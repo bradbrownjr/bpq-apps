@@ -1,0 +1,4 @@
+# Local services
+fortune         63000/tcp                       # BPQ demo app w/ fortune
+wx              63010/tcp                       # Weather app
+sysinfo         63020/tcp                       # System Information
