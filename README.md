@@ -36,7 +36,8 @@ Step 1
 ------
 The Raspberry Pi Raspian OS is using systemd to run its
 services, so we need to install the legacy inetd software:
-    sudo apt-get install inetd
+
+```sudo apt-get install inetd```
 
 Step 2
 ------
@@ -44,7 +45,8 @@ Now we add the applications to the services list. These
 may be native Linux applications or scripts built with
 a language that is installed to the host: Python, Perl,
 Go, BASH, etc. See my examples in /etc/.
-    sudo nano /etc/inetd.conf
+
+```sudo nano /etc/inetd.conf```
 
 Note: 
 * Applications should be run under the same user account whose /home directory contains linbpq.
@@ -57,20 +59,24 @@ Next, we will assign the service application a tcp port.
 In the examples I've found, sysops are using ports in
 the 63,000 range. Take note of these port numbers, you
 will need them for the next step.
-    sudo nano /etc/services
+
+```sudo nano /etc/services```
 
 Step 5
 ------
 Now that the services are defined, start inetd:
-    sudo service inetd start
+
+```sudo service inetd start```
 
 Or, if you are making edits to these files later, restart:
-    sudo service inetd restart
+
+```sudo service inetd restart```
 
 Step 7
 ------
 Test your application by telnetting into it:
-    telnet localhost 63010
+
+```telnet localhost 63010```
 
 If it executes as expected, it *should* work via AX.25.
 
@@ -79,7 +85,8 @@ Step 8
 Finally, we add the commands to the BPQ node to call the 
 external applications running as services. Again, my linbpq
 directory is under the 'ect' user, yours likely differs:
-    nano /home/ect/linbpq/bpq32.cfg
+
+```nano /home/ect/linbpq/bpq32.cfg```
 
 See my example linbpq/bpq32.cfg configuration file for the
 more complete uncommented version. The full file, with
@@ -87,38 +94,48 @@ passwords redacted, is available in that file's revision
 history.
 
 Note your telnet port number:
+```
 PORT
  PORTNUM=9
  ID=Telnet Server
-
-Note the CMDPORT numbers need to match the port numbers defined in /etc/services:
+```
+Note the CMDPORT numbers need to match the port numbers defined in /etc/services.
+Each port number is referred to by linbpq by its position number in the list.
+```
     CMDPORT 63000 63010 63020 63030
             ^ #0  ^ #1  ^ #2  ^ #3
-
+```
 Internal and external applications are called with the following commands:
+```
     APPLICATION 6,SYSINFO,C 9 HOST 2 NOCALL S
-                ^       ^        ^ ^      ^
-	        |       |        | |      |
-		|       |        | |      Return to node upon exit
-		|       |        | Do not pass call sign to app
-		|       |        CMDPORT #
-		|       Connect to Telnet PORT #
-		App name entered at user prompt
+                  ^       ^    ^   ^ ^      ^
+                  |       |    |   | |      |
+	          |       |    |   | |      Return to node upon exit
+		  |       |    |   | Do not pass call sign to app
+                  |       |    |   CMDPORT #
+		  |       |    Localhost
+		  |       Connect to Telnet PORT #
+		  App name entered at user prompt
+```
 
 Step 9
 ------
 Restart your linbpq node.
 1) If you run it as a service:
-    sudo systemctl restart linbpq 
+
+```sudo systemctl restart linbpq```
 2) If you run it detached, from the linbpq directory:
-    ps -A | grep linbpq
-    kill -1 (process number of prior command's output)
-    nohup ./linbpq &
+```
+ps -A | grep linbpq
+kill -1 (process number of prior command's output)
+nohup ./linbpq &
+```
 
 Step 10
 -------
 Test locally. This will be the node's telnet port defined by TCPPORT=8010 in bpq32.cfg:
-    telnet localhost 8010
+
+```telnet localhost 8010```
 
 Log into your node and run the new command. If it works, it /should/ work over radio.
 
@@ -131,5 +148,6 @@ There seems to be some sort of timeout for which a command run by the BPQ node s
 
 If you are using script
 * Ensure the script is executable
-    chmod +x script.py
+
+```chmod +x script.py```
 * Ensure the first line is either #!/bin/sh or #!/bin/python3 and that the interpreter is installed there. Run 'whereis python3' to get the correct path.
