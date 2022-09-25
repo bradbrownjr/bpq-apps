@@ -62,24 +62,24 @@ will need them for the next step.
 Step 5
 ------
 Now that the services are defined, start inetd:
-# sudo service inetd start
+	sudo service inetd start
 
 Or, if you are making edits to these files later, restart:
-# sudo service inetd restart
+	sudo service inetd restart
 
 Step 7
 ------
 Test your application by telnetting into it:
-# telnet localhost 63010
+	telnet localhost 63010
 
-If it executes as expected, it /should/ work via AX.25.
+If it executes as expected, it *should* work via AX.25.
 
 Step 8
 ------
 Finally, we add the commands to the BPQ node to call the 
 external applications running as services. Again, my linbpq
 directory is under the 'ect' user, yours likely differs:
-# nano /home/ect/linbpq/bpq32.cfg
+	nano /home/ect/linbpq/bpq32.cfg
 
 See my example linbpq/bpq32.cfg configuration file for the
 more complete uncommented version. The full file, with
@@ -110,16 +110,16 @@ Step 9
 ------
 Restart your linbpq node.
 1) If you run it as a service:
-# sudo systemctl restart linbpq 
+	sudo systemctl restart linbpq 
 2) If you run it detached, from the linbpq directory:
-# ps -A | grep linbpq
-# kill -1 (process number of prior command's output)
-# nohup ./linbpq &
+	ps -A | grep linbpq
+	kill -1 (process number of prior command's output)
+	nohup ./linbpq &
 
 Step 10
 -------
 Test locally. This will be the node's telnet port defined by TCPPORT=8010 in bpq32.cfg:
-# telnet localhost 8010
+	telnet localhost 8010
 
 Log into your node and run the new command. If it works, it /should/ work over radio.
 
@@ -132,5 +132,5 @@ There seems to be some sort of timeout for which a command run by the BPQ node s
 
 If you are using script
 * Ensure the script is executable
-# chmod +x script.py
+	chmod +x script.py
 * Ensure the first line is either #!/bin/sh or #!/bin/python3 and that the interpreter is installed there. Run 'whereis python3' to get the correct path.
