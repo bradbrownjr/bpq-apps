@@ -124,6 +124,7 @@ Restart your linbpq node.
 1) If you run it as a service:
 
 ```sudo systemctl restart linbpq```
+
 2) If you run it detached, from the linbpq directory:
 ```
 ps -A | grep linbpq
@@ -137,7 +138,7 @@ Test locally. This will be the node's telnet port defined by TCPPORT=8010 in bpq
 
 ```telnet localhost 8010```
 
-Log into your node and run the new command. If it works, it /should/ work over radio.
+Log into your node and run the new command. If it works, it *should* work over radio.
 
 Caveats
 =======
@@ -150,4 +151,4 @@ If you are using script
 * Ensure the script is executable
 
 ```chmod +x script.py```
-* Ensure the first line is either #!/bin/sh or #!/bin/python3 and that the interpreter is installed there. Run 'whereis python3' to get the correct path.
+* Ensure the first line is either #!/bin/sh or #!/bin/python3 and that the interpreter is installed there. Run ```whereis python3```, for instance, to get the correct path for Python 3.
