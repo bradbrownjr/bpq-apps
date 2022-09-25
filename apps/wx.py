@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+# This script requires w3m which may not be installed by default on your OS
+# sudo apt-get install w3m
+
 import os
 menu = """
 Weather Services
