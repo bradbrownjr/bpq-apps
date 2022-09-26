@@ -1,12 +1,11 @@
 #!/bin/sh
-# Install Neofetch with 'sudo apt-get install neofetch'
+# Prints neofetch output without ANSI color
+# Ref https://github.com/dylanaraps/neofetch/issues/753
+neofetch|sed 's/\x1B\[[0-9;\?]*[a-zA-Z]//g'
 
-# OS logo and system information
-neofetch
-
-# Disk usage
+# Get disk space / utilization
 df /
 echo
-# Confirm required node processes are running
-ps -A | grep -E 'direwolf|linbpq' | column -t
 
+# List node-required processes
+ps -A | grep -E 'direwolf|linbpq' | column -t
