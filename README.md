@@ -28,6 +28,8 @@ AX.25 (radio) or telnet (IP), they need to be redirected
 to a tcp socket. This is done by making them into a 
 service run by inetd.
 
+![Screenshot](Screenshot-2022-09-26 094854.png)
+
 These steps assume that you have already installed the
 applications or downloaded the scripts which you wish
 to run on your node.
