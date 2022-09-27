@@ -13,7 +13,7 @@ Weather Services
 5) Maine/New Hampshire Max/Min Temperature 
    and Precipitation Table
 ------------------------------------------
-6) About this application
+9) About this application
 0) Return to node
 
 Information is retrieved from 
@@ -44,7 +44,7 @@ while True:
         	os.system("/usr/bin/w3m http://www.weather.gov/data/CAR/SFTCAR -dump")
 	elif selected == 5:
         	os.system("/usr/bin/w3m http://www.weather.gov/data/GYX/RTPGYX -dump")
-	elif selected == 6:
+	elif selected == 9:
 		print (about)
 	elif selected == 0:
 		print ("\nExiting...\n")
