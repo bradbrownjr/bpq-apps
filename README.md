@@ -109,11 +109,12 @@ Each port number is referred to by linbpq by its position number in the list.
 ```
 Internal and external applications are called with the following commands:
 ```
-    APPLICATION 6,SYSINFO,C 9 HOST 2 NOCALL S
-                  ^       ^    ^   ^ ^      ^
-                  |       |    |   | |      |
-	          |       |    |   | |      Return to node upon exit
-		  |       |    |   | Do not pass call sign to app
+    APPLICATION 6,SYSINFO,C 9 HOST 2 NOCALL K S
+                  ^       ^    ^   ^ ^      ^ ^
+                  |       |    |   | |      | |
+                  |       |    |   | |      | Return to node upon exit (omit if giving app its own NODECALL-#)
+	          |       |    |   | |      Keep-alive to prevent premature exit of application
+		  |       |    |   | Do not pass call sign to app (omit if you want it via stdin)
                   |       |    |   CMDPORT #
 		  |       |    Localhost
 		  |       Connect to Telnet PORT #
@@ -146,8 +147,7 @@ Caveats
 =======
 There seems to be some sort of timeout for which a command run by the BPQ node software waits before it terminates the process. 
 * If the application returns to the node prompt without output, try the command again
-* If the application runs fine but output is truncated, you may need to curb your expectations and reduce the actions performed by the script
-* I'll continue to research a way around this
+* If the application runs fine but output is truncated, you may need to add the 'K' to your bpq32.cfg APPLICATION line
 
 If you are using script
 * Ensure the script is executable
