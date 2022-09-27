@@ -154,3 +154,7 @@ If you are using script
 
 ```chmod +x script.py```
 * Ensure the first line is either #!/bin/sh or #!/bin/python3 and that the interpreter is installed there. Run ```whereis python3```, for instance, to get the correct path for Python 3.
+
+References
+==========
+https://www.cantab.net/users/john.wiseman/Documents/LinBPQ%20Applications%20Interface.html
