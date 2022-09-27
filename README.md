@@ -39,7 +39,7 @@ Step 1
 The Raspberry Pi Raspian OS is using systemd to run its
 services, so we need to install the legacy inetd software:
 
-```sudo apt-get install inetd```
+```sudo apt-get install openbsd-inetd```
 
 Step 2
 ------
