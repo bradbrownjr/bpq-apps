@@ -45,8 +45,6 @@ while True:
                 os.system("/usr/bin/w3m https://services.swpc.noaa.gov/text/weekly.txt -dump")
         elif selected == 7:
                 os.system("/usr/bin/w3m https://services.swpc.noaa.gov/text/wwv.txt -dump")
-        elif selected == 8:
-                os.system("/usr/bin/w3m -dump")
         elif selected == 9:
                 print (about)
         elif selected == 0:
