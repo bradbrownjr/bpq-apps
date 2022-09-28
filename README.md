@@ -46,14 +46,28 @@ Step 2
 Now we add the applications to the services list. These
 may be native Linux applications or scripts built with
 a language that is installed to the host: Python, Perl,
-Go, BASH, etc. See my examples in /etc/.
+Go, BASH, etc.
 
 ```sudo nano /etc/inetd.conf```
+
+```
+wx                      stream  tcp     nowait  ect     /home/ect/apps/wx.py
+|                       |       |       |       |      |
+|                       |       |       |       |      Full path to *executable*
+|                       |       |       |       User to run executable as, your node may use 'pi'
+|                       |       |       Run new, concurrent processes for new requests
+|                       |       Socket type to use for stream
+|                       inetd hooks the network stream directly to stdin and stdout of the executable 
+Application/service name to be executed from node
+```
+
+See more examples in /etc/
 
 Note: 
 * Applications should be run under the same user account whose /home directory contains linbpq.
 * Exact paths to the app or script should be used. 
 * In the case of my node, the username is 'ect' for emergency communications team; not to be confused with 'etc' the system configuration directory.
+* More info can be found at https://en.wikipedia.org/wiki/Inetd
 
 Step 3
 ------
