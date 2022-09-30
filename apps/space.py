@@ -15,7 +15,7 @@ Space Weather Reports
 about = """
 This is a Python3 script which pulls data from
 https://services.swpc.noaa.gov/text/.
-Developed by Brad Brown KC1JMH
+Script developed by Brad Brown KC1JMH
 """
 
 def pullthis(url):
