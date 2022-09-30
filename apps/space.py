@@ -14,12 +14,8 @@ Space Weather Reports
 
 about = """
 This is a Python3 script which pulls data from
-https://services.swpc.noaa.gov/text/ and displays
-them on the screen using the w3m utility.
-
-Enter the number of the report to retrieve it. If the report
-is blank or cuts off too early, you may have encountered the
-BBS node's app timeout. Try again if nothing was retrieved.
+https://services.swpc.noaa.gov/text/.
+Developed by Brad Brown KC1JMH
 """
 
 def pullthis(url):
