@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # Original script acquired from https://github.com/hink/qrzpy/blob/master/qrz3.py
+# Install necessary modules: pip install beautifulsoup4 requests
 from getpass import getpass
 import signal
 import sys
