@@ -14,9 +14,9 @@ import warnings # Suppress "it looks like you're trying to parse HTML
 warnings.filterwarnings("ignore")
 
 api_root = 'http://xmldata.qrz.com/xml/current/'
-qrz_user = "KC1JMH"
-qrz_pass = urllib.parse.quote_plus("3g7w&41TG*TE0MXi")
-color_term = False
+qrz_user = "" # Enter QRZ username in the quotes
+qrz_pass = urllib.parse.quote_plus("") # Enter QRZ password in the quotes
+color_term = False # Set to false if using script on packet radio
 ###
 
 class Colors(object):
