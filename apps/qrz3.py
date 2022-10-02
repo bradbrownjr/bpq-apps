@@ -13,6 +13,11 @@ import urllib.parse # Allow special characters in password
 import warnings # Suppress "it looks like you're trying to parse HTML
 warnings.filterwarnings("ignore")
 
+# User variables
+# --------------
+# If it is preferred to prompt the user for their
+# creds, remark the next two lines and re-enable
+# lines 107 and 108.
 api_root = 'http://xmldata.qrz.com/xml/current/'
 qrz_user = "" # Enter QRZ username in the quotes
 qrz_pass = urllib.parse.quote_plus("") # Enter QRZ password in the quotes
