@@ -186,9 +186,9 @@ def main():
     # Lookup Callsigns
     while True:
         callsign = input(Colors.BLUE + '\nCallsign: ' + Colors.END)
-        if callsign == "?" or callsign.lower() == "h" or callsign.lower() == "help":
+        if "?" in callsign or "h"in callsign.lower() or "help" in callsign.lower():
             print("Enter callsign or leave blank to quit")
-        elif callsign != "":
+        elif "" not in callsign:
             lookup_callsign(callsign, session_key)
         else:
             exit()
