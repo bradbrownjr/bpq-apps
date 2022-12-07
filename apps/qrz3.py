@@ -1,12 +1,19 @@
 #!/usr/bin/python3
 # Original script acquired from https://github.com/hink/qrzpy/blob/master/qrz3.py
-# Install necessary modules: python3 -m pip install beautifulsoup4 requests
+# Script will try to install necessary module: beautifulsoup4 for XML parsing
 from getpass import getpass
 import signal
-import sys
-
-from bs4 import BeautifulSoup as soup
+import sys 
+import os
 import requests
+
+try:
+  from bs4 import BeautifulSoup as soup
+except ImportError:
+  print ("Trying to Install required module: BeautifulSoup4\n")
+  os.system('python3 -m pip install BeautifulSoup4')
+from bs4 import BeautifulSoup as soup
+
 
 # Brad's additions
 import urllib.parse # Allow special characters in password
@@ -22,7 +29,11 @@ api_root = 'http://xmldata.qrz.com/xml/current/'
 qrz_user = "" # Enter QRZ username in the quotes
 qrz_pass = urllib.parse.quote_plus("") # Enter QRZ password in the quotes
 color_term = False # Set to false if using script on packet radio
+if qrz_user == "":
+    print("Please enter your QRZ API account credentials in config!")
+    quit()
 ###
+
 
 class Colors(object):
     if color_term == True:
