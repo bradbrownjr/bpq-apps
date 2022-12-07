@@ -6,6 +6,18 @@ import signal
 import sys 
 import os
 import requests
+import config as cfg  # Enter variables into config.py!
+import urllib.parse # Allow special characters in password
+import warnings # Suppress "it looks like you're trying to parse HTML
+warnings.filterwarnings("ignore")
+
+# Install and load from pip: libxml and BeautifulSoup4
+try:
+  import lxml
+except ImportError:
+  print ("Trying to Install required module: lxml\n")
+  os.system('python3 -m pip install lxml')
+import lxml
 
 try:
   from bs4 import BeautifulSoup as soup
@@ -14,20 +26,14 @@ except ImportError:
   os.system('python3 -m pip install BeautifulSoup4')
 from bs4 import BeautifulSoup as soup
 
-
-# Brad's additions
-import urllib.parse # Allow special characters in password
-import warnings # Suppress "it looks like you're trying to parse HTML
-warnings.filterwarnings("ignore")
-
 # User variables
 # --------------
 # If it is preferred to prompt the user for their
-# creds, remark the next two lines and re-enable
-# lines 107 and 108.
+# creds, remark the qrz_user and pass lines and 
+# re-enable lines 204 and 205.
 api_root = 'http://xmldata.qrz.com/xml/current/'
-qrz_user = "" # Enter QRZ username in the quotes
-qrz_pass = urllib.parse.quote_plus("") # Enter QRZ password in the quotes
+qrz_user = cfg.qrz_user
+qrz_pass = urllib.parse.quote_plus(cfg.qrz_pass)
 color_term = False # Set to false if using script on packet radio
 if qrz_user == "":
     print("Please enter your QRZ API account credentials in config!")
