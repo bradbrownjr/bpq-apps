@@ -209,6 +209,10 @@ def main():
     session_key = login(qrz_user, qrz_pass)
 
     # Lookup Callsigns
+    if sys.argv:
+        try:lookup_callsign(sys.argv[1], session_key)
+        except:return
+        
     while True:
         callsign = input(Colors.BLUE + '\nCallsign: ' + Colors.END).strip()
         if "" == callsign or "?" == callsign or "h" == callsign.lower() or "help" == callsign.lower():
