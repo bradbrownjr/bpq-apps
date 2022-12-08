@@ -4,7 +4,7 @@
 neofetch|sed 's/\x1B\[[0-9;\?]*[a-zA-Z]//g'
 
 # Get disk space / utilization
-df /
+df / -h
 echo
 
 # List node-required processes
