@@ -30,7 +30,7 @@ from bs4 import BeautifulSoup as soup
 # --------------
 # If it is preferred to prompt the user for their
 # creds, remark the qrz_user and pass lines and 
-# re-enable lines 204 and 205.
+# re-enable lines 207 and 208.
 api_root = 'http://xmldata.qrz.com/xml/current/'
 qrz_user = cfg.qrz_user
 qrz_pass = urllib.parse.quote_plus(cfg.qrz_pass)
@@ -66,13 +66,16 @@ def _error(msg, do_exit=False):
         sys.exit(1)
 
 def print_header():
-    print("""  ____  _____   ______
- / __ \|  __ \ |___  /
-| |  | | |__) |   / / 
-| |  | |  _  /   / /  
-| |__| | | \ \  / /__ 
- \___\_\_|  \_\/_____|
-     Lookup Tool""")
+    print("""      ____  _____   ______
+     / __ \|  __ \ |___  /
+    | |  | | |__) |   / / 
+    | |  | |  _  /   / /  
+    | |__| | | \ \  / /__ 
+     \___\_\_|  \_\/_____|
+         Lookup Tool
+
+ Enter call sign or Q to quit.
+     """)
 
 def login(username, password):
     # Login to QRZ - Must have access to XML API
@@ -207,7 +210,7 @@ def main():
 
     # Lookup Callsigns
     while True:
-        callsign = input(Colors.BLUE + '\nCallsign: ' + Colors.END)
+        callsign = input(Colors.BLUE + '\nCallsign: ' + Colors.END).strip()
         if "" == callsign or "?" == callsign or "h" == callsign.lower() or "help" == callsign.lower():
             print("Enter callsign or enter 'q' to quit")
         elif "q" == callsign.lower() or "quit" == callsign.lower() or "x" == callsign.lower():
