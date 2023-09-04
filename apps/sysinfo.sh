@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # Prints neofetch output without ANSI color
 # Ref https://github.com/dylanaraps/neofetch/issues/753
 neofetch|sed 's/\x1B\[[0-9;\?]*[a-zA-Z]//g'

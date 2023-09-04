@@ -1,7 +1,7 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import requests
 menu = """
-Weather Services
+Weather reports from NWS Gray, ME
 ------------------------------------------
 1) Maine/New Hampshire Weather Summary
 2) Maine/New Hampshire Weather Roundup

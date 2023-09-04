@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Original script acquired from https://github.com/hink/qrzpy/blob/master/qrz3.py
 # Script will try to install necessary module: beautifulsoup4 for XML parsing
 from getpass import getpass
