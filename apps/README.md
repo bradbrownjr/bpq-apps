@@ -48,6 +48,6 @@ wx.py
 ![Terminal output](images/wx.png)
 
 # ToDos
-[ ] **All** - Update #! to call interpreter regardless of location using env  
+[X] **All** - Update #! to call interpreter regardless of location using env  
 [ ] **qrz3.py** - Add variable check so as to not require sysop to comment lines if used in the mode that requires user login  
 [ ] **wx.py** - Expand to provide weather information for other areas, in the meantime the txt web requests may be updated to pull any URL.
