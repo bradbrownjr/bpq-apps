@@ -163,11 +163,11 @@ There seems to be some sort of timeout for which a command run by the BPQ node s
 * If the application returns to the node prompt without output, try the command again
 * If the application runs fine but output is truncated, you may need to add the 'K' to your bpq32.cfg APPLICATION line
 
-If you are using script
-* Ensure the script is executable
-
+If scripts are not executing  
+* Ensure the script is executable  
 ```chmod +x script.py```
-* Ensure the first line is either #!/bin/sh or #!/bin/python3 and that the interpreter is installed there. Run ```whereis python3```, for instance, to get the correct path for Python 3.
+* Ensure the interpreter is installed. These scripts require Python3 or a shell. The first lines of a script will indicate what interpreter and modules are needed.
+e.g.: ```#!/bin/env sh``` or ```#!/bin/env python3```
 
 References
 ==========
