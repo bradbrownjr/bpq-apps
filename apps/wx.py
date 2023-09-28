@@ -28,7 +28,7 @@ while True:
         if "1" in selected:
                 pullthis("https://w1.weather.gov/data/GYX/RWSGYX")
         elif "2" in selected:
-                pullthis("/usr/bin/w3m http://www.weather.gov/data/GYX/RWRGYX")
+                pullthis("http://www.weather.gov/data/GYX/RWRGYX")
         elif "3" in selected:
                 pullthis("http://www.weather.gov/data/GYX/SFTGYX")
         elif "4" in selected:
