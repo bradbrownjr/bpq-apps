@@ -163,11 +163,16 @@ There seems to be some sort of timeout for which a command run by the BPQ node s
 * If the application returns to the node prompt without output, try the command again
 * If the application runs fine but output is truncated, you may need to add the 'K' to your bpq32.cfg APPLICATION line
 
-If scripts are not executing  
+If scripts are not executing locally
 * Ensure the script is executable  
 ```chmod +x script.py```
 * Ensure the interpreter is installed. These scripts require Python3 or a shell. The first lines of a script will indicate what interpreter and modules are needed.
 e.g.: ```#!/bin/env sh``` or ```#!/bin/env python3```
+
+Scripts run locally, and via their inetd telnet port, but won't produce output when accessed from the node, check for and remove the following lines from your TELNET port configuration:
+* FALLBACKTORELAY=1
+* RELAYAPPL=BBS
+* RELAYHOST=127.0.0.1
 
 References
 ==========
