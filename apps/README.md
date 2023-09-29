@@ -8,6 +8,8 @@ hamqsl.py
 **Information source**: www.hamqsl.com, used by permission of author Paul n0nbh  
 **Developer**: Brad Brown KC1JMH
 
+**Download or update**: `wget -O hamqsl.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/hamqsl.py && chmod +x hamqsl.py`
+
 ![Terminal output](images/hamqsl.png)
 
 qrz3.py
@@ -18,6 +20,8 @@ qrz3.py
 **Developer**: Modified code from github.com/hink/qrzpy  
 **Notes**: Requires XML subscription and API key, unless you are prompting visitors for their QRZ creds (in plaintext over the air or local)
 
+**Download or update**: `wget -O qrz3.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/qrz3.py && chmod +x qrz3.py`
+
 ![Terminal output](images/qrz3.png)
 
 space.py
@@ -26,6 +30,8 @@ space.py
 **Purpose**: NOAA Space Weather reports  
 **Information source**: Space Weather Prediction Center, National Oceanic and Atmospheric Administration  
 **Developer**: Brad Brown KC1JMH
+
+**Download or update**: `wget -O space.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/space.py && chmod +x space.py`
 
 ![Terminal output](images/space.png)
 
@@ -37,6 +43,8 @@ sysinfo.sh
 **Developer**: Brad Brown KC1JMH  
 **Notes**: Requires neofetch be installed  
 
+**Download or update**: `wget -O sysinfo.sh https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/sysinfo.sh && chmod +x sysinfo.sh`
+
 ![Terminal output](images/sysinfo.png)
 
 wx.py
@@ -45,6 +53,9 @@ wx.py
 **Purpose**: Local weather reports to Southern Maine and New Hampshire  
 **Information source**: National Weather Service, Gray Office  
 **Developer**: Brad Brown KC1JMH
+
+**Download or update**: `wget -O wx.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx.py && chmod +x wx.py`
+
 ![Terminal output](images/wx.png)
 
 # ToDos
