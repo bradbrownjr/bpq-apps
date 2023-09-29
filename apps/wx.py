@@ -12,8 +12,12 @@ Weather reports from NWS Gray, ME
 ------------------------------------------"""
 
 about = """
+Get text products right from the
+National Weather Service in Gray, ME.
+
 This is a Python3 script which pulls data from
 https://www.maine.gov/mema/weather/general-information
+
 Script developed by Brad Brown KC1JMH
 """
 
