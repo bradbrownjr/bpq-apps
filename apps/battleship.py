@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # battleship_bbs.py (Version 1.3 - Production Ready)
 # A simple, text-based Battleship server for Packet Radio BBS systems.
-# Author: Gemini
+# Author: Brad Brown Jr, KC1JMH
+# With help from Gemini 2.5 and GPT 4.1
 # Date: 2025-09-19
 
 import socket
