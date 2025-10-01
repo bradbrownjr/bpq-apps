@@ -30,15 +30,15 @@ print (menu)
 while True:
         selected = str(input("#1-5), R)elist, A)bout, Q)uit :> "))
         if "1" in selected:
-                pullthis("https://w1.weather.gov/data/GYX/RWSGYX")
+                pullthis("https://tgftp.nws.noaa.gov/data/raw/aw/awus81.kgyx.rws.gyx.txt")
         elif "2" in selected:
-                pullthis("http://www.weather.gov/data/GYX/RWRGYX")
+                pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus41.kgyx.rwr.gyx.txt")
         elif "3" in selected:
-                pullthis("http://www.weather.gov/data/GYX/SFTGYX")
+                pullthis("https://tgftp.nws.noaa.gov/data/forecasts/state/nh/nhz010.txt")
         elif "4" in selected:
-                pullthis("http://www.weather.gov/data/CAR/SFTCAR")
+                pullthis("https://tgftp.nws.noaa.gov/data/raw/fp/fpus61.kcar.sft.car.txt")
         elif "5" in selected:
-                pullthis("http://www.weather.gov/data/GYX/RTPGYX")
+                pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus61.kgyx.rtp.gyx.txt")
         elif "a" in selected.lower():
                 print (about)
         elif "r" in selected.lower():
