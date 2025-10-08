@@ -15,8 +15,20 @@ Author: Brad Brown KC1JMH
 Date: October 2025
 """
 
-import socket
 import sys
+
+# Check Python version
+if sys.version_info < (3, 5):
+    print("Error: This script requires Python 3.5 or later.")
+    print("Your version: Python {}.{}.{}".format(
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro
+    ))
+    print("\nPlease run with: python3 gopher.py")
+    sys.exit(1)
+
+import socket
 import textwrap
 from urllib.parse import urlparse
 
@@ -113,7 +125,7 @@ class GopherClient:
         except ConnectionRefusedError:
             return None, "Connection refused"
         except Exception as e:
-            return None, f"Error: {str(e)}"
+            return None, "Error: {}".format(str(e))
     
     def parse_gopher_menu(self, content):
         """Parse a Gopher menu/directory listing"""
@@ -173,21 +185,21 @@ class GopherClient:
             
             # Info lines don't get numbers
             if item_type == 'i':
-                print(f"    {display}")
+                print("    {}".format(display))
             # Skip non-readable types for packet radio
             elif item_type in ['2', '4', '5', '6', '8', '9', 'g', 'I', 's', 'T']:
-                print(f"    [{type_label}] {display} (not supported)")
+                print("    [{}] {} (not supported)".format(type_label, display))
             else:
                 # Wrap long lines
                 if len(display) > LINE_WIDTH - 12:
                     wrapped = textwrap.fill(display, width=LINE_WIDTH - 12,
                                           subsequent_indent=' ' * 12)
                     lines = wrapped.split('\n')
-                    print(f"{item_num:3}) [{type_label}] {lines[0]}")
+                    print("{:3}) [{}] {}".format(item_num, type_label, lines[0]))
                     for line in lines[1:]:
                         print(line)
                 else:
-                    print(f"{item_num:3}) [{type_label}] {display}")
+                    print("{:3}) [{}] {}".format(item_num, type_label, display))
                 item_num += 1
                 
         print("=" * LINE_WIDTH)
@@ -223,7 +235,7 @@ class GopherClient:
             chunk = lines[i:i + PAGE_SIZE]
             
             print("\n" + "-" * LINE_WIDTH)
-            print(f"Page {page_num}/{total_pages}")
+            print("Page {}/{}".format(page_num, total_pages))
             print("-" * LINE_WIDTH)
             
             for line in chunk:
@@ -246,13 +258,13 @@ class GopherClient:
         print("BOOKMARKS")
         print("=" * LINE_WIDTH)
         for i, (name, url) in enumerate(BOOKMARKS, 1):
-            print(f"{i}) {name}")
-            print(f"   {url}")
+            print("{}) {}".format(i, name))
+            print("   {}".format(url))
         print("=" * LINE_WIDTH)
     
     def navigate_to(self, url):
         """Navigate to a Gopher URL"""
-        print(f"\nConnecting to {url}...")
+        print("\nConnecting to {}...".format(url))
         
         host, port, item_type, selector = self.parse_gopher_url(url)
         
@@ -265,7 +277,7 @@ class GopherClient:
         if item_type == '1' or item_type == '':
             content = self.fetch_gopher(host, port, selector)
             if isinstance(content, tuple):
-                print(f"Error: {content[1]}")
+                print("Error: {}".format(content[1]))
                 return False
                 
             items = self.parse_gopher_menu(content)
@@ -281,11 +293,11 @@ class GopherClient:
                 return False
                 
             size_kb, content = result
-            print(f"\nArticle size: {size_kb:.1f} KB")
+            print("\nArticle size: {:.1f} KB".format(size_kb))
             
             # Offer pagination for large articles
             if size_kb > MAX_ARTICLE_SIZE_KB:
-                print(f"Warning: This article is large ({size_kb:.1f} KB)")
+                print("Warning: This article is large ({:.1f} KB)".format(size_kb))
                 print("This may take significant time over packet radio.")
                 
             response = input("Display: A)ll at once, P)aginated, C)ancel :> ").strip().lower()
@@ -306,7 +318,7 @@ class GopherClient:
                 search_selector = selector + '\t' + query
                 content = self.fetch_gopher(host, port, search_selector)
                 if isinstance(content, tuple):
-                    print(f"Error: {content[1]}")
+                    print("Error: {}".format(content[1]))
                     return False
                     
                 items = self.parse_gopher_menu(content)
@@ -317,12 +329,12 @@ class GopherClient:
         elif item_type == 'h':
             if selector.startswith('URL:'):
                 url = selector[4:]
-                print(f"\nHTML link: {url}")
+                print("\nHTML link: {}".format(url))
                 print("(Cannot display HTML in text mode)")
             return True
             
         else:
-            print(f"Item type '{item_type}' not supported in text mode")
+            print("Item type '{}' not supported in text mode".format(item_type))
             return False
     
     def show_help(self):
@@ -380,7 +392,7 @@ class GopherClient:
         print("")
         print("A simple text-based Gopher protocol client.")
         print("Designed for AX.25 packet radio terminals.")
-        print(f"\nDefault home: {DEFAULT_HOME}")
+        print("\nDefault home: {}".format(DEFAULT_HOME))
         print("\nCommands:")
         print("  H)ome    - Go to home page")
         print("  M)arks   - Show bookmarks")
@@ -462,10 +474,11 @@ class GopherClient:
                         item = selectable[item_num - 1]
                         
                         # Build URL for the selected item
-                        url = f"gopher://{item['host']}:{item['port']}/{item['type']}{item['selector']}"
+                        url = "gopher://{}:{}/{}{}".format(
+                            item['host'], item['port'], item['type'], item['selector'])
                         self.navigate_to(url)
                     else:
-                        print(f"Invalid selection. Choose 1-{len(selectable)}")
+                        print("Invalid selection. Choose 1-{}".format(len(selectable)))
                 
                 else:
                     print("Unknown command. Type ? for help")
@@ -477,7 +490,7 @@ class GopherClient:
                 print("\n\nConnection closed. Goodbye! 73\n")
                 break
             except Exception as e:
-                print(f"\nError: {str(e)}")
+                print("\nError: {}".format(str(e)))
                 continue
 
 
@@ -486,5 +499,5 @@ if __name__ == '__main__':
     try:
         client.run()
     except Exception as e:
-        print(f"\nFatal error: {str(e)}")
+        print("\nFatal error: {}".format(str(e)))
         sys.exit(1)
