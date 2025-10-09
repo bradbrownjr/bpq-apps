@@ -31,6 +31,7 @@ if sys.version_info < (3, 5):
 
 import os
 import csv
+import re
 import textwrap
 import urllib.request
 import urllib.error
@@ -113,15 +114,34 @@ class RSSReader:
             sys.exit(1)
     
     def strip_html(self, html_text):
-        """Strip HTML tags from text"""
+        """Strip HTML tags from text, converting breaks and paragraphs to newlines"""
         if not html_text:
             return ""
+        
+        # Convert common spacing/break tags to newlines before stripping
+        # Match <br>, <br/>, <br />, </p>, <p> with case-insensitive matching
+        html_text = re.sub(r'<br\s*/?>', '\n', html_text, flags=re.IGNORECASE)
+        html_text = re.sub(r'</p>', '\n\n', html_text, flags=re.IGNORECASE)
+        html_text = re.sub(r'<p>', '\n', html_text, flags=re.IGNORECASE)
+        
+        # Strip remaining HTML tags
         stripper = HTMLStripper()
         stripper.feed(html_text)
         text = stripper.get_text()
-        # Clean up whitespace
-        text = ' '.join(text.split())
-        return unescape(text)
+        
+        # Clean up excessive whitespace while preserving single newlines
+        # Replace multiple spaces with single space
+        lines = text.split('\n')
+        cleaned_lines = []
+        for line in lines:
+            line = ' '.join(line.split())  # Collapse multiple spaces
+            cleaned_lines.append(line)
+        
+        # Join lines and collapse multiple consecutive newlines to max 2
+        text = '\n'.join(cleaned_lines)
+        text = re.sub(r'\n\n\n+', '\n\n', text)  # Max 2 consecutive newlines
+        
+        return unescape(text.strip())
     
     def fetch_feed(self, url):
         """Fetch and parse an RSS feed"""
