@@ -475,7 +475,6 @@ class RSSReader:
         print("A simple text-based RSS feed reader.")
         print("\nCommands are shown in each prompt. Type ? for full help.")
         print("You can quit at any time by typing Q.")
-        print("=" * LINE_WIDTH)
         
         state = 'categories'  # categories, feeds, articles, description
         
