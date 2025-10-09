@@ -473,9 +473,7 @@ class RSSReader:
         print(" |_|  \\_\\_____/|_____/  |_| \\_|______|   \\/  \\/  |_____/  ")
         print("")
         print("A simple text-based RSS feed reader.")
-        print("\nCommands are shown in each prompt. Type ? for full help.")
-        print("You can quit at any time by typing Q.")
-        
+                
         state = 'categories'  # categories, feeds, articles, description
         
         # Display category list on startup
