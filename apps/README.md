@@ -63,6 +63,44 @@ wx.py
 
 ![Terminal output](images/wx.png)
 
+gopher.py
+---------
+**Type**: Python  
+**Purpose**: Gopher protocol client for accessing gopherspace  
+**Information source**: Gopher servers worldwide  
+**Developer**: Brad Brown KC1JMH
+
+**Download or update**:  
+```wget -O gopher.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.py && chmod +x gopher.py```
+
+rss-news.py
+-----------
+**Type**: Python  
+**Purpose**: RSS feed reader with categorized feeds  
+**Information source**: Configurable RSS feeds  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Requires rss-news.conf configuration file. Optionally uses w3m for better text extraction from web articles.
+
+**Download or update**:  
+```
+wget -O rss-news.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/rss-news.py && chmod +x rss-news.py
+wget -O rss-news.conf https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/rss-news.conf
+```
+
+**Features**:
+- Categorized RSS feeds from configuration file
+- Browse feeds by category and view article lists
+- Article size warnings for bandwidth management
+- Pagination support for large articles
+- Clean text extraction from web pages
+- Optional full article fetching from source URLs
+
+**Configuration**:
+Edit `rss-news.conf` to add your own RSS feeds in CSV format:
+```
+Category,Feed Name,Feed URL
+```
+
 # ToDos
 [X] **All** - Update #! to call interpreter regardless of location using env  
 [ ] **qrz3.py** - Add variable check so as to not require sysop to comment lines if used in the mode that requires user login  
