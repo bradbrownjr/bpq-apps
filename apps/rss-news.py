@@ -224,8 +224,9 @@ class RSSReader:
             try:
                 result = subprocess.run(
                     ['w3m', '-dump', url],
-                    capture_output=True,
-                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
                     timeout=SOCKET_TIMEOUT
                 )
                 if result.returncode == 0 and result.stdout:
