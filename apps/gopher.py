@@ -36,10 +36,9 @@ from urllib.parse import urlparse
 # -------------
 DEFAULT_HOME = "gopher://gopher.floodgap.com"  # Default home page
 BOOKMARKS = [
-    ("Gopherpedia", "gopher://gopherpedia.com"),
-    ("Floodgap Gopher", "gopher://gopher.floodgap.com"),
+    ("Wikipedia", "gopher://gopherpedia.com"),
+    ("Floodgap", "gopher://gopher.floodgap.com"),
     ("SDF Gopher", "gopher://sdf.org"),
-    ("Bitreich Gopher", "gopher://bitreich.org"),
 ]
 PAGE_SIZE = 20  # Lines per page for pagination
 MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
