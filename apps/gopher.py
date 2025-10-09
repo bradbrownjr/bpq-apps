@@ -74,6 +74,7 @@ class GopherClient:
         self.history = []
         self.current_url = DEFAULT_HOME
         self.last_menu = []
+        self.current_state = 'start'  # start, menu, article
         
     def parse_gopher_url(self, url):
         """Parse a Gopher URL into components"""
@@ -281,6 +282,7 @@ class GopherClient:
                 
             items = self.parse_gopher_menu(content)
             self.display_menu(items)
+            self.current_state = 'menu'
             return True
             
         # Text file
@@ -302,12 +304,14 @@ class GopherClient:
             response = input("Display: A)ll at once, P)aginated, C)ancel :> ").strip().lower()
             
             if response.startswith('c'):
+                self.current_state = 'menu'
                 return True
             elif response.startswith('p'):
                 self.display_article(content, paginate=True)
             else:  # Default to all at once (including empty/Enter)
                 self.display_article(content, paginate=False)
-                
+            
+            self.current_state = 'article'
             return True
             
         # Search
@@ -322,6 +326,7 @@ class GopherClient:
                     
                 items = self.parse_gopher_menu(content)
                 self.display_menu(items)
+                self.current_state = 'menu'
             return True
             
         # HTML (just show the URL)
@@ -330,6 +335,7 @@ class GopherClient:
                 url = selector[4:]
                 print("\nHTML link: {}".format(url))
                 print("(Cannot display HTML in text mode)")
+            self.current_state = 'menu'
             return True
             
         else:
@@ -348,7 +354,8 @@ class GopherClient:
         print("  G)o URL  - Go to specific Gopher URL")
         print("  A)bout   - About Gopher protocol")
         print("  ?)       - Show this help")
-        print("  Q)uit    - Exit the client")
+        print("  Q)uit    - Exit (works from any menu)")
+        print("\nPrompts are context-aware and show available commands.")
         print("=" * LINE_WIDTH)
     
     def show_about(self):
@@ -379,6 +386,25 @@ class GopherClient:
         print("appreciate its simplicity and efficiency. Perfect for ham radio!")
         print("=" * LINE_WIDTH)
     
+    def show_startup_menu(self):
+        """Display startup menu with command descriptions"""
+        print("\n" + "=" * LINE_WIDTH)
+        print("GETTING STARTED")
+        print("=" * LINE_WIDTH)
+        print("\nWelcome to Gopherspace! Here's how to explore:")
+        print("")
+        print("  H)ome - Connect to the default home gopher server")
+        print("  M)arks - View and select from your bookmarks")
+        print("  G)o URL - Navigate to a specific gopher URL")
+        print("  A)bout - Learn about the Gopher protocol")
+        print("  ?)Help - Show complete command reference")
+        print("  Q)uit - Exit the gopher client")
+        print("")
+        print("TIP: Start by typing 'H' to visit the home server, or 'M' to")
+        print("     browse bookmarks. Once viewing a gopher menu, you can")
+        print("     select items by number.")
+        print("=" * LINE_WIDTH)
+    
     def run(self):
         """Main program loop"""
         print("")
@@ -391,7 +417,6 @@ class GopherClient:
         print("")
         print("A simple text-based Gopher protocol client.")
         print("Designed for AX.25 packet radio terminals.")
-        print("\nDefault home: {}".format(DEFAULT_HOME))
         print("\nCommands:")
         print("  H)ome    - Go to home page")
         print("  M)arks   - Show bookmarks")
@@ -399,20 +424,27 @@ class GopherClient:
         print("  G)o URL  - Go to specific Gopher URL")
         print("  ?)       - Show help")
         print("  Q)uit    - Exit the client")
-        print("\nType H for home, M for bookmarks, A for about, or ? for help")
         print("=" * LINE_WIDTH)
         
         # Main command loop
         while True:
             try:
-                command = input("\nCommand :> ").strip()
+                # Context-aware prompt
+                if self.current_state == 'menu':
+                    prompt = "\nMenu: [#] or H)ome, B)ack, M)arks, G)o, A)bout, ?)Help, Q)uit :> "
+                elif self.current_state == 'article':
+                    prompt = "\nArticle: B)ack, H)ome, M)arks, G)o, ?)Help, Q)uit :> "
+                else:
+                    prompt = "\nGopher: H)ome, M)arks, A)bout, G)o, ?)Help, Q)uit :> "
+                
+                command = input(prompt).strip()
                 
                 if not command:
                     continue
                     
                 cmd_lower = command.lower()
                 
-                # Quit
+                # Quit - works from anywhere
                 if cmd_lower.startswith('q'):
                     print("\nGoodbye! 73\n")
                     break
