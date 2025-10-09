@@ -407,14 +407,15 @@ class RSSReader:
         print("  [number] - Select item by number")
         print("  C)ategories - Show feed categories")
         print("  B)ack    - Go back to previous menu")
-        print("  R)efresh - Reload current feed")
+        print("  R)efresh - Reload current feed (when viewing articles)")
         print("  ?)       - Show this help")
-        print("  Q)uit    - Exit the reader")
+        print("  Q)uit    - Exit (works from any menu)")
         print("\nNavigation:")
         print("  1. Select a category")
         print("  2. Select a feed to view article list")
         print("  3. Select an article to view description")
         print("  4. Choose to load full article from web (optional)")
+        print("\nPrompts are context-aware and show available commands.")
         print("\nNote: Only the {} most recent articles are shown per feed".format(MAX_ARTICLES))
         print("to optimize bandwidth usage over packet radio.")
         print("=" * LINE_WIDTH)
@@ -454,11 +455,8 @@ class RSSReader:
         print("Designed for AX.25 packet radio terminals.")
         print("")
         print("Loaded {} categories".format(len(self.feeds)))
-        print("\nCommands:")
-        print("  C)ategories - Show feed categories")
-        print("  A)bout      - About RSS feeds")
-        print("  ?)          - Show help")
-        print("  Q)uit       - Exit the reader")
+        print("\nCommands are shown in each prompt. Type ? for full help.")
+        print("You can quit at any time by typing Q.")
         print("=" * LINE_WIDTH)
         
         state = 'categories'  # categories, feeds, articles, description
@@ -466,14 +464,24 @@ class RSSReader:
         # Main command loop
         while True:
             try:
-                command = input("\nCommand :> ").strip()
+                # Context-aware prompt
+                if state == 'categories':
+                    prompt = "\nCategories: [#] or C)ategory list, A)bout RSS, ?)Help, Q)uit :> "
+                elif state == 'feeds':
+                    prompt = "\nFeeds: [#] or B)ack, C)ategory list, ?)Help, Q)uit :> "
+                elif state == 'articles':
+                    prompt = "\nArticles: [#] or B)ack, C)ategory list, R)efresh, ?)Help, Q)uit :> "
+                else:
+                    prompt = "\nCommand or Q)uit :> "
+                
+                command = input(prompt).strip()
                 
                 if not command:
                     continue
                     
                 cmd_lower = command.lower()
                 
-                # Quit
+                # Quit - works from anywhere
                 if cmd_lower.startswith('q'):
                     print("\nGoodbye! 73\n")
                     break
