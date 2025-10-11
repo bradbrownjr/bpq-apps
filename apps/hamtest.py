@@ -76,6 +76,9 @@ EXAM_SPECS = {
     }
 }
 
+# Define the correct order for all operations
+EXAM_ORDER = ['technician', 'general', 'extra']
+
 
 class HamTestApp:
     """Ham Radio License Test Application"""
@@ -168,7 +171,8 @@ class HamTestApp:
         
     def load_question_pools(self):
         """Load question pools from JSON files, downloading if necessary"""
-        for exam_type, spec in EXAM_SPECS.items():
+        for exam_type in EXAM_ORDER:
+            spec = EXAM_SPECS[exam_type]
             file_path = os.path.join(QUESTION_POOLS_DIR, spec['file'])
             
             # Try to load existing file first
@@ -220,10 +224,7 @@ class HamTestApp:
         # Get current exam directory info for display
         directories = self.get_github_directories(silent=True)
         
-        # Define the correct order for menu display
-        exam_order = ['technician', 'general', 'extra']
-        
-        for i, exam_type in enumerate(exam_order, 1):
+        for i, exam_type in enumerate(EXAM_ORDER, 1):
             spec = EXAM_SPECS[exam_type]
             print("{}. {}".format(i, spec['name']))
             
@@ -317,7 +318,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         self.github_directories = {}
         
         updated_count = 0
-        for exam_type in EXAM_SPECS.keys():
+        for exam_type in EXAM_ORDER:
             if self.download_question_pool(exam_type):
                 updated_count += 1
         
@@ -346,8 +347,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
                     self.display_about()
                     return 'menu'
                 elif choice in ['1', '2', '3']:
-                    exam_order = ['technician', 'general', 'extra']
-                    selected_exam = exam_order[int(choice) - 1]
+                    selected_exam = EXAM_ORDER[int(choice) - 1]
                     
                     if selected_exam not in self.question_pools:
                         print("\nThe {} question pool is not available.".format(EXAM_SPECS[selected_exam]['name']))
