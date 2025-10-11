@@ -1,3 +1,7 @@
 **/__pycache__
 **/config.py
 *.swp
+apps/question_pools/extra.json
+.gitignore
+apps/question_pools/technician.json
+apps/question_pools/general.json
