@@ -85,6 +85,8 @@ class HamTestApp:
         self.current_exam = None
         self.github_directories = {}  # Cache for GitHub directory info
         self.ensure_question_pools_dir()
+        # Check GitHub for current exam pools first
+        self.get_github_directories()
         self.load_question_pools()
         
     def ensure_question_pools_dir(self):
@@ -138,7 +140,7 @@ class HamTestApp:
     
     def download_question_pool(self, exam_type):
         """Download question pool from GitHub"""
-        directories = self.get_github_directories()
+        directories = self.get_github_directories(silent=True)
         if exam_type not in directories:
             print("No current {} exam pool found on GitHub".format(exam_type))
             return False
