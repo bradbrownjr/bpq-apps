@@ -8,7 +8,8 @@ AX.25 packet radio via linbpq BBS software.
 Features:
 - Plain ASCII text interface (no control codes)
 - Practice tests for Technician, General, and Extra class licenses
-- Realistic exam simulation with proper question distribution
+- Reali        if len(subelement_keys) != spec['subelements']:
+            print("Warning: Expected {} subelements, found {}".format(spec['subelements'], len(subelement_keys)))ic exam simulation with proper question distribution
 - Scoring with pass/fail indication
 - ASCII art logo and simple menu navigation
 - Link to ARRL test session locator for successful candidates
@@ -90,7 +91,7 @@ class HamTestApp:
         """Ensure the question_pools directory exists"""
         if not os.path.exists(QUESTION_POOLS_DIR):
             os.makedirs(QUESTION_POOLS_DIR)
-            print(f"Created directory: {QUESTION_POOLS_DIR}")
+            print("Created directory: {}".format(QUESTION_POOLS_DIR))
     
     def get_github_directories(self):
         """Get list of directories from GitHub repository"""
@@ -125,39 +126,39 @@ class HamTestApp:
                                     'end_year': end_year
                                 }
             
-            print(f"Found {len(self.github_directories)} current exam pools on GitHub")
+            print("Found {} current exam pools on GitHub".format(len(self.github_directories)))
             return self.github_directories
             
         except Exception as e:
-            print(f"Warning: Could not check GitHub repository: {e}")
+            print("Warning: Could not check GitHub repository: {}".format(e))
             return {}
     
     def download_question_pool(self, exam_type):
         """Download question pool from GitHub"""
         directories = self.get_github_directories()
         if exam_type not in directories:
-            print(f"No current {exam_type} exam pool found on GitHub")
+            print("No current {} exam pool found on GitHub".format(exam_type))
             return False
         
         directory = directories[exam_type]['directory']
-        filename = f"{exam_type}.json"
-        url = f"{GITHUB_RAW_URL}/{directory}/{filename}"
+        filename = "{}.json".format(exam_type)
+        url = "{}/{}/{}".format(GITHUB_RAW_URL, directory, filename)
         local_path = os.path.join(QUESTION_POOLS_DIR, filename)
         
         try:
-            print(f"Downloading {exam_type} question pool from {directory}...")
+            print("Downloading {} question pool from {}...".format(exam_type, directory))
             with urllib.request.urlopen(url, timeout=30) as response:
                 data = response.read()
             
             with open(local_path, 'wb') as f:
                 f.write(data)
             
-            print(f"Successfully downloaded {filename}")
+            print("Successfully downloaded {}".format(filename))
             print("Question pool courtesy of: https://github.com/russolsen/ham_radio_question_pool")
             return True
             
         except Exception as e:
-            print(f"Error downloading {filename}: {e}")
+            print("Error downloading {}: {}".format(filename, e))
             return False
         
     def load_question_pools(self):
@@ -170,24 +171,24 @@ class HamTestApp:
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         self.question_pools[exam_type] = json.load(f)
-                    print(f"Loaded {len(self.question_pools[exam_type])} questions for {spec['name']}")
+                    print("Loaded {} questions for {}".format(len(self.question_pools[exam_type]), spec['name']))
                     continue  # Successfully loaded, move to next exam type
                 except Exception as e:
-                    print(f"Error loading existing {spec['file']}: {e}")
+                    print("Error loading existing {}: {}".format(spec['file'], e))
                     # File exists but is corrupted, try to download fresh copy
             
             # File doesn't exist or is corrupted, try to download
-            print(f"Question pool for {spec['name']} not found locally")
+            print("Question pool for {} not found locally".format(spec['name']))
             if self.download_question_pool(exam_type):
                 # Try to load the downloaded file
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         self.question_pools[exam_type] = json.load(f)
-                    print(f"Loaded {len(self.question_pools[exam_type])} questions for {spec['name']}")
+                    print("Loaded {} questions for {}".format(len(self.question_pools[exam_type]), spec['name']))
                 except Exception as e:
-                    print(f"Error loading downloaded {spec['file']}: {e}")
+                    print("Error loading downloaded {}: {}".format(spec['file'], e))
             else:
-                print(f"Could not obtain question pool for {spec['name']}")
+                print("Could not obtain question pool for {}".format(spec['name']))
                 print("Please check your internet connection or download manually from:")
                 print("https://github.com/russolsen/ham_radio_question_pool")
     
@@ -216,7 +217,7 @@ class HamTestApp:
         
         for i, (exam_type, spec) in enumerate(EXAM_SPECS.items(), 1):
             available = "✓" if exam_type in self.question_pools else "✗"
-            print(f"{i}. {spec['name']} [{available}]")
+            print("{}. {} [{}]".format(i, spec['name'], available))
             
             # Wrap the description text
             wrapped_desc = textwrap.fill(
@@ -228,17 +229,17 @@ class HamTestApp:
             print(wrapped_desc)
             
             if exam_type in self.question_pools:
-                print(f"   {spec['questions']} questions, {spec['pass_score']} needed to pass (74%)")
+                print("   {} questions, {} needed to pass (74%)".format(spec['questions'], spec['pass_score']))
                 
                 # Show exam validity period if available
                 if exam_type in directories:
                     dir_info = directories[exam_type]
-                    print(f"   Current exam pool: {dir_info['start_year']}-{dir_info['end_year']}")
+                    print("   Current exam pool: {}-{}".format(dir_info['start_year'], dir_info['end_year']))
             else:
                 print("   Question pool not available")
                 if exam_type in directories:
                     dir_info = directories[exam_type]
-                    print(f"   Available to download: {dir_info['start_year']}-{dir_info['end_year']} pool")
+                    print("   Available to download: {}-{} pool".format(dir_info['start_year'], dir_info['end_year']))
             print()
         
         print("4. About Ham Radio Licensing")
@@ -319,7 +320,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
                 updated_count += 1
         
         if updated_count > 0:
-            print(f"\nSuccessfully updated {updated_count} question pool(s)")
+            print("\nSuccessfully updated {} question pool(s)".format(updated_count))
             print("Reloading question pools...")
             self.question_pools = {}
             self.load_question_pools()
@@ -347,7 +348,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
                     selected_exam = exam_types[int(choice) - 1]
                     
                     if selected_exam not in self.question_pools:
-                        print(f"\nThe {EXAM_SPECS[selected_exam]['name']} question pool is not available.")
+                        print("\nThe {} question pool is not available.".format(EXAM_SPECS[selected_exam]['name']))
                         print("Would you like to try downloading it now? (y/n): ", end='')
                         
                         download_choice = input().strip().lower()
@@ -358,10 +359,10 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
                                 try:
                                     with open(file_path, 'r', encoding='utf-8') as f:
                                         self.question_pools[selected_exam] = json.load(f)
-                                    print(f"Successfully loaded {EXAM_SPECS[selected_exam]['name']} question pool!")
+                                    print("Successfully loaded {} question pool!".format(EXAM_SPECS[selected_exam]['name']))
                                     return selected_exam
                                 except Exception as e:
-                                    print(f"Error loading downloaded file: {e}")
+                                    print("Error loading downloaded file: {}".format(e))
                             else:
                                 print("Download failed. Please check your internet connection.")
                         
@@ -394,7 +395,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         subelement_keys = sorted(subelements.keys())
         
         if len(subelement_keys) < spec['subelements']:
-            print(f"Warning: Expected {spec['subelements']} subelements, found {len(subelement_keys)}")
+            print("Warning: Expected {} subelements, found {}".format(spec['subelements'], len(subelement_keys)))
         
         # Select required number of questions
         for i in range(spec['questions']):
@@ -416,7 +417,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
     
     def display_question(self, question_num, total_questions, question):
         """Display a single question"""
-        print(f"\nQuestion {question_num} of {total_questions}")
+        print("\nQuestion {} of {}".format(question_num, total_questions))
         print("="*50)
         
         # Wrap question text
@@ -435,7 +436,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
             wrapped_answer = textwrap.fill(
                 answer,
                 width=LINE_WIDTH-4,
-                initial_indent=f"{letter}. ",
+                initial_indent="{}. ".format(letter),
                 subsequent_indent="   "
             )
             print(wrapped_answer)
@@ -458,9 +459,9 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
     def run_exam(self, exam_type):
         """Run a complete exam"""
         spec = EXAM_SPECS[exam_type]
-        print(f"\nPreparing {spec['name']} Practice Exam...")
-        print(f"This exam has {spec['questions']} questions.")
-        print(f"You need {spec['pass_score']} correct answers to pass (74%).")
+        print("\nPreparing {} Practice Exam...".format(spec['name']))
+        print("This exam has {} questions.".format(spec['questions']))
+        print("You need {} correct answers to pass (74%).".format(spec['pass_score']))
         print("\nPress Enter to begin, or 'q' to return to menu...")
         
         user_input = input().strip().lower()
@@ -497,12 +498,12 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
             user_letter = chr(ord('A') + user_answer)
             
             if is_correct:
-                print(f"✓ Correct! The answer is {correct_letter}.")
+                print("✓ Correct! The answer is {}.".format(correct_letter))
             else:
-                print(f"✗ Incorrect. The correct answer is {correct_letter}, you answered {user_letter}.")
+                print("✗ Incorrect. The correct answer is {}, you answered {}.".format(correct_letter, user_letter))
             
             # Show progress
-            print(f"Score so far: {correct_count}/{i} ({correct_count/i*100:.1f}%)")
+            print("Score so far: {}/{} ({:.1f}%)".format(correct_count, i, correct_count/i*100))
             
             if i < len(exam_questions):
                 input("\nPress Enter for next question...")
@@ -519,18 +520,18 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         print("\n" + "="*78)
         print("EXAM RESULTS")
         print("="*78)
-        print(f"License Class: {spec['name']}")
-        print(f"Questions Answered: {total_questions}")
-        print(f"Correct Answers: {correct_count}")
-        print(f"Score: {percentage:.1f}%")
-        print(f"Passing Score: 74% ({spec['pass_score']} correct)")
+        print("License Class: {}".format(spec['name']))
+        print("Questions Answered: {}".format(total_questions))
+        print("Correct Answers: {}".format(correct_count))
+        print("Score: {:.1f}%".format(percentage))
+        print("Passing Score: 74% ({} correct)".format(spec['pass_score']))
         print()
         
         if passed:
             print("🎉 CONGRATULATIONS! YOU PASSED! 🎉")
             print()
             print("You have demonstrated the knowledge required for the")
-            print(f"{spec['name']} amateur radio license.")
+            print("{} amateur radio license.".format(spec['name']))
             print()
             print("NEXT STEPS:")
             print("1. Find a Volunteer Examiner (VE) test session in your area")
@@ -555,8 +556,8 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
             
             print("❌ Sorry, you did not pass this time.")
             print()
-            print(f"You missed {missed} questions.")
-            print(f"You need {need_more} more correct answers to pass.")
+            print("You missed {} questions.".format(missed))
+            print("You need {} more correct answers to pass.".format(need_more))
             print()
             print("STUDY SUGGESTIONS:")
             print("- Review the question pool and study materials")
@@ -601,7 +602,7 @@ def main():
     except KeyboardInterrupt:
         print("\n\nExiting...")
     except Exception as e:
-        print(f"\nError: {e}")
+        print("\nError: {}".format(e))
         print("Please report this issue if it persists.")
 
 
