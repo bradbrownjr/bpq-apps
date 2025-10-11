@@ -93,13 +93,14 @@ class HamTestApp:
             os.makedirs(QUESTION_POOLS_DIR)
             print("Created directory: {}".format(QUESTION_POOLS_DIR))
     
-    def get_github_directories(self):
+    def get_github_directories(self, silent=False):
         """Get list of directories from GitHub repository"""
         if self.github_directories:
             return self.github_directories
             
         try:
-            print("Checking GitHub repository for current exam pools...")
+            if not silent:
+                print("Checking GitHub repository for current exam pools...")
             with urllib.request.urlopen(GITHUB_REPO_URL, timeout=10) as response:
                 data = json.loads(response.read().decode('utf-8'))
             
@@ -126,11 +127,13 @@ class HamTestApp:
                                     'end_year': end_year
                                 }
             
-            print("Found {} current exam pools on GitHub".format(len(self.github_directories)))
+            if not silent:
+                print("Found {} current exam pools on GitHub".format(len(self.github_directories)))
             return self.github_directories
             
         except Exception as e:
-            print("Warning: Could not check GitHub repository: {}".format(e))
+            if not silent:
+                print("Warning: Could not check GitHub repository: {}".format(e))
             return {}
     
     def download_question_pool(self, exam_type):
@@ -213,7 +216,7 @@ class HamTestApp:
         print()
         
         # Get current exam directory info for display
-        directories = self.get_github_directories()
+        directories = self.get_github_directories(silent=True)
         
         for i, (exam_type, spec) in enumerate(EXAM_SPECS.items(), 1):
             print("{}. {}".format(i, spec['name']))
@@ -499,7 +502,10 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
             print("Score so far: {}/{} ({:.1f}%)".format(correct_count, i, correct_count/i*100))
             
             if i < len(exam_questions):
-                input("\nPress Enter for next question...")
+                continue_input = input("\nPress Enter for next question, or Q to quit.").strip().upper()
+                if continue_input == 'Q':
+                    print("\nExam stopped. Returning to main menu...")
+                    return
         
         # Display final results
         self.display_exam_results(exam_type, correct_count, len(exam_questions))
