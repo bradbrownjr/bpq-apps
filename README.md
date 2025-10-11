@@ -10,14 +10,14 @@ APPLICATIONS
 ============
 These applications are custom-built for low bandwidth terminal access over packet radio:
 
-**gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. It's like the Internet, but for terminals!  
-**hamqsl.py** - HF propagation reports from www.hamqsl.com.  
-**hamtest.py** - Ham radio license test practice with automatic question pool updates.  
-**qrz3.py** - Look up name, city, state, country of an amateur radio operator with QRZ.com.  
-**rss-news.py** - News feed reader with categorized feeds: News, Science, Technology, Weather, and of course, ham radio topics.  
-**space.py** - NOAA Space Weather reports and solar activity data.  
-**sysinfo.sh** - Node system information and BBS service status checker.  
-**wx-me.py** - Local weather reports for Southern Maine and New Hampshire.  
+* **gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. It's like the Internet, but for terminals!  
+* **hamqsl.py** - HF propagation reports from www.hamqsl.com.  
+* **hamtest.py** - Ham radio license test practice with automatic question pool updates.  
+* **qrz3.py** - Look up name, city, state, country of an amateur radio operator with QRZ.com.  
+* **rss-news.py** - News feed reader with categorized feeds: News, Science, Technology, Weather, and of course, ham radio topics.  
+* **space.py** - NOAA Space Weather reports and solar activity data.  
+* **sysinfo.sh** - Node system information and BBS service status checker.  
+* **wx-me.py** - Local weather reports for Southern Maine and New Hampshire.  
 
 For detailed documentation, installation commands, and configuration instructions, see [apps/README.md](apps/README.md).
 
@@ -118,12 +118,12 @@ Internal and external applications are called with the following commands:
                   ^       ^    ^   ^ ^      ^ ^
                   |       |    |   | |      | |
                   |       |    |   | |      | Return to node upon exit (omit if giving app its own NODECALL-#)
-	          |       |    |   | |      Keep-alive to prevent premature exit of application
-		  |       |    |   | Do not pass call sign to app (omit if you want it via stdin)
-                  |       |    |   CMDPORT #
-		  |       |    Localhost
-		  |       Connect to Telnet PORT #
-		  App name entered at user prompt
+	              |       |    |   | |      Keep-alive to prevent premature exit of application
+	        	  |       |    |   | Do not pass call sign to app (omit if you want it via stdin)
+                  |       |    |   CMDPORT position number (see above)
+         		  |       |    Localhost
+           		  |       Connect to Telnet PORT #
+	           	  App name entered at user prompt
 ```
 
 Step 9
