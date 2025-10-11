@@ -216,8 +216,7 @@ class HamTestApp:
         directories = self.get_github_directories()
         
         for i, (exam_type, spec) in enumerate(EXAM_SPECS.items(), 1):
-            available = "✓" if exam_type in self.question_pools else "✗"
-            print("{}. {} [{}]".format(i, spec['name'], available))
+            print("{}. {}".format(i, spec['name']))
             
             # Wrap the description text
             wrapped_desc = textwrap.fill(
@@ -228,18 +227,12 @@ class HamTestApp:
             )
             print(wrapped_desc)
             
-            if exam_type in self.question_pools:
-                print("   {} questions, {} needed to pass (74%)".format(spec['questions'], spec['pass_score']))
-                
-                # Show exam validity period if available
-                if exam_type in directories:
-                    dir_info = directories[exam_type]
-                    print("   Current exam pool: {}-{}".format(dir_info['start_year'], dir_info['end_year']))
-            else:
-                print("   Question pool not available")
-                if exam_type in directories:
-                    dir_info = directories[exam_type]
-                    print("   Available to download: {}-{} pool".format(dir_info['start_year'], dir_info['end_year']))
+            print("   {} questions, {} needed to pass (74%)".format(spec['questions'], spec['pass_score']))
+            
+            # Show exam validity period if available
+            if exam_type in directories:
+                dir_info = directories[exam_type]
+                print("   Current exam pool: {}-{}".format(dir_info['start_year'], dir_info['end_year']))
             print()
         
         print("4. About Ham Radio Licensing")
@@ -498,9 +491,9 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
             user_letter = chr(ord('A') + user_answer)
             
             if is_correct:
-                print("✓ Correct! The answer is {}.".format(correct_letter))
+                print("+ Correct! The answer is {}.".format(correct_letter))
             else:
-                print("✗ Incorrect. The correct answer is {}, you answered {}.".format(correct_letter, user_letter))
+                print("- Incorrect. The correct answer is {}, you answered {}.".format(correct_letter, user_letter))
             
             # Show progress
             print("Score so far: {}/{} ({:.1f}%)".format(correct_count, i, correct_count/i*100))
