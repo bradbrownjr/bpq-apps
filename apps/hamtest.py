@@ -220,7 +220,11 @@ class HamTestApp:
         # Get current exam directory info for display
         directories = self.get_github_directories(silent=True)
         
-        for i, (exam_type, spec) in enumerate(EXAM_SPECS.items(), 1):
+        # Define the correct order for menu display
+        exam_order = ['technician', 'general', 'extra']
+        
+        for i, exam_type in enumerate(exam_order, 1):
+            spec = EXAM_SPECS[exam_type]
             print("{}. {}".format(i, spec['name']))
             
             # Wrap the description text
@@ -342,8 +346,8 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
                     self.display_about()
                     return 'menu'
                 elif choice in ['1', '2', '3']:
-                    exam_types = list(EXAM_SPECS.keys())
-                    selected_exam = exam_types[int(choice) - 1]
+                    exam_order = ['technician', 'general', 'extra']
+                    selected_exam = exam_order[int(choice) - 1]
                     
                     if selected_exam not in self.question_pools:
                         print("\nThe {} question pool is not available.".format(EXAM_SPECS[selected_exam]['name']))
