@@ -6,47 +6,46 @@ local packet radio node, which runs on a Raspberry Pi B+
 running John Wiseman's linbpq32 downloadable from:
 https://www.cantab.net/users/john.wiseman/Documents/Downloads.html
 
+APPLICATIONS
+============
+These applications are custom-built for low bandwidth terminal access over packet radio:
+
+**gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. It's like the Internet, but for terminals!  
+**hamqsl.py** - HF propagation reports from www.hamqsl.com.  
+**hamtest.py** - Ham radio license test practice with automatic question pool updates.  
+**qrz3.py** - Look up name, city, state, country of an amateur radio operator with QRZ.com.  
+**rss-news.py** - News feed reader with categorized feeds: News, Science, Technology, Weather, and of course, ham radio topics.  
+**space.py** - NOAA Space Weather reports and solar activity data.  
+**sysinfo.sh** - Node system information and BBS service status checker.  
+**wx-me.py** - Local weather reports for Southern Maine and New Hampshire.  
+
+For detailed documentation, installation commands, and configuration instructions, see [apps/README.md](apps/README.md).
+
 DIRECTORIES
 ===========
-**/apps** contains Applications either written for Python 3,
-where the input() command works as expected, and BASH.
+**/apps** contains Applications written for Python 3.5+ and BASH.
 
-**/etc** contains the Linux service files required for the
-running of these applications with linbpq. Content may
-be added to the end of the respective file on your own 
-node host.
+**/etc** contains excerpts of the Linux service files required for the running of these applications with linbpq. Content may be added to the end of the respective file on your own  node host.
 
-**/linbpq** contains excerpts of the bpq32.cfg node required
-for the execution of external applications by the user.
+**/linbpq** contains excerpts of the bpq32.cfg node configuration file required for the execution of external applications by the user.
 
-INSTRUCTIONS
+INSTALLATION INSTRUCTIONS
 ============
-Applications or scripts on a Linux system are typically
-piped to stdout: the screen. In order to get the output
-redirected to the users connected to the BPQ node over
-AX.25 (radio) or telnet (IP), they need to be redirected
-to a tcp socket. This is done by making them into a 
-service run by inetd.
+Applications or scripts on a Linux system are typically piped to stdout: the screen. In order to get the output redirected to the users connected to the BPQ node over AX.25 (radio) or telnet (IP), they need to be redirected to a tcp socket. This is done by making them into a service run with inetd.
 
 ![](Screenshot-2022-09-26%20094854.png)
 
-These steps assume that you have already installed the
-applications or downloaded the scripts which you wish
-to run on your node.
+These steps assume that you have already installed the applications or downloaded the scripts which you wish to run on your node.
 
 Step 1
 ------
-The Raspberry Pi Raspian OS is using systemd to run its
-services, so we need to install the legacy inetd software:
+The Raspberry Pi Raspian OS is using systemd to run its services, so we need to install the legacy inetd software:
 
 ```sudo apt-get install openbsd-inetd```
 
 Step 2
 ------
-Now we add the applications to the services list. These
-may be native Linux applications or scripts built with
-a language that is installed to the host: Python, Perl,
-Go, BASH, etc.
+Now we add the applications to the services list. These may be native Linux applications or scripts built with a language that is installed to the host: Python, Perl, Go, BASH, etc.
 
 ```sudo nano /etc/inetd.conf```
 
@@ -71,10 +70,7 @@ Note:
 
 Step 3
 ------
-Next, we will assign the service application a tcp port.
-In the examples I've found, sysops are using ports in
-the 63,000 range. Take note of these port numbers, you
-will need them for the next step.
+Next, we will assign the service application a tcp port. In the examples I've found, sysops are using ports in the 63,000 range. Take note of these port numbers, you will need them for the next step.
 
 ```sudo nano /etc/services```
 
@@ -98,16 +94,11 @@ If it executes as expected, it *should* work via AX.25.
 
 Step 8
 ------
-Finally, we add the commands to the BPQ node to call the 
-external applications running as services. Again, my linbpq
-directory is under the 'ect' user, yours likely differs:
+Finally, we add the commands to the BPQ node to call the external applications running as services. Again, my linbpq directory is under the 'ect' user, yours likely differs:
 
 ```nano /home/ect/linbpq/bpq32.cfg```
 
-See my example linbpq/bpq32.cfg configuration file for the
-more complete uncommented version. The full file, with
-passwords redacted, is available in that file's revision
-history.
+See my example linbpq/bpq32.cfg configuration file for the more complete uncommented version. The full file, with passwords redacted, is available in that file's revision history.
 
 Note your telnet port number:
 ```
