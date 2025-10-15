@@ -7,12 +7,19 @@ Users can select and fill out forms which are then exported
 as BPQ-importable messages.
 
 Features:
-- Auto-discovery of form templates from forms/ subdirectory
-- Multiple field types: text, yes/no/na, numeric choice
+- Auto-discovery and download of form templates from GitHub
+- Multiple field types: text (single-line), textarea (/EX terminated), yes/no/na, numeric choice
 - Required and optional field validation
 - BPQ message format export for auto-import
 - FLMSG-compatible plaintext output
 - Press Q to quit at any time
+
+Field Types:
+- text: Single-line input (press Enter to finish)
+- textarea: Multi-line input (type /EX on new line to finish)
+- yesno: Yes/No/NA response
+- choice: Numbered list of options
+- strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
 Date: October 2025
@@ -371,7 +378,7 @@ class FormsApp:
         return form_data
     
     def fill_text_field(self, field, required):
-        """Fill a text field"""
+        """Fill a single-line text field (press Enter to finish)"""
         max_length = field.get('max_length', 255)
         
         while True:
@@ -389,23 +396,23 @@ class FormsApp:
                 return value
     
     def fill_textarea_field(self, field, required):
-        """Fill a multi-line text field"""
-        print("(Enter text. Type END on a new line when finished)")
+        """Fill a multi-line text field (terminated with /EX)"""
+        print("(Enter text. Type /EX on a new line when finished)")
         lines = []
         
         while True:
             line = self.get_input("")
-            if line.upper() == 'END':
+            if line.upper() == '/EX':
                 break
             lines.append(line)
         
-        value = '\n'.join(lines)
+        text = '\n'.join(lines)
         
-        if not value.strip() and required:
+        if not text and required:
             print("This field is required.")
             return self.fill_textarea_field(field, required)
         
-        return value
+        return text
     
     def fill_yesno_field(self, field, required):
         """Fill a yes/no/na field"""

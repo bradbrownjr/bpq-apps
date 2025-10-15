@@ -73,7 +73,7 @@ Form templates use JSON format. Here's the structure:
     {
       "name": "field_identifier",
       "label": "Human-readable Field Label",
-      "type": "text|textarea|yesno|choice",
+      "type": "text|textarea|yesno|choice|strip",
       "required": true,
       "description": "Help text for the user",
       "max_length": 100,
@@ -89,7 +89,7 @@ Form templates use JSON format. Here's the structure:
 ## Field Types
 
 ### text
-Single-line text input. Supports optional `max_length` parameter.
+Single-line text input. User presses Enter to finish. Can be left blank if not required. Supports optional `max_length` parameter.
 
 ```json
 {
@@ -103,7 +103,7 @@ Single-line text input. Supports optional `max_length` parameter.
 ```
 
 ### textarea
-Multi-line text input. User types END on a new line to finish.
+Multi-line text input. User types `/EX` on a new line to finish. This is the standard packet radio message terminator, preventing conflicts with message content that might include "END".
 
 ```json
 {
@@ -111,7 +111,7 @@ Multi-line text input. User types END on a new line to finish.
   "label": "Message Text",
   "type": "textarea",
   "required": true,
-  "description": "Enter your message. Type END when finished."
+  "description": "Enter your message. Type /EX when finished."
 }
 ```
 

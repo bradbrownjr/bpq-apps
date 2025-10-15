@@ -133,7 +133,7 @@ wget -O forms.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/app
 - User always specifies recipient for each form submission
 - Optional form review before submission (saves bandwidth)
 - **Strip Mode**: Parse and respond to slash-separated information request strips (MARS/SHARES format)
-- Multiple field types: text, textarea, yes/no/na, multiple choice
+- Multiple field types: text (single-line), textarea (/EX terminated), yes/no/na, multiple choice
 - Required and optional field validation
 - Press Q to quit at any time during form filling
 - Exports to BPQ message format for automatic import
@@ -191,10 +191,11 @@ Form templates use JSON format with the following structure:
 Note: Recipient is always prompted from user after form completion.
 
 **Field Types**:
-- `text` - Single line text input
-- `textarea` - Multi-line text input (enter END to finish)
+- `text` - Single-line text input (press Enter to finish, can be left blank if not required)
+- `textarea` - Multi-line text input (type `/EX` on new line to finish)
 - `yesno` - Yes/No/NA response
 - `choice` - Numbered list of options
+- `strip` - Slash-separated MARS/SHARES format for information request/response
 
 space.py
 --------
