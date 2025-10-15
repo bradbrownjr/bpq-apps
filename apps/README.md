@@ -101,6 +101,126 @@ Edit `rss-news.conf` to add your own RSS feeds in CSV format:
 Category,Feed Name,Feed URL
 ```
 
+callout.py
+----------
+**Type**: Python  
+**Purpose**: Test application demonstrating BPQ callsign capture  
+**Information source**: BPQ32 connection data  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Simple example showing how to capture the connecting user's callsign from BPQ32. Used as a reference for other applications.
+
+**Download or update**:  
+```wget -O callout.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/callout.py && chmod +x callout.py```
+
+**Features**:
+- Captures callsign passed from BPQ32 via stdin
+- Demonstrates configuration without NOCALL flag
+- Shows how to use 'S' flag to strip SSID
+- Reference implementation for other applications
+
+**BPQ32 Configuration**:
+```
+APPLICATION 7,CALLOUT,C 9 HOST 3 S
+```
+The 'S' flag strips the SSID (e.g., KC1JMH-8 becomes KC1JMH). Remove 'S' to include SSID.
+
+forms.py
+--------
+**Type**: Python  
+**Purpose**: Fillable forms system for packet radio  
+**Information source**: User input, form templates  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Generates BPQ-importable messages from completed forms. Automatically captures user callsign from BPQ32.
+
+**Download or update**:  
+```
+wget -O forms.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms.py && chmod +x forms.py
+mkdir -p forms
+cd forms
+wget -O ics213.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/ics213.frm
+wget -O netcheck.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/netcheck.frm
+wget -O eqstat.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/eqstat.frm
+wget -O radiogram.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/radiogram.frm
+wget -O fsr.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/fsr.frm
+wget -O severe_wx.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/severe_wx.frm
+wget -O bulletin.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/bulletin.frm
+wget -O ics309.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/ics309.frm
+wget -O dyfi.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/dyfi.frm
+wget -O strip.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/strip.frm
+cd ..
+```
+
+**Features**:
+- Auto-discovery of form templates from `forms/` subdirectory
+- Captures user callsign automatically from BPQ32 (or prompts if not available)
+- User always specifies recipient for each form submission
+- Optional form review before submission (saves bandwidth)
+- **Strip Mode**: Parse and respond to slash-separated information request strips (MARS/SHARES format)
+- Multiple field types: text, textarea, yes/no/na, multiple choice
+- Required and optional field validation
+- Press Q to quit at any time during form filling
+- Exports to BPQ message format for automatic import
+
+**Included Forms**:
+- ICS-213 General Message
+- Net Check-in
+- Equipment Status Report
+- ARRL Radiogram
+- Field Situation Report (FSR)
+- Severe Weather Report (SKYWARN compatible)
+- Bulletin Message
+- ICS-309 Communications Log
+- USGS Did You Feel It? (DYFI) Earthquake Report
+- Information Strip Response (MARS/SHARES format)
+
+**BPQ32 Configuration**:
+```
+APPLICATION 12,FORMS,C 9 HOST 8 S
+```
+Note: Does NOT use NOCALL flag, so callsign is passed to the application. The 'S' flag strips SSID.
+
+**Setup**:
+1. Create the BPQ import directory: `mkdir -p ../bpq/import`
+2. Ensure the forms directory exists: `mkdir -p forms`
+3. Add form templates (`.frm` files) to the `forms/` subdirectory
+4. Configure BPQ32 to auto-import messages from the import directory
+
+**Creating Custom Forms**:
+Form templates use JSON format with the following structure:
+```json
+{
+  "id": "FORMID",
+  "title": "Form Title",
+  "version": "1.0",
+  "description": "Form description",
+  "fields": [
+    {
+      "name": "field_name",
+      "label": "Field Label",
+      "type": "text|textarea|yesno|choice",
+      "required": true|false,
+      "description": "Field description",
+      "max_length": 100,
+      "allow_na": true|false,
+      "choices": ["Option 1", "Option 2"]
+    }
+  ]
+}
+```
+Note: Recipient is always prompted from user after form completion.
+
+**Field Types**:
+- `text` - Single line text input
+- `textarea` - Multi-line text input (enter END to finish)
+- `yesno` - Yes/No/NA response
+- `choice` - Numbered list of options
+
+**BPQ Import Setup**:
+Configure BPQ32 to automatically import messages from the export directory. Add to your BPQ32 forwarding configuration:
+```
+IMPORT ../bpq/import/*.txt DELETE
+```
+
 # ToDos
 [X] **All** - Update #! to call interpreter regardless of location using env  
 [ ] **qrz3.py** - Add variable check so as to not require sysop to comment lines if used in the mode that requires user login  

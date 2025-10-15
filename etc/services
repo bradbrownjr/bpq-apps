@@ -7,3 +7,4 @@ space           63040/tcp                       # Space weather reports
 bands           63050/tcp                       # Space weather reports
 qrz             63060/tcp                       # Space weather reports
 gopher-cli      63070/tcp                       # Gopher browser
+forms           63080/tcp                       # Fillable forms system
