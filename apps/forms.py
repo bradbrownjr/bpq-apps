@@ -631,13 +631,25 @@ class FormsApp:
             print("Attempting to save to current directory instead...")
             export_filepath = os.path.join(script_dir, "infile")
         
+        # Check if file exists before appending (for debug info)
+        file_existed = os.path.exists(export_filepath)
+        file_size_before = os.path.getsize(export_filepath) if file_existed else 0
+        
         try:
             # Append to the import file (BPQ will process and delete it)
             with open(export_filepath, 'a') as f:
                 f.write(message_text)
                 f.write('\n')  # Extra newline between messages
+            
+            file_size_after = os.path.getsize(export_filepath)
+            
             print("\nForm queued successfully!")
             print("Message appended to: {}".format(export_filepath))
+            if file_existed:
+                print("File already contained {} bytes, now {} bytes".format(
+                    file_size_before, file_size_after))
+            else:
+                print("New file created with {} bytes".format(file_size_after))
             print("BPQ will automatically import and deliver this message.")
             return True
         except Exception as e:
