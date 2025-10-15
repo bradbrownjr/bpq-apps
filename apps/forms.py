@@ -36,6 +36,8 @@ import json
 from datetime import datetime
 import textwrap
 import select
+import urllib.request
+import urllib.error
 
 # Configuration
 # -------------
@@ -43,6 +45,8 @@ FORMS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "forms")
 EXPORT_DIR = "../bpq/import"  # Relative to script location
 LINE_WIDTH = 80  # Maximum line width for display
 EXPORT_ABSOLUTE = False  # Set to True to use absolute path
+GITHUB_FORMS_URL = "https://api.github.com/repos/bradbrownjr/bpq-apps/contents/apps/forms"
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms"
 
 class FormsApp:
     """Main forms application class"""
@@ -86,11 +90,20 @@ class FormsApp:
             sys.exit(0)
     
     def load_forms(self):
-        """Load all form templates from the forms directory"""
+        """Load form templates from forms directory, downloading from GitHub if needed"""
+        # Create forms directory if it doesn't exist
         if not os.path.exists(FORMS_DIR):
-            print("Error: Forms directory not found: {}".format(FORMS_DIR))
-            return False
+            print("Forms directory not found. Creating: {}".format(FORMS_DIR))
+            try:
+                os.makedirs(FORMS_DIR)
+            except Exception as e:
+                print("Error creating forms directory: {}".format(e))
+                return False
         
+        # Check GitHub for available forms
+        github_forms = self.get_github_forms()
+        
+        # Load existing forms and check for updates
         self.forms = []
         for filename in sorted(os.listdir(FORMS_DIR)):
             if filename.endswith('.frm'):
@@ -103,11 +116,71 @@ class FormsApp:
                 except Exception as e:
                     print("Warning: Could not load {}: {}".format(filename, str(e)))
         
+        # Download any missing forms from GitHub
+        if github_forms:
+            existing_files = set(f['filename'] for f in self.forms)
+            for github_form in github_forms:
+                if github_form not in existing_files:
+                    print("Downloading new form: {}".format(github_form))
+                    if self.download_form(github_form):
+                        # Load the newly downloaded form
+                        filepath = os.path.join(FORMS_DIR, github_form)
+                        try:
+                            with open(filepath, 'r') as f:
+                                form_data = json.load(f)
+                                form_data['filename'] = github_form
+                                self.forms.append(form_data)
+                        except Exception as e:
+                            print("Warning: Could not load downloaded {}: {}".format(github_form, str(e)))
+        
         if not self.forms:
-            print("Error: No form templates found in {}".format(FORMS_DIR))
+            print("Error: No form templates found.")
+            print("Please check your internet connection or manually download forms from:")
+            print("https://github.com/bradbrownjr/bpq-apps/tree/main/apps/forms")
             return False
         
         return True
+    
+    def get_github_forms(self):
+        """Get list of available form templates from GitHub repository"""
+        try:
+            print("Checking GitHub for available forms...")
+            with urllib.request.urlopen(GITHUB_FORMS_URL, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
+            
+            # Extract .frm files
+            forms = []
+            for item in data:
+                if item['type'] == 'file' and item['name'].endswith('.frm'):
+                    forms.append(item['name'])
+            
+            if forms:
+                print("Found {} forms on GitHub".format(len(forms)))
+            return forms
+            
+        except Exception as e:
+            print("Note: Could not check GitHub repository: {}".format(e))
+            print("Will use local forms only.")
+            return []
+    
+    def download_form(self, filename):
+        """Download a form template from GitHub"""
+        url = "{}/{}".format(GITHUB_RAW_URL, filename)
+        local_path = os.path.join(FORMS_DIR, filename)
+        
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                data = response.read()
+            
+            with open(local_path, 'wb') as f:
+                f.write(data)
+            
+            print("Successfully downloaded {}".format(filename))
+            return True
+            
+        except Exception as e:
+            print("Error downloading {}: {}".format(filename, e))
+            return False
     
     def display_menu(self):
         """Display the main menu of available forms"""

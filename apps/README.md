@@ -119,27 +119,15 @@ forms.py
 **Purpose**: Fillable forms system for packet radio  
 **Information source**: User input, form templates  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Generates BPQ-importable messages from completed forms. Automatically captures user callsign from BPQ32.
+**Notes**: Generates BPQ-importable messages from completed forms. Automatically captures user callsign from BPQ32. Form templates are automatically downloaded from GitHub on first run.
 
 **Download or update**:  
 ```
 wget -O forms.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms.py && chmod +x forms.py
-mkdir -p forms
-cd forms
-wget -O ics213.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/ics213.frm
-wget -O netcheck.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/netcheck.frm
-wget -O eqstat.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/eqstat.frm
-wget -O radiogram.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/radiogram.frm
-wget -O fsr.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/fsr.frm
-wget -O severe_wx.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/severe_wx.frm
-wget -O bulletin.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/bulletin.frm
-wget -O ics309.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/ics309.frm
-wget -O dyfi.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/dyfi.frm
-wget -O strip.frm https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms/strip.frm
-cd ..
 ```
 
 **Features**:
+- **Auto-downloads form templates from GitHub** - no manual wget needed for forms!
 - Auto-discovery of form templates from `forms/` subdirectory
 - Captures user callsign automatically from BPQ32 (or prompts if not available)
 - User always specifies recipient for each form submission
