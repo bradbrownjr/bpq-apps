@@ -177,11 +177,13 @@ The forms.py application will automatically:
 
 ## Output Format
 
-Completed forms are exported in BPQ message format and saved to the import directory. The format is compatible with FLMSG plaintext output and includes:
+Completed forms are appended to a single import file (`../linbpq/infile`) in BPQ message format. Multiple messages can be queued in this file, and BPQ will process them automatically. The format is compatible with FLMSG plaintext output and includes:
 - BPQ message header (SP for private, SB for bulletin)
 - Form title and metadata
 - All field values
 - /EX terminator for BPQ import
+
+Each message is appended to the file, allowing multiple users to submit forms concurrently. BPQ's import system will process all messages in the file and then delete it (when configured with the DELETE option).
 
 Example output:
 ```

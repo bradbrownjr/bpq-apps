@@ -152,15 +152,19 @@ wget -O forms.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/app
 
 **BPQ32 Configuration**:
 ```
-APPLICATION 12,FORMS,C 9 HOST 8 S
+APPLICATION 14,FORMS,C 9 HOST 10 S
 ```
 Note: Does NOT use NOCALL flag, so callsign is passed to the application. The 'S' flag strips SSID.
 
-**Setup**:
-1. Create the BPQ import directory: `mkdir -p ../bpq/import`
-2. Ensure the forms directory exists: `mkdir -p forms`
-3. Add form templates (`.frm` files) to the `forms/` subdirectory
-4. Configure BPQ32 to auto-import messages from the import directory
+**BPQ Import Setup**:
+The forms application appends completed forms to a single file (`../linbpq/infile` relative to the forms.py script) in BPQ message format. To automatically import these messages into your BPQ BBS:
+
+1. The export file will be: `linbpq/infile` (same directory as your bpq32.cfg)
+2. In the BPQ32 web UI, configure a forwarding record to import from this file
+3. Use the forwarding script command: `IMPORT infile DELETE`
+4. The DELETE option removes the file after successful import
+
+For manual import via web UI: **Actions → Import Messages** and select the infile.
 
 **Creating Custom Forms**:
 Form templates use JSON format with the following structure:
@@ -191,12 +195,6 @@ Note: Recipient is always prompted from user after form completion.
 - `textarea` - Multi-line text input (enter END to finish)
 - `yesno` - Yes/No/NA response
 - `choice` - Numbered list of options
-
-**BPQ Import Setup**:
-Configure BPQ32 to automatically import messages from the export directory. Add to your BPQ32 forwarding configuration:
-```
-IMPORT ../bpq/import/*.txt DELETE
-```
 
 space.py
 --------

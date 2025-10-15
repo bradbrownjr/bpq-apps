@@ -42,9 +42,8 @@ import urllib.error
 # Configuration
 # -------------
 FORMS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "forms")
-EXPORT_DIR = "../bpq/import"  # Relative to script location
+EXPORT_FILE = "../linbpq/infile"  # Single file for all messages (BPQ import format)
 LINE_WIDTH = 80  # Maximum line width for display
-EXPORT_ABSOLUTE = False  # Set to True to use absolute path
 GITHUB_FORMS_URL = "https://api.github.com/repos/bradbrownjr/bpq-apps/contents/apps/forms"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms"
 
@@ -617,33 +616,29 @@ class FormsApp:
         return '\n'.join(lines)
     
     def save_message(self, message_text):
-        """Save the message to the BPQ import directory"""
-        # Determine export path
+        """Append the message to the BPQ import file"""
+        # Determine export file path
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        if EXPORT_ABSOLUTE:
-            export_path = EXPORT_DIR
-        else:
-            export_path = os.path.join(script_dir, EXPORT_DIR)
+        export_filepath = os.path.join(script_dir, EXPORT_FILE)
         
         # Create directory if it doesn't exist
+        export_dir = os.path.dirname(export_filepath)
         try:
-            os.makedirs(export_path, exist_ok=True)
+            if export_dir and not os.path.exists(export_dir):
+                os.makedirs(export_dir, exist_ok=True)
         except Exception as e:
             print("\nError: Could not create export directory: {}".format(str(e)))
             print("Attempting to save to current directory instead...")
-            export_path = script_dir
-        
-        # Generate filename with timestamp
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        filename = "form_{}_{}.txt".format(self.user_call, timestamp)
-        filepath = os.path.join(export_path, filename)
+            export_filepath = os.path.join(script_dir, "infile")
         
         try:
-            with open(filepath, 'w') as f:
+            # Append to the import file (BPQ will process and delete it)
+            with open(export_filepath, 'a') as f:
                 f.write(message_text)
-            print("\nForm saved successfully!")
-            print("File: {}".format(filepath))
+                f.write('\n')  # Extra newline between messages
+            print("\nForm queued successfully!")
+            print("Message appended to: {}".format(export_filepath))
+            print("BPQ will automatically import and deliver this message.")
             return True
         except Exception as e:
             print("\nError saving form: {}".format(str(e)))
