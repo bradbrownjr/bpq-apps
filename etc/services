@@ -7,3 +7,6 @@ space           63040/tcp                       # Space weather reports
 bands           63050/tcp                       # Space weather reports
 qrz             63060/tcp                       # Space weather reports
 gopher-cli      63070/tcp                       # Gopher browser
+rss-news        63080/tcp                       # RSS News Feeds
+hamtest         63090/tcp                       # Ham radio license test practice
+forms           63100/tcp                       # Fillable forms app
