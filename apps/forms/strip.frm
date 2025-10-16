@@ -7,7 +7,7 @@
     {
       "name": "strip_input",
       "label": "Information Request Strip",
-      "type": "textarea",
+      "type": "text",
       "required": true,
       "description": "Paste the request strip here (slash-separated format ending with //)"
     }
