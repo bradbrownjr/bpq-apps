@@ -1,7 +1,7 @@
 {
   "id": "STRIP",
   "title": "Information Strip Response Form",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Parse and respond to slash-separated information request strips. Common in MARS and SHARES operations. Example: ROSTER/CALL/NAME/LOCATION//",
   "fields": [
     {

@@ -111,6 +111,8 @@ class FormsApp:
         
         # Load existing forms and check for updates
         self.forms = []
+        local_form_versions = {}  # Track local versions for update checking
+        
         for filename in sorted(os.listdir(FORMS_DIR)):
             if filename.endswith('.frm'):
                 filepath = os.path.join(FORMS_DIR, filename)
@@ -119,15 +121,31 @@ class FormsApp:
                         form_data = json.load(f)
                         form_data['filename'] = filename
                         self.forms.append(form_data)
+                        local_form_versions[filename] = form_data.get('version', '0.0')
                 except Exception as e:
                     print("Warning: Could not load {}: {}".format(filename, str(e)))
         
-        # Download any missing forms from GitHub
+        # Download any missing forms from GitHub, or update existing ones if version is newer
         if github_forms:
             existing_files = set(f['filename'] for f in self.forms)
             for github_form in github_forms:
+                should_download = False
+                
                 if github_form not in existing_files:
+                    # New form - download it
                     print("Downloading new form: {}".format(github_form))
+                    should_download = True
+                else:
+                    # Existing form - check if GitHub version is newer
+                    github_version = self.get_github_form_version(github_form)
+                    if github_version:
+                        local_version = local_form_versions.get(github_form, '0.0')
+                        if self.compare_versions(github_version, local_version) > 0:
+                            print("Updating {}: v{} -> v{}".format(
+                                github_form, local_version, github_version))
+                            should_download = True
+                
+                if should_download:
                     if self.download_form(github_form):
                         # Load the newly downloaded form
                         filepath = os.path.join(FORMS_DIR, github_form)
@@ -135,7 +153,16 @@ class FormsApp:
                             with open(filepath, 'r') as f:
                                 form_data = json.load(f)
                                 form_data['filename'] = github_form
-                                self.forms.append(form_data)
+                                # Update or add to forms list
+                                if github_form in existing_files:
+                                    # Replace existing form in list
+                                    for i, form in enumerate(self.forms):
+                                        if form['filename'] == github_form:
+                                            self.forms[i] = form_data
+                                            break
+                                else:
+                                    # Add new form to list
+                                    self.forms.append(form_data)
                         except Exception as e:
                             print("Warning: Could not load downloaded {}: {}".format(github_form, str(e)))
         
@@ -187,6 +214,50 @@ class FormsApp:
         except Exception as e:
             print("Error downloading {}: {}".format(filename, e))
             return False
+    
+    def get_github_form_version(self, filename):
+        """Get the version number of a form from GitHub"""
+        url = "{}/{}".format(GITHUB_RAW_URL, filename)
+        
+        try:
+            with urllib.request.urlopen(url, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
+            return data.get('version', '0.0')
+            
+        except Exception as e:
+            print("Warning: Could not check version for {}: {}".format(filename, e))
+            return None
+    
+    def compare_versions(self, version1, version2):
+        """
+        Compare two version strings (e.g., '1.0', '1.2', '2.0')
+        Returns: 
+            1 if version1 > version2
+            0 if version1 == version2
+           -1 if version1 < version2
+        """
+        try:
+            # Split versions into parts and convert to integers
+            parts1 = [int(x) for x in str(version1).split('.')]
+            parts2 = [int(x) for x in str(version2).split('.')]
+            
+            # Pad shorter version with zeros
+            max_len = max(len(parts1), len(parts2))
+            parts1.extend([0] * (max_len - len(parts1)))
+            parts2.extend([0] * (max_len - len(parts2)))
+            
+            # Compare each part
+            for p1, p2 in zip(parts1, parts2):
+                if p1 > p2:
+                    return 1
+                elif p1 < p2:
+                    return -1
+            
+            return 0
+            
+        except (ValueError, AttributeError):
+            # If version comparison fails, assume they're equal
+            return 0
     
     def display_menu(self):
         """Display the main menu of available forms"""
@@ -301,18 +372,29 @@ class FormsApp:
         self.print_separator()
         print()
         
-        # Get the strip input
-        print("\nPaste the Information Request Strip below:")
-        print("(Type END on a new line when finished)\n")
+        # Get the strip input - check field type from form definition
+        fields = form.get('fields', [])
+        strip_field_type = 'textarea'  # default to textarea for backwards compatibility
+        if fields and len(fields) > 0:
+            strip_field_type = fields[0].get('type', 'textarea')
         
-        strip_lines = []
-        while True:
-            line = self.get_input("")
-            if line.upper() == 'END':
-                break
-            strip_lines.append(line)
-        
-        strip_input = ' '.join(strip_lines).strip()
+        if strip_field_type == 'text':
+            # Single-line input
+            print("\nPaste the Information Request Strip below:")
+            strip_input = self.get_input("> ").strip()
+        else:
+            # Multi-line input (textarea)
+            print("\nPaste the Information Request Strip below:")
+            print("(Type END on a new line when finished)\n")
+            
+            strip_lines = []
+            while True:
+                line = self.get_input("")
+                if line.upper() == 'END':
+                    break
+                strip_lines.append(line)
+            
+            strip_input = ' '.join(strip_lines).strip()
         
         # Remove trailing // if present
         if strip_input.endswith('//'):
