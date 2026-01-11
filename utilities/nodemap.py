@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.5'
+__version__ = '1.3.6'
 
 import sys
 import telnetlib
@@ -55,7 +55,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None):
         """
         Initialize crawler.
         
@@ -68,6 +68,7 @@ class NodeCrawler:
             password: Telnet login password (default: None, prompts when needed)
             verbose: Enable verbose output (default: False)
             notify_url: URL to POST notifications to (default: None)
+            log_file: File to log all telnet traffic to (default: None)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -77,6 +78,8 @@ class NodeCrawler:
         self.password = password  # None means prompt when needed
         self.verbose = verbose
         self.notify_url = notify_url
+        self.log_file = log_file
+        self.log_handle = None
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -158,6 +161,37 @@ class NodeCrawler:
                     print("Error reading {}: {}".format(path, e))
         
         return None
+    
+    def _log(self, direction, data):
+        """Log telnet traffic to file if logging enabled.
+        
+        Args:
+            direction: 'SEND' or 'RECV'
+            data: Bytes or string to log
+        """
+        if not self.log_file:
+            return
+        
+        # Open log file on first use
+        if self.log_handle is None:
+            try:
+                self.log_handle = open(self.log_file, 'a')
+            except Exception as e:
+                print("Warning: Could not open log file {}: {}".format(self.log_file, e))
+                self.log_file = None
+                return
+        
+        try:
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+            if isinstance(data, bytes):
+                data_str = data.decode('ascii', errors='replace')
+            else:
+                data_str = data
+            self.log_handle.write("[{}] {}: {}\n".format(timestamp, direction, repr(data_str)))
+            self.log_handle.flush()
+        except Exception as e:
+            if self.verbose:
+                print("    Log write failed: {}".format(e))
     
     def _send_notification(self, message):
         """Send notification to webhook URL if configured."""
@@ -299,8 +333,21 @@ class NodeCrawler:
                     tn.close()
                     return None
                 
-                # Wait for prompt after connection
-                time.sleep(1)
+                # Wait for remote node prompt after connection
+                # Remote node may send banner/info text, then prompt
+                time.sleep(2)  # Give remote node time to send banner
+                try:
+                    # Read until we see a prompt character at end of line
+                    prompt_data = tn.read_until(b'\n>', timeout=5)
+                    self._log('RECV', prompt_data)
+                    if self.verbose:
+                        print("    Received remote prompt")
+                except:
+                    # If no prompt received, just consume whatever is buffered
+                    buffered = tn.read_very_eager()
+                    self._log('RECV', buffered)
+                    if self.verbose:
+                        print("    No clear prompt, consumed {} bytes".format(len(buffered)))
             
             return tn
             
@@ -313,7 +360,9 @@ class NodeCrawler:
         try:
             if self.verbose:
                 print("    Sending command: {}".format(command))
-            tn.write("{}\r".format(command).encode('ascii'))
+            cmd_bytes = "{}\r".format(command).encode('ascii')
+            tn.write(cmd_bytes)
+            self._log('SEND', cmd_bytes)
             # Short delay for command to be received
             time.sleep(0.5)
             
@@ -321,8 +370,12 @@ class NodeCrawler:
             # BPQ prompt is "ALIAS:CALLSIGN-SSID} " followed by echo of command, then output, then ">"
             # We need to look for "\n>" or "\r>" to ensure we get the actual prompt, not > in data
             response = tn.read_until(b'\n>', timeout=timeout)
+            self._log('RECV', response)
             # If we got "\n>", also consume any trailing space
-            response += tn.read_very_eager()
+            extra = tn.read_very_eager()
+            if extra:
+                self._log('RECV', extra)
+                response += extra
             
             decoded = response.decode('ascii', errors='ignore')
             if self.verbose:
@@ -1020,6 +1073,7 @@ def main():
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
+        print("  --log FILE, -l   Log all telnet traffic to file")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
@@ -1050,6 +1104,7 @@ def main():
     username = None
     password = None
     notify_url = None
+    log_file = None
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     
     # Parse positional and optional arguments
@@ -1077,6 +1132,9 @@ def main():
         elif (arg == '--notify' or arg == '-n') and i + 1 < len(sys.argv):
             notify_url = sys.argv[i + 1]
             i += 2
+        elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
+            log_file = sys.argv[i + 1]
+            i += 2
         else:
             i += 1
     
@@ -1084,7 +1142,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file)
     
     # Only require local callsign if no start_node provided
     if not start_node and not crawler.callsign:
@@ -1125,6 +1183,10 @@ def main():
         # Notify successful completion
         crawler._send_notification("Successfully crawled {} nodes!".format(len(crawler.nodes)))
         
+        # Close log file if open
+        if crawler.log_handle:
+            crawler.log_handle.close()
+        
     except KeyboardInterrupt:
         print("\n\nCrawl interrupted by user.")
         print("Partial results:")
@@ -1136,6 +1198,10 @@ def main():
             partial_name = 'nodemap_partial_{}'.format(start_node) if start_node else 'nodemap_partial'
             crawler.export_json('{}.json'.format(partial_name))
             crawler.export_csv('{}.csv'.format(partial_name))
+        
+        # Close log file if open
+        if crawler.log_handle:
+            crawler.log_handle.close()
 
 
 if __name__ == '__main__':
