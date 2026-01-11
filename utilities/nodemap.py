@@ -49,6 +49,9 @@ if sys.version_info < (3, 5):
 class NodeCrawler:
     """Crawls BPQ packet radio network to discover topology."""
     
+    # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
+    CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
+    
     def __init__(self, host='localhost', port=None, callsign=None, max_hops=10):
         """
         Initialize crawler.
@@ -97,6 +100,13 @@ class NodeCrawler:
         # Default to 8010 if not found
         print("BPQ port not found in config, using default: 8010")
         return 8010
+    
+    @staticmethod
+    def _is_valid_callsign(callsign):
+        """Validate callsign format: 1-2 prefix, digit, 1-3 suffix, optional -SSID."""
+        if not callsign:
+            return False
+        return NodeCrawler.CALLSIGN_PATTERN.match(callsign.upper()) is not None
     
     def _find_callsign(self):
         """Extract callsign from bpq32.cfg."""
@@ -229,8 +239,13 @@ class NodeCrawler:
             # Look for lines like: "KC1JMH   Port 2  ..."
             match = re.search(r'(\w+(?:-\d+)?)\s+Port\s+(\d+)', line)
             if match:
-                callsign = match.group(1).split('-')[0]  # Strip SSID
+                full_callsign = match.group(1)
+                callsign = full_callsign.split('-')[0]  # Strip SSID for base call
                 port = int(match.group(2))
+                
+                # Validate callsign format
+                if not self._is_valid_callsign(callsign):
+                    continue
                 
                 # Skip if already in list
                 if callsign not in [c for c, p in heard]:
@@ -361,7 +376,9 @@ class NodeCrawler:
         # Look for patterns like: "CCEBBS:WS1EC-2"
         matches = re.findall(r'(\w+):(\w+(?:-\d+)?)', output)
         for alias, callsign in matches:
-            aliases[alias] = callsign
+            # Validate callsign format
+            if self._is_valid_callsign(callsign):
+                aliases[alias] = callsign
         
         return aliases
     
@@ -452,6 +469,9 @@ class NodeCrawler:
             match = re.search(r'(\w+(?:-\d+)?)\s+.*?(\d+)', line)
             if match:
                 dest = match.group(1).split('-')[0]
+                # Validate callsign format
+                if not self._is_valid_callsign(dest):
+                    continue
                 quality = int(match.group(2))
                 routes[dest] = quality
         
