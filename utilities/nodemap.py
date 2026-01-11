@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.8'
+__version__ = '1.3.9'
 
 import sys
 import telnetlib
@@ -753,7 +753,9 @@ class NodeCrawler:
         # Calculate command timeout based on path length
         # At 1200 baud simplex: ~10s per hop for command/response cycle
         # Base timeout 5s + 10s per hop, max 60s
-        hop_count = len(path)
+        # hop_count = number of RF jumps from start node
+        # path=[] means 0 hops (local node), path=[KC1JMH] means 1 hop, etc.
+        hop_count = len(path) if path else (0 if callsign == self.callsign else 1)
         cmd_timeout = min(5 + (hop_count * 10), 60)
         
         # Connect to node
@@ -839,6 +841,18 @@ class NodeCrawler:
             # Remove duplicates and exclude self (all SSIDs)
             all_neighbors = list(set([n for n in mheard_neighbors if n != base_callsign]))
             
+            # Mark which neighbors will be explored vs skipped
+            # A neighbor is explored if: not visited, not failed, within hop limit
+            explored_neighbors = []
+            unexplored_neighbors = []
+            for neighbor in all_neighbors:
+                if neighbor in self.visited or neighbor in self.failed:
+                    explored_neighbors.append(neighbor)
+                elif hop_count + 1 > self.max_hops:
+                    unexplored_neighbors.append(neighbor)
+                else:
+                    explored_neighbors.append(neighbor)
+            
             # Get INFO
             if check_deadline():
                 return
@@ -861,6 +875,9 @@ class NodeCrawler:
             self.nodes[callsign] = {
                 'info': info_output.strip(),
                 'neighbors': all_neighbors,  # From MHEARD (reliable)
+                'explored_neighbors': explored_neighbors,  # Neighbors that were/will be visited
+                'unexplored_neighbors': unexplored_neighbors,  # Neighbors skipped (hop limit)
+                'hop_distance': hop_count,  # RF hops from start node
                 'location': location,  # From INFO (unreliable, sysop-entered)
                 'location_source': 'info',  # Mark as low-confidence
                 'ports': ports_list,  # From PORTS (reliable)
@@ -885,7 +902,8 @@ class NodeCrawler:
                 })
                 
                 # Add unvisited neighbors to queue with shortest path optimization
-                if neighbor not in self.visited and neighbor not in self.failed:
+                # Only queue if within hop limit (next hop would be hop_count + 1)
+                if neighbor not in self.visited and neighbor not in self.failed and hop_count + 1 <= self.max_hops:
                     # Determine path to this neighbor (intermediate hops only, not target)
                     # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[]
                     #   (direct connection from local, no intermediate hops)
@@ -967,8 +985,11 @@ class NodeCrawler:
             callsign, path = self.queue.popleft()
             
             # Limit depth to prevent excessive crawling
-            if len(path) > self.max_hops:
-                print("Skipping {} (depth limit {} reached)".format(callsign, self.max_hops))
+            # path contains intermediate hops, so len(path)+1 = hop distance from start
+            # For local node: path=[] means 0 hops, path=[KC1JMH] means 1 hop to next node
+            hop_distance = len(path) if path else (0 if callsign == starting_callsign else 1)
+            if hop_distance > self.max_hops:
+                print("Skipping {} ({} hops > max {})".format(callsign, hop_distance, self.max_hops))
                 continue
             
             self.crawl_node(callsign, path)
@@ -988,17 +1009,18 @@ class NodeCrawler:
             print("\n" + "=" * 80)
             print("NETWORK SUMMARY")
             print("=" * 80)
-            print("{:<10} {:<8} {:<6} {:<6} {:<10} {:<30}".format(
-                "CALLSIGN", "TYPE", "PORTS", "APPS", "NEIGHBORS", "GRID/LOCATION"
+            print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<10} {:<30}".format(
+                "CALLSIGN", "HOPS", "PORTS", "APPS", "NBRS", "UNEXPLRD", "GRID/LOCATION"
             ))
             print("-" * 80)
             
             for callsign in sorted(self.nodes.keys()):
                 node = self.nodes[callsign]
-                node_type = node.get('type', 'Unknown')
+                hop_dist = node.get('hop_distance', 0)
                 ports = len([p for p in node.get('ports', []) if p.get('is_rf')])
                 apps = len(node.get('applications', []))
                 neighbors = len(node.get('neighbors', []))
+                unexplored = len(node.get('unexplored_neighbors', []))
                 location = node.get('location', {})
                 grid = location.get('grid', '')
                 city = location.get('city', '')
@@ -1012,12 +1034,13 @@ class NodeCrawler:
                 else:
                     loc_str = ""
                 
-                print("{:<10} {:<8} {:<6} {:<6} {:<10} {:<30}".format(
+                print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<10} {:<30}".format(
                     callsign,
-                    node_type,
+                    hop_dist,
                     ports,
                     apps,
                     neighbors,
+                    unexplored if unexplored > 0 else '',
                     loc_str[:30]
                 ))
             
@@ -1070,17 +1093,22 @@ class NodeCrawler:
         """Export connections to CSV."""
         with open(filename, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['From', 'To', 'Port', 'Quality', 'From_Grid', 'To_Grid', 'From_Type', 'To_Type'])
+            writer.writerow(['From', 'To', 'Port', 'Quality', 'To_Explored', 'From_Grid', 'To_Grid', 'From_Type', 'To_Type'])
             
             for conn in self.connections:
                 from_node = self.nodes.get(conn['from'], {})
                 to_node = self.nodes.get(conn['to'], {})
+                to_call = conn['to']
+                
+                # Determine if 'to' node was explored
+                to_explored = 'Yes' if to_call in self.visited else 'No'
                 
                 writer.writerow([
                     conn['from'],
                     conn['to'],
                     conn['port'],
                     conn.get('quality', 0),
+                    to_explored,
                     from_node.get('location', {}).get('grid', ''),
                     to_node.get('location', {}).get('grid', ''),
                     from_node.get('type', 'Unknown'),
@@ -1099,7 +1127,8 @@ def main():
         print("\nAutomatically crawls packet radio network to discover topology.")
         print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
         print("\nArguments:")
-        print("  MAX_HOPS         Maximum traversal depth (default: 10)")
+        print("  MAX_HOPS         Maximum RF hops from start (default: 10)")
+        print("                   0=local only, 1=direct neighbors, 2=neighbors+their neighbors")
         print("  START_NODE       Callsign to begin crawl (default: local node)")
         print("\nOptions:")
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
