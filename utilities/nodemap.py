@@ -24,7 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
+Version: 1.0.0
 """
+
+__version__ = '1.0.0'
 
 import sys
 import telnetlib
@@ -52,7 +55,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, debug=False):
         """
         Initialize crawler.
         
@@ -61,15 +64,17 @@ class NodeCrawler:
             port: BPQ telnet port (auto-detected if None)
             callsign: Your callsign for login (auto-detected if None)
             max_hops: Maximum hops to traverse (default: 10)
-            username: Telnet login username (default: None, tries callsign)
-            password: Telnet login password (default: None, uses empty password)
+            username: Telnet login username (default: None, prompts when needed)
+            password: Telnet login password (default: None, prompts when needed)
+            debug: Enable debug output (default: False)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
         self.callsign = callsign if callsign else self._find_callsign()
         self.max_hops = max_hops
-        self.username = username if username else (callsign if callsign else self._find_callsign())
-        self.password = password if password else ''
+        self.username = username  # None means prompt when needed
+        self.password = password  # None means prompt when needed
+        self.debug = debug
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -187,11 +192,11 @@ class NodeCrawler:
                     response = tn.read_very_eager().decode('ascii', errors='ignore')
                     if 'password:' in response.lower():
                         # Prompt for password if not provided
-                        if not self.password:
+                        if self.password is None:
                             import getpass
                             self.password = getpass.getpass("    Password: ")
                         
-                        # Send password (may be empty)
+                        # Send password
                         tn.write("{}\r".format(self.password).encode('ascii'))
                         time.sleep(0.5)
                 
@@ -257,11 +262,17 @@ class NodeCrawler:
     def _send_command(self, tn, command, wait_for=b'>', timeout=5):
         """Send command and read response with timeout protection."""
         try:
+            if self.debug:
+                print("    DEBUG: Sending command: {}".format(command))
             tn.write("{}\r".format(command).encode('ascii'))
             # Short delay for command to be received
             time.sleep(0.5)
             response = tn.read_until(wait_for, timeout=timeout)
-            return response.decode('ascii', errors='ignore')
+            decoded = response.decode('ascii', errors='ignore')
+            if self.debug:
+                print("    DEBUG: Response ({} bytes):".format(len(decoded)))
+                print("    {}".format(decoded[:200] if len(decoded) > 200 else decoded))
+            return decoded
         except EOFError:
             print("    Connection lost during {} command".format(command))
             return ""
@@ -844,7 +855,7 @@ def main():
     """Main entry point."""
     # Check for help flag first
     if '-h' in sys.argv or '--help' in sys.argv or '/?' in sys.argv:
-        print("BPQ Node Map Crawler")
+        print("BPQ Node Map Crawler v{}".format(__version__))
         print("=" * 50)
         print("\nAutomatically crawls packet radio network to discover topology.")
         print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
@@ -853,8 +864,9 @@ def main():
         print("  START_NODE       Callsign to begin crawl (default: local node)")
         print("\nOptions:")
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
-        print("  --user USERNAME  Telnet login username (default: NODECALL)")
-        print("  --pass PASSWORD  Telnet login password (default: empty)")
+        print("  --user USERNAME  Telnet login username (default: prompt if needed)")
+        print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
+        print("  --debug          Show command/response details for troubleshooting")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
@@ -875,7 +887,7 @@ def main():
         print("  Overall operation timeout: 5min + 2min/hop")
         sys.exit(0)
     
-    print("BPQ Node Map Crawler")
+    print("BPQ Node Map Crawler v{}".format(__version__))
     print("=" * 50)
     
     # Parse command line args
@@ -883,6 +895,7 @@ def main():
     start_node = None
     username = None
     password = None
+    debug = '--debug' in sys.argv
     
     # Parse positional and optional arguments
     i = 1
@@ -913,7 +926,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, debug=debug)
     
     # Only require local callsign if no start_node provided
     if not start_node and not crawler.callsign:
