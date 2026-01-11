@@ -2,7 +2,7 @@
 
 Sysop tools for BBS management, network mapping, and maintenance tasks.
 
-**Installation**: See [docs/INSTALLATION.md](../docs/INSTALLATION.md) for setup instructions and directory layout.
+**Installation**: See [docs/INSTALLATION.md#utilities-installation](../docs/INSTALLATION.md#utilities-installation) for setup instructions and directory layout.
 
 ## nodemap.py - Network Topology Mapper
 
