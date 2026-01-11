@@ -77,10 +77,11 @@ class NodeCrawler:
     def _find_bpq_port(self):
         """Find BPQ telnet port from bpq32.cfg."""
         config_paths = [
-            '../linbpq/bpq32.cfg',
-            '/home/pi/linbpq/bpq32.cfg',
-            '/home/ect/linbpq/bpq32.cfg',
-            'linbpq/bpq32.cfg'
+            'bpq32.cfg',                    # Same directory as script
+            '../linbpq/bpq32.cfg',          # Script in utilities/, cfg in linbpq/
+            'linbpq/bpq32.cfg',             # Script in parent, cfg in linbpq/
+            '/home/pi/linbpq/bpq32.cfg',    # Standard RPi location
+            '/home/ect/linbpq/bpq32.cfg'    # Alternative user
         ]
         
         for path in config_paths:
@@ -111,10 +112,11 @@ class NodeCrawler:
     def _find_callsign(self):
         """Extract callsign from bpq32.cfg."""
         config_paths = [
-            '../linbpq/bpq32.cfg',
-            '/home/pi/linbpq/bpq32.cfg',
-            '/home/ect/linbpq/bpq32.cfg',
-            'linbpq/bpq32.cfg'
+            'bpq32.cfg',                    # Same directory as script
+            '../linbpq/bpq32.cfg',          # Script in utilities/, cfg in linbpq/
+            'linbpq/bpq32.cfg',             # Script in parent, cfg in linbpq/
+            '/home/pi/linbpq/bpq32.cfg',    # Standard RPi location
+            '/home/ect/linbpq/bpq32.cfg'    # Alternative user
         ]
         
         for path in config_paths:
@@ -333,6 +335,18 @@ class NodeCrawler:
             return 'FBB'  # FBB uses : prompt
         
         return 'Unknown'
+    
+    def _load_existing_data(self, filename):
+        """Load existing nodemap data if available."""
+        if not os.path.exists(filename):
+            return None
+        
+        try:
+            with open(filename, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print("Warning: Could not load {}: {}".format(filename, e))
+            return None
     
     def _parse_ports(self, output):
         """
@@ -661,22 +675,43 @@ class NodeCrawler:
         if self.failed:
             print("  Failed: {}".format(', '.join(sorted(self.failed))))
     
-    def export_json(self, filename='nodemap.json'):
-        """Export node data to JSON."""
+    def export_json(self, filename='nodemap.json', merge=False):
+        """Export network map to JSON.
+        
+        Args:
+            filename: Output filename
+            merge: If True, merge with existing data instead of overwrite
+        """
+        nodes_data = {}
+        
+        # Load existing data if merge mode
+        if merge:
+            existing = self._load_existing_data(filename)
+            if existing and 'nodes' in existing:
+                nodes_data = existing['nodes']
+                print("Merging with {} existing nodes...".format(len(nodes_data)))
+        
+        # Update with current crawl data (overwrites duplicates)
+        for callsign, node_data in self.nodes.items():
+            nodes_data[callsign] = node_data
+        
         data = {
-            'nodes': self.nodes,
+            'nodes': nodes_data,
             'connections': self.connections,
             'crawl_info': {
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'start_node': self.callsign,
-                'total_nodes': len(self.nodes),
-                'total_connections': len(self.connections)
+                'total_nodes': len(nodes_data),
+                'total_connections': len(self.connections),
+                'mode': 'merge' if merge else 'overwrite'
             }
         }
         
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         
-        print("Exported to {}".format(filename))
+        mode_str = "Merged into" if merge else "Exported to"
+        print("{} {} ({} nodes)".format(mode_str, filename, len(nodes_data)))
     
     def export_csv(self, filename='nodemap.csv'):
         """Export connections to CSV."""
@@ -710,6 +745,7 @@ def main():
     # Parse command line args
     max_hops = int(sys.argv[1]) if len(sys.argv) > 1 else 10
     start_node = sys.argv[2].upper() if len(sys.argv) > 2 else None
+    merge_mode = '--merge' in sys.argv or '-m' in sys.argv
     
     # Create crawler
     crawler = NodeCrawler(max_hops=max_hops)
@@ -718,20 +754,27 @@ def main():
     if not start_node and not crawler.callsign:
         print("\nError: Could not determine local node callsign.")
         print("Ensure NODECALL is set in bpq32.cfg or provide a starting callsign.")
-        print("\nUsage: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]))
+        print("\nUsage: {} [MAX_HOPS] [START_NODE] [--merge]".format(sys.argv[0]))
         print("  MAX_HOPS: Maximum traversal depth (default: 10)")
         print("  START_NODE: Callsign to begin crawl (default: local node)")
+        print("  --merge, -m: Merge results with existing data")
         print("\nExamples:")
         print("  {} 5           # Crawl 5 hops from local node".format(sys.argv[0]))
         print("  {} 10 WS1EC    # Crawl 10 hops starting from WS1EC".format(sys.argv[0]))
+        print("  {} 5 --merge   # Crawl and merge with existing nodemap.json".format(sys.argv[0]))
+        print("\nInstallation:")
+        print("  Place in /home/pi/utilities/ or same directory as linbpq/bpq32.cfg")
         sys.exit(1)
+    
+    if merge_mode:
+        print("Merge mode: Will update existing nodemap.json")
     
     # Crawl network
     try:
         crawler.crawl_network(start_node=start_node)
         
         # Export results
-        crawler.export_json()
+        crawler.export_json(merge=merge_mode)
         crawler.export_csv()
         
         print("\nNetwork map complete!")
