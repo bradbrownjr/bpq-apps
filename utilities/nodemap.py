@@ -739,6 +739,36 @@ class NodeCrawler:
 
 def main():
     """Main entry point."""
+    # Check for help flag first
+    if '-h' in sys.argv or '--help' in sys.argv or '/?' in sys.argv:
+        print("BPQ Node Map Crawler")
+        print("=" * 50)
+        print("\nAutomatically crawls packet radio network to discover topology.")
+        print("\nUsage: {} [MAX_HOPS] [START_NODE] [--overwrite]".format(sys.argv[0]))
+        print("\nArguments:")
+        print("  MAX_HOPS         Maximum traversal depth (default: 10)")
+        print("  START_NODE       Callsign to begin crawl (default: local node)")
+        print("\nOptions:")
+        print("  --overwrite, -o  Overwrite existing data (default: merge)")
+        print("  --help, -h, /?   Show this help message")
+        print("\nExamples:")
+        print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
+        print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
+        print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
+        print("\nData Storage:")
+        print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
+        print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
+        print("\nOutput Files:")
+        print("  nodemap.json      Complete network topology and node information")
+        print("  nodemap.csv       Connection list for spreadsheet analysis")
+        print("\nInstallation:")
+        print("  Place in ~/utilities/ or ~/apps/ adjacent to ~/linbpq/")
+        print("  Reads NODECALL and TCPPORT from ../linbpq/bpq32.cfg")
+        print("\nTimeout Protection:")
+        print("  Commands scale with hop count (5s + 10s/hop, max 60s)")
+        print("  Overall operation timeout: 5min + 2min/hop")
+        sys.exit(0)
+    
     print("BPQ Node Map Crawler")
     print("=" * 50)
     
