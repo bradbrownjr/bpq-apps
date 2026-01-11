@@ -208,7 +208,18 @@ class NodeCrawler:
             
             # Connect through intermediate nodes
             for callsign in path:
-                cmd = "C {}\r".format(callsign).encode('ascii')
+                # Determine full callsign with NetRom SSID if available
+                full_callsign = callsign
+                if callsign in self.nodes:
+                    node_data = self.nodes[callsign]
+                    netrom_ssids = node_data.get('netrom_ssids', {})
+                    if callsign in netrom_ssids:
+                        full_callsign = netrom_ssids[callsign]
+                
+                # Use NetRom CONNECT syntax: C CALLSIGN (BPQ will route automatically)
+                cmd = "C {}\r".format(full_callsign).encode('ascii')
+                if self.debug:
+                    print("    DEBUG: Connecting to {}".format(full_callsign))
                 tn.write(cmd)
                 
                 # Wait for connection response (up to 30 seconds for RF)
@@ -443,22 +454,33 @@ class NodeCrawler:
         Parse NODES output to get alias/SSID mappings and neighbor callsigns.
         
         Returns:
-            Tuple of (aliases dict, neighbors list)
+            Tuple of (aliases dict, netrom_ssids dict, neighbors list)
+            - aliases: Maps alias to full callsign-SSID
+            - netrom_ssids: Maps base callsign to NetRom SSID for connections
+            - neighbors: List of base callsigns (without SSID)
         """
         aliases = {}
+        netrom_ssids = {}
         neighbors = []
-        # Look for patterns like: "CCEBBS:WS1EC-2"
+        # Look for patterns like: "CCEBBS:WS1EC-2" or "CCEMA:WS1EC-15"
         matches = re.findall(r'(\w+):(\w+(?:-\d+)?)', output)
         for alias, callsign in matches:
             # Validate callsign format
             if self._is_valid_callsign(callsign):
                 aliases[alias] = callsign
-                # Extract base callsign (without SSID) for neighbor list
-                base_call = callsign.split('-')[0]
+                # Extract base callsign and SSID
+                if '-' in callsign:
+                    base_call, ssid = callsign.rsplit('-', 1)
+                    # Store NetRom SSID for this base callsign (typically highest SSID or -15)
+                    netrom_ssids[base_call] = callsign
+                else:
+                    base_call = callsign
+                    netrom_ssids[base_call] = callsign
+                
                 if base_call not in neighbors:
                     neighbors.append(base_call)
         
-        return aliases, neighbors
+        return aliases, netrom_ssids, neighbors
     
     def _parse_applications(self, info_output):
         """
@@ -609,7 +631,10 @@ class NodeCrawler:
             if check_deadline():
                 return
             nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
-            aliases, neighbors_from_nodes = self._parse_nodes_aliases(nodes_output)
+            aliases, netrom_ssids, neighbors_from_nodes = self._parse_nodes_aliases(nodes_output)
+            
+            # Filter out the current node from neighbors
+            neighbors_from_nodes = [n for n in neighbors_from_nodes if n != callsign]
             
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
@@ -628,8 +653,8 @@ class NodeCrawler:
                     heard = self._parse_mheard(mheard_output)
                     mheard_neighbors.extend([call for call, p in heard])
             
-            # Combine neighbors from NODES and MHEARD
-            all_neighbors = list(set(neighbors_from_nodes + mheard_neighbors))
+            # Combine neighbors from NODES and MHEARD, exclude self
+            all_neighbors = [n for n in list(set(neighbors_from_nodes + mheard_neighbors)) if n != callsign]
             
             # Get INFO
             if check_deadline():
@@ -657,6 +682,7 @@ class NodeCrawler:
                 'type': node_type,
                 'routes': routes,
                 'aliases': aliases,
+                'netrom_ssids': netrom_ssids,  # Store for connections
                 'applications': applications,
                 'commands': commands
             }
