@@ -699,6 +699,51 @@ class NodeCrawler:
         print("Failed connections: {} nodes".format(len(self.failed)))
         if self.failed:
             print("  Failed: {}".format(', '.join(sorted(self.failed))))
+        
+        # Display summary table
+        if self.nodes:
+            print("\n" + "=" * 80)
+            print("NETWORK SUMMARY")
+            print("=" * 80)
+            print("{:<10} {:<8} {:<6} {:<6} {:<10} {:<30}".format(
+                "CALLSIGN", "TYPE", "PORTS", "APPS", "NEIGHBORS", "GRID/LOCATION"
+            ))
+            print("-" * 80)
+            
+            for callsign in sorted(self.nodes.keys()):
+                node = self.nodes[callsign]
+                node_type = node.get('type', 'Unknown')
+                ports = len([p for p in node.get('ports', []) if p.get('is_rf')])
+                apps = len(node.get('applications', []))
+                neighbors = len(node.get('neighbors', []))
+                location = node.get('location', {})
+                grid = location.get('grid', '')
+                city = location.get('city', '')
+                state = location.get('state', '')
+                
+                # Build location string
+                if grid:
+                    loc_str = grid
+                elif city and state:
+                    loc_str = "{}, {}".format(city, state)
+                else:
+                    loc_str = ""
+                
+                print("{:<10} {:<8} {:<6} {:<6} {:<10} {:<30}".format(
+                    callsign,
+                    node_type,
+                    ports,
+                    apps,
+                    neighbors,
+                    loc_str[:30]
+                ))
+            
+            print("=" * 80)
+            print("Total: {} nodes, {} connections".format(
+                len(self.nodes),
+                len(self.connections)
+            ))
+            print("=" * 80)
     
     def export_json(self, filename='nodemap.json', merge=False):
         """Export network map to JSON.
