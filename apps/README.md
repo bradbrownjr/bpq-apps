@@ -1,7 +1,8 @@
 # BBS Apps
-These following applications should be able to be run stand-alone or by a BBS. See below for notes on the purpose, setup and usage of the individual applications.
+Applications designed to run via BPQ BBS APPLICATION commands or standalone. See below for purpose, setup and usage of individual applications.
 
-gopher.py
+callout.py
+----------
 ---------
 **Type**: Python  
 **Purpose**: Gopher protocol client for accessing gopherspace  
@@ -21,7 +22,7 @@ hamqsl.py
 **Download or update**:  
 ```wget -O hamqsl.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/hamqsl.py && chmod +x hamqsl.py```
 
-![Terminal output](images/hamqsl.png)
+![Terminal output](../docs/images/hamqsl.png)
 
 hamtest.py
 ----------
@@ -60,7 +61,7 @@ qrz3.py
 **Download or update**:  
 ```wget -O qrz3.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/qrz3.py && chmod +x qrz3.py```
 
-![Terminal output](images/qrz3.png)
+![Terminal output](../docs/images/qrz3.png)
 
 rss-news.py
 -----------
@@ -207,7 +208,7 @@ space.py
 **Download or update**:  
 ```wget -O space.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/space.py && chmod +x space.py```
 
-![Terminal output](images/space.png)
+![Terminal output](../docs/images/space.png)
 
 sysinfo.sh
 ----------
@@ -220,21 +221,65 @@ sysinfo.sh
 **Download or update**:  
 ```wget -O sysinfo.sh https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/sysinfo.sh && chmod +x sysinfo.sh```
 
-![Terminal output](images/sysinfo.png)
+![Terminal output](../docs/images/sysinfo.png)
+
+wx.py
+-----
+**Type**: Python  
+**Purpose**: Weather reports via NWS API  
+**Information source**: National Weather Service API  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Work in progress. Uses NWS API to pull weather for any location. Requires `maidenhead` module for grid square conversions. Not yet production-ready.
+
+**Download or update**:  
+```wget -O wx.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx.py && chmod +x wx.py```
+
+**Status**: Under development. For production use, see `wx-me.py` below.
 
 wx-me.py
 --------
 **Type**: Python  
-**Purpose**: Local weather reports to Southern Maine and New Hampshire  
+**Purpose**: Local weather reports for Southern Maine and New Hampshire  
 **Information source**: National Weather Service, Gray Office  
-**Developer**: Brad Brown KC1JMH
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Production version of weather app. Direct text file retrieval from NWS.
 
 **Download or update**:  
-```wget -O wx.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx-me.py && chmod +x wx.py```
+```wget -O wx-me.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx-me.py && chmod +x wx-me.py```
 
-**Note**: The original wx.py is being retooled to leverage the NWS FTP API to make it easier to pull more reports, for all of their coverage area. It is not ready, yet. Please continue to use the original code in wx-me.py, and update the source text file locations. 
+![Terminal output](../docs/images/wx.png)
 
-![Terminal output](images/wx.png)
+wxnws-ftp.py
+------------
+**Type**: Python  
+**Purpose**: Retrieve NWS products via FTP  
+**Information source**: NWS TGFTP server  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Experimental. Downloads and displays NWS text products from FTP server. Configurable region code.
+
+**Download or update**:  
+```wget -O wxnws-ftp.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wxnws-ftp.py && chmod +x wxnws-ftp.py```
+
+**Features**:
+- Downloads AFD (Area Forecast Discussion) files from NWS FTP
+- Pauses at section breaks (&&) for user pacing
+- Configurable regional NWS office
+
+**Status**: Experimental, not production-ready.
+
+## Subdirectories
+
+### forms/
+Contains form templates (.frm files) used by forms.py. Templates are automatically downloaded from GitHub on first run. See forms/ subdirectory README for form template format and available forms.
+
+### question_pools/
+Contains ham radio license exam question pools in JSON format. Automatically downloaded and updated by hamtest.py from russolsen/ham_radio_question_pool repository.
+
+### images/
+Screenshots and example output images for documentation.
+
+### utilities/
+Reserved for future sysop utilities and maintenance scripts.
 
 # ToDos
 [X] **All** - Update #! to call interpreter regardless of location using env  

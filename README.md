@@ -21,19 +21,31 @@ These applications are custom-built for low bandwidth terminal access over packe
 
 For detailed documentation, installation commands, and configuration instructions, see [apps/README.md](apps/README.md).
 
+GAMES
+=====
+Interactive games that run as standalone TCP servers:
+
+* **battleship.py** - Classic multiplayer Battleship game with ASCII terminal interface and leaderboard tracking.
+
+See [games/README.md](games/README.md) for game documentation and setup instructions.
+
 DIRECTORIES
 ===========
 **/apps** contains Applications written for Python 3.5+ and BASH.
 
-**/etc** contains excerpts of the Linux service files required for the running of these applications with linbpq. Content may be added to the end of the respective file on your own  node host.
+**/games** contains Interactive games that run as standalone TCP servers.
+
+**/etc** contains excerpts of the Linux service files required for the running of these applications with linbpq. Content may be added to the end of the respective file on your own node host.
 
 **/linbpq** contains excerpts of the bpq32.cfg node configuration file required for the execution of external applications by the user.
+
+**/docs** contains documentation, screenshots, and example output images.
 
 INSTALLATION INSTRUCTIONS
 ============
 Applications or scripts on a Linux system are typically piped to stdout: the screen. In order to get the output redirected to the users connected to the BPQ node over AX.25 (radio) or telnet (IP), they need to be redirected to a tcp socket. This is done by making them into a service run with inetd.
 
-![](Screenshot-2022-09-26%20094854.png)
+![Installation Diagram](docs/images/Screenshot-2022-09-26%20094854.png)
 
 These steps assume that you have already installed the applications or downloaded the scripts which you wish to run on your node.
 
@@ -74,6 +86,16 @@ Next, we will assign the service application a tcp port. In the examples I've fo
 
 ```sudo nano /etc/services```
 
+Step 4
+------
+Add entries for each application service to the services file:
+
+```
+wx              63010/tcp
+hamqsl          63020/tcp
+space           63030/tcp
+```
+
 Step 5
 ------
 Now that the services are defined, start inetd:
@@ -84,7 +106,7 @@ Or, if you are making edits to these files later, restart:
 
 ```sudo service inetd restart```
 
-Step 7
+Step 6
 ------
 Test your application by telnetting into it:
 
@@ -92,7 +114,7 @@ Test your application by telnetting into it:
 
 If it executes as expected, it *should* work via AX.25.
 
-Step 8
+Step 7
 ------
 Finally, we add the commands to the BPQ node to call the external applications running as services. Again, my linbpq directory is under the 'ect' user, yours likely differs:
 
@@ -126,7 +148,7 @@ Internal and external applications are called with the following commands:
 	           	  App name entered at user prompt
 ```
 
-Step 9
+Step 8
 ------
 Restart your linbpq node.
 1) If you run it as a service:
@@ -140,7 +162,7 @@ kill -1 (process number of prior command's output)
 nohup ./linbpq &
 ```
 
-Step 10
+Step 9
 -------
 Test locally. This will be the node's telnet port defined by TCPPORT=8010 in bpq32.cfg:
 
