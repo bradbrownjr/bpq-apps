@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.6'
+__version__ = '1.3.7'
 
 import sys
 import telnetlib
@@ -334,14 +334,14 @@ class NodeCrawler:
                     return None
                 
                 # Wait for remote node prompt after connection
-                # Remote node may send banner/info text, then prompt
-                time.sleep(2)  # Give remote node time to send banner
+                # BPQ remote nodes use "ALIAS:CALLSIGN-SSID} " prompt format
+                # Banner/info is sent immediately after CONNECTED, followed by prompt
                 try:
-                    # Read until we see a prompt character at end of line
-                    prompt_data = tn.read_until(b'\n>', timeout=5)
+                    # Look for BPQ remote prompt: "} " at end of banner
+                    prompt_data = tn.read_until(b'} ', timeout=10)
                     self._log('RECV', prompt_data)
                     if self.verbose:
-                        print("    Received remote prompt")
+                        print("    Received remote prompt: {}...".format(prompt_data[-20:].decode('ascii', errors='replace').strip()))
                 except:
                     # If no prompt received, just consume whatever is buffered
                     buffered = tn.read_very_eager()
@@ -366,12 +366,25 @@ class NodeCrawler:
             # Short delay for command to be received
             time.sleep(0.5)
             
-            # Read response until we find prompt at start of line
-            # BPQ prompt is "ALIAS:CALLSIGN-SSID} " followed by echo of command, then output, then ">"
-            # We need to look for "\n>" or "\r>" to ensure we get the actual prompt, not > in data
-            response = tn.read_until(b'\n>', timeout=timeout)
-            self._log('RECV', response)
-            # If we got "\n>", also consume any trailing space
+            # Read response until we find prompt
+            # Local BPQ: "\n>" or "\r>" (newline before prompt)
+            # Remote BPQ: "} " (curly brace + space after ALIAS:CALL prompt)
+            # Try remote prompt first (more specific), fall back to local
+            response = b''
+            try:
+                response = tn.read_until(b'} ', timeout=timeout)
+                self._log('RECV', response)
+            except:
+                # Timeout on remote prompt, try local prompt
+                try:
+                    response = tn.read_until(b'\n>', timeout=timeout)
+                    self._log('RECV', response)
+                except:
+                    # Neither prompt found, get whatever is buffered
+                    response = tn.read_very_eager()
+                    self._log('RECV', response)
+            
+            # Consume any extra buffered data
             extra = tn.read_very_eager()
             if extra:
                 self._log('RECV', extra)
