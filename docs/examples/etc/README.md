@@ -33,4 +33,4 @@ Copy relevant entries to `/etc/services` on your node, ensuring port numbers don
 5. Configure corresponding entries in `bpq32.cfg` APPLICATION section
 6. Test via telnet before radio deployment
 
-See main [README.md](../README.md) for complete installation instructions.
+See main [../../INSTALLATION.md](../../INSTALLATION.md) for complete installation instructions.

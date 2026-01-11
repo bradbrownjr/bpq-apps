@@ -285,3 +285,7 @@ Reserved for future sysop utilities and maintenance scripts.
 [X] **All** - Update #! to call interpreter regardless of location using env  
 [ ] **qrz3.py** - Add variable check so as to not require sysop to comment lines if used in the mode that requires user login  
 [ ] **wx.py** - Expand to provide weather information for other areas, in the meantime the txt web requests may be updated to pull any URL.
+
+## Configuration
+
+See [../docs/examples/](../docs/examples/) for inetd and bpq32.cfg configuration examples.

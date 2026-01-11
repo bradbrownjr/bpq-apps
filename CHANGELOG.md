@@ -11,9 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - This changelog file to track project changes
 - `docs/` directory for consolidated documentation and images
 - `docs/images/` directory containing all screenshots and example outputs
+- `docs/examples/` directory for configuration file examples
+- `docs/INSTALLATION.md` - comprehensive installation and setup guide
 - `games/` directory for interactive game applications
 - `games/README.md` documenting game setup and configuration
-- Comprehensive documentation in `/etc/README.md` explaining service integration
+- Comprehensive documentation in `docs/examples/etc/README.md` explaining service integration
 - Complete app documentation in `apps/README.md` for all applications including:
   - callout.py (BPQ callsign capture example)
   - forms.py (fillable forms system)
@@ -28,12 +30,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Consolidated all images from `apps/images/` and root screenshot into `docs/images/`
 - Updated all image references in README files to point to new `docs/images/` location
 - Reorganized repository structure: moved games to separate `games/` directory
-- Updated main README.md with GAMES section and directory descriptions
+- Moved configuration examples: `etc/` and `linbpq/` now under `docs/examples/`
+- Streamlined main README.md to focus on features/capabilities with links to detailed docs
+- Extracted installation instructions from README.md to `docs/INSTALLATION.md`
+- Updated all path references throughout documentation
 
 ### Removed
 - `apps/images/` directory (consolidated into `docs/images/`)
 - Root-level screenshot file (moved to `docs/images/`)
 - battleship.py from `apps/` directory (moved to `games/`)
+- Installation instructions from main README.md (extracted to `docs/INSTALLATION.md`)
+- Root-level `etc/` directory (moved to `docs/examples/etc/`)
+- Root-level `linbpq/` directory (moved to `docs/examples/linbpq/`)
 
 ### Deprecated
 
