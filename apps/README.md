@@ -278,8 +278,7 @@ Contains ham radio license exam question pools in JSON format. Automatically dow
 ### images/
 Screenshots and example output images for documentation.
 
-### utilities/
-Reserved for future sysop utilities and maintenance scripts.
+**Note**: Sysop utilities for managing the BBS are located in `/utilities` at repository root.
 
 # ToDos
 [X] **All** - Update #! to call interpreter regardless of location using env  

@@ -42,6 +42,7 @@ See [games/README.md](games/README.md) for game documentation and setup instruct
 bpq-apps/
 ├── apps/              # User-facing BPQ applications
 ├── games/             # Interactive game servers
+├── utilities/         # Sysop tools for BBS management
 ├── docs/              # Documentation and setup guides
 │   ├── examples/      # Configuration file examples (inetd, bpq32.cfg)
 │   └── images/        # Screenshots and example outputs

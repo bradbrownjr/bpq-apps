@@ -34,6 +34,7 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 bpq-apps/
 ├── apps/              # User-facing BPQ applications (Python/bash)
 ├── games/             # Interactive game servers (standalone TCP)
+├── utilities/         # Sysop tools for BBS management (cron jobs, maintenance)
 ├── docs/
 │   ├── INSTALLATION.md       # Complete setup guide
 │   ├── examples/
