@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.7'
+__version__ = '1.3.8'
 
 import sys
 import telnetlib
@@ -366,23 +366,44 @@ class NodeCrawler:
             # Short delay for command to be received
             time.sleep(0.5)
             
-            # Read response until we find prompt
-            # Local BPQ: "\n>" or "\r>" (newline before prompt)
-            # Remote BPQ: "} " (curly brace + space after ALIAS:CALL prompt)
-            # Try remote prompt first (more specific), fall back to local
+            # BPQ echoes commands, so the sequence is:
+            # 1. ALIAS:CALL} CommandEcho
+            # 2. [response data]
+            # 3. ALIAS:CALL} (prompt for next command)
+            # We need to read until the SECOND prompt to get the full response
+            
             response = b''
+            # First, try to detect if we're on local or remote node
+            # Remote uses "} ", local uses newline before ">"
+            is_remote = False
+            
             try:
-                response = tn.read_until(b'} ', timeout=timeout)
-                self._log('RECV', response)
+                # Try reading until first prompt (will include command echo)
+                first_chunk = tn.read_until(b'} ', timeout=timeout)
+                self._log('RECV', first_chunk)
+                response = first_chunk
+                is_remote = True
+                
+                # Now read until second prompt (will include actual response)
+                second_chunk = tn.read_until(b'} ', timeout=timeout)
+                self._log('RECV', second_chunk)
+                response += second_chunk
             except:
                 # Timeout on remote prompt, try local prompt
                 try:
-                    response = tn.read_until(b'\n>', timeout=timeout)
-                    self._log('RECV', response)
+                    first_chunk = tn.read_until(b'\n>', timeout=timeout)
+                    self._log('RECV', first_chunk)
+                    response = first_chunk
+                    
+                    # For local node, read until next prompt
+                    second_chunk = tn.read_until(b'\n>', timeout=timeout)
+                    self._log('RECV', second_chunk)
+                    response += second_chunk
                 except:
-                    # Neither prompt found, get whatever is buffered
-                    response = tn.read_very_eager()
-                    self._log('RECV', response)
+                    # Neither prompt pattern worked, get whatever is buffered
+                    if not response:
+                        response = tn.read_very_eager()
+                        self._log('RECV', response)
             
             # Consume any extra buffered data
             extra = tn.read_very_eager()
