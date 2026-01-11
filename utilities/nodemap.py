@@ -206,20 +206,23 @@ class NodeCrawler:
                 print("  Connected to local node")
                 return tn
             
-            # Connect through intermediate nodes
-            for callsign in path:
+            # Connect through nodes in path (for multi-hop or direct connections)
+            for i, callsign in enumerate(path):
                 # Determine full callsign with NetRom SSID if available
                 full_callsign = callsign
+                
+                # Look up NetRom SSID for this callsign
+                # Check if we have data for this node from a previous crawl
                 if callsign in self.nodes:
                     node_data = self.nodes[callsign]
                     netrom_ssids = node_data.get('netrom_ssids', {})
                     if callsign in netrom_ssids:
                         full_callsign = netrom_ssids[callsign]
                 
-                # Use NetRom CONNECT syntax: C CALLSIGN (BPQ will route automatically)
+                # Use NetRom CONNECT syntax: C CALLSIGN-SSID
                 cmd = "C {}\r".format(full_callsign).encode('ascii')
                 if self.debug:
-                    print("    DEBUG: Connecting to {}".format(full_callsign))
+                    print("    DEBUG: Connecting to {} (hop {}/{})".format(full_callsign, i+1, len(path)))
                 tn.write(cmd)
                 
                 # Wait for connection response (up to 30 seconds for RF)
@@ -602,7 +605,17 @@ class NodeCrawler:
         cmd_timeout = min(5 + (hop_count * 10), 60)
         
         # Connect to node
-        connect_path = path + [callsign] if path else []
+        # path represents intermediate nodes to connect through before reaching target
+        # For local node (path=[]), connect directly via telnet
+        # For direct neighbors of local node (path=[]), connect via NetRom CONNECT
+        # For multi-hop (path=[A, B, ...]), connect through each intermediate node
+        if not path:
+            # Connecting to local node or direct neighbor from local node
+            connect_path = [callsign] if callsign != self.callsign else []
+        else:
+            # Multi-hop connection - add target to path
+            connect_path = path + [callsign]
+        
         tn = self._connect_to_node(connect_path)
         if not tn:
             print("  Skipping {} (connection failed)".format(callsign))
@@ -696,10 +709,19 @@ class NodeCrawler:
                     'quality': routes.get(neighbor, 0)
                 })
                 
-                # Add unvisited neighbors to queue with route preference
+                # Add unvisited neighbors to queue
                 if neighbor not in self.visited and neighbor not in self.failed:
-                    # Prefer routes through nodes with better quality scores
-                    self.queue.append((neighbor, path + [callsign]))
+                    # Queue neighbor with path showing intermediate hops
+                    # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[]
+                    #   (direct NetRom connection)
+                    # If we're at KC1JMH (path=[]), queue N1XP with path=[KC1JMH]
+                    #   (connect via KC1JMH to reach N1XP)
+                    if path:
+                        # We're not at local node, add current node to path
+                        self.queue.append((neighbor, path + [callsign]))
+                    else:
+                        # We're at local node, neighbors are direct connections
+                        self.queue.append((neighbor, []))
             
             print("  Found {} neighbors: {}".format(
                 len(all_neighbors),
