@@ -432,7 +432,7 @@ class NodeCrawler:
         print("-" * 50)
         
         # Start with local node
-        self.queue.append((start, []))
+        self.queue.append((self.callsign, []))
         
         # BFS traversal
         while self.queue:
