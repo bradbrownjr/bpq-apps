@@ -174,6 +174,11 @@ class NodeCrawler:
                 # Check if login is required
                 if 'user:' in initial.lower() or 'callsign:' in initial.lower():
                     print("  Authentication required...")
+                    
+                    # Prompt for username if not provided
+                    if not self.username:
+                        self.username = raw_input("    Username: ") if sys.version_info[0] < 3 else input("    Username: ")
+                    
                     # Send username
                     tn.write("{}\r".format(self.username).encode('ascii'))
                     time.sleep(0.5)
@@ -181,6 +186,11 @@ class NodeCrawler:
                     # Check for password prompt
                     response = tn.read_very_eager().decode('ascii', errors='ignore')
                     if 'password:' in response.lower():
+                        # Prompt for password if not provided
+                        if not self.password:
+                            import getpass
+                            self.password = getpass.getpass("    Password: ")
+                        
                         # Send password (may be empty)
                         tn.write("{}\r".format(self.password).encode('ascii'))
                         time.sleep(0.5)
@@ -850,7 +860,7 @@ def main():
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
-        print("  {} 10 --user KC1JMH --pass PASSWORD  # With authentication".format(sys.argv[0]))
+        print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
         print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
@@ -919,7 +929,7 @@ def main():
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
-        print("  {} 10 --user KC1JMH --pass PASSWORD  # With authentication".format(sys.argv[0]))
+        print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
         print("\nInstallation:")
         print("  Place in ~/utilities/ or ~/apps/ adjacent to ~/linbpq/")
         sys.exit(1)
