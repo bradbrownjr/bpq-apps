@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.16'
+__version__ = '1.3.17'
 
 import sys
 import telnetlib
@@ -897,6 +897,16 @@ class NodeCrawler:
         
         print("Crawling {}{}".format(callsign, path_desc))
         
+        # Notify about connection attempt
+        if not path:
+            if callsign != self.callsign:
+                notify_msg = "Connecting to {}".format(callsign)
+            else:
+                notify_msg = "Starting at {}".format(callsign)
+        else:
+            notify_msg = "{} connecting to {}".format(path[-1], callsign)
+        self._send_notification(notify_msg)
+        
         self.visited.add(callsign)
         
         # Calculate command timeout based on path length
@@ -918,7 +928,12 @@ class NodeCrawler:
         if not tn:
             print("  Skipping {} (connection failed)".format(callsign))
             self.failed.add(callsign)
-            self._send_notification("Failed to connect to {}".format(callsign))
+            # Show who failed to reach whom
+            if not path:
+                fail_msg = "Failed: {} unreachable".format(callsign)
+            else:
+                fail_msg = "{} failed to reach {}".format(path[-1], callsign)
+            self._send_notification(fail_msg)
             return
         
         # Set overall operation timeout (commands + processing)
@@ -1114,7 +1129,14 @@ class NodeCrawler:
                 print("  Aliases: {}".format(len(aliases)))
             
             # Notify after successful crawl
-            self._send_notification("Crawled {} - {} neighbors".format(callsign, len(all_neighbors)))
+            if not path:
+                if callsign == self.callsign:
+                    notify_msg = "{}: {} neighbors".format(callsign, len(all_neighbors))
+                else:
+                    notify_msg = "{}: {} neighbors".format(callsign, len(all_neighbors))
+            else:
+                notify_msg = "{}: {} neighbors".format(callsign, len(all_neighbors))
+            self._send_notification(notify_msg)
             
         finally:
             # Disconnect
