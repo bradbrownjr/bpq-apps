@@ -309,7 +309,94 @@ class NodeCrawler:
         
         return 'Unknown'
     
-    def _parse_routes(self, output):
+    def _parse_ports(self, output):
+        """
+        Parse PORTS output to extract port details.
+        
+        Returns:
+            List of port dictionaries with number, frequency, speed, type
+        """
+        ports = []
+        lines = output.split('\n')
+        
+        for line in lines:
+            # Look for lines like: "  1 433.300 MHz 1200 BAUD"
+            # or "  8 AX/IP/UDP" or "  9 Telnet Server"
+            match = re.search(r'^\s*(\d+)\s+(.+?)(?:\s+@\s+|\s+at\s+)?(\d+)?\s*(?:b/s|BAUD)?', line, re.IGNORECASE)
+            if match:
+                port_num = int(match.group(1))
+                description = match.group(2).strip()
+                speed = match.group(3) if match.group(3) else None
+                
+                # Determine if it's RF or IP-based
+                is_rf = not any(x in description.upper() for x in ['TELNET', 'TCP', 'IP', 'UDP'])
+                
+                ports.append({
+                    'number': port_num,
+                    'description': description,
+                    'speed': int(speed) if speed else None,
+                    'is_rf': is_rf
+                })
+        
+        return ports
+    
+    def _parse_nodes_aliases(self, output):
+        """
+        Parse NODES output to get alias/SSID mappings.
+        
+        Returns:
+            Dictionary of {alias: ssid} like {'CCEBBS': 'WS1EC-2'}
+        """
+        aliases = {}
+        # Look for patterns like: "CCEBBS:WS1EC-2"
+        matches = re.findall(r'(\w+):(\w+(?:-\d+)?)', output)
+        for alias, callsign in matches:
+            aliases[alias] = callsign
+        
+        return aliases
+    
+    def _parse_applications(self, info_output):
+        """
+        Extract application list from INFO output.
+        
+        Returns:
+            List of application dictionaries with name, description, ssid
+        """
+        apps = []
+        lines = info_output.split('\n')
+        in_apps_section = False
+        
+        for line in lines:
+            # Look for "Applications" header
+            if 'application' in line.lower() and ('---' in lines[lines.index(line) + 1] if lines.index(line) + 1 < len(lines) else False):
+                in_apps_section = True
+                continue
+            
+            # Stop at next section header (dashes or all caps words followed by dashes)
+            if in_apps_section and ('---' in line or (line.isupper() and line.strip())):
+                in_apps_section = False
+                continue
+            
+            # Parse application lines like: "BBS     Inter-node Mail      WS1EC-2"
+            if in_apps_section and line.strip():
+                parts = line.split()
+                if len(parts) >= 2:
+                    name = parts[0]
+                    # Find SSID if present (callsign-number at end)
+                    ssid = None
+                    if len(parts) > 1 and re.match(r'\w+-\d+', parts[-1]):
+                        ssid = parts[-1]
+                        description = ' '.join(parts[1:-1])
+                    else:
+                        description = ' '.join(parts[1:])
+                    
+                    apps.append({
+                        'name': name,
+                        'description': description.strip(),
+                        'ssid': ssid
+                    })
+        
+        return apps
         """
         Parse ROUTES output to find best paths to destinations.
         
@@ -359,6 +446,11 @@ class NodeCrawler:
         try:
             # Get PORTS to identify RF ports
             ports_output = self._send_command(tn, 'PORTS')
+            ports_list = self._parse_ports(ports_output)
+            
+            # Get NODES for alias mappings
+            nodes_output = self._send_command(tn, 'NODES')
+            aliases = self._parse_nodes_aliases(nodes_output)
             
             # Get ROUTES for path optimization (BPQ only)
             routes_output = self._send_command(tn, 'ROUTES')
@@ -374,6 +466,7 @@ class NodeCrawler:
             # Get INFO
             info_output = self._send_command(tn, 'INFO')
             location = self._parse_info(info_output)
+            applications = self._parse_applications(info_output)
             
             # Detect node type
             node_type = self._detect_node_type(info_output, '>:')
@@ -383,9 +476,12 @@ class NodeCrawler:
                 'info': info_output.strip(),
                 'neighbors': [call for call, port in rf_heard],
                 'location': location,
-                'ports': [(call, port) for call, port in rf_heard],
+                'ports': ports_list,
+                'heard_on_ports': [(call, port) for call, port in rf_heard],
                 'type': node_type,
-                'routes': routes
+                'routes': routes,
+                'aliases': aliases,
+                'applications': applications
             }
             
             # Record connections
@@ -407,6 +503,10 @@ class NodeCrawler:
                 ', '.join([call for call, port in rf_heard])
             ))
             print("  Node type: {}".format(node_type))
+            print("  RF Ports: {}".format(len([p for p in ports_list if p['is_rf']])))
+            print("  Applications: {}".format(len(applications)))
+            if aliases:
+                print("  Aliases: {}".format(len(aliases)))
             
         finally:
             # Disconnect
