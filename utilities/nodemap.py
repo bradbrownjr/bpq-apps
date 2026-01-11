@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.9'
+__version__ = '1.3.10'
 
 import sys
 import telnetlib
@@ -85,6 +85,7 @@ class NodeCrawler:
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
         self.connections = []  # List of [node1, node2, port] connections
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
+        self.route_ports = {}  # Port numbers for direct neighbors: {callsign: port_number}
         self.shortest_paths = {}  # Shortest discovered path to each node: {callsign: [path]}
         self.netrom_ssid_map = {}  # Global NetRom SSID mapping: {base_callsign: 'CALLSIGN-SSID'}
         self.alias_to_call = {}  # Global alias->callsign-SSID mapping: {'CHABUR': 'KS1R-13'}
@@ -282,11 +283,25 @@ class NodeCrawler:
                         print("    Issuing command: C {} (NetRom alias for {}, hop {}/{})".format(alias, full_call, i+1, len(path)))
                 else:
                     # Fallback: use callsign-SSID from global map
-                    full_callsign = self.netrom_ssid_map.get(callsign, callsign)
-                    cmd = "C {}\r".format(full_callsign).encode('ascii')
-                    connect_target = full_callsign
+                    # For direct connections by callsign-SSID, BPQ requires port number
+                    full_callsign = self.netrom_ssid_map.get(callsign)
+                    if not full_callsign:
+                        # No SSID mapping, try adding -15 (common NetRom SSID)
+                        full_callsign = "{}-15".format(callsign)
+                    
+                    # Check if we know the port for this neighbor (from ROUTES)
+                    port_num = self.route_ports.get(callsign)
+                    if port_num:
+                        # Direct neighbor: C PORT CALLSIGN-SSID
+                        cmd = "C {} {}\r".format(port_num, full_callsign).encode('ascii')
+                        connect_target = "{} {} (port {})".format(port_num, full_callsign, port_num)
+                    else:
+                        # No port info, try without port (may fail)
+                        cmd = "C {}\r".format(full_callsign).encode('ascii')
+                        connect_target = "{} (no port)".format(full_callsign)
+                    
                     if self.verbose:
-                        print("    Issuing command: C {} (direct, hop {}/{})".format(full_callsign, i+1, len(path)))
+                        print("    Issuing command: C {} (direct, hop {}/{})".format(connect_target, i+1, len(path)))
                 
                 tn.write(cmd)
                 
@@ -707,13 +722,33 @@ class NodeCrawler:
         Parse ROUTES output to find best paths to destinations.
         
         Returns:
-            Dictionary of {callsign: quality} for direct routes
+            Tuple of (routes dict, ports dict)
+            - routes: {callsign: quality} for all routes
+            - ports: {callsign: port_number} for direct neighbors only (lines starting with >)
         """
         routes = {}
+        ports = {}
         lines = output.split('\n')
         
         for line in lines:
-            # Look for route lines with quality indicators
+            # Look for direct neighbor routes (start with >)
+            # Format: "> PORT CALLSIGN-SSID QUALITY METRIC"
+            # Example: "> 1 WS1EC-15  200 4!"
+            if line.strip().startswith('>'):
+                match = re.search(r'>\s+(\d+)\s+(\w+(?:-\d+)?)\s+(\d+)', line)
+                if match:
+                    port_num = int(match.group(1))
+                    full_call = match.group(2)
+                    quality = int(match.group(3))
+                    base_call = full_call.split('-')[0]
+                    
+                    # Validate callsign format
+                    if self._is_valid_callsign(base_call):
+                        routes[base_call] = quality
+                        ports[base_call] = port_num  # Store port for direct neighbors
+                        continue
+            
+            # Look for other route lines with quality indicators
             # Format varies but usually: DEST VIA PORT QUALITY
             match = re.search(r'(\w+(?:-\d+)?)\s+.*?(\d+)', line)
             if match:
@@ -722,9 +757,10 @@ class NodeCrawler:
                 if not self._is_valid_callsign(dest):
                     continue
                 quality = int(match.group(2))
-                routes[dest] = quality
+                if dest not in routes:  # Don't overwrite direct neighbor entries
+                    routes[dest] = quality
         
-        return routes
+        return routes, ports
     
     def crawl_node(self, callsign, path=[]):
         """
@@ -823,7 +859,9 @@ class NodeCrawler:
             if check_deadline():
                 return
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
-            routes = self._parse_routes(routes_output)
+            routes, route_ports = self._parse_routes(routes_output)
+            # Update global route_ports with direct neighbor port info from this node
+            self.route_ports.update(route_ports)
             
             # Get MHEARD from each RF port to find actual RF neighbors
             # MHEARD shows stations recently heard on RF - actual connectivity
