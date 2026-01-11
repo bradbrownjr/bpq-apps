@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.2.2
+Version: 1.3.0
 """
 
-__version__ = '1.2.2'
+__version__ = '1.3.0'
 
 import sys
 import telnetlib
@@ -84,6 +84,8 @@ class NodeCrawler:
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
         self.shortest_paths = {}  # Shortest discovered path to each node: {callsign: [path]}
         self.netrom_ssid_map = {}  # Global NetRom SSID mapping: {base_callsign: 'CALLSIGN-SSID'}
+        self.alias_to_call = {}  # Global alias->callsign-SSID mapping: {'CHABUR': 'KS1R-13'}
+        self.call_to_alias = {}  # Reverse lookup: {'KS1R': 'CHABUR'}
         self.queue = deque()  # BFS queue for crawling
         self.timeout = 10  # Telnet timeout in seconds
         
@@ -234,27 +236,24 @@ class NodeCrawler:
             
             # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):
-                # Determine full callsign with NetRom SSID from global map
-                full_callsign = self.netrom_ssid_map.get(callsign, callsign)
+                # Try NetRom alias first (preferred method)
+                alias = self.call_to_alias.get(callsign)
                 
-                # Get alias if available for better messages
-                alias = None
-                for node_data in self.nodes.values():
-                    aliases = node_data.get('aliases', {})
-                    for a, cs in aliases.items():
-                        if cs.split('-')[0] == callsign:
-                            alias = a
-                            break
-                    if alias:
-                        break
+                if alias:
+                    # Use NetRom alias: C ALIAS
+                    cmd = "C {}\r".format(alias).encode('ascii')
+                    connect_target = alias
+                    if self.debug:
+                        full_call = self.alias_to_call.get(alias, 'unknown')
+                        print("    DEBUG: Issuing command: C {} (NetRom alias for {}, hop {}/{})".format(alias, full_call, i+1, len(path)))
+                else:
+                    # Fallback: use callsign-SSID from global map
+                    full_callsign = self.netrom_ssid_map.get(callsign, callsign)
+                    cmd = "C {}\r".format(full_callsign).encode('ascii')
+                    connect_target = full_callsign
+                    if self.debug:
+                        print("    DEBUG: Issuing command: C {} (direct, hop {}/{})".format(full_callsign, i+1, len(path)))
                 
-                # Use NetRom CONNECT syntax: C CALLSIGN-SSID
-                cmd = "C {}\r".format(full_callsign).encode('ascii')
-                if self.debug:
-                    if alias:
-                        print("    DEBUG: Issuing command: C {} (alias: {}, hop {}/{})".format(full_callsign, alias, i+1, len(path)))
-                    else:
-                        print("    DEBUG: Issuing command: C {} (hop {}/{})".format(full_callsign, i+1, len(path)))
                 tn.write(cmd)
                 
                 # Wait for connection response (up to 30 seconds for RF)
@@ -276,10 +275,14 @@ class NodeCrawler:
                         # Check for failure patterns
                         if any(x in response.upper() for x in ['BUSY', 'FAILED', 'NO ROUTE', 
                                                                  'TIMEOUT', 'DISCONNECTED',
-                                                                 'NOT HEARD', 'NO ANSWER']):
-                            print("  Connection to {} failed: {}".format(
+                                                                 'NOT HEARD', 'NO ANSWER',
+                                                                 'NOT IN TABLES', 'NO ROUTE TO']):
+                            # Extract last meaningful line for error message
+                            error_line = response.strip().split('\n')[-1] if response.strip() else 'Unknown error'
+                            print("  Connection to {} (via {}) failed: {}".format(
                                 callsign, 
-                                response.strip().split('\n')[-1]
+                                connect_target,
+                                error_line
                             ))
                             tn.close()
                             return None
@@ -292,7 +295,7 @@ class NodeCrawler:
                         return None
                 
                 if not connected:
-                    print("  Connection to {} timed out (no CONNECTED response)".format(callsign))
+                    print("  Connection to {} (via {}) timed out (no CONNECTED response)".format(callsign, connect_target))
                     tn.close()
                     return None
                 
@@ -680,8 +683,22 @@ class NodeCrawler:
             nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
             aliases, netrom_ssids, neighbors_from_nodes = self._parse_nodes_aliases(nodes_output)
             
-            # Update global NetRom SSID map with discovered SSIDs
+            # Update global NetRom SSID map and alias mappings
             self.netrom_ssid_map.update(netrom_ssids)
+            self.alias_to_call.update(aliases)
+            # Build reverse lookup: base callsign -> NetRom alias
+            for alias, full_call in aliases.items():
+                base_call = full_call.split('-')[0]
+                # Only store if this is likely a NetRom node (not BBS/RMS specific SSIDs)
+                # Prefer higher SSIDs for routing (typically -15 for NetRom, -10 for RMS, -2 for BBS)
+                if '-' in full_call:
+                    ssid = int(full_call.split('-')[1])
+                    # Only update if no alias yet, or this SSID is higher (likely NetRom)
+                    if base_call not in self.call_to_alias or ssid >= 10:
+                        self.call_to_alias[base_call] = alias
+                else:
+                    if base_call not in self.call_to_alias:
+                        self.call_to_alias[base_call] = alias
             
             # Filter out the current node from neighbors (including different SSIDs of same callsign)
             # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
@@ -705,8 +722,14 @@ class NodeCrawler:
                     heard = self._parse_mheard(mheard_output)
                     mheard_neighbors.extend([call for call, p in heard])
             
-            # Combine neighbors from NODES and MHEARD, exclude self (all SSIDs)
-            all_neighbors = [n for n in list(set(neighbors_from_nodes + mheard_neighbors)) if n != base_callsign]
+            # Prioritize MHEARD (recently heard) over NODES (routing table may be stale)
+            # Start with MHEARD neighbors, then add NODES neighbors not already in list
+            all_neighbors = list(mheard_neighbors)  # Start with MHEARD (RF confirmed)
+            for neighbor in neighbors_from_nodes:
+                if neighbor not in all_neighbors:
+                    all_neighbors.append(neighbor)
+            # Exclude self (all SSIDs)
+            all_neighbors = [n for n in all_neighbors if n != base_callsign]
             
             # Get INFO
             if check_deadline():
