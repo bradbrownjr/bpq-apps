@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.2.0
+Version: 1.2.1
 """
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 import sys
 import telnetlib
@@ -1072,6 +1072,9 @@ def main():
         print("\nNetwork map complete!")
         print("Nodes discovered: {}".format(len(crawler.nodes)))
         print("Connections found: {}".format(len(crawler.connections)))
+        
+        # Notify successful completion
+        crawler._send_notification("Successfully crawled {} nodes!".format(len(crawler.nodes)))
         
     except KeyboardInterrupt:
         print("\n\nCrawl interrupted by user.")
