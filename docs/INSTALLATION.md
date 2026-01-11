@@ -210,17 +210,41 @@ Place scripts in `~/utilities/` or `~/apps/` adjacent to `~/linbpq/`:
 
 ### Setup
 
+**Option 1: Clone entire repository**
 ```bash
 # Create utilities directory
 mkdir -p ~/utilities
 cd ~/utilities
 
-# Clone repo (or copy utilities/)
+# Clone repo
 git clone https://github.com/bradbrownjr/bpq-apps.git
 cd bpq-apps/utilities
 
 # Make scripts executable
 chmod +x *.py
+```
+
+**Option 2: Download individual utilities**
+```bash
+# Create utilities directory
+mkdir -p ~/utilities
+cd ~/utilities
+
+# Download specific utility (example: nodemap.py)
+wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py
+chmod +x nodemap.py
+
+# Test help
+./nodemap.py --help
+```
+
+**Option 3: Update existing utility**
+```bash
+cd ~/utilities
+
+# Update to latest version
+wget -O nodemap.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py
+chmod +x nodemap.py
 ```
 
 ### Configuration Detection
