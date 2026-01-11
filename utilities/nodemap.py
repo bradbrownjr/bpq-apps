@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.11'
+__version__ = '1.3.12'
 
 import sys
 import telnetlib
@@ -286,8 +286,11 @@ class NodeCrawler:
                     # For direct connections by callsign-SSID, BPQ requires port number
                     full_callsign = self.netrom_ssid_map.get(callsign)
                     if not full_callsign:
-                        # No SSID mapping, try adding -15 (common NetRom SSID)
-                        full_callsign = "{}-15".format(callsign)
+                        # No NetRom SSID mapping found
+                        # Use base callsign (no SSID) to let node pick appropriate SSID
+                        if self.verbose:
+                            print("    No NetRom SSID found for {}, using base callsign".format(callsign))
+                        full_callsign = callsign
                     
                     # Check if we know the port for this neighbor (from ROUTES)
                     port_num = self.route_ports.get(callsign)
@@ -860,21 +863,40 @@ class NodeCrawler:
             # Discard neighbors_from_nodes - NODES is routing table, not neighbor list
             
             # Update global NetRom SSID map and alias mappings
-            self.netrom_ssid_map.update(netrom_ssids)
-            self.alias_to_call.update(aliases)
             # Build reverse lookup: base callsign -> NetRom alias
+            # Strategy: Prefer -15 (NetRom standard), avoid application SSIDs (-2 BBS, -10 RMS)
             for alias, full_call in aliases.items():
                 base_call = full_call.split('-')[0]
-                # Only store if this is likely a NetRom node (not BBS/RMS specific SSIDs)
-                # Prefer higher SSIDs for routing (typically -15 for NetRom, -10 for RMS, -2 for BBS)
+                
+                # Store all callsign-SSID mappings for potential use
                 if '-' in full_call:
                     ssid = int(full_call.split('-')[1])
-                    # Only update if no alias yet, or this SSID is higher (likely NetRom)
-                    if base_call not in self.call_to_alias or ssid >= 10:
-                        self.call_to_alias[base_call] = alias
+                    # Only store NetRom routing SSIDs, not application SSIDs
+                    # NetRom typically uses -15, sometimes -13, -14
+                    # Application SSIDs: -2 (BBS), -10 (RMS), -11 (PBBS)
+                    if ssid == 15 or (ssid >= 13 and ssid <= 15):
+                        # This is likely the NetRom node SSID
+                        self.netrom_ssid_map[base_call] = full_call
+                        # Always prefer -15 for alias mapping
+                        if base_call not in self.call_to_alias or ssid == 15:
+                            self.call_to_alias[base_call] = alias
+                    elif ssid not in [2, 10, 11]:
+                        # Other SSIDs that aren't known applications
+                        # Store but don't use for alias if we have a better one
+                        if base_call not in self.netrom_ssid_map:
+                            self.netrom_ssid_map[base_call] = full_call
+                        if base_call not in self.call_to_alias:
+                            self.call_to_alias[base_call] = alias
+                    # Skip application SSIDs (-2, -10, -11) for routing
                 else:
+                    # No SSID, use base callsign
+                    if base_call not in self.netrom_ssid_map:
+                        self.netrom_ssid_map[base_call] = full_call
                     if base_call not in self.call_to_alias:
                         self.call_to_alias[base_call] = alias
+            
+            # Update global alias mapping
+            self.alias_to_call.update(aliases)
             
             # Filter out the current node from neighbors (including different SSIDs of same callsign)
             # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
