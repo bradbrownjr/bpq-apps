@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.0
+Version: 1.3.1
 """
 
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 import sys
 import telnetlib
@@ -468,8 +468,8 @@ class NodeCrawler:
         
         for line in lines:
             # Look for lines like: "  1 433.300 MHz 1200 BAUD"
-            # or "  8 AX/IP/UDP" or "  9 Telnet Server"
-            match = re.search(r'^\s*(\d+)\s+(.+?)(?:\s+@\s+|\s+at\s+)?(\d+)?\s*(?:b/s|BAUD)?', line, re.IGNORECASE)
+            # or "  1 433.30 MHz @ 1200 Baud" or "  8 AX/IP/UDP" or "  9 Telnet Server"
+            match = re.search(r'^\s*(\d+)\s+(.+?)(?:\s+@?\s+)?(\d+)?\s*(?:b/s|BAUD|Baud)?', line, re.IGNORECASE)
             if match:
                 port_num = int(match.group(1))
                 description = match.group(2).strip()
@@ -677,11 +677,13 @@ class NodeCrawler:
             ports_output = self._send_command(tn, 'PORTS', timeout=cmd_timeout)
             ports_list = self._parse_ports(ports_output)
             
-            # Get NODES for alias mappings and neighbor list
+            # Get NODES for alias mappings only (not for neighbor discovery)
+            # NODES shows routing table (all reachable nodes), not RF neighbors
             if check_deadline():
                 return
             nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
-            aliases, netrom_ssids, neighbors_from_nodes = self._parse_nodes_aliases(nodes_output)
+            aliases, netrom_ssids, _ = self._parse_nodes_aliases(nodes_output)
+            # Discard neighbors_from_nodes - NODES is routing table, not neighbor list
             
             # Update global NetRom SSID map and alias mappings
             self.netrom_ssid_map.update(netrom_ssids)
@@ -703,7 +705,6 @@ class NodeCrawler:
             # Filter out the current node from neighbors (including different SSIDs of same callsign)
             # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
             base_callsign = callsign.split('-')[0] if '-' in callsign else callsign
-            neighbors_from_nodes = [n for n in neighbors_from_nodes if n != base_callsign]
             
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
@@ -711,7 +712,8 @@ class NodeCrawler:
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
             routes = self._parse_routes(routes_output)
             
-            # Get MHEARD from each RF port for detailed heard info
+            # Get MHEARD from each RF port to find actual RF neighbors
+            # MHEARD shows stations recently heard on RF - actual connectivity
             mheard_neighbors = []
             for port_info in ports_list:
                 if port_info['is_rf']:
@@ -722,14 +724,9 @@ class NodeCrawler:
                     heard = self._parse_mheard(mheard_output)
                     mheard_neighbors.extend([call for call, p in heard])
             
-            # Prioritize MHEARD (recently heard) over NODES (routing table may be stale)
-            # Start with MHEARD neighbors, then add NODES neighbors not already in list
-            all_neighbors = list(mheard_neighbors)  # Start with MHEARD (RF confirmed)
-            for neighbor in neighbors_from_nodes:
-                if neighbor not in all_neighbors:
-                    all_neighbors.append(neighbor)
-            # Exclude self (all SSIDs)
-            all_neighbors = [n for n in all_neighbors if n != base_callsign]
+            # Use MHEARD exclusively for neighbors (stations actually heard on RF)
+            # Remove duplicates and exclude self (all SSIDs)
+            all_neighbors = list(set([n for n in mheard_neighbors if n != base_callsign]))
             
             # Get INFO
             if check_deadline():
