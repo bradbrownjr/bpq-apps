@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.3'
+__version__ = '1.3.4'
 
 import sys
 import telnetlib
@@ -55,7 +55,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, debug=False, notify_url=None):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None):
         """
         Initialize crawler.
         
@@ -66,7 +66,7 @@ class NodeCrawler:
             max_hops: Maximum hops to traverse (default: 10)
             username: Telnet login username (default: None, prompts when needed)
             password: Telnet login password (default: None, prompts when needed)
-            debug: Enable debug output (default: False)
+            verbose: Enable verbose output (default: False)
             notify_url: URL to POST notifications to (default: None)
         """
         self.host = host
@@ -75,7 +75,7 @@ class NodeCrawler:
         self.max_hops = max_hops
         self.username = username  # None means prompt when needed
         self.password = password  # None means prompt when needed
-        self.debug = debug
+        self.verbose = verbose
         self.notify_url = notify_url
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
@@ -176,8 +176,8 @@ class NodeCrawler:
                 import urllib2
                 urllib2.urlopen(self.notify_url, data=message, timeout=5)
         except Exception as e:
-            if self.debug:
-                print("    DEBUG: Notification failed: {}".format(e))
+            if self.verbose:
+                print("    Notification failed: {}".format(e))
     
     def _connect_to_node(self, path=[]):
         """
@@ -243,16 +243,16 @@ class NodeCrawler:
                     # Use NetRom alias: C ALIAS
                     cmd = "C {}\r".format(alias).encode('ascii')
                     connect_target = alias
-                    if self.debug:
+                    if self.verbose:
                         full_call = self.alias_to_call.get(alias, 'unknown')
-                        print("    DEBUG: Issuing command: C {} (NetRom alias for {}, hop {}/{})".format(alias, full_call, i+1, len(path)))
+                        print("    Issuing command: C {} (NetRom alias for {}, hop {}/{})".format(alias, full_call, i+1, len(path)))
                 else:
                     # Fallback: use callsign-SSID from global map
                     full_callsign = self.netrom_ssid_map.get(callsign, callsign)
                     cmd = "C {}\r".format(full_callsign).encode('ascii')
                     connect_target = full_callsign
-                    if self.debug:
-                        print("    DEBUG: Issuing command: C {} (direct, hop {}/{})".format(full_callsign, i+1, len(path)))
+                    if self.verbose:
+                        print("    Issuing command: C {} (direct, hop {}/{})".format(full_callsign, i+1, len(path)))
                 
                 tn.write(cmd)
                 
@@ -311,15 +311,15 @@ class NodeCrawler:
     def _send_command(self, tn, command, wait_for=b'>', timeout=5):
         """Send command and read response with timeout protection."""
         try:
-            if self.debug:
-                print("    DEBUG: Sending command: {}".format(command))
+            if self.verbose:
+                print("    Sending command: {}".format(command))
             tn.write("{}\r".format(command).encode('ascii'))
             # Short delay for command to be received
             time.sleep(0.5)
             response = tn.read_until(wait_for, timeout=timeout)
             decoded = response.decode('ascii', errors='ignore')
-            if self.debug:
-                print("    DEBUG: Response ({} bytes):".format(len(decoded)))
+            if self.verbose:
+                print("    Response ({} bytes):".format(len(decoded)))
                 print("    {}".format(decoded[:200] if len(decoded) > 200 else decoded))
             return decoded
         except EOFError:
@@ -1012,7 +1012,7 @@ def main():
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --notify URL     Send notifications to webhook URL")
-        print("  --debug          Show command/response details for troubleshooting")
+        print("  --verbose, -v    Show detailed command/response output")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
@@ -1043,7 +1043,7 @@ def main():
     username = None
     password = None
     notify_url = None
-    debug = '--debug' in sys.argv
+    verbose = '--verbose' in sys.argv or '-v' in sys.argv
     
     # Parse positional and optional arguments
     i = 1
@@ -1077,7 +1077,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, debug=debug, notify_url=notify_url)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url)
     
     # Only require local callsign if no start_node provided
     if not start_node and not crawler.callsign:
