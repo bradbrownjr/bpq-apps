@@ -90,11 +90,12 @@ class NodeCrawler:
                     with open(path, 'r') as f:
                         in_telnet_port = False
                         for line in f:
+                            line_upper = line.upper()
                             # Start of Telnet port section
-                            if 'DRIVER=Telnet' in line.upper():
+                            if 'DRIVER=TELNET' in line_upper or 'ID=TELNET SERVER' in line_upper:
                                 in_telnet_port = True
                             # End of port section
-                            elif in_telnet_port and 'ENDPORT' in line.upper():
+                            elif 'ENDPORT' in line_upper:
                                 in_telnet_port = False
                             # Look for TCPPORT only in Telnet port section
                             elif in_telnet_port:
