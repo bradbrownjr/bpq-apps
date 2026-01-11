@@ -29,6 +29,20 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Column-aligned tables, terse messages
 - No colors, progress bars, Unicode, chatty prompts
 
+## Repository Structure
+```
+bpq-apps/
+├── apps/              # User-facing BPQ applications (Python/bash)
+├── games/             # Interactive game servers (standalone TCP)
+├── docs/
+│   ├── INSTALLATION.md       # Complete setup guide
+│   ├── examples/
+│   │   ├── etc/             # inetd.conf, services samples
+│   │   └── linbpq/          # bpq32.cfg samples
+│   └── images/              # Screenshots, example outputs
+└── .github/           # This file (copilot-instructions.md)
+```
+
 ## Testing
 - SSH: ect@ws1ec.mainepacketradio.org -p 4722
 - Verify Py3.5.3 compatibility, ASCII output

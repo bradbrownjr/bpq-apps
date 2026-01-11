@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Streamlined main README.md to focus on features/capabilities with links to detailed docs
 - Extracted installation instructions from README.md to `docs/INSTALLATION.md`
 - Updated all path references throughout documentation
+- Added repository structure documentation to copilot-instructions.md
 
 ### Removed
 - `apps/images/` directory (consolidated into `docs/images/`)
