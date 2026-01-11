@@ -75,7 +75,7 @@ class NodeCrawler:
         self.timeout = 10  # Telnet timeout in seconds
         
     def _find_bpq_port(self):
-        """Find BPQ telnet port from bpq32.cfg."""
+        """Find BPQ telnet port from bpq32.cfg (Telnet Server port only)."""
         config_paths = [
             '../linbpq/bpq32.cfg',          # Script in utilities/ or apps/, cfg in linbpq/
             '/home/pi/linbpq/bpq32.cfg',    # Standard RPi location
@@ -88,13 +88,21 @@ class NodeCrawler:
             if os.path.exists(path):
                 try:
                     with open(path, 'r') as f:
+                        in_telnet_port = False
                         for line in f:
-                            # Look for TCPPORT=8010 or similar
-                            match = re.search(r'TCPPORT\s*=\s*(\d+)', line, re.IGNORECASE)
-                            if match:
-                                port = int(match.group(1))
-                                print("Found BPQ telnet port: {}".format(port))
-                                return port
+                            # Start of Telnet port section
+                            if 'DRIVER=Telnet' in line.upper():
+                                in_telnet_port = True
+                            # End of port section
+                            elif in_telnet_port and 'ENDPORT' in line.upper():
+                                in_telnet_port = False
+                            # Look for TCPPORT only in Telnet port section
+                            elif in_telnet_port:
+                                match = re.search(r'TCPPORT\s*=\s*(\d+)', line, re.IGNORECASE)
+                                if match:
+                                    port = int(match.group(1))
+                                    print("Found BPQ telnet port: {}".format(port))
+                                    return port
                 except Exception as e:
                     print("Error reading {}: {}".format(path, e))
         
@@ -406,20 +414,25 @@ class NodeCrawler:
     
     def _parse_nodes_aliases(self, output):
         """
-        Parse NODES output to get alias/SSID mappings.
+        Parse NODES output to get alias/SSID mappings and neighbor callsigns.
         
         Returns:
-            Dictionary of {alias: ssid} like {'CCEBBS': 'WS1EC-2'}
+            Tuple of (aliases dict, neighbors list)
         """
         aliases = {}
+        neighbors = []
         # Look for patterns like: "CCEBBS:WS1EC-2"
         matches = re.findall(r'(\w+):(\w+(?:-\d+)?)', output)
         for alias, callsign in matches:
             # Validate callsign format
             if self._is_valid_callsign(callsign):
                 aliases[alias] = callsign
+                # Extract base callsign (without SSID) for neighbor list
+                base_call = callsign.split('-')[0]
+                if base_call not in neighbors:
+                    neighbors.append(base_call)
         
-        return aliases
+        return aliases, neighbors
     
     def _parse_applications(self, info_output):
         """
@@ -566,11 +579,11 @@ class NodeCrawler:
             ports_output = self._send_command(tn, 'PORTS', timeout=cmd_timeout)
             ports_list = self._parse_ports(ports_output)
             
-            # Get NODES for alias mappings
+            # Get NODES for alias mappings and neighbor list
             if check_deadline():
                 return
             nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
-            aliases = self._parse_nodes_aliases(nodes_output)
+            aliases, neighbors_from_nodes = self._parse_nodes_aliases(nodes_output)
             
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
@@ -578,14 +591,19 @@ class NodeCrawler:
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
             routes = self._parse_routes(routes_output)
             
-            # Get MHEARD
-            if check_deadline():
-                return
-            mheard_output = self._send_command(tn, 'MHEARD', timeout=cmd_timeout)
-            heard = self._parse_mheard(mheard_output)
+            # Get MHEARD from each RF port for detailed heard info
+            mheard_neighbors = []
+            for port_info in ports_list:
+                if port_info['is_rf']:
+                    if check_deadline():
+                        return
+                    port_num = port_info['number']
+                    mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout)
+                    heard = self._parse_mheard(mheard_output)
+                    mheard_neighbors.extend([call for call, p in heard])
             
-            # Filter to RF ports only
-            rf_heard = self._filter_rf_ports(heard, ports_output)
+            # Combine neighbors from NODES and MHEARD
+            all_neighbors = list(set(neighbors_from_nodes + mheard_neighbors))
             
             # Get INFO
             if check_deadline():
@@ -606,10 +624,10 @@ class NodeCrawler:
             # Store node data
             self.nodes[callsign] = {
                 'info': info_output.strip(),
-                'neighbors': [call for call, port in rf_heard],
+                'neighbors': all_neighbors,
                 'location': location,
                 'ports': ports_list,
-                'heard_on_ports': [(call, port) for call, port in rf_heard],
+                'heard_on_ports': [(call, None) for call in all_neighbors],
                 'type': node_type,
                 'routes': routes,
                 'aliases': aliases,
@@ -618,11 +636,11 @@ class NodeCrawler:
             }
             
             # Record connections
-            for neighbor, port in rf_heard:
+            for neighbor in all_neighbors:
                 self.connections.append({
                     'from': callsign,
                     'to': neighbor,
-                    'port': port,
+                    'port': None,
                     'quality': routes.get(neighbor, 0)
                 })
                 
@@ -631,9 +649,9 @@ class NodeCrawler:
                     # Prefer routes through nodes with better quality scores
                     self.queue.append((neighbor, path + [callsign]))
             
-            print("  Found {} RF neighbors: {}".format(
-                len(rf_heard),
-                ', '.join([call for call, port in rf_heard])
+            print("  Found {} neighbors: {}".format(
+                len(all_neighbors),
+                ', '.join(all_neighbors)
             ))
             print("  Node type: {}".format(node_type))
             print("  RF Ports: {}".format(len([p for p in ports_list if p['is_rf']])))
