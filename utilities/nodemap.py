@@ -146,12 +146,36 @@ class NodeCrawler:
             telnetlib.Telnet object or None
         """
         try:
+            # Show progress for local connections
+            if not path:
+                print("  Connecting to localhost:{}...".format(self.port))
+            
             tn = telnetlib.Telnet(self.host, self.port, self.timeout)
             time.sleep(1)
             
-            # If connecting to local node, just wait for prompt
+            # If connecting to local node, handle authentication
             if not path:
+                # Read initial response (may be login prompt or direct prompt)
+                initial = tn.read_very_eager().decode('ascii', errors='ignore')
+                
+                # Check if login is required
+                if 'user:' in initial.lower() or 'callsign:' in initial.lower():
+                    print("  Authentication required...")
+                    # Send callsign as username
+                    tn.write("{}\r".format(self.callsign).encode('ascii'))
+                    time.sleep(0.5)
+                    
+                    # Check for password prompt
+                    response = tn.read_very_eager().decode('ascii', errors='ignore')
+                    if 'password:' in response.lower():
+                        # No password configured, just press enter
+                        tn.write(b"\r")
+                        time.sleep(0.5)
+                
+                # Wait for command prompt
+                print("  Waiting for node prompt...")
                 tn.read_until(b'>', timeout=5)
+                print("  Connected to local node")
                 return tn
             
             # Connect through intermediate nodes
@@ -211,7 +235,8 @@ class NodeCrawler:
         """Send command and read response with timeout protection."""
         try:
             tn.write("{}\r".format(command).encode('ascii'))
-            time.sleep(1)
+            # Short delay for command to be received
+            time.sleep(0.5)
             response = tn.read_until(wait_for, timeout=timeout)
             return response.decode('ascii', errors='ignore')
         except EOFError:
