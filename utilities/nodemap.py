@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.1
+Version: 1.1.2
 """
 
-__version__ = '1.1.1'
+__version__ = '1.1.2'
 
 import sys
 import telnetlib
@@ -603,11 +603,12 @@ class NodeCrawler:
         
         # Build readable path description
         if not path:
-            path_desc = " (local node)"
-        elif len(path) == 1:
-            path_desc = " (direct connection)"
+            if callsign == self.callsign:
+                path_desc = " (local node)"
+            else:
+                path_desc = " (direct connection)"
         else:
-            path_desc = " (via {})".format(' > '.join(path[:-1]))
+            path_desc = " (via {})".format(' > '.join(path))
         
         print("Crawling {}{}".format(callsign, path_desc))
         
@@ -620,11 +621,13 @@ class NodeCrawler:
         cmd_timeout = min(5 + (hop_count * 10), 60)
         
         # Connect to node
-        # path now includes full route including target callsign
-        # For local node: path=[] (connect via telnet only)
-        # For direct neighbor: path=[KC1JMH] (localhost then C KC1JMH-15)
-        # For multi-hop: path=[KC1JMH, N1XP] (localhost, C KC1JMH-15, C N1XP-15)
-        tn = self._connect_to_node(path)
+        # path contains intermediate hops only (not target)
+        # For local node: path=[] (no intermediate hops)
+        # For direct neighbor: callsign=KC1JMH, path=[] -> connect with C KC1JMH-15
+        # For multi-hop: callsign=KS1R, path=[KC1JMH] -> C KC1JMH-15, then C KS1R-15
+        connect_path = path + [callsign] if path else ([callsign] if callsign != self.callsign else [])
+        
+        tn = self._connect_to_node(connect_path)
         if not tn:
             print("  Skipping {} (connection failed)".format(callsign))
             self.failed.add(callsign)
@@ -724,18 +727,20 @@ class NodeCrawler:
                 
                 # Add unvisited neighbors to queue with shortest path optimization
                 if neighbor not in self.visited and neighbor not in self.failed:
-                    # Determine path to this neighbor
-                    # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[KC1JMH]
-                    #   (direct NetRom connection via C KC1JMH-15)
-                    # If we're at KC1JMH (path=[KC1JMH]), queue N1XP with path=[KC1JMH, N1XP]
-                    #   (connect via KC1JMH to reach N1XP)
+                    # Determine path to this neighbor (intermediate hops only, not target)
+                    # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[]
+                    #   (direct connection from local, no intermediate hops)
+                    # If we're at KC1JMH (path=[]), queue KS1R with path=[KC1JMH]
+                    #   (go through KC1JMH to reach KS1R)
+                    # If we're at KS1R (path=[KC1JMH]), queue N1XP with path=[KC1JMH, KS1R]
+                    #   (go through KC1JMH, then KS1R, to reach N1XP)
                     if path:
-                        # We're not at local node, path includes route to current node
-                        # Add neighbor to create full path to neighbor
-                        new_path = path + [neighbor]
+                        # We're not at local node, path contains route to current node
+                        # Current node becomes an intermediate hop to reach neighbor
+                        new_path = path + [callsign]
                     else:
-                        # We're at local node, neighbor is direct connection
-                        new_path = [neighbor]
+                        # We're at local node, direct connection to neighbor (no intermediate hops)
+                        new_path = []
                     
                     # Check if this is a shorter path than previously discovered
                     if neighbor not in self.shortest_paths or len(new_path) < len(self.shortest_paths[neighbor]):
