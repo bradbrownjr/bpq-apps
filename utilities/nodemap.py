@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
 import sys
 import telnetlib
@@ -392,6 +392,9 @@ class NodeCrawler:
         """
         Extract location from INFO output.
         
+        Note: INFO is freeform text entered by sysop. Parsing is unreliable
+        and should be given less weight than structured command output.
+        
         Returns:
             Dictionary with location data (lat, lon, grid, city, state)
         """
@@ -421,6 +424,9 @@ class NodeCrawler:
     def _detect_node_type(self, info_output, prompt_chars):
         """
         Detect node software type (BPQ, FBB, JNOS).
+        
+        Note: Detection from INFO text is unreliable (sysop-entered freeform).
+        Prompt character detection (> or :) is more reliable fallback.
         
         Args:
             info_output: Output from INFO command
@@ -523,6 +529,9 @@ class NodeCrawler:
     def _parse_applications(self, info_output):
         """
         Extract application list from INFO output.
+        
+        Note: INFO is freeform text entered by sysop. Application list format
+        and content varies widely and should be considered unreliable.
         
         Returns:
             List of application dictionaries with name, description, ssid
@@ -745,18 +754,23 @@ class NodeCrawler:
             node_type = self._detect_node_type(info_output, '>:')
             
             # Store node data
+            # Note: INFO-derived data (location, applications, type from keywords) is marked
+            # with 'source' to indicate reliability. Structured command data is preferred.
             self.nodes[callsign] = {
                 'info': info_output.strip(),
-                'neighbors': all_neighbors,
-                'location': location,
-                'ports': ports_list,
+                'neighbors': all_neighbors,  # From MHEARD (reliable)
+                'location': location,  # From INFO (unreliable, sysop-entered)
+                'location_source': 'info',  # Mark as low-confidence
+                'ports': ports_list,  # From PORTS (reliable)
                 'heard_on_ports': [(call, None) for call in all_neighbors],
-                'type': node_type,
-                'routes': routes,
-                'aliases': aliases,
-                'netrom_ssids': netrom_ssids,  # Store for connections
-                'applications': applications,
-                'commands': commands
+                'type': node_type,  # From INFO or prompt (low/medium confidence)
+                'type_source': 'info' if 'BPQ' in info_output.upper() or 'FBB' in info_output.upper() else 'prompt',
+                'routes': routes,  # From ROUTES (reliable)
+                'aliases': aliases,  # From NODES (reliable)
+                'netrom_ssids': netrom_ssids,  # From NODES (reliable)
+                'applications': applications,  # From INFO (unreliable, sysop-entered)
+                'applications_source': 'info',  # Mark as low-confidence
+                'commands': commands  # From ? command (reliable)
             }
             
             # Record connections
