@@ -52,7 +52,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None):
         """
         Initialize crawler.
         
@@ -61,11 +61,15 @@ class NodeCrawler:
             port: BPQ telnet port (auto-detected if None)
             callsign: Your callsign for login (auto-detected if None)
             max_hops: Maximum hops to traverse (default: 10)
+            username: Telnet login username (default: None, tries callsign)
+            password: Telnet login password (default: None, uses empty password)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
         self.callsign = callsign if callsign else self._find_callsign()
         self.max_hops = max_hops
+        self.username = username if username else (callsign if callsign else self._find_callsign())
+        self.password = password if password else ''
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -170,15 +174,15 @@ class NodeCrawler:
                 # Check if login is required
                 if 'user:' in initial.lower() or 'callsign:' in initial.lower():
                     print("  Authentication required...")
-                    # Send callsign as username
-                    tn.write("{}\r".format(self.callsign).encode('ascii'))
+                    # Send username
+                    tn.write("{}\r".format(self.username).encode('ascii'))
                     time.sleep(0.5)
                     
                     # Check for password prompt
                     response = tn.read_very_eager().decode('ascii', errors='ignore')
                     if 'password:' in response.lower():
-                        # No password configured, just press enter
-                        tn.write(b"\r")
+                        # Send password (may be empty)
+                        tn.write("{}\r".format(self.password).encode('ascii'))
                         time.sleep(0.5)
                 
                 # Wait for command prompt
@@ -833,17 +837,20 @@ def main():
         print("BPQ Node Map Crawler")
         print("=" * 50)
         print("\nAutomatically crawls packet radio network to discover topology.")
-        print("\nUsage: {} [MAX_HOPS] [START_NODE] [--overwrite]".format(sys.argv[0]))
+        print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
         print("\nArguments:")
         print("  MAX_HOPS         Maximum traversal depth (default: 10)")
         print("  START_NODE       Callsign to begin crawl (default: local node)")
         print("\nOptions:")
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
+        print("  --user USERNAME  Telnet login username (default: NODECALL)")
+        print("  --pass PASSWORD  Telnet login password (default: empty)")
         print("  --help, -h, /?   Show this help message")
-        print("\nExamples:")
+        print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
+        print("  {} 10 --user KC1JMH --pass PASSWORD  # With authentication".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
         print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
@@ -862,26 +869,57 @@ def main():
     print("=" * 50)
     
     # Parse command line args
-    max_hops = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-    start_node = sys.argv[2].upper() if len(sys.argv) > 2 else None
+    max_hops = 10
+    start_node = None
+    username = None
+    password = None
+    
+    # Parse positional and optional arguments
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        if arg.startswith('-'):
+            break
+        if i == 1 and arg.isdigit():
+            max_hops = int(arg)
+        elif i == 2:
+            start_node = arg.upper()
+        i += 1
+    
+    # Parse options
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        if arg == '--user' and i + 1 < len(sys.argv):
+            username = sys.argv[i + 1]
+            i += 2
+        elif arg == '--pass' and i + 1 < len(sys.argv):
+            password = sys.argv[i + 1]
+            i += 2
+        else:
+            i += 1
+    
     # Merge mode is default; use --overwrite to disable
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler
-    crawler = NodeCrawler(max_hops=max_hops)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password)
     
     # Only require local callsign if no start_node provided
     if not start_node and not crawler.callsign:
         print("\nError: Could not determine local node callsign.")
         print("Ensure NODECALL is set in bpq32.cfg or provide a starting callsign.")
-        print("\nUsage: {} [MAX_HOPS] [START_NODE] [--overwrite]".format(sys.argv[0]))
+        print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
         print("  MAX_HOPS: Maximum traversal depth (default: 10)")
         print("  START_NODE: Callsign to begin crawl (default: local node)")
         print("  --overwrite, -o: Overwrite existing data (default: merge)")
+        print("  --user USERNAME: Telnet login username (default: NODECALL)")
+        print("  --pass PASSWORD: Telnet login password (default: empty)")
         print("\nExamples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
+        print("  {} 10 --user KC1JMH --pass PASSWORD  # With authentication".format(sys.argv[0]))
         print("\nInstallation:")
         print("  Place in ~/utilities/ or ~/apps/ adjacent to ~/linbpq/")
         sys.exit(1)
