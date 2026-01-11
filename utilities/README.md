@@ -4,24 +4,25 @@ Sysop tools for BBS management, network mapping, and maintenance tasks.
 
 ## Installation
 
-### Recommended Locations
+### Recommended Layout
 
-**Option 1: Dedicated utilities directory** (Recommended)
-```bash
-/home/pi/utilities/
+Scripts should be placed in `~/utilities/` or `~/apps/` adjacent to `~/linbpq/`:
+
+```
+/home/pi/               (or /home/ect/)
+├── apps/               # User-facing BPQ applications
+├── utilities/          # Sysop tools (nodemap.py, etc.)
+├── linbpq/
+│   └── bpq32.cfg       # Auto-detected by scripts
+└── ...
 ```
 
-**Option 2: Same directory as linbpq**
-```bash
-/home/pi/linbpq/
-```
-
-The scripts auto-detect `bpq32.cfg` location from these paths:
-- Same directory as script
-- `../linbpq/bpq32.cfg` (script in utilities/, config in linbpq/)
-- `linbpq/bpq32.cfg` (script in parent, config in linbpq/)
-- `/home/pi/linbpq/bpq32.cfg`
-- `/home/ect/linbpq/bpq32.cfg`
+The scripts auto-detect `bpq32.cfg` from:
+1. `../linbpq/bpq32.cfg` (script in utilities/ or apps/, config in linbpq/)
+2. `/home/pi/linbpq/bpq32.cfg`
+3. `/home/ect/linbpq/bpq32.cfg`
+4. Same directory as script
+5. `linbpq/bpq32.cfg` (script in parent)
 
 ### Setup
 
@@ -45,40 +46,40 @@ Automatically crawls packet radio network via RF connections to discover nodes, 
 ### Usage
 
 ```bash
-./nodemap.py [MAX_HOPS] [START_NODE] [--merge]
+./nodemap.py [MAX_HOPS] [START_NODE] [--overwrite]
 ```
 
 **Parameters:**
 - `MAX_HOPS` - Maximum hops to traverse (default: 10)
 - `START_NODE` - Callsign to start from (default: local node from bpq32.cfg)
-- `--merge` or `-m` - Merge with existing nodemap.json instead of overwriting
+- `--overwrite` or `-o` - Overwrite existing data (default: merge mode)
 
 ### Data Storage
 
-**Default mode (overwrite):**
-- Completely replaces `nodemap.json` and `nodemap.csv` each run
-- Good for fresh network scans
-
-**Merge mode (`--merge`):**
+**Default mode (merge):**
 - Loads existing `nodemap.json`
 - Updates nodes with new data (overwrites if callsign exists)
 - Preserves historical data from previous crawls
-- Useful for incremental network discovery
+- Ideal for incremental network discovery and resuming after interruptions
+
+**Overwrite mode (`--overwrite`):**
+- Completely replaces `nodemap.json` and `nodemap.csv` each run
+- Use for fresh network scans or when data needs reset
 
 ### Examples
 
 ```bash
-# Crawl 5 hops from local node (overwrites existing data)
+# Crawl 5 hops from local node (merge with existing)
 ./nodemap.py 5
 
-# Crawl 10 hops starting from WS1EC
+# Crawl 10 hops starting from WS1EC (merge mode)
 ./nodemap.py 10 WS1EC
 
-# Crawl and merge with existing data
-./nodemap.py 5 --merge
+# Crawl and completely replace existing data
+./nodemap.py 5 --overwrite
 
-# Resume from where connection was lost
-./nodemap.py 10 KC1JMH --merge
+# Resume from where connection was lost (merge mode)
+./nodemap.py 10 KC1JMH
 ```
 
 ### Output Files

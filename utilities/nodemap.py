@@ -77,11 +77,11 @@ class NodeCrawler:
     def _find_bpq_port(self):
         """Find BPQ telnet port from bpq32.cfg."""
         config_paths = [
-            'bpq32.cfg',                    # Same directory as script
-            '../linbpq/bpq32.cfg',          # Script in utilities/, cfg in linbpq/
-            'linbpq/bpq32.cfg',             # Script in parent, cfg in linbpq/
+            '../linbpq/bpq32.cfg',          # Script in utilities/ or apps/, cfg in linbpq/
             '/home/pi/linbpq/bpq32.cfg',    # Standard RPi location
-            '/home/ect/linbpq/bpq32.cfg'    # Alternative user
+            '/home/ect/linbpq/bpq32.cfg',   # Alternative user
+            'bpq32.cfg',                    # Same directory as script
+            'linbpq/bpq32.cfg'              # Script in parent, cfg in linbpq/
         ]
         
         for path in config_paths:
@@ -112,11 +112,11 @@ class NodeCrawler:
     def _find_callsign(self):
         """Extract callsign from bpq32.cfg."""
         config_paths = [
-            'bpq32.cfg',                    # Same directory as script
-            '../linbpq/bpq32.cfg',          # Script in utilities/, cfg in linbpq/
-            'linbpq/bpq32.cfg',             # Script in parent, cfg in linbpq/
+            '../linbpq/bpq32.cfg',          # Script in utilities/ or apps/, cfg in linbpq/
             '/home/pi/linbpq/bpq32.cfg',    # Standard RPi location
-            '/home/ect/linbpq/bpq32.cfg'    # Alternative user
+            '/home/ect/linbpq/bpq32.cfg',   # Alternative user
+            'bpq32.cfg',                    # Same directory as script
+            'linbpq/bpq32.cfg'              # Script in parent, cfg in linbpq/
         ]
         
         for path in config_paths:
@@ -745,7 +745,8 @@ def main():
     # Parse command line args
     max_hops = int(sys.argv[1]) if len(sys.argv) > 1 else 10
     start_node = sys.argv[2].upper() if len(sys.argv) > 2 else None
-    merge_mode = '--merge' in sys.argv or '-m' in sys.argv
+    # Merge mode is default; use --overwrite to disable
+    merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler
     crawler = NodeCrawler(max_hops=max_hops)
@@ -754,20 +755,22 @@ def main():
     if not start_node and not crawler.callsign:
         print("\nError: Could not determine local node callsign.")
         print("Ensure NODECALL is set in bpq32.cfg or provide a starting callsign.")
-        print("\nUsage: {} [MAX_HOPS] [START_NODE] [--merge]".format(sys.argv[0]))
+        print("\nUsage: {} [MAX_HOPS] [START_NODE] [--overwrite]".format(sys.argv[0]))
         print("  MAX_HOPS: Maximum traversal depth (default: 10)")
         print("  START_NODE: Callsign to begin crawl (default: local node)")
-        print("  --merge, -m: Merge results with existing data")
+        print("  --overwrite, -o: Overwrite existing data (default: merge)")
         print("\nExamples:")
-        print("  {} 5           # Crawl 5 hops from local node".format(sys.argv[0]))
-        print("  {} 10 WS1EC    # Crawl 10 hops starting from WS1EC".format(sys.argv[0]))
-        print("  {} 5 --merge   # Crawl and merge with existing nodemap.json".format(sys.argv[0]))
+        print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
+        print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
+        print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
         print("\nInstallation:")
-        print("  Place in /home/pi/utilities/ or same directory as linbpq/bpq32.cfg")
+        print("  Place in ~/utilities/ or ~/apps/ adjacent to ~/linbpq/")
         sys.exit(1)
     
     if merge_mode:
-        print("Merge mode: Will update existing nodemap.json")
+        print("Mode: Merge (updating existing nodemap.json)")
+    else:
+        print("Mode: Overwrite (replacing all data)")
     
     # Crawl network
     try:
