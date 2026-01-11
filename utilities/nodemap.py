@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.15'
+__version__ = '1.3.16'
 
 import sys
 import telnetlib
@@ -92,6 +92,7 @@ class NodeCrawler:
         self.netrom_ssid_map = {}  # Global NetRom SSID mapping: {base_callsign: 'CALLSIGN-SSID'}
         self.alias_to_call = {}  # Global alias->callsign-SSID mapping: {'CHABUR': 'KS1R-13'}
         self.call_to_alias = {}  # Reverse lookup: {'KS1R': 'CHABUR'}
+        self.last_heard = {}  # MHEARD timestamps: {callsign: seconds_ago}
         self.queue = deque()  # BFS queue for crawling
         self.timeout = 10  # Telnet timeout in seconds
         
@@ -469,11 +470,11 @@ class NodeCrawler:
     
     def _parse_mheard(self, output, port_num=None):
         """
-        Parse MHEARD output to extract callsigns and optionally port numbers.
+        Parse MHEARD output to extract callsigns, timestamps, and port numbers.
         
         MHEARD output format:
             Heard List for Port N
-            CALLSIGN-SSID  HH:MM:SS:SS
+            CALLSIGN-SSID  DD:HH:MM:SS (days:hours:mins:secs since last heard)
         
         Args:
             output: MHEARD command output
@@ -482,6 +483,7 @@ class NodeCrawler:
         Returns:
             If port_num provided: List of base callsigns (without SSID)
             If port_num None: List of (callsign, port) tuples
+            Also updates self.last_heard dict with timestamps
         """
         heard = []
         lines = output.split('\n')
@@ -501,9 +503,9 @@ class NodeCrawler:
             if 'Heard List' in line or not line.strip():
                 continue
             
-            # Look for callsign at start of line: "KC1JMH-15  00:00:00:03"
-            # Match callsign with optional SSID, followed by whitespace
-            match = re.match(r'^(\w+(?:-\d+)?)\s+', line)
+            # Look for callsign and timestamp: "KC1JMH-15  00:00:00:03"
+            # Match callsign with optional SSID, followed by timestamp
+            match = re.match(r'^(\w+(?:-\d+)?)\s+(\d+):(\d+):(\d+):(\d+)', line)
             if match:
                 full_callsign = match.group(1)
                 callsign = full_callsign.split('-')[0]  # Strip SSID for base call
@@ -511,6 +513,17 @@ class NodeCrawler:
                 # Validate callsign format
                 if not self._is_valid_callsign(callsign):
                     continue
+                
+                # Parse timestamp (DD:HH:MM:SS) to total seconds
+                days = int(match.group(2))
+                hours = int(match.group(3))
+                minutes = int(match.group(4))
+                seconds = int(match.group(5))
+                total_seconds = days * 86400 + hours * 3600 + minutes * 60 + seconds
+                
+                # Update last_heard with most recent time for this callsign
+                if callsign not in self.last_heard or total_seconds < self.last_heard[callsign]:
+                    self.last_heard[callsign] = total_seconds
                 
                 # If we have port info, return (callsign, port) tuple
                 if detected_port is not None:
@@ -1166,8 +1179,14 @@ class NodeCrawler:
             # Start with specified or local node
             self.queue.append((starting_callsign, []))
         
-        # BFS traversal
+        # BFS traversal with priority sorting by MHEARD recency
         while self.queue:
+            # Sort queue by last_heard timestamp (most recent first)
+            # Nodes not in last_heard go to end (never heard, likely stale)
+            queue_list = list(self.queue)
+            queue_list.sort(key=lambda x: self.last_heard.get(x[0], 999999))
+            self.queue = deque(queue_list)
+            
             callsign, path = self.queue.popleft()
             
             # Limit depth to prevent excessive crawling
