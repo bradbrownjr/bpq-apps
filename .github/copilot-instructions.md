@@ -29,6 +29,16 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Column-aligned tables, terse messages
 - No colors, progress bars, Unicode, chatty prompts
 
+## Amateur Radio Formats
+**Callsigns**: 1-2 prefix letters, digit, 1-3 suffix letters, optional -SSID (0-15)
+- Regex: `^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$`
+- Examples: `KC1JMH`, `W1ABC-5`, `N2XY`, `G8BPQ-10`
+
+**Gridsquares**: 2 letters (field), 2 digits (square), 2 letters (subsquare)
+- Regex: `^[A-R]{2}[0-9]{2}[a-x]{2}$`
+- Examples: `FN43hp`, `DM79`, `IO91wm`
+- Precision: 6-char (~5x2.5 mi), 4-char (~70x50 mi)
+
 ## Repository Structure
 ```
 bpq-apps/
