@@ -196,14 +196,24 @@ class NodeCrawler:
             return None
     
     def _send_command(self, tn, command, wait_for=b'>', timeout=5):
-        """Send command and read response."""
-        tn.write("{}\r".format(command).encode('ascii'))
-        time.sleep(1)
+        """Send command and read response with timeout protection."""
         try:
+            tn.write("{}\r".format(command).encode('ascii'))
+            time.sleep(1)
             response = tn.read_until(wait_for, timeout=timeout)
             return response.decode('ascii', errors='ignore')
+        except EOFError:
+            print("    Connection lost during {} command".format(command))
+            return ""
         except:
-            return tn.read_very_eager().decode('ascii', errors='ignore')
+            # Timeout or other error - try to get whatever is buffered
+            try:
+                buffered = tn.read_very_eager().decode('ascii', errors='ignore')
+                if not buffered:
+                    print("    Timeout on {} command ({}s)".format(command, timeout))
+                return buffered
+            except:
+                return ""
     
     def _parse_mheard(self, output):
         """
@@ -465,6 +475,12 @@ class NodeCrawler:
         
         self.visited.add(callsign)
         
+        # Calculate command timeout based on path length
+        # At 1200 baud simplex: ~10s per hop for command/response cycle
+        # Base timeout 5s + 10s per hop, max 60s
+        hop_count = len(path)
+        cmd_timeout = min(5 + (hop_count * 10), 60)
+        
         # Connect to node
         connect_path = path + [callsign] if path else []
         tn = self._connect_to_node(connect_path)
@@ -473,33 +489,56 @@ class NodeCrawler:
             self.failed.add(callsign)
             return
         
+        # Set overall operation timeout (commands + processing)
+        # Allow 5 minutes base + 2 minutes per hop
+        operation_deadline = time.time() + 300 + (hop_count * 120)
+        
         try:
+            # Helper to check if we've exceeded deadline
+            def check_deadline():
+                if time.time() > operation_deadline:
+                    print("  Operation timeout for {} ({} hops)".format(callsign, hop_count))
+                    return True
+                return False
+            
             # Get PORTS to identify RF ports
-            ports_output = self._send_command(tn, 'PORTS')
+            if check_deadline():
+                return
+            ports_output = self._send_command(tn, 'PORTS', timeout=cmd_timeout)
             ports_list = self._parse_ports(ports_output)
             
             # Get NODES for alias mappings
-            nodes_output = self._send_command(tn, 'NODES')
+            if check_deadline():
+                return
+            nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
             aliases = self._parse_nodes_aliases(nodes_output)
             
             # Get ROUTES for path optimization (BPQ only)
-            routes_output = self._send_command(tn, 'ROUTES')
+            if check_deadline():
+                return
+            routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
             routes = self._parse_routes(routes_output)
             
             # Get MHEARD
-            mheard_output = self._send_command(tn, 'MHEARD')
+            if check_deadline():
+                return
+            mheard_output = self._send_command(tn, 'MHEARD', timeout=cmd_timeout)
             heard = self._parse_mheard(mheard_output)
             
             # Filter to RF ports only
             rf_heard = self._filter_rf_ports(heard, ports_output)
             
             # Get INFO
-            info_output = self._send_command(tn, 'INFO')
+            if check_deadline():
+                return
+            info_output = self._send_command(tn, 'INFO', timeout=cmd_timeout)
             location = self._parse_info(info_output)
             applications = self._parse_applications(info_output)
             
             # Get available commands (? command)
-            commands_output = self._send_command(tn, '?')
+            if check_deadline():
+                return
+            commands_output = self._send_command(tn, '?', timeout=cmd_timeout)
             commands = self._parse_commands(commands_output)
             
             # Detect node type
