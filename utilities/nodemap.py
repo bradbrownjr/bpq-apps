@@ -397,6 +397,8 @@ class NodeCrawler:
                     })
         
         return apps
+    
+    def _parse_routes(self, output):
         """
         Parse ROUTES output to find best paths to destinations.
         
