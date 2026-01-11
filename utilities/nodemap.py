@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.12'
+__version__ = '1.3.13'
 
 import sys
 import telnetlib
@@ -354,11 +354,29 @@ class NodeCrawler:
                 # Wait for remote node prompt after connection
                 # BPQ remote nodes use "ALIAS:CALLSIGN-SSID} " prompt format
                 # Banner/info is sent immediately after CONNECTED, followed by prompt
+                # This tells us the actual node SSID in use
                 try:
                     # Look for BPQ remote prompt: "} " at end of banner
                     prompt_data = tn.read_until(b'} ', timeout=10)
                     self._log('RECV', prompt_data)
-                    if self.verbose:
+                    prompt_text = prompt_data.decode('ascii', errors='replace')
+                    
+                    # Extract actual node SSID from prompt: "ALIAS:CALL-SSID} "
+                    # Example: "WINFLD:N1QFY-4} " means node is N1QFY-4
+                    prompt_match = re.search(r'(\w+):(\w+(?:-\d+)?)\}\s*$', prompt_text)
+                    if prompt_match:
+                        prompt_alias = prompt_match.group(1)
+                        prompt_callsign = prompt_match.group(2)
+                        base_call = prompt_callsign.split('-')[0]
+                        
+                        # Store the ACTUAL node SSID we're connected to
+                        self.netrom_ssid_map[base_call] = prompt_callsign
+                        self.alias_to_call[prompt_alias] = prompt_callsign
+                        self.call_to_alias[base_call] = prompt_alias
+                        
+                        if self.verbose:
+                            print("    Connected to node: {} ({}) - stored for routing".format(prompt_callsign, prompt_alias))
+                    elif self.verbose:
                         print("    Received remote prompt: {}...".format(prompt_data[-20:].decode('ascii', errors='replace').strip()))
                 except:
                     # If no prompt received, just consume whatever is buffered
@@ -864,39 +882,28 @@ class NodeCrawler:
             
             # Update global NetRom SSID map and alias mappings
             # Build reverse lookup: base callsign -> NetRom alias
-            # Strategy: Prefer -15 (NetRom standard), avoid application SSIDs (-2 BBS, -10 RMS)
+            # Strategy: Use aliases from NODES, but prefer SSIDs we've actually connected to
+            # Don't overwrite SSIDs extracted from prompts (those are the real node SSIDs)
             for alias, full_call in aliases.items():
                 base_call = full_call.split('-')[0]
                 
-                # Store all callsign-SSID mappings for potential use
-                if '-' in full_call:
-                    ssid = int(full_call.split('-')[1])
-                    # Only store NetRom routing SSIDs, not application SSIDs
-                    # NetRom typically uses -15, sometimes -13, -14
-                    # Application SSIDs: -2 (BBS), -10 (RMS), -11 (PBBS)
-                    if ssid == 15 or (ssid >= 13 and ssid <= 15):
-                        # This is likely the NetRom node SSID
-                        self.netrom_ssid_map[base_call] = full_call
-                        # Always prefer -15 for alias mapping
-                        if base_call not in self.call_to_alias or ssid == 15:
-                            self.call_to_alias[base_call] = alias
-                    elif ssid not in [2, 10, 11]:
-                        # Other SSIDs that aren't known applications
-                        # Store but don't use for alias if we have a better one
-                        if base_call not in self.netrom_ssid_map:
+                # Store alias mapping (prompt-based takes precedence)
+                if base_call not in self.call_to_alias:
+                    self.call_to_alias[base_call] = alias
+                if alias not in self.alias_to_call:
+                    self.alias_to_call[alias] = full_call
+                
+                # Only store SSID mapping if we don't already have one from a prompt
+                # Prompt-based SSIDs are authoritative (we actually connected to them)
+                if base_call not in self.netrom_ssid_map:
+                    # Store SSID from NODES, but mark as lower priority
+                    # Skip obvious application SSIDs: -2 (BBS), -10 (RMS), -11 (PBBS)
+                    if '-' in full_call:
+                        ssid = int(full_call.split('-')[1])
+                        if ssid not in [2, 10, 11]:
                             self.netrom_ssid_map[base_call] = full_call
-                        if base_call not in self.call_to_alias:
-                            self.call_to_alias[base_call] = alias
-                    # Skip application SSIDs (-2, -10, -11) for routing
-                else:
-                    # No SSID, use base callsign
-                    if base_call not in self.netrom_ssid_map:
+                    else:
                         self.netrom_ssid_map[base_call] = full_call
-                    if base_call not in self.call_to_alias:
-                        self.call_to_alias[base_call] = alias
-            
-            # Update global alias mapping
-            self.alias_to_call.update(aliases)
             
             # Filter out the current node from neighbors (including different SSIDs of same callsign)
             # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
