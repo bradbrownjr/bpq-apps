@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.2.1
+Version: 1.2.2
 """
 
-__version__ = '1.2.1'
+__version__ = '1.2.2'
 
 import sys
 import telnetlib
@@ -969,7 +969,7 @@ def main():
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
-        print("  --notify URL     Send notifications to webhook URL (e.g., https://notify.lynwood.us/packet)")
+        print("  --notify URL     Send notifications to webhook URL")
         print("  --debug          Show command/response details for troubleshooting")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
@@ -977,7 +977,7 @@ def main():
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
-        print("  {} --notify https://notify.lynwood.us/packet  # Send progress notifications".format(sys.argv[0]))
+        print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
         print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
