@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.0
+Version: 1.1.1
 """
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 import sys
 import telnetlib
@@ -81,6 +81,7 @@ class NodeCrawler:
         self.connections = []  # List of [node1, node2, port] connections
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
         self.shortest_paths = {}  # Shortest discovered path to each node: {callsign: [path]}
+        self.netrom_ssid_map = {}  # Global NetRom SSID mapping: {base_callsign: 'CALLSIGN-SSID'}
         self.queue = deque()  # BFS queue for crawling
         self.timeout = 10  # Telnet timeout in seconds
         
@@ -211,21 +212,27 @@ class NodeCrawler:
             
             # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):
-                # Determine full callsign with NetRom SSID if available
-                full_callsign = callsign
+                # Determine full callsign with NetRom SSID from global map
+                full_callsign = self.netrom_ssid_map.get(callsign, callsign)
                 
-                # Look up NetRom SSID for this callsign
-                # Check if we have data for this node from a previous crawl
-                if callsign in self.nodes:
-                    node_data = self.nodes[callsign]
-                    netrom_ssids = node_data.get('netrom_ssids', {})
-                    if callsign in netrom_ssids:
-                        full_callsign = netrom_ssids[callsign]
+                # Get alias if available for better messages
+                alias = None
+                for node_data in self.nodes.values():
+                    aliases = node_data.get('aliases', {})
+                    for a, cs in aliases.items():
+                        if cs.split('-')[0] == callsign:
+                            alias = a
+                            break
+                    if alias:
+                        break
                 
                 # Use NetRom CONNECT syntax: C CALLSIGN-SSID
                 cmd = "C {}\r".format(full_callsign).encode('ascii')
                 if self.debug:
-                    print("    DEBUG: Connecting to {} (hop {}/{})".format(full_callsign, i+1, len(path)))
+                    if alias:
+                        print("    DEBUG: Issuing command: C {} (alias: {}, hop {}/{})".format(full_callsign, alias, i+1, len(path)))
+                    else:
+                        print("    DEBUG: Issuing command: C {} (hop {}/{})".format(full_callsign, i+1, len(path)))
                 tn.write(cmd)
                 
                 # Wait for connection response (up to 30 seconds for RF)
@@ -594,10 +601,15 @@ class NodeCrawler:
         if callsign in self.visited:
             return
         
-        print("Crawling {}{}...".format(
-            callsign,
-            " via {}".format(' > '.join(path)) if path else " (local)"
-        ))
+        # Build readable path description
+        if not path:
+            path_desc = " (local node)"
+        elif len(path) == 1:
+            path_desc = " (direct connection)"
+        else:
+            path_desc = " (via {})".format(' > '.join(path[:-1]))
+        
+        print("Crawling {}{}".format(callsign, path_desc))
         
         self.visited.add(callsign)
         
@@ -641,6 +653,9 @@ class NodeCrawler:
                 return
             nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
             aliases, netrom_ssids, neighbors_from_nodes = self._parse_nodes_aliases(nodes_output)
+            
+            # Update global NetRom SSID map with discovered SSIDs
+            self.netrom_ssid_map.update(netrom_ssids)
             
             # Filter out the current node from neighbors (including different SSIDs of same callsign)
             # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
