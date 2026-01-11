@@ -398,6 +398,34 @@ class NodeCrawler:
         
         return apps
     
+    def _parse_commands(self, output):
+        """
+        Parse ? command output to get list of available commands/applications.
+        
+        Returns:
+            List of command names available on the node
+        """
+        commands = []
+        lines = output.split('\n')
+        
+        for line in lines:
+            # Skip header/separator lines
+            if not line.strip() or '---' in line or 'Commands' in line:
+                continue
+            
+            # Commands are typically listed in columns or one per line
+            # Extract words that look like commands (uppercase, alphanumeric)
+            words = line.split()
+            for word in words:
+                # Filter for likely command names (avoid help text)
+                if word.isupper() or (word[0].isupper() and len(word) <= 10):
+                    # Clean up any trailing punctuation
+                    cmd = word.strip('.,;:')
+                    if cmd and cmd not in commands:
+                        commands.append(cmd)
+        
+        return commands
+    
     def _parse_routes(self, output):
         """
         Parse ROUTES output to find best paths to destinations.
@@ -470,6 +498,10 @@ class NodeCrawler:
             location = self._parse_info(info_output)
             applications = self._parse_applications(info_output)
             
+            # Get available commands (? command)
+            commands_output = self._send_command(tn, '?')
+            commands = self._parse_commands(commands_output)
+            
             # Detect node type
             node_type = self._detect_node_type(info_output, '>:')
             
@@ -483,7 +515,8 @@ class NodeCrawler:
                 'type': node_type,
                 'routes': routes,
                 'aliases': aliases,
-                'applications': applications
+                'applications': applications,
+                'commands': commands
             }
             
             # Record connections
@@ -507,6 +540,7 @@ class NodeCrawler:
             print("  Node type: {}".format(node_type))
             print("  RF Ports: {}".format(len([p for p in ports_list if p['is_rf']])))
             print("  Applications: {}".format(len(applications)))
+            print("  Commands: {}".format(len(commands)))
             if aliases:
                 print("  Aliases: {}".format(len(aliases)))
             
