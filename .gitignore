@@ -5,3 +5,13 @@ apps/question_pools/extra.json
 .gitignore
 apps/question_pools/technician.json
 apps/question_pools/general.json
+.github/ect-at-WS1EC ~.txt
+
+# Logs
+*.log
+
+# Sample/test data
+utilities/nodemap.json
+utilities/nodemap.csv
+utilities/nodemap_partial*.json
+utilities/nodemap_partial*.csv

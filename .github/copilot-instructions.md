@@ -59,3 +59,21 @@ bpq-apps/
 - SSH: ect@ws1ec.mainepacketradio.org -p 4722
 - Verify Py3.5.3 compatibility, ASCII output
 - WSL preferred over PowerShell
+
+## Notification Webhook
+Before requesting user testing or executing commands requiring interaction, send notification:
+
+**PowerShell:**
+```powershell
+Invoke-WebRequest -Method POST -Uri "https://notify.lynwood.us/copilot" -Body "Brief message about what's ready"
+```
+
+**Bash/WSL:**
+```bash
+curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
+```
+
+**When to notify:**
+- After changes ready for testing on live node
+- Before requesting terminal input or SSH commands
+- When awaiting user decision or feedback
