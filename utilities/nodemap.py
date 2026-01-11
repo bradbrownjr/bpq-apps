@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.2
+Version: 1.2.0
 """
 
-__version__ = '1.1.2'
+__version__ = '1.2.0'
 
 import sys
 import telnetlib
@@ -55,7 +55,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, debug=False):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, debug=False, notify_url=None):
         """
         Initialize crawler.
         
@@ -67,6 +67,7 @@ class NodeCrawler:
             username: Telnet login username (default: None, prompts when needed)
             password: Telnet login password (default: None, prompts when needed)
             debug: Enable debug output (default: False)
+            notify_url: URL to POST notifications to (default: None)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -75,6 +76,7 @@ class NodeCrawler:
         self.username = username  # None means prompt when needed
         self.password = password  # None means prompt when needed
         self.debug = debug
+        self.notify_url = notify_url
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -154,6 +156,26 @@ class NodeCrawler:
                     print("Error reading {}: {}".format(path, e))
         
         return None
+    
+    def _send_notification(self, message):
+        """Send notification to webhook URL if configured."""
+        if not self.notify_url:
+            return
+        
+        try:
+            # Python 3.x
+            if sys.version_info[0] >= 3:
+                import urllib.request
+                data = message.encode('utf-8')
+                req = urllib.request.Request(self.notify_url, data=data, method='POST')
+                urllib.request.urlopen(req, timeout=5)
+            else:
+                # Python 2.x fallback
+                import urllib2
+                urllib2.urlopen(self.notify_url, data=message, timeout=5)
+        except Exception as e:
+            if self.debug:
+                print("    DEBUG: Notification failed: {}".format(e))
     
     def _connect_to_node(self, path=[]):
         """
@@ -631,6 +653,7 @@ class NodeCrawler:
         if not tn:
             print("  Skipping {} (connection failed)".format(callsign))
             self.failed.add(callsign)
+            self._send_notification("Failed to connect to {}".format(callsign))
             return
         
         # Set overall operation timeout (commands + processing)
@@ -759,6 +782,9 @@ class NodeCrawler:
             if aliases:
                 print("  Aliases: {}".format(len(aliases)))
             
+            # Notify after successful crawl
+            self._send_notification("Crawled {} - {} neighbors".format(callsign, len(all_neighbors)))
+            
         finally:
             # Disconnect
             try:
@@ -791,6 +817,7 @@ class NodeCrawler:
                 return
             starting_callsign = self.callsign
             print("Starting network crawl from local node: {}...".format(starting_callsign))
+        self._send_notification("Starting crawl from {}".format(starting_callsign))
         
         print("BPQ node: {}:{}".format(self.host, self.port))
         print("Max hops: {}".format(self.max_hops))
@@ -816,6 +843,9 @@ class NodeCrawler:
         print("Failed connections: {} nodes".format(len(self.failed)))
         if self.failed:
             print("  Failed: {}".format(', '.join(sorted(self.failed))))
+        
+        # Notify crawl completion
+        self._send_notification("Crawl complete: {} nodes, {} failed".format(len(self.nodes), len(self.failed)))
         
         # Display summary table
         if self.nodes:
@@ -939,6 +969,7 @@ def main():
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
+        print("  --notify URL     Send notifications to webhook URL (e.g., https://notify.lynwood.us/packet)")
         print("  --debug          Show command/response details for troubleshooting")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
@@ -946,6 +977,7 @@ def main():
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
+        print("  {} --notify https://notify.lynwood.us/packet  # Send progress notifications".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
         print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
@@ -968,6 +1000,7 @@ def main():
     start_node = None
     username = None
     password = None
+    notify_url = None
     debug = '--debug' in sys.argv
     
     # Parse positional and optional arguments
@@ -992,6 +1025,9 @@ def main():
         elif arg == '--pass' and i + 1 < len(sys.argv):
             password = sys.argv[i + 1]
             i += 2
+        elif (arg == '--notify' or arg == '-n') and i + 1 < len(sys.argv):
+            notify_url = sys.argv[i + 1]
+            i += 2
         else:
             i += 1
     
@@ -999,7 +1035,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, debug=debug)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, debug=debug, notify_url=notify_url)
     
     # Only require local callsign if no start_node provided
     if not start_node and not crawler.callsign:
