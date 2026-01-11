@@ -612,22 +612,36 @@ class NodeCrawler:
                 pass
             tn.close()
     
-    def crawl_network(self):
+    def crawl_network(self, start_node=None):
         """
-        Crawl entire network starting from local node.
-        """
-        if not self.callsign:
-            print("Error: Could not determine local node callsign from bpq32.cfg.")
-            print("Please ensure NODECALL is set in your bpq32.cfg file.")
-            return
+        Crawl entire network starting from specified or local node.
         
-        print("Starting network crawl from local node: {}...".format(self.callsign))
+        Args:
+            start_node: Callsign to start crawl from (default: local node)
+        """
+        # Determine starting node
+        if start_node:
+            # Validate provided callsign
+            if not self._is_valid_callsign(start_node):
+                print("Error: Invalid callsign format: {}".format(start_node))
+                return
+            starting_callsign = start_node.upper()
+            print("Starting network crawl from: {}...".format(starting_callsign))
+        else:
+            if not self.callsign:
+                print("Error: Could not determine local node callsign from bpq32.cfg.")
+                print("Please ensure NODECALL is set in your bpq32.cfg file.")
+                print("Or provide a starting callsign: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]))
+                return
+            starting_callsign = self.callsign
+            print("Starting network crawl from local node: {}...".format(starting_callsign))
+        
         print("BPQ node: {}:{}".format(self.host, self.port))
         print("Max hops: {}".format(self.max_hops))
         print("-" * 50)
         
-        # Start with local node
-        self.queue.append((self.callsign, []))
+        # Start with specified or local node
+        self.queue.append((starting_callsign, []))
         
         # BFS traversal
         while self.queue:
@@ -695,20 +709,26 @@ def main():
     
     # Parse command line args
     max_hops = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+    start_node = sys.argv[2].upper() if len(sys.argv) > 2 else None
     
     # Create crawler
     crawler = NodeCrawler(max_hops=max_hops)
     
-    if not crawler.callsign:
+    # Only require local callsign if no start_node provided
+    if not start_node and not crawler.callsign:
         print("\nError: Could not determine local node callsign.")
-        print("Ensure NODECALL is set in bpq32.cfg")
-        print("\nUsage: {} [MAX_HOPS]".format(sys.argv[0]))
+        print("Ensure NODECALL is set in bpq32.cfg or provide a starting callsign.")
+        print("\nUsage: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]))
         print("  MAX_HOPS: Maximum traversal depth (default: 10)")
+        print("  START_NODE: Callsign to begin crawl (default: local node)")
+        print("\nExamples:")
+        print("  {} 5           # Crawl 5 hops from local node".format(sys.argv[0]))
+        print("  {} 10 WS1EC    # Crawl 10 hops starting from WS1EC".format(sys.argv[0]))
         sys.exit(1)
     
     # Crawl network
     try:
-        crawler.crawl_network()
+        crawler.crawl_network(start_node=start_node)
         
         # Export results
         crawler.export_json()
@@ -726,8 +746,9 @@ def main():
         
         # Export partial results
         if crawler.nodes:
-            crawler.export_json('nodemap_partial.json')
-            crawler.export_csv('nodemap_partial.csv')
+            partial_name = 'nodemap_partial_{}'.format(start_node) if start_node else 'nodemap_partial'
+            crawler.export_json('{}.json'.format(partial_name))
+            crawler.export_csv('{}.csv'.format(partial_name))
 
 
 if __name__ == '__main__':
