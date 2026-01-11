@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 
 import sys
 import telnetlib
@@ -337,29 +337,37 @@ class NodeCrawler:
     
     def _parse_mheard(self, output):
         """
-        Parse MHEARD output to extract callsigns and ports.
+        Parse MHEARD output to extract callsigns.
+        
+        MHEARD output format:
+            Heard List for Port N
+            CALLSIGN-SSID  HH:MM:SS:SS
         
         Returns:
-            List of (callsign, port) tuples for RF ports only
+            List of base callsigns (without SSID)
         """
         heard = []
         lines = output.split('\n')
         
         for line in lines:
-            # Look for lines like: "KC1JMH   Port 2  ..."
-            match = re.search(r'(\w+(?:-\d+)?)\s+Port\s+(\d+)', line)
+            # Skip header lines
+            if 'Heard List' in line or not line.strip():
+                continue
+            
+            # Look for callsign at start of line: "KC1JMH-15  00:00:00:03"
+            # Match callsign with optional SSID, followed by whitespace
+            match = re.match(r'^(\w+(?:-\d+)?)\s+', line)
             if match:
                 full_callsign = match.group(1)
                 callsign = full_callsign.split('-')[0]  # Strip SSID for base call
-                port = int(match.group(2))
                 
                 # Validate callsign format
                 if not self._is_valid_callsign(callsign):
                     continue
                 
                 # Skip if already in list
-                if callsign not in [c for c, p in heard]:
-                    heard.append((callsign, port))
+                if callsign not in heard:
+                    heard.append(callsign)
         
         return heard
     
@@ -731,7 +739,7 @@ class NodeCrawler:
                     port_num = port_info['number']
                     mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout)
                     heard = self._parse_mheard(mheard_output)
-                    mheard_neighbors.extend([call for call, p in heard])
+                    mheard_neighbors.extend(heard)
             
             # Use MHEARD exclusively for neighbors (stations actually heard on RF)
             # Remove duplicates and exclude self (all SSIDs)
