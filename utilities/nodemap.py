@@ -1,0 +1,539 @@
+#!/usr/bin/env python3
+"""
+Node Map Crawler for BPQ Packet Radio Networks
+-----------------------------------------------
+Automatically crawls through packet radio nodes to discover network topology.
+Connects to nodes, retrieves MHEARD lists and INFO, and builds a map of
+node connectivity for visualization.
+
+Features:
+- Discovers nodes via MHEARD lists on RF ports
+- Extracts location data from INFO command
+- Traverses network breadth-first to avoid loops
+- Uses ROUTES command to find optimal paths
+- Handles BPQ, FBB, and JNOS nodes
+- Exports to JSON and CSV formats
+- Reads BPQ telnet port from bpq32.cfg automatically
+- Skips IP-based ports (focuses on RF connectivity)
+
+Network Resources:
+- Maine Packet Network: https://www.mainepacketradio.org/
+- Network Map: https://n1xp.com/HAM/content/pkt/MEPktNtMap.pdf
+- Station Map: https://n1xp.com/HAM/content/pkt/MEPktStMap.pdf
+- BPQ Commands: https://cheatography.com/gcremerius/cheat-sheets/bpq-user-and-sysop-commands/
+
+Author: Brad Brown KC1JMH
+Date: January 2026
+"""
+
+import sys
+import telnetlib
+import time
+import json
+import csv
+import re
+import os
+from collections import deque
+
+# Check Python version
+if sys.version_info < (3, 5):
+    print("Error: This script requires Python 3.5 or later.")
+    print("Your version: Python {}.{}.{}".format(
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro
+    ))
+    sys.exit(1)
+
+
+class NodeCrawler:
+    """Crawls BPQ packet radio network to discover topology."""
+    
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10):
+        """
+        Initialize crawler.
+        
+        Args:
+            host: BPQ node hostname (default: localhost)
+            port: BPQ telnet port (auto-detected if None)
+            callsign: Your callsign for login (auto-detected if None)
+            max_hops: Maximum hops to traverse (default: 10)
+        """
+        self.host = host
+        self.port = port if port else self._find_bpq_port()
+        self.callsign = callsign if callsign else self._find_callsign()
+        self.max_hops = max_hops
+        self.visited = set()  # Nodes we've already crawled
+        self.failed = set()  # Nodes that failed connection
+        self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
+        self.connections = []  # List of [node1, node2, port] connections
+        self.routes = {}  # Best routes to nodes: {callsign: [path]}
+        self.queue = deque()  # BFS queue for crawling
+        self.timeout = 10  # Telnet timeout in seconds
+        
+    def _find_bpq_port(self):
+        """Find BPQ telnet port from bpq32.cfg."""
+        config_paths = [
+            '../linbpq/bpq32.cfg',
+            '/home/pi/linbpq/bpq32.cfg',
+            '/home/ect/linbpq/bpq32.cfg',
+            'linbpq/bpq32.cfg'
+        ]
+        
+        for path in config_paths:
+            if os.path.exists(path):
+                try:
+                    with open(path, 'r') as f:
+                        for line in f:
+                            # Look for TCPPORT=8010 or similar
+                            match = re.search(r'TCPPORT\s*=\s*(\d+)', line, re.IGNORECASE)
+                            if match:
+                                port = int(match.group(1))
+                                print("Found BPQ telnet port: {}".format(port))
+                                return port
+                except Exception as e:
+                    print("Error reading {}: {}".format(path, e))
+        
+        # Default to 8010 if not found
+        print("BPQ port not found in config, using default: 8010")
+        return 8010
+    
+    def _find_callsign(self):
+        """Extract callsign from bpq32.cfg."""
+        config_paths = [
+            '../linbpq/bpq32.cfg',
+            '/home/pi/linbpq/bpq32.cfg',
+            '/home/ect/linbpq/bpq32.cfg',
+            'linbpq/bpq32.cfg'
+        ]
+        
+        for path in config_paths:
+            if os.path.exists(path):
+                try:
+                    with open(path, 'r') as f:
+                        for line in f:
+                            # Look for NODECALL=WS1EC or similar
+                            match = re.search(r'NODECALL\s*=\s*(\w+)', line, re.IGNORECASE)
+                            if match:
+                                call = match.group(1)
+                                print("Found node callsign: {}".format(call))
+                                return call
+                except Exception as e:
+                    print("Error reading {}: {}".format(path, e))
+        
+        return None
+    
+    def _connect_to_node(self, path=[]):
+        """
+        Connect to a node via telnet.
+        
+        Args:
+            path: List of callsigns to connect through (empty for local node)
+            
+        Returns:
+            telnetlib.Telnet object or None
+        """
+        try:
+            tn = telnetlib.Telnet(self.host, self.port, self.timeout)
+            time.sleep(1)
+            
+            # If connecting to local node, just wait for prompt
+            if not path:
+                tn.read_until(b'>', timeout=5)
+                return tn
+            
+            # Connect through intermediate nodes
+            for callsign in path:
+                cmd = "C {}\r".format(callsign).encode('ascii')
+                tn.write(cmd)
+                
+                # Wait for connection response (up to 30 seconds for RF)
+                start_time = time.time()
+                connected = False
+                response = ""
+                
+                while time.time() - start_time < 30:
+                    try:
+                        chunk = tn.read_some()
+                        response += chunk.decode('ascii', errors='ignore')
+                        
+                        # Check for connection success
+                        if 'CONNECTED' in response.upper():
+                            connected = True
+                            print("  Connected to {}".format(callsign))
+                            break
+                        
+                        # Check for failure patterns
+                        if any(x in response.upper() for x in ['BUSY', 'FAILED', 'NO ROUTE', 
+                                                                 'TIMEOUT', 'DISCONNECTED',
+                                                                 'NOT HEARD', 'NO ANSWER']):
+                            print("  Connection to {} failed: {}".format(
+                                callsign, 
+                                response.strip().split('\n')[-1]
+                            ))
+                            tn.close()
+                            return None
+                        
+                        time.sleep(0.5)
+                        
+                    except EOFError:
+                        print("  Connection lost to {}".format(callsign))
+                        tn.close()
+                        return None
+                
+                if not connected:
+                    print("  Connection to {} timed out (no CONNECTED response)".format(callsign))
+                    tn.close()
+                    return None
+                
+                # Wait for prompt after connection
+                time.sleep(1)
+            
+            return tn
+            
+        except Exception as e:
+            print("Error connecting: {}".format(e))
+            return None
+    
+    def _send_command(self, tn, command, wait_for=b'>', timeout=5):
+        """Send command and read response."""
+        tn.write("{}\r".format(command).encode('ascii'))
+        time.sleep(1)
+        try:
+            response = tn.read_until(wait_for, timeout=timeout)
+            return response.decode('ascii', errors='ignore')
+        except:
+            return tn.read_very_eager().decode('ascii', errors='ignore')
+    
+    def _parse_mheard(self, output):
+        """
+        Parse MHEARD output to extract callsigns and ports.
+        
+        Returns:
+            List of (callsign, port) tuples for RF ports only
+        """
+        heard = []
+        lines = output.split('\n')
+        
+        for line in lines:
+            # Look for lines like: "KC1JMH   Port 2  ..."
+            match = re.search(r'(\w+(?:-\d+)?)\s+Port\s+(\d+)', line)
+            if match:
+                callsign = match.group(1).split('-')[0]  # Strip SSID
+                port = int(match.group(2))
+                
+                # Skip if already in list
+                if callsign not in [c for c, p in heard]:
+                    heard.append((callsign, port))
+        
+        return heard
+    
+    def _filter_rf_ports(self, heard_list, ports_output):
+        """
+        Filter heard list to only include RF ports (not Telnet/IP).
+        
+        Args:
+            heard_list: List of (callsign, port) tuples
+            ports_output: Output from PORTS command
+            
+        Returns:
+            Filtered list of (callsign, port) tuples
+        """
+        # Parse PORTS to identify non-RF ports
+        ip_ports = set()
+        lines = ports_output.split('\n')
+        
+        for line in lines:
+            # Look for Telnet, TCPIP, etc.
+            if re.search(r'Port\s+(\d+).*(?:Telnet|TCPIP|IP)', line, re.IGNORECASE):
+                match = re.search(r'Port\s+(\d+)', line)
+                if match:
+                    ip_ports.add(int(match.group(1)))
+        
+        # Filter out IP-based ports
+        return [(call, port) for call, port in heard_list if port not in ip_ports]
+    
+    def _parse_info(self, output):
+        """
+        Extract location from INFO output.
+        
+        Returns:
+            Dictionary with location data (lat, lon, grid, city, state)
+        """
+        location = {}
+        
+        # Look for common location patterns
+        # Grid square: FN43xx
+        grid_match = re.search(r'\b([A-R]{2}\d{2}[a-x]{2})\b', output, re.IGNORECASE)
+        if grid_match:
+            location['grid'] = grid_match.group(1).upper()
+        
+        # Lat/Lon patterns
+        lat_match = re.search(r'(\d{2}[.\d]*)\s*[NnSs]', output)
+        lon_match = re.search(r'(\d{2,3}[.\d]*)\s*[WwEe]', output)
+        if lat_match and lon_match:
+            location['lat'] = lat_match.group(0)
+            location['lon'] = lon_match.group(0)
+        
+        # City, State pattern
+        city_state = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s+([A-Z]{2})', output)
+        if city_state:
+            location['city'] = city_state.group(1)
+            location['state'] = city_state.group(2)
+        
+        return location
+    
+    def _detect_node_type(self, info_output, prompt_chars):
+        """
+        Detect node software type (BPQ, FBB, JNOS).
+        
+        Args:
+            info_output: Output from INFO command
+            prompt_chars: Last characters received (prompt indicators)
+            
+        Returns:
+            String: 'BPQ', 'FBB', 'JNOS', or 'Unknown'
+        """
+        info_upper = info_output.upper()
+        
+        if 'BPQ' in info_upper or 'G8BPQ' in info_upper:
+            return 'BPQ'
+        elif 'FBB' in info_upper or 'F6FBB' in info_upper:
+            return 'FBB'
+        elif 'JNOS' in info_upper or 'NOS' in info_upper:
+            return 'JNOS'
+        elif '>' in prompt_chars:
+            return 'BPQ'  # BPQ uses > prompt
+        elif ':' in prompt_chars:
+            return 'FBB'  # FBB uses : prompt
+        
+        return 'Unknown'
+    
+    def _parse_routes(self, output):
+        """
+        Parse ROUTES output to find best paths to destinations.
+        
+        Returns:
+            Dictionary of {callsign: quality} for direct routes
+        """
+        routes = {}
+        lines = output.split('\n')
+        
+        for line in lines:
+            # Look for route lines with quality indicators
+            # Format varies but usually: DEST VIA PORT QUALITY
+            match = re.search(r'(\w+(?:-\d+)?)\s+.*?(\d+)', line)
+            if match:
+                dest = match.group(1).split('-')[0]
+                quality = int(match.group(2))
+                routes[dest] = quality
+        
+        return routes
+    
+    def crawl_node(self, callsign, path=[]):
+        """
+        Crawl a single node to discover neighbors.
+        
+        Args:
+            callsign: Node callsign to crawl
+            path: Connection path to reach this node
+        """
+        if callsign in self.visited:
+            return
+        
+        print("Crawling {}{}...".format(
+            callsign,
+            " via {}".format(' > '.join(path)) if path else " (local)"
+        ))
+        
+        self.visited.add(callsign)
+        
+        # Connect to node
+        connect_path = path + [callsign] if path else []
+        tn = self._connect_to_node(connect_path)
+        if not tn:
+            print("  Skipping {} (connection failed)".format(callsign))
+            self.failed.add(callsign)
+            return
+        
+        try:
+            # Get PORTS to identify RF ports
+            ports_output = self._send_command(tn, 'PORTS')
+            
+            # Get ROUTES for path optimization (BPQ only)
+            routes_output = self._send_command(tn, 'ROUTES')
+            routes = self._parse_routes(routes_output)
+            
+            # Get MHEARD
+            mheard_output = self._send_command(tn, 'MHEARD')
+            heard = self._parse_mheard(mheard_output)
+            
+            # Filter to RF ports only
+            rf_heard = self._filter_rf_ports(heard, ports_output)
+            
+            # Get INFO
+            info_output = self._send_command(tn, 'INFO')
+            location = self._parse_info(info_output)
+            
+            # Detect node type
+            node_type = self._detect_node_type(info_output, '>:')
+            
+            # Store node data
+            self.nodes[callsign] = {
+                'info': info_output.strip(),
+                'neighbors': [call for call, port in rf_heard],
+                'location': location,
+                'ports': [(call, port) for call, port in rf_heard],
+                'type': node_type,
+                'routes': routes
+            }
+            
+            # Record connections
+            for neighbor, port in rf_heard:
+                self.connections.append({
+                    'from': callsign,
+                    'to': neighbor,
+                    'port': port,
+                    'quality': routes.get(neighbor, 0)
+                })
+                
+                # Add unvisited neighbors to queue with route preference
+                if neighbor not in self.visited and neighbor not in self.failed:
+                    # Prefer routes through nodes with better quality scores
+                    self.queue.append((neighbor, path + [callsign]))
+            
+            print("  Found {} RF neighbors: {}".format(
+                len(rf_heard),
+                ', '.join([call for call, port in rf_heard])
+            ))
+            print("  Node type: {}".format(node_type))
+            
+        finally:
+            # Disconnect
+            try:
+                tn.write(b'BYE\r')
+                time.sleep(0.5)
+            except:
+                pass
+            tn.close()
+    
+    def crawl_network(self):
+        """
+        Crawl entire network starting from local node.
+        """
+        if not self.callsign:
+            print("Error: Could not determine local node callsign from bpq32.cfg.")
+            print("Please ensure NODECALL is set in your bpq32.cfg file.")
+            return
+        
+        print("Starting network crawl from local node: {}...".format(self.callsign))
+        print("BPQ node: {}:{}".format(self.host, self.port))
+        print("Max hops: {}".format(self.max_hops))
+        print("-" * 50)
+        
+        # Start with local node
+        self.queue.append((start, []))
+        
+        # BFS traversal
+        while self.queue:
+            callsign, path = self.queue.popleft()
+            
+            # Limit depth to prevent excessive crawling
+            if len(path) > self.max_hops:
+                print("Skipping {} (depth limit {} reached)".format(callsign, self.max_hops))
+                continue
+            
+            self.crawl_node(callsign, path)
+            time.sleep(2)  # Be polite, don't hammer network
+        
+        print("-" * 50)
+        print("Crawl complete. Found {} nodes.".format(len(self.nodes)))
+        print("Failed connections: {} nodes".format(len(self.failed)))
+        if self.failed:
+            print("  Failed: {}".format(', '.join(sorted(self.failed))))
+    
+    def export_json(self, filename='nodemap.json'):
+        """Export node data to JSON."""
+        data = {
+            'nodes': self.nodes,
+            'connections': self.connections,
+            'crawl_info': {
+                'start_node': self.callsign,
+                'total_nodes': len(self.nodes),
+                'total_connections': len(self.connections)
+            }
+        }
+        
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2)
+        
+        print("Exported to {}".format(filename))
+    
+    def export_csv(self, filename='nodemap.csv'):
+        """Export connections to CSV."""
+        with open(filename, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['From', 'To', 'Port', 'Quality', 'From_Grid', 'To_Grid', 'From_Type', 'To_Type'])
+            
+            for conn in self.connections:
+                from_node = self.nodes.get(conn['from'], {})
+                to_node = self.nodes.get(conn['to'], {})
+                
+                writer.writerow([
+                    conn['from'],
+                    conn['to'],
+                    conn['port'],
+                    conn.get('quality', 0),
+                    from_node.get('location', {}).get('grid', ''),
+                    to_node.get('location', {}).get('grid', ''),
+                    from_node.get('type', 'Unknown'),
+                    to_node.get('type', 'Unknown')
+                ])
+        
+        print("Exported to {}".format(filename))
+
+
+def main():
+    """Main entry point."""
+    print("BPQ Node Map Crawler")
+    print("=" * 50)
+    
+    # Parse command line args
+    max_hops = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+    
+    # Create crawler
+    crawler = NodeCrawler(max_hops=max_hops)
+    
+    if not crawler.callsign:
+        print("\nError: Could not determine local node callsign.")
+        print("Ensure NODECALL is set in bpq32.cfg")
+        print("\nUsage: {} [MAX_HOPS]".format(sys.argv[0]))
+        print("  MAX_HOPS: Maximum traversal depth (default: 10)")
+        sys.exit(1)
+    
+    # Crawl network
+    try:
+        crawler.crawl_network()
+        
+        # Export results
+        crawler.export_json()
+        crawler.export_csv()
+        
+        print("\nNetwork map complete!")
+        print("Nodes discovered: {}".format(len(crawler.nodes)))
+        print("Connections found: {}".format(len(crawler.connections)))
+        
+    except KeyboardInterrupt:
+        print("\n\nCrawl interrupted by user.")
+        print("Partial results:")
+        print("  Nodes: {}".format(len(crawler.nodes)))
+        print("  Connections: {}".format(len(crawler.connections)))
+        
+        # Export partial results
+        if crawler.nodes:
+            crawler.export_json('nodemap_partial.json')
+            crawler.export_csv('nodemap_partial.csv')
+
+
+if __name__ == '__main__':
+    main()
