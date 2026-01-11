@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.13'
+__version__ = '1.3.14'
 
 import sys
 import telnetlib
@@ -55,7 +55,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, resume=False):
         """
         Initialize crawler.
         
@@ -69,6 +69,7 @@ class NodeCrawler:
             verbose: Enable verbose output (default: False)
             notify_url: URL to POST notifications to (default: None)
             log_file: File to log all telnet traffic to (default: None)
+            resume: Resume from unexplored nodes in existing nodemap.json (default: False)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -80,6 +81,7 @@ class NodeCrawler:
         self.notify_url = notify_url
         self.log_file = log_file
         self.log_handle = None
+        self.resume = resume
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -625,6 +627,58 @@ class NodeCrawler:
             print("Warning: Could not load {}: {}".format(filename, e))
             return None
     
+    def _load_unexplored_nodes(self, filename='nodemap.json'):
+        """Load unexplored nodes from existing nodemap data.
+        
+        Returns:
+            List of (callsign, path) tuples for unexplored neighbors
+        """
+        existing = self._load_existing_data(filename)
+        if not existing or 'nodes' not in existing:
+            print("No existing nodemap.json found. Starting fresh crawl.")
+            return []
+        
+        unexplored = []
+        nodes_data = existing['nodes']
+        
+        # Mark all previously visited nodes
+        for callsign in nodes_data.keys():
+            self.visited.add(callsign)
+        
+        print("Loaded {} previously visited nodes".format(len(self.visited)))
+        
+        # Find unexplored neighbors from each visited node
+        for callsign, node_data in nodes_data.items():
+            unexplored_neighbors = node_data.get('unexplored_neighbors', [])
+            
+            # Also check neighbors that were never visited
+            all_neighbors = node_data.get('neighbors', [])
+            for neighbor in all_neighbors:
+                if neighbor not in self.visited and neighbor not in [u for u, _ in unexplored]:
+                    # Calculate path to this neighbor through the visited node
+                    # We need to reconstruct the path to reach the parent node first
+                    hop_distance = node_data.get('hop_distance', 0)
+                    if hop_distance == 0:
+                        # Parent is local node, direct connection
+                        path = []
+                    else:
+                        # For now, use direct path through parent
+                        # Could be optimized by finding shortest path
+                        path = [callsign]
+                    
+                    unexplored.append((neighbor, path))
+        
+        # Remove duplicates (same callsign might appear as neighbor of multiple nodes)
+        seen = set()
+        unique_unexplored = []
+        for call, path in unexplored:
+            if call not in seen:
+                seen.add(call)
+                unique_unexplored.append((call, path))
+        
+        print("Found {} unexplored neighbors".format(len(unique_unexplored)))
+        return unique_unexplored
+    
     def _parse_ports(self, output):
         """
         Parse PORTS output to extract port details.
@@ -1061,30 +1115,52 @@ class NodeCrawler:
         Args:
             start_node: Callsign to start crawl from (default: local node)
         """
-        # Determine starting node
-        if start_node:
-            # Validate provided callsign
-            if not self._is_valid_callsign(start_node):
-                print("Error: Invalid callsign format: {}".format(start_node))
+        # Resume mode: load unexplored nodes from existing data
+        if self.resume:
+            print("Resume mode: Loading unexplored nodes from nodemap.json...")
+            unexplored = self._load_unexplored_nodes()
+            
+            if not unexplored:
+                print("No unexplored nodes found. Nothing to do.")
                 return
-            starting_callsign = start_node.upper()
-            print("Starting network crawl from: {}...".format(starting_callsign))
+            
+            # Queue all unexplored nodes
+            for callsign, path in unexplored:
+                self.queue.append((callsign, path))
+            
+            print("Queued {} unexplored nodes for crawling".format(len(unexplored)))
+            self._send_notification("Resume crawl: {} unexplored nodes".format(len(unexplored)))
+            
+            # Skip the normal start node logic
+            print("BPQ node: {}:{}".format(self.host, self.port))
+            print("Max hops: {}".format(self.max_hops))
+            print("-" * 50)
         else:
-            if not self.callsign:
-                print("Error: Could not determine local node callsign from bpq32.cfg.")
-                print("Please ensure NODECALL is set in your bpq32.cfg file.")
-                print("Or provide a starting callsign: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]))
-                return
-            starting_callsign = self.callsign
-            print("Starting network crawl from local node: {}...".format(starting_callsign))
-        self._send_notification("Starting crawl from {}".format(starting_callsign))
-        
-        print("BPQ node: {}:{}".format(self.host, self.port))
-        print("Max hops: {}".format(self.max_hops))
-        print("-" * 50)
-        
-        # Start with specified or local node
-        self.queue.append((starting_callsign, []))
+            # Normal mode: start from specified or local node
+            # Determine starting node
+            if start_node:
+                # Validate provided callsign
+                if not self._is_valid_callsign(start_node):
+                    print("Error: Invalid callsign format: {}".format(start_node))
+                    return
+                starting_callsign = start_node.upper()
+                print("Starting network crawl from: {}...".format(starting_callsign))
+            else:
+                if not self.callsign:
+                    print("Error: Could not determine local node callsign from bpq32.cfg.")
+                    print("Please ensure NODECALL is set in your bpq32.cfg file.")
+                    print("Or provide a starting callsign: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]))
+                    return
+                starting_callsign = self.callsign
+                print("Starting network crawl from local node: {}...".format(starting_callsign))
+            self._send_notification("Starting crawl from {}".format(starting_callsign))
+            
+            print("BPQ node: {}:{}".format(self.host, self.port))
+            print("Max hops: {}".format(self.max_hops))
+            print("-" * 50)
+            
+            # Start with specified or local node
+            self.queue.append((starting_callsign, []))
         
         # BFS traversal
         while self.queue:
@@ -1238,6 +1314,7 @@ def main():
         print("  START_NODE       Callsign to begin crawl (default: local node)")
         print("\nOptions:")
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
+        print("  --resume, -r     Resume from unexplored nodes in nodemap.json")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --notify URL     Send notifications to webhook URL")
@@ -1248,6 +1325,7 @@ def main():
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
+        print("  {} --resume       # Continue from unexplored nodes".format(sys.argv[0]))
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
         print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
         print("\nData Storage:")
@@ -1275,6 +1353,7 @@ def main():
     notify_url = None
     log_file = None
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
+    resume = '--resume' in sys.argv or '-r' in sys.argv
     
     # Parse positional and optional arguments
     i = 1
@@ -1311,10 +1390,10 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume)
     
-    # Only require local callsign if no start_node provided
-    if not start_node and not crawler.callsign:
+    # Only require local callsign if no start_node provided and not in resume mode
+    if not start_node and not crawler.callsign and not resume:
         print("\nError: Could not determine local node callsign.")
         print("Ensure NODECALL is set in bpq32.cfg or provide a starting callsign.")
         print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
@@ -1332,7 +1411,9 @@ def main():
         print("  Place in ~/utilities/ or ~/apps/ adjacent to ~/linbpq/")
         sys.exit(1)
     
-    if merge_mode:
+    if resume:
+        print("Mode: Resume (crawling unexplored nodes from nodemap.json)")
+    elif merge_mode:
         print("Mode: Merge (updating existing nodemap.json)")
     else:
         print("Mode: Overwrite (replacing all data)")
