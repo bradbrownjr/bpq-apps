@@ -188,3 +188,48 @@ If scripts run locally and via their inetd telnet port, but won't produce output
 
 * [LinBPQ Applications Interface Documentation](https://www.cantab.net/users/john.wiseman/Documents/LinBPQ%20Applications%20Interface.html)
 * [inetd - Wikipedia](https://en.wikipedia.org/wiki/Inetd)
+
+---
+
+## Utilities Installation
+
+Utilities are sysop tools that typically run from command line or cron jobs, not as BPQ APPLICATION commands.
+
+### Recommended Layout
+
+Place scripts in `~/utilities/` or `~/apps/` adjacent to `~/linbpq/`:
+
+```
+/home/pi/               (or /home/ect/)
+├── apps/               # User-facing BPQ applications
+├── utilities/          # Sysop tools (nodemap.py, etc.)
+├── linbpq/
+│   └── bpq32.cfg       # Auto-detected by scripts
+└── ...
+```
+
+### Setup
+
+```bash
+# Create utilities directory
+mkdir -p ~/utilities
+cd ~/utilities
+
+# Clone repo (or copy utilities/)
+git clone https://github.com/bradbrownjr/bpq-apps.git
+cd bpq-apps/utilities
+
+# Make scripts executable
+chmod +x *.py
+```
+
+### Configuration Detection
+
+Utilities auto-detect `bpq32.cfg` from:
+1. `../linbpq/bpq32.cfg` (script in utilities/ or apps/, config in linbpq/)
+2. `/home/pi/linbpq/bpq32.cfg`
+3. `/home/ect/linbpq/bpq32.cfg`
+4. Same directory as script
+5. `linbpq/bpq32.cfg` (script in parent)
+
+See [utilities/README.md](../utilities/README.md) for individual utility documentation.

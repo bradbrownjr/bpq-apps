@@ -10,6 +10,8 @@ https://www.cantab.net/users/john.wiseman/Documents/Downloads.html
 
 These applications are custom-built for low bandwidth terminal access over packet radio:
 
+* **callout.py** - Test application demonstrating BPQ callsign capture for other apps.
+* **forms.py** - Fillable forms system for creating formatted messages (ICS-213, radiograms, weather reports, etc.)
 * **gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. It's like the Internet, but for terminals!  
 * **hamqsl.py** - HF propagation reports from www.hamqsl.com.  
 * **hamtest.py** - Ham radio license test practice with automatic question pool updates.  
@@ -17,8 +19,9 @@ These applications are custom-built for low bandwidth terminal access over packe
 * **rss-news.py** - News feed reader with categorized feeds: News, Science, Technology, Weather, and of course, ham radio topics.  
 * **space.py** - NOAA Space Weather reports and solar activity data.  
 * **sysinfo.sh** - Node system information and BBS service status checker.  
-* **wx-me.py** - Local weather reports for Southern Maine and New Hampshire.  
-* **forms.py** - Fillable forms system for creating formatted messages (ICS-213, radiograms, weather reports, etc.)
+* **wx.py** - Weather reports using National Weather Service API.
+* **wx-me.py** - Local weather reports for Southern Maine and New Hampshire.
+* **wxnws-ftp.py** - NWS weather product downloader via FTP.
 
 For detailed documentation, see [apps/README.md](apps/README.md).
 
@@ -29,6 +32,14 @@ Interactive games that run as standalone TCP servers:
 * **battleship.py** - Classic multiplayer Battleship game with ASCII terminal interface and leaderboard tracking.
 
 See [games/README.md](games/README.md) for game documentation and setup instructions.
+
+## Utilities
+
+Sysop tools for BBS management and network monitoring:
+
+* **nodemap.py** - Network topology crawler that discovers nodes, ports, applications, and RF connectivity across the packet radio network.
+
+See [utilities/README.md](utilities/README.md) for detailed documentation.
 
 ## Getting Started
 

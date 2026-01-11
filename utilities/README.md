@@ -2,42 +2,7 @@
 
 Sysop tools for BBS management, network mapping, and maintenance tasks.
 
-## Installation
-
-### Recommended Layout
-
-Scripts should be placed in `~/utilities/` or `~/apps/` adjacent to `~/linbpq/`:
-
-```
-/home/pi/               (or /home/ect/)
-├── apps/               # User-facing BPQ applications
-├── utilities/          # Sysop tools (nodemap.py, etc.)
-├── linbpq/
-│   └── bpq32.cfg       # Auto-detected by scripts
-└── ...
-```
-
-The scripts auto-detect `bpq32.cfg` from:
-1. `../linbpq/bpq32.cfg` (script in utilities/ or apps/, config in linbpq/)
-2. `/home/pi/linbpq/bpq32.cfg`
-3. `/home/ect/linbpq/bpq32.cfg`
-4. Same directory as script
-5. `linbpq/bpq32.cfg` (script in parent)
-
-### Setup
-
-```bash
-# Create utilities directory
-mkdir -p /home/pi/utilities
-cd /home/pi/utilities
-
-# Clone repo (or copy utilities/)
-git clone https://github.com/bradbrownjr/bpq-apps.git
-cd bpq-apps/utilities
-
-# Make scripts executable
-chmod +x *.py
-```
+**Installation**: See [docs/INSTALLATION.md](../docs/INSTALLATION.md) for setup instructions and directory layout.
 
 ## nodemap.py - Network Topology Mapper
 
