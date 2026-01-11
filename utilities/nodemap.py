@@ -646,8 +646,10 @@ class NodeCrawler:
             nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
             aliases, netrom_ssids, neighbors_from_nodes = self._parse_nodes_aliases(nodes_output)
             
-            # Filter out the current node from neighbors
-            neighbors_from_nodes = [n for n in neighbors_from_nodes if n != callsign]
+            # Filter out the current node from neighbors (including different SSIDs of same callsign)
+            # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
+            base_callsign = callsign.split('-')[0] if '-' in callsign else callsign
+            neighbors_from_nodes = [n for n in neighbors_from_nodes if n != base_callsign]
             
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
@@ -666,8 +668,8 @@ class NodeCrawler:
                     heard = self._parse_mheard(mheard_output)
                     mheard_neighbors.extend([call for call, p in heard])
             
-            # Combine neighbors from NODES and MHEARD, exclude self
-            all_neighbors = [n for n in list(set(neighbors_from_nodes + mheard_neighbors)) if n != callsign]
+            # Combine neighbors from NODES and MHEARD, exclude self (all SSIDs)
+            all_neighbors = [n for n in list(set(neighbors_from_nodes + mheard_neighbors)) if n != base_callsign]
             
             # Get INFO
             if check_deadline():
