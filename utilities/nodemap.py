@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.10'
+__version__ = '1.3.11'
 
 import sys
 import telnetlib
@@ -444,19 +444,34 @@ class NodeCrawler:
             except:
                 return ""
     
-    def _parse_mheard(self, output):
+    def _parse_mheard(self, output, port_num=None):
         """
-        Parse MHEARD output to extract callsigns.
+        Parse MHEARD output to extract callsigns and optionally port numbers.
         
         MHEARD output format:
             Heard List for Port N
             CALLSIGN-SSID  HH:MM:SS:SS
         
+        Args:
+            output: MHEARD command output
+            port_num: Port number if known (from command context)
+        
         Returns:
-            List of base callsigns (without SSID)
+            If port_num provided: List of base callsigns (without SSID)
+            If port_num None: List of (callsign, port) tuples
         """
         heard = []
         lines = output.split('\n')
+        
+        # Try to extract port from header if not provided
+        detected_port = port_num
+        if detected_port is None:
+            for line in lines:
+                if 'Heard List for Port' in line:
+                    match = re.search(r'Port\s+(\d+)', line)
+                    if match:
+                        detected_port = int(match.group(1))
+                        break
         
         for line in lines:
             # Skip header lines
@@ -474,9 +489,19 @@ class NodeCrawler:
                 if not self._is_valid_callsign(callsign):
                     continue
                 
-                # Skip if already in list
-                if callsign not in heard:
-                    heard.append(callsign)
+                # If we have port info, return (callsign, port) tuple
+                if detected_port is not None:
+                    if callsign not in [h[0] if isinstance(h, tuple) else h for h in heard]:
+                        if port_num is not None:
+                            # Called with explicit port, return just callsigns
+                            heard.append(callsign)
+                        else:
+                            # Called without explicit port, return tuples
+                            heard.append((callsign, detected_port))
+                else:
+                    # No port info, just return callsigns
+                    if callsign not in heard:
+                        heard.append(callsign)
         
         return heard
     
@@ -865,19 +890,33 @@ class NodeCrawler:
             
             # Get MHEARD from each RF port to find actual RF neighbors
             # MHEARD shows stations recently heard on RF - actual connectivity
+            # Also extract port numbers for each neighbor
             mheard_neighbors = []
+            mheard_ports = {}  # {callsign: port_num}
             for port_info in ports_list:
                 if port_info['is_rf']:
                     if check_deadline():
                         return
                     port_num = port_info['number']
                     mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout)
-                    heard = self._parse_mheard(mheard_output)
+                    heard = self._parse_mheard(mheard_output, port_num=port_num)
                     mheard_neighbors.extend(heard)
+                    # Store port info for each neighbor heard on this port
+                    for call in heard:
+                        if call not in mheard_ports:
+                            mheard_ports[call] = port_num
             
             # Use MHEARD exclusively for neighbors (stations actually heard on RF)
             # Remove duplicates and exclude self (all SSIDs)
             all_neighbors = list(set([n for n in mheard_neighbors if n != base_callsign]))
+            
+            # Update global route_ports with MHEARD port info
+            # Combine with ROUTES data (ROUTES takes precedence if both exist)
+            for call, port in mheard_ports.items():
+                if call not in self.route_ports:
+                    self.route_ports[call] = port
+                    if self.verbose:
+                        print("    Port info from MHEARD: {} on port {}".format(call, port))
             
             # Mark which neighbors will be explored vs skipped
             # A neighbor is explored if: not visited, not failed, within hop limit
