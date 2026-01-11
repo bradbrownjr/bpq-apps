@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.14'
+__version__ = '1.3.15'
 
 import sys
 import telnetlib
@@ -941,6 +941,17 @@ class NodeCrawler:
             for alias, full_call in aliases.items():
                 base_call = full_call.split('-')[0]
                 
+                # Skip application SSIDs: -2 (BBS), -10 (RMS), -11 (PBBS)
+                # Don't store aliases or SSIDs for applications
+                is_application_ssid = False
+                if '-' in full_call:
+                    ssid = int(full_call.split('-')[1])
+                    if ssid in [2, 10, 11]:
+                        is_application_ssid = True
+                
+                if is_application_ssid:
+                    continue  # Skip this alias entirely
+                
                 # Store alias mapping (prompt-based takes precedence)
                 if base_call not in self.call_to_alias:
                     self.call_to_alias[base_call] = alias
@@ -950,14 +961,7 @@ class NodeCrawler:
                 # Only store SSID mapping if we don't already have one from a prompt
                 # Prompt-based SSIDs are authoritative (we actually connected to them)
                 if base_call not in self.netrom_ssid_map:
-                    # Store SSID from NODES, but mark as lower priority
-                    # Skip obvious application SSIDs: -2 (BBS), -10 (RMS), -11 (PBBS)
-                    if '-' in full_call:
-                        ssid = int(full_call.split('-')[1])
-                        if ssid not in [2, 10, 11]:
-                            self.netrom_ssid_map[base_call] = full_call
-                    else:
-                        self.netrom_ssid_map[base_call] = full_call
+                    self.netrom_ssid_map[base_call] = full_call
             
             # Filter out the current node from neighbors (including different SSIDs of same callsign)
             # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
