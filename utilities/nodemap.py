@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.4'
+__version__ = '1.3.5'
 
 import sys
 import telnetlib
@@ -316,7 +316,14 @@ class NodeCrawler:
             tn.write("{}\r".format(command).encode('ascii'))
             # Short delay for command to be received
             time.sleep(0.5)
-            response = tn.read_until(wait_for, timeout=timeout)
+            
+            # Read response until we find prompt at start of line
+            # BPQ prompt is "ALIAS:CALLSIGN-SSID} " followed by echo of command, then output, then ">"
+            # We need to look for "\n>" or "\r>" to ensure we get the actual prompt, not > in data
+            response = tn.read_until(b'\n>', timeout=timeout)
+            # If we got "\n>", also consume any trailing space
+            response += tn.read_very_eager()
+            
             decoded = response.decode('ascii', errors='ignore')
             if self.verbose:
                 print("    Response ({} bytes):".format(len(decoded)))
