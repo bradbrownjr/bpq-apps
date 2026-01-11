@@ -24,10 +24,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.0.0
+Version: 1.1.0
 """
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 import sys
 import telnetlib
@@ -80,6 +80,7 @@ class NodeCrawler:
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
         self.connections = []  # List of [node1, node2, port] connections
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
+        self.shortest_paths = {}  # Shortest discovered path to each node: {callsign: [path]}
         self.queue = deque()  # BFS queue for crawling
         self.timeout = 10  # Telnet timeout in seconds
         
@@ -171,42 +172,44 @@ class NodeCrawler:
             tn = telnetlib.Telnet(self.host, self.port, self.timeout)
             time.sleep(1)
             
-            # If connecting to local node, handle authentication
-            if not path:
-                # Read initial response (may be login prompt or direct prompt)
-                initial = tn.read_very_eager().decode('ascii', errors='ignore')
+            # Always handle authentication when connecting to localhost
+            # Read initial response (may be login prompt or direct prompt)
+            initial = tn.read_very_eager().decode('ascii', errors='ignore')
+            
+            # Check if login is required
+            if 'user:' in initial.lower() or 'callsign:' in initial.lower():
+                print("  Authentication required...")
                 
-                # Check if login is required
-                if 'user:' in initial.lower() or 'callsign:' in initial.lower():
-                    print("  Authentication required...")
+                # Prompt for username if not provided
+                if not self.username:
+                    self.username = raw_input("    Username: ") if sys.version_info[0] < 3 else input("    Username: ")
+                
+                # Send username
+                tn.write("{}\r".format(self.username).encode('ascii'))
+                time.sleep(0.5)
+                
+                # Check for password prompt
+                response = tn.read_very_eager().decode('ascii', errors='ignore')
+                if 'password:' in response.lower():
+                    # Prompt for password if not provided
+                    if self.password is None:
+                        import getpass
+                        self.password = getpass.getpass("    Password: ")
                     
-                    # Prompt for username if not provided
-                    if not self.username:
-                        self.username = raw_input("    Username: ") if sys.version_info[0] < 3 else input("    Username: ")
-                    
-                    # Send username
-                    tn.write("{}\r".format(self.username).encode('ascii'))
+                    # Send password
+                    tn.write("{}\r".format(self.password).encode('ascii'))
                     time.sleep(0.5)
-                    
-                    # Check for password prompt
-                    response = tn.read_very_eager().decode('ascii', errors='ignore')
-                    if 'password:' in response.lower():
-                        # Prompt for password if not provided
-                        if self.password is None:
-                            import getpass
-                            self.password = getpass.getpass("    Password: ")
-                        
-                        # Send password
-                        tn.write("{}\r".format(self.password).encode('ascii'))
-                        time.sleep(0.5)
-                
-                # Wait for command prompt
-                print("  Waiting for node prompt...")
-                tn.read_until(b'>', timeout=5)
-                print("  Connected to local node")
+            
+            # Wait for command prompt
+            print("  Waiting for node prompt...")
+            tn.read_until(b'>', timeout=5)
+            print("  Connected to local node")
+            
+            # If no path, just return (connecting to local node)
+            if not path:
                 return tn
             
-            # Connect through nodes in path (for multi-hop or direct connections)
+            # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):
                 # Determine full callsign with NetRom SSID if available
                 full_callsign = callsign
@@ -605,18 +608,11 @@ class NodeCrawler:
         cmd_timeout = min(5 + (hop_count * 10), 60)
         
         # Connect to node
-        # path represents intermediate nodes to connect through before reaching target
-        # For local node (path=[]), connect directly via telnet
-        # For direct neighbors of local node (path=[]), connect via NetRom CONNECT
-        # For multi-hop (path=[A, B, ...]), connect through each intermediate node
-        if not path:
-            # Connecting to local node or direct neighbor from local node
-            connect_path = [callsign] if callsign != self.callsign else []
-        else:
-            # Multi-hop connection - add target to path
-            connect_path = path + [callsign]
-        
-        tn = self._connect_to_node(connect_path)
+        # path now includes full route including target callsign
+        # For local node: path=[] (connect via telnet only)
+        # For direct neighbor: path=[KC1JMH] (localhost then C KC1JMH-15)
+        # For multi-hop: path=[KC1JMH, N1XP] (localhost, C KC1JMH-15, C N1XP-15)
+        tn = self._connect_to_node(path)
         if not tn:
             print("  Skipping {} (connection failed)".format(callsign))
             self.failed.add(callsign)
@@ -711,19 +707,26 @@ class NodeCrawler:
                     'quality': routes.get(neighbor, 0)
                 })
                 
-                # Add unvisited neighbors to queue
+                # Add unvisited neighbors to queue with shortest path optimization
                 if neighbor not in self.visited and neighbor not in self.failed:
-                    # Queue neighbor with path showing intermediate hops
-                    # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[]
-                    #   (direct NetRom connection)
-                    # If we're at KC1JMH (path=[]), queue N1XP with path=[KC1JMH]
+                    # Determine path to this neighbor
+                    # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[KC1JMH]
+                    #   (direct NetRom connection via C KC1JMH-15)
+                    # If we're at KC1JMH (path=[KC1JMH]), queue N1XP with path=[KC1JMH, N1XP]
                     #   (connect via KC1JMH to reach N1XP)
                     if path:
-                        # We're not at local node, add current node to path
-                        self.queue.append((neighbor, path + [callsign]))
+                        # We're not at local node, path includes route to current node
+                        # Add neighbor to create full path to neighbor
+                        new_path = path + [neighbor]
                     else:
-                        # We're at local node, neighbors are direct connections
-                        self.queue.append((neighbor, []))
+                        # We're at local node, neighbor is direct connection
+                        new_path = [neighbor]
+                    
+                    # Check if this is a shorter path than previously discovered
+                    if neighbor not in self.shortest_paths or len(new_path) < len(self.shortest_paths[neighbor]):
+                        self.shortest_paths[neighbor] = new_path
+                        # Only queue if this is a new or shorter path
+                        self.queue.append((neighbor, new_path))
             
             print("  Found {} neighbors: {}".format(
                 len(all_neighbors),
