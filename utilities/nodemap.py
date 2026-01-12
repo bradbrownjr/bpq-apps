@@ -27,10 +27,11 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.32'
+__version__ = '1.3.33'
 
 import sys
 import telnetlib
+import socket
 import time
 import json
 import csv
@@ -234,6 +235,12 @@ class NodeCrawler:
                 print("  Connecting to localhost:{}...".format(self.port))
             
             tn = telnetlib.Telnet(self.host, self.port, self.timeout)
+            
+            # Set socket-level timeout for ALL subsequent read operations
+            # Without this, read_some() blocks indefinitely
+            # Use 5s socket timeout - the outer loop handles per-hop timing
+            tn.sock.settimeout(5)
+            
             time.sleep(1)
             
             # Always handle authentication when connecting to localhost
@@ -352,6 +359,10 @@ class NodeCrawler:
                         
                         time.sleep(0.5)
                         
+                    except socket.timeout:
+                        # Socket read timed out, but we're still within conn_timeout
+                        # Just continue waiting for more data
+                        pass
                     except EOFError:
                         print("  Connection lost to {}".format(callsign))
                         tn.close()
@@ -791,6 +802,14 @@ class NodeCrawler:
         """
         Parse NODES output to get alias/SSID mappings and neighbor callsigns.
         
+        NODES output contains two types of entries:
+        1. Aliased: "CCEBBS:WS1EC-2" (alias:callsign-ssid)
+        2. Non-aliased: "N1LJK-15" (just callsign-ssid, no alias)
+        
+        Both types indicate entries in the routing table (crawlable nodes).
+        Non-aliased entries are common for nodes that only advertise their
+        node SSID without application aliases.
+        
         Returns:
             Tuple of (aliases dict, netrom_ssids dict, neighbors list)
             - aliases: Maps alias to full callsign-SSID
@@ -800,7 +819,8 @@ class NodeCrawler:
         aliases = {}
         netrom_ssids = {}
         neighbors = []
-        # Look for patterns like: "CCEBBS:WS1EC-2" or "CCEMA:WS1EC-15"
+        
+        # First pass: Look for aliased entries like "CCEBBS:WS1EC-2"
         matches = re.findall(r'(\w+):(\w+(?:-\d+)?)', output)
         for alias, callsign in matches:
             # Validate callsign format
@@ -809,7 +829,6 @@ class NodeCrawler:
                 # Extract base callsign and SSID
                 if '-' in callsign:
                     base_call, ssid = callsign.rsplit('-', 1)
-                    # Store NetRom SSID for this base callsign (typically highest SSID or -15)
                     netrom_ssids[base_call] = callsign
                 else:
                     base_call = callsign
@@ -817,6 +836,24 @@ class NodeCrawler:
                 
                 if base_call not in neighbors:
                     neighbors.append(base_call)
+        
+        # Second pass: Look for non-aliased entries like "N1LJK-15"
+        # These are callsign-SSID patterns NOT preceded by a colon (not part of alias)
+        # Pattern: word boundary, callsign-SSID, whitespace or end
+        # Exclude entries already found via aliases
+        non_aliased = re.findall(r'\b([A-Z]{1,2}\d[A-Z]{1,3}-\d{1,2})\b', output)
+        for full_callsign in non_aliased:
+            base_call = full_callsign.rsplit('-', 1)[0]
+            # Skip if we already have this from aliased entries
+            if base_call in netrom_ssids:
+                continue
+            # Validate callsign format
+            if self._is_valid_callsign(full_callsign):
+                netrom_ssids[base_call] = full_callsign
+                if base_call not in neighbors:
+                    neighbors.append(base_call)
+        
+        return aliases, netrom_ssids, neighbors
         
         return aliases, netrom_ssids, neighbors
     
@@ -1130,6 +1167,14 @@ class NodeCrawler:
             # Get MHEARD from each RF port to find actual RF neighbors
             # MHEARD shows stations recently heard on RF - actual connectivity
             # Also extract port numbers for each neighbor AND their SSIDs (for connections)
+            # 
+            # SSID Selection Strategy:
+            # - NODES routing table is authoritative for node SSIDs (entries are nodes)
+            # - MHEARD shows all heard traffic (nodes, applications, operators)
+            # - If callsign is in NODES, use that SSID (it's a crawlable node)
+            # - If callsign is ONLY in MHEARD, it may be an operator connection
+            #   (e.g., N1LJK-1 might be an operator, N1LJK-15 is the node)
+            # - Don't update netrom_ssid_map from MHEARD if NODES already has it
             mheard_neighbors = []
             mheard_ports = {}  # {callsign: port_num}
             mheard_ssids = {}  # {base_callsign: 'CALLSIGN-SSID'} - from actual RF
@@ -1163,29 +1208,26 @@ class NodeCrawler:
                             # They can't be crawled as nodes (no BPQ commands)
                             has_ssid = '-' in full_callsign
                             
-                            # Store SSID info from MHEARD (what was actually heard on RF)
-                            # Prefer higher SSIDs (typically node SSIDs like -15, -10, -5)
-                            # over lower SSIDs (typically applications like -2, -1 or operators)
-                            # Node SSIDs are conventionally -15, -10, -5
-                            # Application SSIDs are conventionally -2, -3, -4
-                            # User connections might be -1 or no SSID
-                            if base_call not in mheard_ssids:
+                            # SSID Selection: Prefer NODES routing table over MHEARD
+                            # Entries in NODES are known nodes; MHEARD may include operators
+                            if base_call in netrom_ssids_from_nodes:
+                                # Already have authoritative SSID from NODES - use it
+                                if base_call not in mheard_ssids:
+                                    mheard_ssids[base_call] = netrom_ssids_from_nodes[base_call]
+                                    if self.verbose:
+                                        print("    {} in NODES as {} (authoritative)".format(base_call, netrom_ssids_from_nodes[base_call]))
+                            elif base_call not in mheard_ssids:
+                                # First MHEARD entry for this callsign, not in NODES
+                                # Accept it but mark as potentially not a node
                                 mheard_ssids[base_call] = full_callsign
                                 if self.verbose:
                                     if has_ssid:
-                                        print("    MHEARD SSID for {}: {}".format(base_call, full_callsign))
+                                        print("    MHEARD SSID for {}: {} (not in NODES - may be operator)".format(base_call, full_callsign))
                                     else:
                                         print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
-                            else:
-                                # Already have an SSID - check if this one is "better" (higher)
-                                existing_ssid = int(mheard_ssids[base_call].split('-')[1]) if '-' in mheard_ssids[base_call] else 0
-                                new_ssid = int(full_callsign.split('-')[1]) if '-' in full_callsign else 0
-                                if new_ssid > existing_ssid:
-                                    if self.verbose:
-                                        print("    Upgrading {} from {} to {} (higher SSID)".format(base_call, mheard_ssids[base_call], full_callsign))
-                                    mheard_ssids[base_call] = full_callsign
-                                elif self.verbose and has_ssid:
-                                    print("    Ignoring {} (already have higher SSID {})".format(full_callsign, mheard_ssids[base_call]))
+                            elif self.verbose and has_ssid:
+                                # Already have SSID, ignore subsequent entries
+                                print("    Ignoring {} (already have {})".format(full_callsign, mheard_ssids[base_call]))
                             
                             # Only add to neighbor list if it has an SSID (is a node)
                             # Stations without SSIDs can't be crawled
@@ -1196,12 +1238,21 @@ class NodeCrawler:
                                 if base_call not in mheard_ports:
                                     mheard_ports[base_call] = port_num
             
-            # Update global netrom_ssid_map with MHEARD data (what was heard on RF)
-            # This is the correct SSID to use for connections (not from NODES routing table)
+            # Update global netrom_ssid_map with MHEARD/NODES data
+            # Priority: 1) NODES routing table (authoritative for nodes)
+            #           2) MHEARD (only if not in NODES and not already mapped)
             # Don't overwrite existing entries - first connection established the correct SSID
             for call, ssid in mheard_ssids.items():
                 if call not in self.netrom_ssid_map:
-                    self.netrom_ssid_map[call] = ssid
+                    # Only add to global map if it's from NODES (known node)
+                    # or if we have no other info
+                    if call in netrom_ssids_from_nodes:
+                        # Authoritative: from NODES routing table
+                        self.netrom_ssid_map[call] = netrom_ssids_from_nodes[call]
+                    else:
+                        # MHEARD-only entry, may be operator
+                        # Still add it, but it's less reliable
+                        self.netrom_ssid_map[call] = ssid
             
             # Use MHEARD exclusively for neighbors (stations actually heard on RF with SSIDs)
             # Remove duplicates and exclude self (all SSIDs)

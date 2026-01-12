@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.33] - 2025-06-25
+
+### Fixed
+- nodemap.py: Connection timeout now enforced (was hanging indefinitely on failed RF connections)
+- nodemap.py: Socket-level timeout (5s) prevents read_some() blocking forever
+- nodemap.py: SSID selection now uses NODES routing table as authoritative source
+- nodemap.py: Non-aliased NODES entries (e.g., N1LJK-15) now parsed correctly
+- nodemap.py: Removed incorrect "higher SSID is better" assumption
+
+### Changed
+- nodemap.py: _parse_nodes_aliases now captures both aliased (CCEBBS:WS1EC-2) and non-aliased (N1LJK-15) entries
+- nodemap.py: MHEARD SSID selection defers to NODES routing table for known nodes
+- nodemap.py: Entries only in MHEARD (not in NODES) marked as potentially operators
+
 ## [1.3.29] - 2025-06-25
 
 ### Changed
