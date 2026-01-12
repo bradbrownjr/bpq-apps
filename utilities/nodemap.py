@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.43'
+__version__ = '1.3.44'
 
 import sys
 import telnetlib
@@ -1493,6 +1493,9 @@ class NodeCrawler:
             print("Queued {} unexplored nodes for crawling".format(len(unexplored)))
             self._send_notification("Resume crawl: {} unexplored nodes".format(len(unexplored)))
             
+            # In resume mode, we don't have a single starting callsign
+            starting_callsign = None
+            
             # Skip the normal start node logic
             print("BPQ node: {}:{}".format(self.host, self.port))
             print("Max hops: {}".format(self.max_hops))
@@ -1536,7 +1539,13 @@ class NodeCrawler:
             # Limit depth to prevent excessive crawling
             # path contains intermediate hops, so len(path)+1 = hop distance from start
             # For local node: path=[] means 0 hops, path=[KC1JMH] means 1 hop to next node
-            hop_distance = len(path) if path else (0 if callsign == starting_callsign else 1)
+            # In resume mode, starting_callsign is None, so calculate hops from path length
+            if starting_callsign is None:
+                # Resume mode: hop distance is path length + 1 (unless path is empty and it's local node)
+                hop_distance = len(path) if path else (0 if callsign == self.callsign else 1)
+            else:
+                # Normal mode: compare with actual starting callsign
+                hop_distance = len(path) if path else (0 if callsign == starting_callsign else 1)
             if hop_distance > self.max_hops:
                 print("Skipping {} ({} hops > max {})".format(callsign, hop_distance, self.max_hops))
                 continue
