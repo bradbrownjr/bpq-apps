@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.24'
+__version__ = '1.3.25'
 
 import sys
 import telnetlib
@@ -313,12 +313,18 @@ class NodeCrawler:
                 
                 tn.write(cmd)
                 
-                # Wait for connection response (up to 30 seconds for RF)
+                # Wait for connection response (scale timeout with hop count)
+                # At 1200 baud RF: ~30s per hop for connection establishment
+                # Base 30s + 30s per hop, max 3 minutes
+                conn_timeout = min(30 + (i * 30), 180)
                 start_time = time.time()
                 connected = False
                 response = ""
                 
-                while time.time() - start_time < 30:
+                if self.verbose:
+                    print("    Waiting for connection (timeout: {}s)...".format(conn_timeout))
+                
+                while time.time() - start_time < conn_timeout:
                     try:
                         chunk = tn.read_some()
                         response += chunk.decode('ascii', errors='ignore')
