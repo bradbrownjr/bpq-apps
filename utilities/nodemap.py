@@ -895,9 +895,32 @@ class NodeCrawler:
                         commands.append(cmd)
         
         # Identify actual applications (interactive services)
-        # Common packet radio applications
-        app_keywords = ['BBS', 'CHAT', 'RMS', 'PBBS', 'MAIL', 'GATEWAY', 'NODE', 'DX', 'TELNET']
-        applications = [cmd for cmd in commands if cmd.upper() in app_keywords]
+        # Exclude standard BPQ/JNOS/FBB commands - only keep user-facing applications
+        # Standard commands that are NOT applications:
+        standard_commands = [
+            # BPQ User Commands
+            'BYE', 'CONNECT', 'C', 'DISCONNECT', 'D', 'INFO', 'I', 'NODES', 'N',
+            'PORTS', 'ROUTES', 'USERS', 'U', 'MHEARD', 'MH', 'LINKS', 'L',
+            'SESSION', 'S', 'YAPP', 'UNPROTO', 'VERSION', 'V', 'HOME', 'CQ',
+            # BPQ Sysop Commands
+            'SYSOP', 'ATTACH', 'DETACH', 'RECONNECT', 'RESPTIME', 'FRACK',
+            'FRACKS', 'PACLEN', 'MAXFRAME', 'RETRIES', 'RESET',
+            # JNOS Commands
+            'ARP', 'DIALER', 'DOMAIN', 'EXIT', 'FINGER', 'FTP', 'HELP',
+            'HOPCHECK', 'IFCONFIG', 'IP', 'KICK', 'LOG', 'NETROM', 'PING',
+            'PPP', 'RECORD', 'REMOTE', 'RESET', 'ROUTE', 'SMTP', 'START',
+            'STOP', 'TCP', 'TRACE', 'UDP', 'UPLOAD',
+            # FBB Commands
+            'ABORT', 'CHECK', 'DIR', 'EXPERT', 'HELP', 'KILL', 'LIST',
+            'READ', 'REPLY', 'SEND', 'STATS', 'TALK', 'VERBOSE', 'WHO'
+        ]
+        
+        # Built-in BPQ applications that should be counted as apps
+        builtin_apps = ['BBS', 'CHAT', 'RMS', 'APRS']
+        
+        # Filter: include if NOT in standard commands OR if in builtin apps
+        applications = [cmd for cmd in commands 
+                       if cmd.upper() not in standard_commands or cmd.upper() in builtin_apps]
         
         return commands, applications
     
