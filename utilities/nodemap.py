@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.29'
+__version__ = '1.3.30'
 
 import sys
 import telnetlib
