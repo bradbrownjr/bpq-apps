@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.27'
+__version__ = '1.3.28'
 
 import sys
 import telnetlib
@@ -411,66 +411,89 @@ class NodeCrawler:
             print("Error connecting: {}".format(e))
             return None
     
-    def _send_command(self, tn, command, wait_for=b'>', timeout=5):
-        """Send command and read response with timeout protection."""
+    def _send_command(self, tn, command, wait_for=b'>', timeout=5, expect_content=None):
+        """Send command and read response with timeout protection.
+        
+        Args:
+            tn: Telnet connection
+            command: Command to send
+            wait_for: Prompt to wait for (default: >)
+            timeout: Read timeout in seconds
+            expect_content: Optional string that should appear in response for validation
+        
+        Returns:
+            Decoded response string
+        """
         try:
             if self.verbose:
                 print("    Sending command: {}".format(command))
             cmd_bytes = "{}\r".format(command).encode('ascii')
             tn.write(cmd_bytes)
             self._log('SEND', cmd_bytes)
-            # Short delay for command to be received
-            time.sleep(0.5)
             
-            # BPQ echoes commands, so the sequence is:
-            # 1. ALIAS:CALL} CommandEcho
-            # 2. [response data]
-            # 3. ALIAS:CALL} (prompt for next command)
-            # We need to read until the SECOND prompt to get the full response
+            # Wait for command echo before reading response
+            # This helps synchronize on slow multi-hop RF links
+            time.sleep(0.3)
             
+            # Read all available data with retries
+            # Over RF, responses arrive in chunks with gaps
             response = b''
-            # First, try to detect if we're on local or remote node
-            # Remote uses "} ", local uses newline before ">"
-            is_remote = False
+            read_attempts = 0
+            max_attempts = 3  # Try multiple times to get complete response
+            last_response_len = 0
             
-            try:
-                # Try reading until first prompt (will include command echo)
-                first_chunk = tn.read_until(b'} ', timeout=timeout)
-                self._log('RECV', first_chunk)
-                response = first_chunk
-                is_remote = True
+            while read_attempts < max_attempts:
+                read_attempts += 1
                 
-                # Now read until second prompt (will include actual response)
-                second_chunk = tn.read_until(b'} ', timeout=timeout)
-                self._log('RECV', second_chunk)
-                response += second_chunk
-            except:
-                # Timeout on remote prompt, try local prompt
                 try:
-                    first_chunk = tn.read_until(b'\n>', timeout=timeout)
-                    self._log('RECV', first_chunk)
-                    response = first_chunk
+                    # Try to read until prompt
+                    chunk = tn.read_until(b'} ', timeout=timeout)
+                    self._log('RECV', chunk)
+                    response += chunk
                     
-                    # For local node, read until next prompt
-                    second_chunk = tn.read_until(b'\n>', timeout=timeout)
-                    self._log('RECV', second_chunk)
-                    response += second_chunk
+                    # Try to get second prompt (actual response follows first prompt)
+                    chunk2 = tn.read_until(b'} ', timeout=timeout)
+                    self._log('RECV', chunk2)
+                    response += chunk2
                 except:
-                    # Neither prompt pattern worked, get whatever is buffered
-                    if not response:
-                        response = tn.read_very_eager()
-                        self._log('RECV', response)
-            
-            # Consume any extra buffered data
-            extra = tn.read_very_eager()
-            if extra:
-                self._log('RECV', extra)
-                response += extra
+                    pass
+                
+                # Consume any extra buffered data
+                time.sleep(0.5)  # Give time for trailing data to arrive
+                try:
+                    extra = tn.read_very_eager()
+                    if extra:
+                        self._log('RECV', extra)
+                        response += extra
+                except:
+                    pass
+                
+                # Check if we have enough data (response stopped growing)
+                if len(response) > 0 and len(response) == last_response_len:
+                    break
+                last_response_len = len(response)
+                
+                # If we have expected content, check for it
+                decoded_check = response.decode('ascii', errors='ignore')
+                if expect_content and expect_content.lower() in decoded_check.lower():
+                    break  # Found what we're looking for
+                
+                # Small delay before retry
+                if read_attempts < max_attempts:
+                    time.sleep(0.5)
             
             decoded = response.decode('ascii', errors='ignore')
+            
+            # Validate response content if expected
+            if expect_content and expect_content.lower() not in decoded.lower():
+                if self.verbose:
+                    print("    Warning: Expected '{}' not found in response".format(expect_content))
+            
             if self.verbose:
                 print("    Response ({} bytes):".format(len(decoded)))
-                print("    {}".format(decoded[:200] if len(decoded) > 200 else decoded))
+                # Show more of response for debugging
+                display = decoded[:300] if len(decoded) > 300 else decoded
+                print("    {}".format(display.replace('\r\n', '\n    ')))
             return decoded
         except EOFError:
             print("    Connection lost during {} command".format(command))
@@ -713,6 +736,13 @@ class NodeCrawler:
         """
         Parse PORTS output to extract port details.
         
+        Expected format:
+            Ports
+              1 433.300 MHz 1200 BAUD
+              2 145.050 MHz @ 1200 b/s
+              8 AX/IP/UDP
+              9 Telnet Server
+        
         Returns:
             List of port dictionaries with number, frequency, speed, type
         """
@@ -720,23 +750,40 @@ class NodeCrawler:
         lines = output.split('\n')
         
         for line in lines:
-            # Look for lines like: "  1 433.300 MHz 1200 BAUD"
-            # or "  1 433.30 MHz @ 1200 Baud" or "  8 AX/IP/UDP" or "  9 Telnet Server"
-            match = re.search(r'^\s*(\d+)\s+(.+?)(?:\s+@?\s+)?(\d+)?\s*(?:b/s|BAUD|Baud)?', line, re.IGNORECASE)
-            if match:
-                port_num = int(match.group(1))
-                description = match.group(2).strip()
-                speed = match.group(3) if match.group(3) else None
-                
-                # Determine if it's RF or IP-based
-                is_rf = not any(x in description.upper() for x in ['TELNET', 'TCP', 'IP', 'UDP'])
-                
-                ports.append({
-                    'number': port_num,
-                    'description': description,
-                    'speed': int(speed) if speed else None,
-                    'is_rf': is_rf
-                })
+            # Skip empty lines and header
+            line = line.strip()
+            if not line or line.lower() == 'ports':
+                continue
+            
+            # Pattern: port_num followed by description
+            # Examples: "1 433.300 MHz 1200 BAUD", "9 Telnet Server", "8 AX/IP/UDP"
+            match = re.match(r'^(\d+)\s+(.+)$', line)
+            if not match:
+                continue
+            
+            port_num = int(match.group(1))
+            rest = match.group(2).strip()
+            
+            # Try to extract speed (baud rate) from description
+            # Look for patterns like "1200 BAUD", "@ 1200 b/s", "1200 Baud"
+            speed = None
+            speed_match = re.search(r'@?\s*(\d+)\s*(?:b/s|baud|BAUD)', rest, re.IGNORECASE)
+            if speed_match:
+                speed = int(speed_match.group(1))
+            
+            # Full description is everything after port number
+            description = rest
+            
+            # Determine if it's RF or IP-based
+            desc_upper = description.upper()
+            is_rf = not any(x in desc_upper for x in ['TELNET', 'TCP', 'IP', 'UDP', 'AX/IP'])
+            
+            ports.append({
+                'number': port_num,
+                'description': description,
+                'speed': speed,
+                'is_rf': is_rf
+            })
         
         return ports
     
@@ -985,19 +1032,25 @@ class NodeCrawler:
                     return True
                 return False
             
+            # Inter-command delay scales with hop count
+            # Over multi-hop RF, need time for responses to fully arrive
+            inter_cmd_delay = 0.5 + (hop_count * 0.5)  # 0.5s base + 0.5s per hop
+            
             # Get PORTS to identify RF ports
             if check_deadline():
                 return
-            ports_output = self._send_command(tn, 'PORTS', timeout=cmd_timeout)
+            ports_output = self._send_command(tn, 'PORTS', timeout=cmd_timeout, expect_content='Port')
             ports_list = self._parse_ports(ports_output)
+            time.sleep(inter_cmd_delay)
             
             # Get NODES for alias mappings only (not for neighbor discovery)
             # NODES shows routing table (all reachable nodes), not RF neighbors
             if check_deadline():
                 return
-            nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout)
+            nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout, expect_content=':')
             aliases, netrom_ssids_from_nodes, _ = self._parse_nodes_aliases(nodes_output)
             # Discard neighbors_from_nodes - NODES is routing table, not neighbor list
+            time.sleep(inter_cmd_delay)
             
             # Update global alias mappings from NODES (routing table)
             for alias, full_call in aliases.items():
@@ -1016,10 +1069,11 @@ class NodeCrawler:
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
                 return
-            routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
+            routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout, expect_content='Routes')
             routes, route_ports = self._parse_routes(routes_output)
             # Update global route_ports with direct neighbor port info from this node
             self.route_ports.update(route_ports)
+            time.sleep(inter_cmd_delay)
             
             # Get MHEARD from each RF port to find actual RF neighbors
             # MHEARD shows stations recently heard on RF - actual connectivity
@@ -1032,7 +1086,8 @@ class NodeCrawler:
                     if check_deadline():
                         return
                     port_num = port_info['number']
-                    mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout)
+                    mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout, expect_content='Heard')
+                    time.sleep(inter_cmd_delay)
                     
                     # Parse MHEARD with full callsign-SSID info
                     lines = mheard_output.split('\n')
@@ -1099,6 +1154,7 @@ class NodeCrawler:
             info_output = self._send_command(tn, 'INFO', timeout=cmd_timeout)
             location = self._parse_info(info_output)
             applications = self._parse_applications(info_output)
+            time.sleep(inter_cmd_delay)
             
             # Get available commands (? command)
             if check_deadline():
