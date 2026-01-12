@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.41] - 2026-01-12
+### Fixed
+- Reduced excessive operation timeout from 5min+2min/hop to 2min+1min/hop (max 12min vs 25min)
+- Reduced connection timeout from 30s+30s/hop to 20s+20s/hop (max 2min vs 3min)
+- Added staleness filter: skip nodes not heard in >24 hours (prevents long waits on offline nodes)
+- Fixed W1LH-6 type scenarios where nodes with very old MHEARD timestamps cause extended hangs
+
+### Changed
+- Verbose output now shows when nodes are skipped due to staleness (e.g., "Skipping W1LH (stale: 2d 3h ago)")
+
 ## [1.3.40] - 2026-01-12
 ### Added
 - Safety check to prevent merging output file (nodemap.json) into itself

@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.40'
+__version__ = '1.3.41'
 
 import sys
 import telnetlib
@@ -322,9 +322,9 @@ class NodeCrawler:
                 tn.write(cmd)
                 
                 # Wait for connection response (scale timeout with hop count)
-                # At 1200 baud RF: ~30s per hop for connection establishment
-                # Base 30s + 30s per hop, max 3 minutes
-                conn_timeout = min(30 + (i * 30), 180)
+                # At 1200 baud RF: ~20s per hop for connection establishment
+                # Base 20s + 20s per hop, max 2 minutes
+                conn_timeout = min(20 + (i * 20), 120)
                 start_time = time.time()
                 connected = False
                 response = ""
@@ -1108,8 +1108,9 @@ class NodeCrawler:
             return
         
         # Set overall operation timeout (commands + processing)
-        # Allow 5 minutes base + 2 minutes per hop
-        operation_deadline = time.time() + 300 + (hop_count * 120)
+        # Allow 2 minutes base + 1 minute per hop (reasonable for packet radio)
+        # Max ~12 minutes for 10 hops instead of previous 25 minutes
+        operation_deadline = time.time() + 120 + (hop_count * 60)
         
         try:
             # Helper to check if we've exceeded deadline
@@ -1388,6 +1389,19 @@ class NodeCrawler:
                     # Check if this is a shorter path than previously discovered
                     if neighbor not in self.shortest_paths or len(new_path) < len(self.shortest_paths[neighbor]):
                         self.shortest_paths[neighbor] = new_path
+                        
+                        # Skip nodes that haven't been heard in over 24 hours (likely offline)
+                        # 86400 seconds = 24 hours
+                        stale_threshold = 86400
+                        neighbor_age = self.last_heard.get(neighbor, 0)
+                        
+                        if neighbor_age > stale_threshold:
+                            if self.verbose:
+                                days = neighbor_age // 86400
+                                hours = (neighbor_age % 86400) // 3600
+                                print("    Skipping {} (stale: {}d {}h ago)".format(neighbor, days, hours))
+                            continue
+                        
                         # Only queue if this is a new or shorter path
                         self.queue.append((neighbor, new_path))
             
