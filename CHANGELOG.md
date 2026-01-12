@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.39] - 2026-01-12
+### Added
+- Support for -m as shorthand alias for --merge option
+- Wildcard pattern support for merge files (e.g., -m *.json, --merge node*.json)
+- Automatic expansion of glob patterns with informative matching output
+
 ## [1.3.38] - 2026-01-12
 ### Added
 - Multi-perspective network mapping with --merge functionality

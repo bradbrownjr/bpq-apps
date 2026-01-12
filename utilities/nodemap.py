@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.38'
+__version__ = '1.3.39'
 
 import sys
 import telnetlib
@@ -35,6 +35,7 @@ import socket
 import time
 import json
 import csv
+import glob
 import re
 import os
 from collections import deque
@@ -1745,7 +1746,8 @@ def main():
         print("\nOptions:")
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
         print("  --resume, -r     Resume from unexplored nodes in nodemap.json")
-        print("  --merge FILE     Merge another nodemap.json file into current data")
+        print("  --merge FILE, -m Merge another nodemap.json file into current data")
+        print("                   Supports wildcards: --merge *.json")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --notify URL     Send notifications to webhook URL")
@@ -1758,6 +1760,7 @@ def main():
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
         print("  {} --resume       # Continue from unexplored nodes".format(sys.argv[0]))
         print("  {} --merge remote_nodemap.json  # Merge data from another node's perspective".format(sys.argv[0]))
+        print("  {} -m *.json      # Merge all JSON files in current directory".format(sys.argv[0]))
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
         print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
         print("\nData Storage:")
@@ -1822,8 +1825,18 @@ def main():
         elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
             log_file = sys.argv[i + 1]
             i += 2
-        elif arg == '--merge' and i + 1 < len(sys.argv):
-            merge_files.append(sys.argv[i + 1])
+        elif (arg == '--merge' or arg == '-m') and i + 1 < len(sys.argv):
+            pattern = sys.argv[i + 1]
+            # Handle wildcard patterns like *.json
+            if '*' in pattern or '?' in pattern:
+                matched_files = glob.glob(pattern)
+                if matched_files:
+                    merge_files.extend(matched_files)
+                    print("Wildcard '{}' matched {} files: {}".format(pattern, len(matched_files), ', '.join(matched_files)))
+                else:
+                    print("Warning: Wildcard pattern '{}' matched no files".format(pattern))
+            else:
+                merge_files.append(pattern)
             i += 2
         else:
             i += 1
