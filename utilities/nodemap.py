@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.50'
+__version__ = '1.3.51'
 
 import sys
 import telnetlib
@@ -353,6 +353,10 @@ class NodeCrawler:
                 
                 if self.verbose:
                     print("    Waiting for connection (timeout: {}s)...".format(conn_timeout))
+                
+                # Set socket timeout to prevent read_some() from blocking forever
+                # Use short timeout so we can check elapsed time in the loop
+                tn.sock.settimeout(2.0)
                 
                 while time.time() - start_time < conn_timeout:
                     try:

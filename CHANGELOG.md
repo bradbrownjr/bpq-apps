@@ -28,6 +28,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Connection lines between neighboring nodes
 - Legend showing frequency bands and node count
 
+## [1.3.51] - 2026-01-12
+### Fixed
+- Fixed infinite hang during multi-hop connections when RF link goes silent
+- Added socket timeout (2s) to read_some() loop to ensure conn_timeout is respected
+- Prevents scenarios where script hangs indefinitely waiting for connection response
+
 ## [1.3.50] - 2026-01-15
 ### Added
 - Frequency tracking for network mapping and mesh interconnection planning
