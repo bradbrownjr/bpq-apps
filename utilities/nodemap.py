@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.19'
+__version__ = '1.3.20'
 
 import sys
 import telnetlib
@@ -899,16 +899,6 @@ class NodeCrawler:
         
         print("Crawling {}{}".format(callsign, path_desc))
         
-        # Notify about connection attempt
-        if not path:
-            if callsign != self.callsign:
-                notify_msg = "Connecting to {}".format(callsign)
-            else:
-                notify_msg = "Starting at {}".format(callsign)
-        else:
-            notify_msg = "{} connecting to {}".format(path[-1], callsign)
-        self._send_notification(notify_msg)
-        
         self.visited.add(callsign)
         
         # Calculate command timeout based on path length
@@ -919,6 +909,16 @@ class NodeCrawler:
         hop_count = len(path) if path else (0 if callsign == self.callsign else 1)
         cmd_timeout = min(5 + (hop_count * 10), 60)
         
+        # Notify about connection attempt before connecting
+        if not path:
+            if callsign != self.callsign:
+                notify_msg = "Connecting to {}".format(callsign)
+            else:
+                notify_msg = "Connecting to {}".format(callsign)
+        else:
+            notify_msg = "{} connecting to {}".format(path[-1], callsign)
+        self._send_notification(notify_msg)
+        
         # Connect to node
         # path contains intermediate hops only (not target)
         # For local node: path=[] (no intermediate hops)
@@ -927,6 +927,10 @@ class NodeCrawler:
         connect_path = path + [callsign] if path else ([callsign] if callsign != self.callsign else [])
         
         tn = self._connect_to_node(connect_path)
+        
+        # Send 'Starting crawl' notification after successful connection to local node
+        if tn and not path and callsign == self.callsign:
+            self._send_notification("Starting crawl from {}".format(callsign))
         if not tn:
             print("  Skipping {} (connection failed)".format(callsign))
             
@@ -1225,7 +1229,6 @@ class NodeCrawler:
                     return
                 starting_callsign = self.callsign
                 print("Starting network crawl from local node: {}...".format(starting_callsign))
-            self._send_notification("Starting crawl from {}".format(starting_callsign))
             
             print("BPQ node: {}:{}".format(self.host, self.port))
             print("Max hops: {}".format(self.max_hops))
