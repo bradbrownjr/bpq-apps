@@ -6,45 +6,121 @@ Sysop tools for BBS management, network mapping, and maintenance tasks.
 
 ## nodemap.py - Network Topology Mapper
 
-Automatically crawls packet radio network via RF connections to discover nodes, ports, applications, and connectivity.
+Advanced packet radio network discovery tool that crawls through BPQ nodes via RF connections to map topology, applications, and connectivity. Creates comprehensive network maps by analyzing routing tables, MHEARD lists, and node information.
+
+### Key Features
+
+- **RF-Only Discovery**: Uses actual RF connections, ignoring IP/Telnet ports
+- **Intelligent SSID Selection**: Distinguishes node SSIDs from application SSIDs (BBS, RMS, CHAT)
+- **Quality-Based Routing**: Respects sysop quality settings, skips blocked routes (quality 0)
+- **Multi-Perspective Mapping**: Combines data from multiple operators' viewpoints
+- **Resume Capability**: Continues interrupted crawls from unexplored nodes
+- **Timeout Protection**: Handles slow RF links with adaptive timeouts
+- **Data Preservation**: Merge mode preserves historical data across runs
+
+### Network Assumptions
+
+**Node Discovery:**
+- Uses MHEARD lists from RF ports to find actual neighbors
+- Only crawls stations with SSIDs (assumes they run node software)
+- Validates callsign format before attempting connections
+
+**SSID Selection Priority:**
+1. **ROUTES command** (authoritative) - Shows actual node SSIDs for connections
+2. **MHEARD data** (fallback) - What was heard on RF, may include apps/operators
+3. **NODES aliases** (ignored for connections) - Often contain app SSIDs like BBS (-2), RMS (-10)
+
+**Path Quality:**
+- **Quality > 0**: Route is available and usable
+- **Quality 0**: Sysop has blocked this route (poor RF, policy, etc.)
+- **Not in ROUTES**: Node not reachable from current vantage point
+
+**RF vs IP Separation:**
+- Focuses exclusively on RF connectivity for actual packet radio topology
+- Ignores Telnet/TCP ports to avoid Internet-based connections
+- Maps real over-the-air packet radio network structure
 
 ### Usage
 
 ```bash
-./nodemap.py [MAX_HOPS] [START_NODE] [--overwrite]
+./nodemap.py [MAX_HOPS] [START_NODE] [OPTIONS]
 ```
 
 **Parameters:**
-- `MAX_HOPS` - Maximum hops to traverse (default: 10)
+- `MAX_HOPS` - Maximum RF hops to traverse (default: 10)
 - `START_NODE` - Callsign to start from (default: local node from bpq32.cfg)
-- `--overwrite` or `-o` - Overwrite existing data (default: merge mode)
 
-### Data Storage
+**Options:**
+- `--overwrite` or `-o` - Replace existing data (default: merge mode)
+- `--resume` or `-r` - Continue from unexplored nodes in existing data
+- `--merge FILE` - Combine data from another operator's nodemap.json
+- `--verbose` or `-v` - Show detailed command/response output
+- `--notify URL` - Send progress notifications to webhook
+- `--log FILE` - Log all telnet traffic for debugging
+
+### Multi-Node Mapping Workflow
+
+For comprehensive network coverage, coordinate with other operators:
+
+1. **Each operator runs from their perspective:**
+   ```bash
+   # Operator 1 (Southern region)
+   ./nodemap.py 15 > south_network.log
+   
+   # Operator 2 (Northern region)  
+   ./nodemap.py 12 > north_network.log
+   
+   # Operator 3 (Western region)
+   ./nodemap.py 10 > west_network.log
+   ```
+
+2. **Share the resulting nodemap.json files** via email, BBS, or file transfer
+
+3. **One operator combines all perspectives:**
+   ```bash
+   ./nodemap.py --merge north_nodemap.json --merge west_nodemap.json
+   ```
+
+4. **Result**: Comprehensive network map showing connectivity from all vantage points
+
+### Data Storage Modes
 
 **Default mode (merge):**
 - Loads existing `nodemap.json`
 - Updates nodes with new data (overwrites if callsign exists)
 - Preserves historical data from previous crawls
-- Ideal for incremental network discovery and resuming after interruptions
+- Ideal for incremental discovery and building comprehensive maps
 
 **Overwrite mode (`--overwrite`):**
 - Completely replaces `nodemap.json` and `nodemap.csv` each run
 - Use for fresh network scans or when data needs reset
 
+**Merge mode (`--merge`):**
+- Combines data from external nodemap.json files
+- Intelligently merges neighbor lists (union of all neighbors)
+- Preserves most detailed application and location data
+- Handles duplicate connections and intermittent links
+
 ### Examples
 
 ```bash
-# Crawl 5 hops from local node (merge with existing)
-./nodemap.py 5
+# Basic crawling
+./nodemap.py 5                    # Crawl 5 hops from local node
+./nodemap.py 10 WS1EC            # Crawl 10 hops starting from WS1EC
+./nodemap.py 5 --overwrite       # Crawl and replace existing data
 
-# Crawl 10 hops starting from WS1EC (merge mode)
-./nodemap.py 10 WS1EC
+# Resume interrupted crawls
+./nodemap.py --resume             # Continue from unexplored nodes
+./nodemap.py 15 KC1JMH           # Resume/expand from previous crawl
 
-# Crawl and completely replace existing data
-./nodemap.py 5 --overwrite
+# Multi-operator mapping
+./nodemap.py --merge remote_map.json              # Merge one file
+./nodemap.py --merge map1.json --merge map2.json  # Merge multiple files
+./nodemap.py 10 --merge other_perspective.json    # Crawl AND merge
 
-# Resume from where connection was lost (merge mode)
-./nodemap.py 10 KC1JMH
+# Advanced options
+./nodemap.py 10 --verbose --log debug.txt         # Detailed logging
+./nodemap.py 5 --notify https://my.webhook.com    # Progress notifications
 ```
 
 ### Output Files

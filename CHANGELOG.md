@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.38] - 2026-01-12
+### Added
+- Multi-perspective network mapping with --merge functionality
+- Merge external nodemap.json files from other operators' viewpoints
+- Intelligent node data merging (combines neighbors, preserves most detailed info)
+- Merge-only mode for combining data without crawling
+- Enhanced help documentation with multi-node mapping workflow
+
 ## [1.3.37] - 2026-01-12
 ### Changed
 - Simplified SSID selection verbose messaging:

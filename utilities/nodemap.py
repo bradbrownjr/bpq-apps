@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.37'
+__version__ = '1.3.38'
 
 import sys
 import telnetlib
@@ -1634,6 +1634,100 @@ class NodeCrawler:
                 ])
         
         print("Exported to {}".format(filename))
+    
+    def merge_external_data(self, filename):
+        """Merge data from another nodemap.json file.
+        
+        Args:
+            filename: Path to external nodemap.json file
+            
+        Returns:
+            Number of nodes merged, or -1 on error
+        """
+        try:
+            external_data = self._load_existing_data(filename)
+            if not external_data or 'nodes' not in external_data:
+                print("Error: Invalid or missing nodemap data in {}".format(filename))
+                return -1
+            
+            external_nodes = external_data['nodes']
+            merged_count = 0
+            new_count = 0
+            
+            for callsign, node_data in external_nodes.items():
+                if callsign in self.nodes:
+                    # Node exists, merge data intelligently
+                    existing = self.nodes[callsign]
+                    
+                    # Keep most recent timestamp for same data
+                    # Merge neighbor lists (union)
+                    existing_neighbors = set(existing.get('neighbors', []))
+                    external_neighbors = set(node_data.get('neighbors', []))
+                    merged_neighbors = list(existing_neighbors | external_neighbors)
+                    
+                    # Merge intermittent_neighbors
+                    existing_intermittent = set(existing.get('intermittent_neighbors', []))
+                    external_intermittent = set(node_data.get('intermittent_neighbors', []))
+                    merged_intermittent = list(existing_intermittent | external_intermittent)
+                    
+                    # Use external data if it has more recent info or more details
+                    external_timestamp = external_data.get('crawl_info', {}).get('timestamp', '')
+                    
+                    # Update with merged data
+                    self.nodes[callsign]['neighbors'] = merged_neighbors
+                    self.nodes[callsign]['intermittent_neighbors'] = merged_intermittent
+                    
+                    # Merge other fields if external has more info
+                    if len(node_data.get('applications', [])) > len(existing.get('applications', [])):
+                        self.nodes[callsign]['applications'] = node_data['applications']
+                    
+                    if node_data.get('location', {}).get('grid') and not existing.get('location', {}).get('grid'):
+                        self.nodes[callsign]['location'] = node_data['location']
+                    
+                    merged_count += 1
+                else:
+                    # New node, add it
+                    self.nodes[callsign] = node_data
+                    new_count += 1
+            
+            # Merge connections
+            if 'connections' in external_data:
+                external_connections = external_data['connections']
+                
+                # Create set of existing connections for deduplication
+                existing_conn_keys = set()
+                for conn in self.connections:
+                    key = (conn['from'], conn['to'])
+                    existing_conn_keys.add(key)
+                
+                # Add new connections
+                for conn in external_connections:
+                    key = (conn['from'], conn['to'])
+                    if key not in existing_conn_keys:
+                        self.connections.append(conn)
+            
+            # Merge intermittent_links
+            if 'intermittent_links' in external_data:
+                external_intermittent = external_data['intermittent_links']
+                for link_key, attempts in external_intermittent.items():
+                    # Convert back to tuple key format
+                    if '>' in link_key:
+                        from_call, to_call = link_key.split('>', 1)
+                        tuple_key = (from_call, to_call)
+                        
+                        if tuple_key in self.intermittent_links:
+                            # Merge attempt lists
+                            self.intermittent_links[tuple_key].extend(attempts)
+                        else:
+                            self.intermittent_links[tuple_key] = attempts
+            
+            print("Merged {} nodes from {} ({} new, {} updated)".format(
+                len(external_nodes), filename, new_count, merged_count))
+            return len(external_nodes)
+            
+        except Exception as e:
+            print("Error merging {}: {}".format(filename, e))
+            return -1
 
 
 def main():
@@ -1651,6 +1745,7 @@ def main():
         print("\nOptions:")
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
         print("  --resume, -r     Resume from unexplored nodes in nodemap.json")
+        print("  --merge FILE     Merge another nodemap.json file into current data")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --notify URL     Send notifications to webhook URL")
@@ -1662,11 +1757,18 @@ def main():
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
         print("  {} --resume       # Continue from unexplored nodes".format(sys.argv[0]))
+        print("  {} --merge remote_nodemap.json  # Merge data from another node's perspective".format(sys.argv[0]))
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
         print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
         print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
+        print("  Merge file mode: Combines data from multiple node perspectives")
+        print("\nMulti-Node Mapping:")
+        print("  1. Run script from different nodes: nodemap.py 10 > node1_map.json")
+        print("  2. Share JSON files between operators")
+        print("  3. Merge perspectives: nodemap.py --merge node2_map.json --merge node3_map.json")
+        print("  4. Result: Combined network view from all vantage points")
         print("\nOutput Files:")
         print("  nodemap.json      Complete network topology and node information")
         print("  nodemap.csv       Connection list for spreadsheet analysis")
@@ -1688,6 +1790,7 @@ def main():
     password = None
     notify_url = None
     log_file = None
+    merge_files = []  # List of files to merge
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     resume = '--resume' in sys.argv or '-r' in sys.argv
     
@@ -1719,6 +1822,9 @@ def main():
         elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
             log_file = sys.argv[i + 1]
             i += 2
+        elif arg == '--merge' and i + 1 < len(sys.argv):
+            merge_files.append(sys.argv[i + 1])
+            i += 2
         else:
             i += 1
     
@@ -1727,6 +1833,43 @@ def main():
     
     # Create crawler
     crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume)
+    
+    # Handle merge-only mode (no crawling, just merge files)
+    if merge_files and not resume and not start_node and max_hops == 10:
+        print("Merge mode: Combining data from {} file(s)".format(len(merge_files)))
+        
+        # Load existing data if available
+        if merge_mode:
+            existing = crawler._load_existing_data('nodemap.json')
+            if existing and 'nodes' in existing:
+                crawler.nodes = existing['nodes']
+                crawler.connections = existing.get('connections', [])
+                # Reload intermittent_links from serialized format
+                intermittent_serialized = existing.get('intermittent_links', {})
+                for key_str, attempts in intermittent_serialized.items():
+                    if '>' in key_str:
+                        from_call, to_call = key_str.split('>', 1)
+                        crawler.intermittent_links[(from_call, to_call)] = attempts
+                print("Loaded {} existing nodes".format(len(crawler.nodes)))
+        
+        # Merge each file
+        total_merged = 0
+        for merge_file in merge_files:
+            result = crawler.merge_external_data(merge_file)
+            if result > 0:
+                total_merged += result
+        
+        if total_merged > 0:
+            # Export merged results
+            crawler.export_json(merge=merge_mode)
+            crawler.export_csv()
+            print("\nMerge complete! Combined data from {} files.".format(len(merge_files)))
+            print("Total nodes: {}".format(len(crawler.nodes)))
+            print("Total connections: {}".format(len(crawler.connections)))
+        else:
+            print("No data was merged.")
+        
+        return
     
     # Only require local callsign if no start_node provided and not in resume mode
     if not start_node and not crawler.callsign and not resume:
@@ -1761,6 +1904,19 @@ def main():
         # Export results
         crawler.export_json(merge=merge_mode)
         crawler.export_csv()
+        
+        # Merge additional files if specified
+        if merge_files:
+            print("\\nMerging additional data files...")
+            for merge_file in merge_files:
+                result = crawler.merge_external_data(merge_file)
+                if result > 0:
+                    print("Successfully merged {} nodes from {}".format(result, merge_file))
+            
+            # Re-export with merged data
+            crawler.export_json(merge=merge_mode)
+            crawler.export_csv()
+            print("Final merged data exported.")
         
         print("\nNetwork map complete!")
         print("Nodes discovered: {}".format(len(crawler.nodes)))
