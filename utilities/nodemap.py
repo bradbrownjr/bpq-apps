@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.22'
+__version__ = '1.3.23'
 
 import sys
 import telnetlib
@@ -1134,9 +1134,9 @@ class NodeCrawler:
                 # can still be explored from other neighbors (better paths)
                 if neighbor not in self.visited and hop_count + 1 <= self.max_hops:
                     # Determine path to this neighbor (intermediate hops only, not target)
-                    # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[]
+                    # If we're at local node WS1EC (path=[], callsign==self.callsign), queue KC1JMH with path=[]
                     #   (direct connection from local, no intermediate hops)
-                    # If we're at KC1JMH (path=[]), queue KS1R with path=[KC1JMH]
+                    # If we're at KC1JMH (path=[], callsign!=self.callsign), queue KS1R with path=[KC1JMH]
                     #   (go through KC1JMH to reach KS1R)
                     # If we're at KS1R (path=[KC1JMH]), queue N1XP with path=[KC1JMH, KS1R]
                     #   (go through KC1JMH, then KS1R, to reach N1XP)
@@ -1144,9 +1144,13 @@ class NodeCrawler:
                         # We're not at local node, path contains route to current node
                         # Current node becomes an intermediate hop to reach neighbor
                         new_path = path + [callsign]
-                    else:
-                        # We're at local node, direct connection to neighbor (no intermediate hops)
+                    elif callsign == self.callsign:
+                        # We're at the actual local node, direct connection to neighbor (no intermediate hops)
                         new_path = []
+                    else:
+                        # We're at a direct neighbor of local node (path=[] but not local node)
+                        # Need to route through this node to reach its neighbors
+                        new_path = [callsign]
                     
                     # Check if this is a shorter path than previously discovered
                     if neighbor not in self.shortest_paths or len(new_path) < len(self.shortest_paths[neighbor]):
