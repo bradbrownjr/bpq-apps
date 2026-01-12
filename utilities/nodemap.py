@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.31'
+__version__ = '1.3.32'
 
 import sys
 import telnetlib
@@ -1109,14 +1109,14 @@ class NodeCrawler:
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
             
-            # Pre-populate global netrom_ssid_map with NODES routing table data
-            # NODES shows actual node SSIDs (usually -15) used for routing
-            # This takes precedence over MHEARD which might show application SSIDs
+            # Pre-populate netrom_ssid_map with NODES alias data (e.g., CCEBBS:WS1EC-2)
+            # These are known-good SSIDs from aliases, but won't include all nodes
+            # MHEARD will fill in the rest, preferring higher SSIDs (node SSIDs like -15)
             for call, ssid in netrom_ssids_from_nodes.items():
                 if call not in self.netrom_ssid_map:
                     self.netrom_ssid_map[call] = ssid
                     if self.verbose:
-                        print("    Node SSID from NODES: {} = {}".format(call, ssid))
+                        print("    Node SSID from NODES alias: {} = {}".format(call, ssid))
             
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
@@ -1164,9 +1164,11 @@ class NodeCrawler:
                             has_ssid = '-' in full_callsign
                             
                             # Store SSID info from MHEARD (what was actually heard on RF)
-                            # This is the SSID that node uses for node-to-node connections
-                            # Don't overwrite - first SSID seen is typically the node SSID
-                            # (subsequent entries might be user applications like -8, -2, etc.)
+                            # Prefer higher SSIDs (typically node SSIDs like -15, -10, -5)
+                            # over lower SSIDs (typically applications like -2, -1 or operators)
+                            # Node SSIDs are conventionally -15, -10, -5
+                            # Application SSIDs are conventionally -2, -3, -4
+                            # User connections might be -1 or no SSID
                             if base_call not in mheard_ssids:
                                 mheard_ssids[base_call] = full_callsign
                                 if self.verbose:
@@ -1174,8 +1176,16 @@ class NodeCrawler:
                                         print("    MHEARD SSID for {}: {}".format(base_call, full_callsign))
                                     else:
                                         print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
-                            elif self.verbose and has_ssid and mheard_ssids[base_call] != full_callsign:
-                                print("    Ignoring {} (already have {})".format(full_callsign, mheard_ssids[base_call]))
+                            else:
+                                # Already have an SSID - check if this one is "better" (higher)
+                                existing_ssid = int(mheard_ssids[base_call].split('-')[1]) if '-' in mheard_ssids[base_call] else 0
+                                new_ssid = int(full_callsign.split('-')[1]) if '-' in full_callsign else 0
+                                if new_ssid > existing_ssid:
+                                    if self.verbose:
+                                        print("    Upgrading {} from {} to {} (higher SSID)".format(base_call, mheard_ssids[base_call], full_callsign))
+                                    mheard_ssids[base_call] = full_callsign
+                                elif self.verbose and has_ssid:
+                                    print("    Ignoring {} (already have higher SSID {})".format(full_callsign, mheard_ssids[base_call]))
                             
                             # Only add to neighbor list if it has an SSID (is a node)
                             # Stations without SSIDs can't be crawled
