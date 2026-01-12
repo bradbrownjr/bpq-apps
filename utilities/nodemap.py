@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.48'
+__version__ = '1.3.49'
 
 import sys
 import telnetlib
@@ -1187,9 +1187,10 @@ class NodeCrawler:
             return
         
         # Set overall operation timeout (commands + processing)
-        # Allow 2 minutes base + 1 minute per hop (reasonable for packet radio)
-        # Max ~12 minutes for 10 hops instead of previous 25 minutes
-        operation_deadline = time.time() + 120 + (hop_count * 60)
+        # Allow more generous timeout for nodes with many neighbors
+        # 3 minutes base + 2 minutes per hop (was 2min + 1min/hop)
+        # This gives more time for processing routes, mheard, and neighbor analysis
+        operation_deadline = time.time() + 180 + (hop_count * 120)
         
         try:
             # Helper to check if we've exceeded deadline
