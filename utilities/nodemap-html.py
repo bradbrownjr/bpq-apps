@@ -6,7 +6,7 @@ Generates interactive HTML map and static SVG from nodemap.json data.
 
 Outputs:
   nodemap.html - Interactive Leaflet map (requires internet for tiles)
-  nodemap.svg  - Static vector map (fully offline, no dependencies)
+  nodemap.svg  - Static vector map (fully offline with state/county boundaries)
 
 For BPQ Web Server:
   Copy nodemap.html to your BPQ HTML directory and add menu link.
@@ -14,16 +14,23 @@ For BPQ Web Server:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.0.0
+Version: 1.1.0
 """
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 import sys
 import json
 import os
 import math
 import re
+
+# Try to import boundary data (optional)
+try:
+    from map_boundaries import get_state_boundaries, get_maine_counties, get_states_in_bounds
+    HAS_BOUNDARIES = True
+except ImportError:
+    HAS_BOUNDARIES = False
 
 # Check Python version
 if sys.version_info < (3, 5):
@@ -478,15 +485,17 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
         print("Error: No nodes with valid grid squares found.")
         return False
     
-    # Calculate bounds
+    # Calculate bounds from nodes
     min_lat = min(n['lat'] for n in map_nodes)
     max_lat = max(n['lat'] for n in map_nodes)
     min_lon = min(n['lon'] for n in map_nodes)
     max_lon = max(n['lon'] for n in map_nodes)
     
-    # Add padding
-    lat_padding = (max_lat - min_lat) * 0.1 or 0.5
-    lon_padding = (max_lon - min_lon) * 0.1 or 0.5
+    # Add generous padding for context (show surrounding area)
+    lat_range = max_lat - min_lat
+    lon_range = max_lon - min_lon
+    lat_padding = max(lat_range * 0.3, 0.5)  # At least 0.5 degrees
+    lon_padding = max(lon_range * 0.3, 0.5)
     min_lat -= lat_padding
     max_lat += lat_padding
     min_lon -= lon_padding
@@ -502,6 +511,16 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
         y = (max_lat - lat) / (max_lat - min_lat) * (height - 100) + 50
         return (x, y)
     
+    def coords_to_path(coords):
+        """Convert list of [lon, lat] coords to SVG path."""
+        if not coords:
+            return ""
+        points = []
+        for lon, lat in coords:
+            x, y = project(lat, lon)
+            points.append("{:.1f},{:.1f}".format(x, y))
+        return "M " + " L ".join(points) + " Z"
+    
     # Generate SVG
     svg_lines = []
     svg_lines.append('<?xml version="1.0" encoding="UTF-8"?>')
@@ -513,10 +532,52 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
     svg_lines.append('    .connection { stroke-opacity: 0.6; }')
     svg_lines.append('    .legend text { font-family: sans-serif; font-size: 11px; }')
     svg_lines.append('    .title { font-family: sans-serif; font-size: 16px; font-weight: bold; }')
+    svg_lines.append('    .state { fill: #e8e8e8; stroke: #999; stroke-width: 1; }')
+    svg_lines.append('    .county { fill: none; stroke: #bbb; stroke-width: 0.5; stroke-dasharray: 2,2; }')
+    svg_lines.append('    .state-label { font-family: sans-serif; font-size: 12px; fill: #666; }')
     svg_lines.append('  </style>')
     
     # Background
     svg_lines.append('  <rect width="100%" height="100%" fill="#f5f5f5"/>')
+    
+    # Define clip path to constrain boundary drawing to visible area
+    svg_lines.append('  <defs>')
+    svg_lines.append('    <clipPath id="map-clip">')
+    svg_lines.append('      <rect x="50" y="50" width="{}" height="{}"/>'.format(width - 100, height - 100))
+    svg_lines.append('    </clipPath>')
+    svg_lines.append('  </defs>')
+    
+    # Draw state boundaries if available
+    if HAS_BOUNDARIES:
+        svg_lines.append('  <!-- State boundaries -->')
+        svg_lines.append('  <g class="boundaries" clip-path="url(#map-clip)">')
+        
+        # Get states that overlap with our map bounds
+        visible_states = get_states_in_bounds(min_lat, max_lat, min_lon, max_lon)
+        state_data = get_state_boundaries()
+        
+        for state_code in visible_states:
+            if state_code in state_data:
+                state = state_data[state_code]
+                path_d = coords_to_path(state['coords'])
+                if path_d:
+                    svg_lines.append('    <path class="state" d="{}">'.format(path_d))
+                    svg_lines.append('      <title>{}</title>'.format(state['name']))
+                    svg_lines.append('    </path>')
+        
+        # Draw Maine counties if Maine is visible and we're zoomed in enough
+        if 'ME' in visible_states:
+            lat_range = max_lat - min_lat
+            if lat_range < 5:  # Only show counties when zoomed in
+                county_data = get_maine_counties()
+                for county_name, county in county_data.items():
+                    path_d = coords_to_path(county['coords'])
+                    if path_d:
+                        svg_lines.append('    <path class="county" d="{}">'.format(path_d))
+                        svg_lines.append('      <title>{} County</title>'.format(county_name))
+                        svg_lines.append('    </path>')
+        
+        svg_lines.append('  </g>')
     
     # Title
     svg_lines.append('  <text x="{}" y="25" class="title" text-anchor="middle">Packet Radio Network Map</text>'.format(width/2))

@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.1.0] - 2026-01-15
+### Added
+- State and county boundaries for offline SVG maps (New England region)
+- New map_boundaries.py with simplified boundary coordinates
+- SVG clipPath to constrain boundary rendering to visible area
+- Maine county boundaries shown when zoomed in (lat range < 5 degrees)
+- Hover tooltips on state and county boundaries
+
+### Changed
+- Increased SVG padding from 10% to 30% for better geographic context
+- Updated output description: SVG now includes state/county boundaries
+
+## [nodemap-html 1.0.0] - 2026-01-15
+### Added
+- New utility: nodemap-html.py for map visualization
+- Interactive HTML map using Leaflet.js and OpenStreetMap tiles
+- Static SVG map for fully offline viewing
+- Band-based color coding (2m blue, 1.25m purple, 70cm orange, etc.)
+- Grid square to lat/lon conversion (Maidenhead locator system)
+- Connection lines between neighboring nodes
+- Legend showing frequency bands and node count
+
+## [1.3.50] - 2026-01-15
+### Added
+- Frequency tracking for network mapping and mesh interconnection planning
+- Enhanced CSV export with From_Frequencies, To_Frequencies, From_Ports columns
+- Frequency extraction from PORTS command output (parses MHz values)
+- Port-level frequency data in JSON output (nodes.ports[].frequency)
+
 ## [1.3.41] - 2026-01-12
 ### Fixed
 - Reduced excessive operation timeout from 5min+2min/hop to 2min+1min/hop (max 12min vs 25min)
