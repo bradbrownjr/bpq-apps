@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.41'
+__version__ = '1.3.42'
 
 import sys
 import telnetlib
@@ -84,6 +84,7 @@ class NodeCrawler:
         self.log_file = log_file
         self.log_handle = None
         self.resume = resume
+        self.resume_file = None  # Set externally if specific file needed
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -698,10 +699,32 @@ class NodeCrawler:
         Returns:
             List of (callsign, path) tuples for unexplored neighbors
         """
-        existing = self._load_existing_data(filename)
+        # Try multiple possible filenames if default doesn't exist
+        possible_files = [filename]
+        if filename == 'nodemap.json':
+            # Also try partial files from interrupted crawls
+            import glob
+            partial_files = glob.glob('nodemap_partial*.json')
+            if partial_files:
+                # Use most recent partial file
+                partial_files.sort(key=lambda f: os.path.getmtime(f), reverse=True)
+                possible_files.extend(partial_files)
+        
+        existing = None
+        used_file = None
+        for try_file in possible_files:
+            existing = self._load_existing_data(try_file)
+            if existing and 'nodes' in existing:
+                used_file = try_file
+                break
+        
         if not existing or 'nodes' not in existing:
-            print("No existing nodemap.json found. Starting fresh crawl.")
+            print("No existing nodemap data found. Starting fresh crawl.")
+            print("Tried files: {}".format(', '.join(possible_files)))
             return []
+        
+        if used_file != filename:
+            print("Using existing data from: {}".format(used_file))
         
         unexplored = []
         nodes_data = existing['nodes']
@@ -1444,8 +1467,9 @@ class NodeCrawler:
         """
         # Resume mode: load unexplored nodes from existing data
         if self.resume:
-            print("Resume mode: Loading unexplored nodes from nodemap.json...")
-            unexplored = self._load_unexplored_nodes()
+            resume_filename = self.resume_file if self.resume_file else 'nodemap.json'
+            print("Resume mode: Loading unexplored nodes from {}...".format(resume_filename))
+            unexplored = self._load_unexplored_nodes(resume_filename)
             
             if not unexplored:
                 print("No unexplored nodes found. Nothing to do.")
@@ -1760,6 +1784,8 @@ def main():
         print("\nOptions:")
         print("  --overwrite, -o  Overwrite existing data (default: merge)")
         print("  --resume, -r     Resume from unexplored nodes in nodemap.json")
+        print("                   Automatically finds nodemap_partial*.json if nodemap.json missing")
+        print("  --resume FILE    Resume from specific JSON file")
         print("  --merge FILE, -m Merge another nodemap.json file into current data")
         print("                   Supports wildcards: --merge *.json")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
@@ -1773,6 +1799,7 @@ def main():
         print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
         print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
         print("  {} --resume       # Continue from unexplored nodes".format(sys.argv[0]))
+        print("  {} --resume nodemap_partial.json  # Resume from specific file".format(sys.argv[0]))
         print("  {} --merge remote_nodemap.json  # Merge data from another node's perspective".format(sys.argv[0]))
         print("  {} -m *.json      # Merge all JSON files in current directory".format(sys.argv[0]))
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
@@ -1794,7 +1821,9 @@ def main():
         print("  Reads NODECALL and TCPPORT from ../linbpq/bpq32.cfg")
         print("\nTimeout Protection:")
         print("  Commands scale with hop count (5s + 10s/hop, max 60s)")
-        print("  Overall operation timeout: 5min + 2min/hop")
+        print("  Connection timeout: 20s + 20s/hop (max 2min)")
+        print("  Operation timeout: 2min + 1min/hop (max ~12min for 10 hops)")
+        print("  Staleness filter: Skips nodes not heard in >24 hours")
         sys.exit(0)
     
     print("BPQ Node Map Crawler v{}".format(__version__))
@@ -1808,6 +1837,7 @@ def main():
     notify_url = None
     log_file = None
     merge_files = []  # List of files to merge
+    resume_file = None  # File to resume from (None = auto-detect)
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     resume = '--resume' in sys.argv or '-r' in sys.argv
     
@@ -1839,6 +1869,14 @@ def main():
         elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
             log_file = sys.argv[i + 1]
             i += 2
+        elif (arg == '--resume' or arg == '-r'):
+            resume = True
+            # Check if next arg is a filename (not another option)
+            if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith('-'):
+                resume_file = sys.argv[i + 1]
+                i += 2
+            else:
+                i += 1
         elif (arg == '--merge' or arg == '-m') and i + 1 < len(sys.argv):
             pattern = sys.argv[i + 1]
             # Handle wildcard patterns like *.json
@@ -1873,6 +1911,10 @@ def main():
     
     # Create crawler
     crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume)
+    
+    # Set resume file if specified
+    if resume_file:
+        crawler.resume_file = resume_file
     
     # Handle merge-only mode (no crawling, just merge files)
     if merge_files and not resume and not start_node and max_hops == 10:
