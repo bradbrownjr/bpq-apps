@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.18'
+__version__ = '1.3.19'
 
 import sys
 import telnetlib
@@ -275,40 +275,41 @@ class NodeCrawler:
             
             # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):
-                # Try NetRom alias first (preferred method)
-                alias = self.call_to_alias.get(callsign)
+                # Strategy: Prefer direct connection (C PORT CALL-SSID) when we have port info
+                # This bypasses NetRom routing and is faster for direct neighbors
+                # Fallback to NetRom alias (C ALIAS) if no port info available
                 
-                if alias:
-                    # Use NetRom alias: C ALIAS
+                port_num = self.route_ports.get(callsign)
+                full_callsign = self.netrom_ssid_map.get(callsign, callsign)
+                
+                if port_num and full_callsign:
+                    # Direct neighbor with known port and SSID: C PORT CALLSIGN-SSID
+                    # Fastest method - goes straight to neighbor, no NetRom routing
+                    cmd = "C {} {}\r".format(port_num, full_callsign).encode('ascii')
+                    connect_target = "{} {} (port {}, direct)".format(port_num, full_callsign, port_num)
+                    if self.verbose:
+                        print("    Issuing command: C {} {} (direct port connection, hop {}/{})".format(port_num, full_callsign, i+1, len(path)))
+                elif self.call_to_alias.get(callsign):
+                    # NetRom alias available: C ALIAS
+                    # Uses NetRom routing - slower but works for non-direct neighbors
+                    alias = self.call_to_alias.get(callsign)
                     cmd = "C {}\r".format(alias).encode('ascii')
                     connect_target = alias
                     if self.verbose:
                         full_call = self.alias_to_call.get(alias, 'unknown')
                         print("    Issuing command: C {} (NetRom alias for {}, hop {}/{})".format(alias, full_call, i+1, len(path)))
                 else:
-                    # Fallback: use callsign-SSID from global map
-                    # For direct connections by callsign-SSID, BPQ requires port number
-                    full_callsign = self.netrom_ssid_map.get(callsign)
+                    # Fallback: use callsign-SSID without port
+                    # May fail if not a direct neighbor
                     if not full_callsign:
-                        # No NetRom SSID mapping found
-                        # Use base callsign (no SSID) to let node pick appropriate SSID
+                        full_callsign = callsign  # Use base callsign
                         if self.verbose:
                             print("    No NetRom SSID found for {}, using base callsign".format(callsign))
-                        full_callsign = callsign
                     
-                    # Check if we know the port for this neighbor (from ROUTES)
-                    port_num = self.route_ports.get(callsign)
-                    if port_num:
-                        # Direct neighbor: C PORT CALLSIGN-SSID
-                        cmd = "C {} {}\r".format(port_num, full_callsign).encode('ascii')
-                        connect_target = "{} {} (port {})".format(port_num, full_callsign, port_num)
-                    else:
-                        # No port info, try without port (may fail)
-                        cmd = "C {}\r".format(full_callsign).encode('ascii')
-                        connect_target = "{} (no port)".format(full_callsign)
-                    
+                    cmd = "C {}\r".format(full_callsign).encode('ascii')
+                    connect_target = "{} (no port)".format(full_callsign)
                     if self.verbose:
-                        print("    Issuing command: C {} (direct, hop {}/{})".format(connect_target, i+1, len(path)))
+                        print("    Issuing command: C {} (fallback, hop {}/{})".format(full_callsign, i+1, len(path)))
                 
                 tn.write(cmd)
                 
