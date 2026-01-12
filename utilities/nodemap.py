@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.45'
+__version__ = '1.3.46'
 
 import sys
 import telnetlib
@@ -746,18 +746,27 @@ class NodeCrawler:
                     if self.verbose:
                         print("Restored SSID mapping: {} = {}".format(base_call, full_call))
             
-            # Also restore route_ports for direct connections
+            # Also restore route_ports from heard_on_ports data (MHEARD port information)
+            heard_on_ports = node_data.get('heard_on_ports', [])
+            for call, port in heard_on_ports:
+                if port is not None and call not in self.route_ports:
+                    self.route_ports[call] = port
+                    if self.verbose:
+                        print("Restored MHEARD port: {} on port {}".format(call, port))
+            
+            # Also restore route_ports from routes data (for any additional entries)
             routes = node_data.get('routes', {})
             for neighbor, quality in routes.items():
                 if neighbor not in self.route_ports and quality > 0:
-                    # Find port from the node's neighbors data
-                    neighbors = node_data.get('neighbors', [])
-                    if neighbor in neighbors:
-                        # Use port 1 as default for now - could be improved
-                        self.route_ports[neighbor] = 1
+                    # Use port 1 as fallback if no MHEARD data available
+                    self.route_ports[neighbor] = 1
+                    if self.verbose:
+                        print("Restored route port (fallback): {} on port 1".format(neighbor))
         
         if self.verbose and self.netrom_ssid_map:
             print("Restored {} SSID mappings from previous crawl".format(len(self.netrom_ssid_map)))
+        if self.verbose and self.route_ports:
+            print("Restored {} route ports from previous crawl".format(len(self.route_ports)))
         
         # Find unexplored neighbors from each visited node
         for callsign, node_data in nodes_data.items():
@@ -1391,7 +1400,7 @@ class NodeCrawler:
                 'location': location,  # From INFO (unreliable, sysop-entered)
                 'location_source': 'info',  # Mark as low-confidence
                 'ports': ports_list,  # From PORTS (reliable)
-                'heard_on_ports': [(call, None) for call in all_neighbors],
+                'heard_on_ports': [(call, mheard_ports.get(call)) for call in all_neighbors],
                 'type': node_type,  # From INFO or prompt (low/medium confidence)
                 'type_source': 'info' if 'BPQ' in info_output.upper() or 'FBB' in info_output.upper() else 'prompt',
                 'routes': routes,  # From ROUTES (reliable)
