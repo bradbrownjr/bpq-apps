@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.55] - 2026-01-22
+### Fixed
+- Callsign-SSID normalization in port/alias lookups
+- Extract base callsign (split on '-') before checking route_ports and call_to_alias maps
+- Remote node crawls now properly use direct port connections instead of fallback mode
+
+## [nodemap 1.3.54] - 2026-01-22
+### Added
+- Pre-load route info from existing nodemap.json when starting remote crawl
+- Loads netrom_ssid_map and route_ports for remote node startup (no delays waiting for PORTS/NODES)
+
 ## [nodemap-html 1.1.0] - 2026-01-15
 ### Added
 - State and county boundaries for offline SVG maps (New England region)

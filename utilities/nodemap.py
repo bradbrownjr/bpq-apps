@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.54'
+__version__ = '1.3.55'
 
 import sys
 import telnetlib
@@ -309,8 +309,11 @@ class NodeCrawler:
                 # This bypasses NetRom routing and is faster for direct neighbors
                 # Fallback to NetRom alias (C ALIAS) if no port info available
                 
-                port_num = self.route_ports.get(callsign)
-                full_callsign = self.netrom_ssid_map.get(callsign, callsign)
+                # Extract base callsign for lookups (route_ports and netrom_ssid_map are keyed by base call)
+                lookup_call = callsign.split('-')[0] if '-' in callsign else callsign
+                
+                port_num = self.route_ports.get(lookup_call)
+                full_callsign = self.netrom_ssid_map.get(lookup_call, callsign)
                 
                 if port_num and full_callsign:
                     # Direct neighbor with known port and SSID: C PORT CALLSIGN-SSID
@@ -319,10 +322,10 @@ class NodeCrawler:
                     connect_target = "{} {} (port {}, direct)".format(port_num, full_callsign, port_num)
                     if self.verbose:
                         print("    Issuing command: C {} {} (direct port connection, hop {}/{})".format(port_num, full_callsign, i+1, len(path)))
-                elif self.call_to_alias.get(callsign):
+                elif self.call_to_alias.get(lookup_call):
                     # NetRom alias available: C ALIAS
                     # Uses NetRom routing - slower but works for non-direct neighbors
-                    alias = self.call_to_alias.get(callsign)
+                    alias = self.call_to_alias.get(lookup_call)
                     cmd = "C {}\r".format(alias).encode('ascii')
                     connect_target = alias
                     if self.verbose:
