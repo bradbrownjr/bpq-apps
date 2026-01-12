@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.35] - 2025-06-25
+
+### Fixed
+- nodemap.py: ROUTES parsing now includes non-direct neighbors with quality > 0
+- nodemap.py: Nodes with quality 0 in ROUTES are skipped (sysop-blocked poor paths)
+- nodemap.py: Removed overly strict 'Routes' content validation that caused parsing failures
+
+### Changed  
+- nodemap.py: All ROUTES entries with quality > 0 now provide authoritative node SSIDs
+- nodemap.py: MHEARD nodes found in any ROUTES entry (not just direct >) are marked as authoritative
+
 ## [1.3.34] - 2025-06-25
 
 ### Fixed

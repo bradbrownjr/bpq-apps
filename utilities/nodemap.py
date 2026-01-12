@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.34'
+__version__ = '1.3.35'
 
 import sys
 import telnetlib
@@ -1003,17 +1003,22 @@ class NodeCrawler:
                         ssids[base_call] = full_call  # AUTHORITATIVE node SSID
                         continue
             
-            # Look for other route lines with quality indicators
-            # Format varies but usually: DEST VIA PORT QUALITY
-            match = re.search(r'(\w+(?:-\d+)?)\s+.*?(\d+)', line)
+            # Look for other route lines (non-direct neighbors)
+            # Format: "  PORT CALLSIGN-SSID QUALITY METRIC"
+            # Example: "  1 K1NYY-15  200 0!" (reachable via intermediate hop)
+            # Skip routes with quality 0 (blocked/poor paths that sysop disabled)
+            match = re.search(r'^\s+(\d+)\s+(\w+(?:-\d+)?)\s+(\d+)', line)
             if match:
-                dest = match.group(1).split('-')[0]
-                # Validate callsign format
-                if not self._is_valid_callsign(dest):
-                    continue
-                quality = int(match.group(2))
-                if dest not in routes:  # Don't overwrite direct neighbor entries
-                    routes[dest] = quality
+                port_num = int(match.group(1))
+                full_call = match.group(2)
+                quality = int(match.group(3))
+                base_call = full_call.split('-')[0]
+                
+                # Validate callsign format and skip quality 0 (blocked routes)
+                if self._is_valid_callsign(base_call) and quality > 0:
+                    if base_call not in routes:  # Don't overwrite direct neighbor entries
+                        routes[base_call] = quality
+                        ssids[base_call] = full_call  # AUTHORITATIVE node SSID from ROUTES
         
         return routes, ports, ssids
     
@@ -1166,7 +1171,7 @@ class NodeCrawler:
             # ROUTES is AUTHORITATIVE for node SSIDs - direct neighbor entries show actual node SSID
             if check_deadline():
                 return
-            routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout, expect_content='Routes')
+            routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
             routes, route_ports, routes_ssids = self._parse_routes(routes_output)
             # Update global route_ports with direct neighbor port info from this node
             self.route_ports.update(route_ports)
