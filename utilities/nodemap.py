@@ -1109,6 +1109,15 @@ class NodeCrawler:
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
             
+            # Pre-populate global netrom_ssid_map with NODES routing table data
+            # NODES shows actual node SSIDs (usually -15) used for routing
+            # This takes precedence over MHEARD which might show application SSIDs
+            for call, ssid in netrom_ssids_from_nodes.items():
+                if call not in self.netrom_ssid_map:
+                    self.netrom_ssid_map[call] = ssid
+                    if self.verbose:
+                        print("    Node SSID from NODES: {} = {}".format(call, ssid))
+            
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
                 return
