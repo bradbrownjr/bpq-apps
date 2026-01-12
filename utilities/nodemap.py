@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.35'
+__version__ = '1.3.36'
 
 import sys
 import telnetlib
@@ -1015,10 +1015,13 @@ class NodeCrawler:
                 base_call = full_call.split('-')[0]
                 
                 # Validate callsign format and skip quality 0 (blocked routes)
-                if self._is_valid_callsign(base_call) and quality > 0:
-                    if base_call not in routes:  # Don't overwrite direct neighbor entries
-                        routes[base_call] = quality
-                        ssids[base_call] = full_call  # AUTHORITATIVE node SSID from ROUTES
+                if self._is_valid_callsign(base_call):
+                    if quality > 0:
+                        if base_call not in routes:  # Don't overwrite direct neighbor entries
+                            routes[base_call] = quality
+                            ssids[base_call] = full_call  # AUTHORITATIVE node SSID from ROUTES
+                    elif self.verbose:
+                        print("    Ignoring {} (quality 0 - sysop blocked route)".format(full_call))
         
         return routes, ports, ssids
     
@@ -1242,7 +1245,7 @@ class NodeCrawler:
                                 mheard_ssids[base_call] = full_callsign
                                 if self.verbose:
                                     if has_ssid:
-                                        print("    MHEARD SSID for {}: {} (not in ROUTES - may be app/operator)".format(base_call, full_callsign))
+                                        print("    MHEARD SSID for {}: {} (not in ROUTES table - may be app/operator SSID)".format(base_call, full_callsign))
                                     else:
                                         print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
                             elif self.verbose and has_ssid:

@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [1.3.35] - 2025-06-25
+## [1.3.36] - 2026-01-12
+### Changed
+- Improved verbose output clarity for SSID selection:
+  - Added logging when quality 0 routes are ignored ("sysop blocked route")
+  - Clarified "not in ROUTES table" vs quality-based filtering
+  - Enhanced distinction between authoritative vs fallback SSID sources
+
+## [1.3.35] - 2026-01-12
 
 ### Fixed
 - nodemap.py: ROUTES parsing now includes non-direct neighbors with quality > 0
