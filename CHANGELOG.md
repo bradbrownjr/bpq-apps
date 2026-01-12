@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.37] - 2026-01-12
+### Changed
+- Simplified SSID selection verbose messaging:
+  - Removed unnecessary "may be app/operator SSID" text
+  - Added explicit detection of quality 0 routes in MHEARD stations
+  - Now shows "Skipping X (quality 0 in ROUTES - sysop blocked route)" for blocked stations
+  - Cleaner "not in ROUTES table" message for truly unknown stations
+
 ## [1.3.36] - 2026-01-12
 ### Changed
 - Improved verbose output clarity for SSID selection:
