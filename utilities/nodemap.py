@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.20'
+__version__ = '1.3.21'
 
 import sys
 import telnetlib
@@ -1269,20 +1269,21 @@ class NodeCrawler:
         
         # Display summary table
         if self.nodes:
-            print("\n" + "=" * 80)
+            print("\n" + "=" * 88)
             print("NETWORK SUMMARY")
-            print("=" * 80)
-            print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<10} {:<30}".format(
-                "CALLSIGN", "HOPS", "PORTS", "APPS", "NBRS", "UNEXPLRD", "GRID/LOCATION"
+            print("=" * 88)
+            print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<6} {:<10} {:<30}".format(
+                "CALLSIGN", "HOPS", "PORTS", "CMDS", "NBRS", "FAILED", "UNEXPLRD", "GRID/LOCATION"
             ))
-            print("-" * 80)
+            print("-" * 88)
             
             for callsign in sorted(self.nodes.keys()):
                 node = self.nodes[callsign]
                 hop_dist = node.get('hop_distance', 0)
                 ports = len([p for p in node.get('ports', []) if p.get('is_rf')])
-                apps = len(node.get('applications', []))
+                commands = len(node.get('commands', []))  # Count commands from ? (reliable)
                 neighbors = len(node.get('neighbors', []))
+                failed = len(node.get('intermittent_neighbors', []))  # Failed connections
                 unexplored = len(node.get('unexplored_neighbors', []))
                 location = node.get('location', {})
                 grid = location.get('grid', '')
@@ -1297,22 +1298,23 @@ class NodeCrawler:
                 else:
                     loc_str = ""
                 
-                print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<10} {:<30}".format(
+                print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<6} {:<10} {:<30}".format(
                     callsign,
                     hop_dist,
                     ports,
-                    apps,
+                    commands,
                     neighbors,
+                    failed if failed > 0 else '',
                     unexplored if unexplored > 0 else '',
                     loc_str[:30]
                 ))
             
-            print("=" * 80)
+            print("=" * 88)
             print("Total: {} nodes, {} connections".format(
                 len(self.nodes),
                 len(self.connections)
             ))
-            print("=" * 80)
+            print("=" * 88)
     
     def export_json(self, filename='nodemap.json', merge=False):
         """Export network map to JSON.
