@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.46'
+__version__ = '1.3.47'
 
 import sys
 import telnetlib
@@ -40,14 +40,35 @@ import re
 import os
 from collections import deque
 
+
+class Colors:
+    """ANSI color codes for console output."""
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    GREEN = '\033[92m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    MAGENTA = '\033[95m'
+    BOLD = '\033[1m'
+    RESET = '\033[0m'
+
+
+def colored_print(message, color=None):
+    """Print message with color if stdout is a terminal."""
+    if color and hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        print(f"{color}{message}{Colors.RESET}")
+    else:
+        print(message)
+
+
 # Check Python version
 if sys.version_info < (3, 5):
-    print("Error: This script requires Python 3.5 or later.")
-    print("Your version: Python {}.{}.{}".format(
+    colored_print("Error: This script requires Python 3.5 or later.", Colors.RED)
+    colored_print("Your version: Python {}.{}.{}".format(
         sys.version_info.major,
         sys.version_info.minor,
         sys.version_info.micro
-    ))
+    ), Colors.YELLOW)
     sys.exit(1)
 
 
@@ -351,11 +372,11 @@ class NodeCrawler:
                                                                  'NOT IN TABLES', 'NO ROUTE TO']):
                             # Extract last meaningful line for error message
                             error_line = response.strip().split('\n')[-1] if response.strip() else 'Unknown error'
-                            print("  Connection to {} (via {}) failed: {}".format(
+                            colored_print("  Connection to {} (via {}) failed: {}".format(
                                 callsign, 
                                 connect_target,
                                 error_line
-                            ))
+                            ), Colors.RED)
                             tn.close()
                             return None
                         
@@ -421,7 +442,7 @@ class NodeCrawler:
             return tn
             
         except Exception as e:
-            print("Error connecting: {}".format(e))
+            colored_print("Error connecting: {}".format(e), Colors.RED)
             return None
     
     def _send_command(self, tn, command, wait_for=b'>', timeout=5, expect_content=None):
@@ -1104,7 +1125,7 @@ class NodeCrawler:
         else:
             path_desc = " (via {})".format(' > '.join(path))
         
-        print("Crawling {}{}".format(callsign, path_desc))
+        colored_print("Crawling {}{}".format(callsign, path_desc), Colors.CYAN)
         
         self.visited.add(callsign)
         
@@ -1139,7 +1160,7 @@ class NodeCrawler:
         if tn and not path and callsign == self.callsign:
             self._send_notification("Starting crawl from {}".format(callsign))
         if not tn:
-            print("  Skipping {} (connection failed)".format(callsign))
+            colored_print("  Skipping {} (connection failed)".format(callsign), Colors.YELLOW)
             
             # Track this as an intermittent/unreliable link
             # Don't add to self.failed - node may be reachable from other paths
@@ -1174,7 +1195,7 @@ class NodeCrawler:
             # Helper to check if we've exceeded deadline
             def check_deadline():
                 if time.time() > operation_deadline:
-                    print("  Operation timeout for {} ({} hops)".format(callsign, hop_count))
+                    colored_print("  Operation timeout for {} ({} hops)".format(callsign, hop_count), Colors.YELLOW)
                     return True
                 return False
             
@@ -1514,16 +1535,16 @@ class NodeCrawler:
                 print("No unexplored nodes found.")
                 if len(self.visited) > 0:
                     print("All {} previously crawled nodes have been fully explored.".format(len(self.visited)))
-                    print("Use normal mode to start a fresh crawl or increase max hops.")
+                    colored_print("Use normal mode to start a fresh crawl or increase max hops.", Colors.YELLOW)
                 else:
-                    print("No previous crawl data found. Use normal mode to start a fresh crawl.")
+                    colored_print("No previous crawl data found. Use normal mode to start a fresh crawl.", Colors.RED)
                 return
             
             # Queue all unexplored nodes
             for callsign, path in unexplored:
                 self.queue.append((callsign, path))
             
-            print("Queued {} unexplored nodes for crawling".format(len(unexplored)))
+            colored_print("Queued {} unexplored nodes for crawling".format(len(unexplored)), Colors.GREEN)
             self._send_notification("Resume crawl: {} unexplored nodes".format(len(unexplored)))
             
             # In resume mode, we don't have a single starting callsign
@@ -1550,7 +1571,7 @@ class NodeCrawler:
                     print("Or provide a starting callsign: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]))
                     return
                 starting_callsign = self.callsign
-                print("Starting network crawl from local node: {}...".format(starting_callsign))
+                colored_print("Starting network crawl from local node: {}...".format(starting_callsign), Colors.GREEN)
             
             print("BPQ node: {}:{}".format(self.host, self.port))
             print("Max hops: {}".format(self.max_hops))
@@ -1587,10 +1608,12 @@ class NodeCrawler:
             time.sleep(2)  # Be polite, don't hammer network
         
         print("-" * 50)
-        print("Crawl complete. Found {} nodes.".format(len(self.nodes)))
-        print("Failed connections: {} nodes".format(len(self.failed)))
+        colored_print("Crawl complete. Found {} nodes.".format(len(self.nodes)), Colors.GREEN)
         if self.failed:
+            colored_print("Failed connections: {} nodes".format(len(self.failed)), Colors.YELLOW)
             print("  Failed: {}".format(', '.join(sorted(self.failed))))
+        else:
+            print("No failed connections.")
         
         # Notify crawl completion
         self._send_notification("Crawl complete: {} nodes, {} failed".format(len(self.nodes), len(self.failed)))
