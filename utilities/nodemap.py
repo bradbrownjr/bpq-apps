@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.28'
+__version__ = '1.3.29'
 
 import sys
 import telnetlib
@@ -1048,12 +1048,25 @@ class NodeCrawler:
             if check_deadline():
                 return
             nodes_output = self._send_command(tn, 'NODES', timeout=cmd_timeout, expect_content=':')
-            aliases, netrom_ssids_from_nodes, _ = self._parse_nodes_aliases(nodes_output)
+            all_aliases, netrom_ssids_from_nodes, _ = self._parse_nodes_aliases(nodes_output)
             # Discard neighbors_from_nodes - NODES is routing table, not neighbor list
             time.sleep(inter_cmd_delay)
             
+            # Separate this node's own aliases from other nodes' aliases
+            # Own aliases: entries where the callsign matches current node's base callsign
+            # Example: On WS1EC, own aliases are CCEMA:WS1EC-15, CCEBBS:WS1EC-2, etc.
+            own_aliases = {}
+            other_aliases = {}
+            for alias, full_call in all_aliases.items():
+                alias_base = full_call.split('-')[0]
+                if alias_base == base_callsign:
+                    own_aliases[alias] = full_call
+                else:
+                    other_aliases[alias] = full_call
+            
             # Update global alias mappings from NODES (routing table)
-            for alias, full_call in aliases.items():
+            # These are useful for routing to other nodes
+            for alias, full_call in other_aliases.items():
                 base_call = full_call.split('-')[0]
                 
                 # Store alias mapping for documentation
@@ -1106,25 +1119,35 @@ class NodeCrawler:
                             if not self._is_valid_callsign(base_call):
                                 continue
                             
+                            # Check if this has a node SSID (contains -number)
+                            # Stations without SSID are likely user stations or digipeaters
+                            # They can't be crawled as nodes (no BPQ commands)
+                            has_ssid = '-' in full_callsign
+                            
                             # Store SSID info from MHEARD (what was actually heard on RF)
                             # This is the SSID that node uses for node-to-node connections
                             if base_call not in mheard_ssids:
                                 mheard_ssids[base_call] = full_callsign
                                 if self.verbose:
-                                    print("    MHEARD SSID for {}: {}".format(base_call, full_callsign))
+                                    if has_ssid:
+                                        print("    MHEARD SSID for {}: {}".format(base_call, full_callsign))
+                                    else:
+                                        print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
                             
-                            # Add to neighbor list (base callsign only)
-                            mheard_neighbors.append(base_call)
-                            
-                            # Store port info
-                            if base_call not in mheard_ports:
-                                mheard_ports[base_call] = port_num
+                            # Only add to neighbor list if it has an SSID (is a node)
+                            # Stations without SSIDs can't be crawled
+                            if has_ssid:
+                                mheard_neighbors.append(base_call)
+                                
+                                # Store port info
+                                if base_call not in mheard_ports:
+                                    mheard_ports[base_call] = port_num
             
             # Update global netrom_ssid_map with MHEARD data (what was heard on RF)
             # This is the correct SSID to use for connections (not from NODES routing table)
             self.netrom_ssid_map.update(mheard_ssids)
             
-            # Use MHEARD exclusively for neighbors (stations actually heard on RF)
+            # Use MHEARD exclusively for neighbors (stations actually heard on RF with SSIDs)
             # Remove duplicates and exclude self (all SSIDs)
             all_neighbors = list(set([n for n in mheard_neighbors if n != base_callsign]))
             
@@ -1178,7 +1201,7 @@ class NodeCrawler:
             
             self.nodes[callsign] = {
                 'info': info_output.strip(),
-                'neighbors': all_neighbors,  # From MHEARD (reliable)
+                'neighbors': all_neighbors,  # Direct RF neighbors from MHEARD (with SSIDs only)
                 'explored_neighbors': explored_neighbors,  # Neighbors that were/will be visited
                 'unexplored_neighbors': unexplored_neighbors,  # Neighbors skipped (hop limit)
                 'intermittent_neighbors': intermittent_neighbors,  # Neighbors with failed connections
@@ -1190,7 +1213,8 @@ class NodeCrawler:
                 'type': node_type,  # From INFO or prompt (low/medium confidence)
                 'type_source': 'info' if 'BPQ' in info_output.upper() or 'FBB' in info_output.upper() else 'prompt',
                 'routes': routes,  # From ROUTES (reliable)
-                'aliases': aliases,  # From NODES (reliable, for documentation)
+                'own_aliases': own_aliases,  # This node's aliases (CCEMA:WS1EC-15, etc.)
+                'seen_aliases': other_aliases,  # Other nodes' aliases seen in NODES
                 'netrom_ssids': mheard_ssids,  # From MHEARD (actual RF transmissions)
                 'applications': applications,  # From INFO (unreliable, sysop-entered)
                 'applications_source': 'info',  # Mark as low-confidence
@@ -1248,8 +1272,8 @@ class NodeCrawler:
             print("  RF Ports: {}".format(len([p for p in ports_list if p['is_rf']])))
             print("  Applications: {}".format(len(applications)))
             print("  Commands: {}".format(len(commands)))
-            if aliases:
-                print("  Aliases: {}".format(len(aliases)))
+            if own_aliases:
+                print("  Own Aliases: {}".format(len(own_aliases)))
             
             # Notify after successful crawl
             if not path:

@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.29] - 2025-06-25
+
+### Changed
+- nodemap.py: Skip non-node stations (no SSID) in MHEARD-based crawling
+- nodemap.py: Stations without SSIDs (digipeaters, users) documented but not crawled
+- nodemap.py: Separated own_aliases (current node) from nodes_aliases (routing table)
+- nodemap.py: Summary now shows "Own Aliases" count instead of all nodes' aliases
+
+### Fixed
+- nodemap.py: WD1F hang - stations without SSIDs are not BPQ nodes, don't try to connect
+- nodemap.py: Alias count was inflated by including all NODES entries
+
+## [1.3.28] - 2025-06-25
+
+### Changed
+- nodemap.py: Complete rewrite of _send_command for multi-hop RF reliability
+- nodemap.py: Added retry logic with content validation for command responses
+- nodemap.py: Inter-command delays scaled by hop count (0.5s base + 0.5s per hop)
+- nodemap.py: Connection timeout scales with hop count (30s base + 30s per hop, max 180s)
+
+### Fixed
+- nodemap.py: Command/response synchronization issues on multi-hop RF paths
+- nodemap.py: PORTS regex now correctly extracts frequency information
+- nodemap.py: Handles partial/malformed responses with automatic retry
+
 ### Added
 - GitHub Copilot instructions file (`.github/copilot-instructions.md`)
 - This changelog file to track project changes
