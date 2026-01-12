@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.49'
+__version__ = '1.3.50'
 
 import sys
 import telnetlib
@@ -862,6 +862,13 @@ class NodeCrawler:
             if speed_match:
                 speed = int(speed_match.group(1))
             
+            # Try to extract frequency from description
+            # Look for patterns like "433.300 MHz", "145.050 MHz", "144.930 MHz"
+            frequency = None
+            freq_match = re.search(r'(\d+\.\d+)\s*MHz', rest, re.IGNORECASE)
+            if freq_match:
+                frequency = float(freq_match.group(1))
+            
             # Full description is everything after port number
             description = rest
             
@@ -872,6 +879,7 @@ class NodeCrawler:
             ports.append({
                 'number': port_num,
                 'description': description,
+                'frequency': frequency,  # MHz as float (433.3, 145.05, etc.)
                 'speed': speed,
                 'is_rf': is_rf
             })
@@ -1723,10 +1731,13 @@ class NodeCrawler:
         print("{} {} ({} nodes)".format(mode_str, filename, len(nodes_data)))
     
     def export_csv(self, filename='nodemap.csv'):
-        """Export connections to CSV."""
+        """Export connections to CSV with frequency information for network mapping."""
         with open(filename, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['From', 'To', 'Port', 'Quality', 'Intermittent', 'To_Explored', 'From_Grid', 'To_Grid', 'From_Type', 'To_Type'])
+            # Enhanced header with frequency fields for network mapping
+            writer.writerow(['From', 'To', 'Port', 'Quality', 'Intermittent', 'To_Explored', 
+                           'From_Grid', 'To_Grid', 'From_Type', 'To_Type', 
+                           'From_Frequencies', 'To_Frequencies', 'From_Ports'])
             
             for conn in self.connections:
                 from_node = self.nodes.get(conn['from'], {})
@@ -1735,6 +1746,20 @@ class NodeCrawler:
                 
                 # Determine if 'to' node was explored
                 to_explored = 'Yes' if to_call in self.visited else 'No'
+                
+                # Extract RF frequencies from 'from' node for operators to know connection options
+                from_frequencies = []
+                from_ports = []
+                for port in from_node.get('ports', []):
+                    if port['is_rf'] and port.get('frequency'):
+                        from_frequencies.append(str(port['frequency']))
+                        from_ports.append(str(port['number']))
+                
+                # Extract RF frequencies from 'to' node
+                to_frequencies = []
+                for port in to_node.get('ports', []):
+                    if port['is_rf'] and port.get('frequency'):
+                        to_frequencies.append(str(port['frequency']))
                 
                 writer.writerow([
                     conn['from'],
@@ -1746,7 +1771,10 @@ class NodeCrawler:
                     from_node.get('location', {}).get('grid', ''),
                     to_node.get('location', {}).get('grid', ''),
                     from_node.get('type', 'Unknown'),
-                    to_node.get('type', 'Unknown')
+                    to_node.get('type', 'Unknown'),
+                    ';'.join(from_frequencies),  # Semicolon-separated frequencies (e.g., "433.3;145.05")
+                    ';'.join(to_frequencies),
+                    ';'.join(from_ports)         # Corresponding port numbers for frequency reference
                 ])
         
         print("Exported to {}".format(filename))
