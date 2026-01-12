@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.23'
+__version__ = '1.3.24'
 
 import sys
 import telnetlib
@@ -383,6 +383,15 @@ class NodeCrawler:
                             print("    Connected to node: {} ({}) - stored for routing".format(prompt_callsign, prompt_alias))
                     elif self.verbose:
                         print("    Received remote prompt: {}...".format(prompt_data[-20:].decode('ascii', errors='replace').strip()))
+                    
+                    # Always consume any remaining buffered data after prompt
+                    # This prevents leftover banner/info text from contaminating first command response
+                    time.sleep(0.5)  # Give any trailing data time to arrive
+                    extra_data = tn.read_very_eager()
+                    if extra_data:
+                        self._log('RECV', extra_data)
+                        if self.verbose:
+                            print("    Cleared {} bytes of buffered data".format(len(extra_data)))
                 except:
                     # If no prompt received, just consume whatever is buffered
                     buffered = tn.read_very_eager()
