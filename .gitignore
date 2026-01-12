@@ -15,3 +15,4 @@ utilities/nodemap.json
 utilities/nodemap.csv
 utilities/nodemap_partial*.json
 utilities/nodemap_partial*.csv
+utilities/test_nodemap.json

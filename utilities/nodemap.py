@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.51'
+__version__ = '1.3.52'
 
 import sys
 import telnetlib
@@ -341,7 +341,16 @@ class NodeCrawler:
                     if self.verbose:
                         print("    Issuing command: C {} (fallback, hop {}/{})".format(full_callsign, i+1, len(path)))
                 
-                tn.write(cmd)
+                # Set socket timeout before write to prevent blocking on dead connections
+                # TCP write() can block if remote end's receive buffer is full
+                tn.sock.settimeout(10.0)
+                
+                try:
+                    tn.write(cmd)
+                except socket.timeout:
+                    print("  Connection to {} timed out (write blocked)".format(callsign))
+                    tn.close()
+                    return None
                 
                 # Wait for connection response (scale timeout with hop count)
                 # At 1200 baud RF: ~20s per hop for connection establishment

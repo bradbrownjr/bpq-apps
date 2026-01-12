@@ -28,6 +28,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Connection lines between neighboring nodes
 - Legend showing frequency bands and node count
 
+## [1.3.52] - 2026-01-12
+### Fixed
+- Fixed infinite hang when tn.write() blocks on dead TCP connections during multi-hop
+- Added 10s socket timeout before write operations to detect unresponsive remote nodes
+- Fixes 23+ minute hangs when intermediate node (e.g. KS1R) stops responding before command sent
+
 ## [1.3.51] - 2026-01-12
 ### Fixed
 - Fixed infinite hang during multi-hop connections when RF link goes silent
