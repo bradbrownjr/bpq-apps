@@ -1,0 +1,722 @@
+#!/usr/bin/env python3
+"""
+Node Map HTML Generator for BPQ Packet Radio Networks
+------------------------------------------------------
+Generates interactive HTML map and static SVG from nodemap.json data.
+
+Outputs:
+  nodemap.html - Interactive Leaflet map (requires internet for tiles)
+  nodemap.svg  - Static vector map (fully offline, no dependencies)
+
+For BPQ Web Server:
+  Copy nodemap.html to your BPQ HTML directory and add menu link.
+  See --help for BPQ configuration instructions.
+
+Author: Brad Brown KC1JMH
+Date: January 2026
+Version: 1.0.0
+"""
+
+__version__ = '1.0.0'
+
+import sys
+import json
+import os
+import math
+import re
+
+# Check Python version
+if sys.version_info < (3, 5):
+    print("Error: This script requires Python 3.5 or later.")
+    sys.exit(1)
+
+
+def grid_to_latlon(grid):
+    """
+    Convert Maidenhead grid square to lat/lon center point.
+    
+    Args:
+        grid: 4 or 6 character grid square (e.g., FN43, FN43sr)
+        
+    Returns:
+        Tuple (lat, lon) or None if invalid
+    """
+    if not grid or len(grid) < 4:
+        return None
+    
+    grid = grid.upper().strip()
+    
+    # Validate format
+    if not re.match(r'^[A-R]{2}[0-9]{2}([A-X]{2})?$', grid):
+        return None
+    
+    # Field (2 letters A-R)
+    field1 = ord(grid[0]) - ord('A')
+    field2 = ord(grid[1]) - ord('A')
+    
+    # Square (2 digits 0-9)
+    square1 = int(grid[2])
+    square2 = int(grid[3])
+    
+    # Base calculation (center of 4-char grid)
+    lon = (field1 * 20) - 180 + (square1 * 2) + 1
+    lat = (field2 * 10) - 90 + (square2 * 1) + 0.5
+    
+    # Subsquare (2 letters a-x) if present - more precise
+    if len(grid) >= 6:
+        sub1 = ord(grid[4]) - ord('A')
+        sub2 = ord(grid[5]) - ord('A')
+        lon = (field1 * 20) - 180 + (square1 * 2) + (sub1 * 2.0 / 24) + (1.0 / 24)
+        lat = (field2 * 10) - 90 + (square2 * 1) + (sub2 * 1.0 / 24) + (0.5 / 24)
+    
+    return (lat, lon)
+
+
+def get_band_color(frequency):
+    """
+    Get color for amateur radio band based on frequency (MHz).
+    
+    Returns CSS color string.
+    """
+    if frequency is None:
+        return '#888888'  # Gray for unknown
+    
+    freq = float(frequency)
+    
+    if 144.0 <= freq <= 148.0:
+        return '#2196F3'  # Blue - 2m
+    elif 222.0 <= freq <= 225.0:
+        return '#9C27B0'  # Purple - 1.25m
+    elif 420.0 <= freq <= 450.0:
+        return '#FF9800'  # Orange - 70cm
+    elif 902.0 <= freq <= 928.0:
+        return '#E91E63'  # Pink - 33cm
+    elif 1240.0 <= freq <= 1300.0:
+        return '#00BCD4'  # Cyan - 23cm
+    elif 50.0 <= freq <= 54.0:
+        return '#4CAF50'  # Green - 6m
+    elif 28.0 <= freq <= 29.7:
+        return '#FFEB3B'  # Yellow - 10m
+    else:
+        return '#888888'  # Gray - other
+
+
+def get_band_name(frequency):
+    """Get band name from frequency (MHz)."""
+    if frequency is None:
+        return 'Unknown'
+    
+    freq = float(frequency)
+    
+    if 144.0 <= freq <= 148.0:
+        return '2m'
+    elif 222.0 <= freq <= 225.0:
+        return '1.25m'
+    elif 420.0 <= freq <= 450.0:
+        return '70cm'
+    elif 902.0 <= freq <= 928.0:
+        return '33cm'
+    elif 1240.0 <= freq <= 1300.0:
+        return '23cm'
+    elif 50.0 <= freq <= 54.0:
+        return '6m'
+    elif 28.0 <= freq <= 29.7:
+        return '10m'
+    else:
+        return 'Other'
+
+
+def load_nodemap(filename='nodemap.json'):
+    """Load nodemap.json and return nodes dict."""
+    if not os.path.exists(filename):
+        print("Error: {} not found".format(filename))
+        print("Run nodemap.py first to generate network data.")
+        return None
+    
+    # Use utf-8-sig to handle BOM if present
+    with open(filename, 'r', encoding='utf-8-sig') as f:
+        data = json.load(f)
+    
+    return data.get('nodes', {})
+
+
+def extract_sponsor(info_text):
+    """Extract sponsoring agency from INFO text if present."""
+    if not info_text:
+        return None
+    
+    # Common patterns for sponsoring organizations
+    patterns = [
+        r'maintained by[:\s]+(.+?)(?:\.|$)',
+        r'operated by[:\s]+(.+?)(?:\.|$)',
+        r'sponsored by[:\s]+(.+?)(?:\.|$)',
+        r'owned by[:\s]+(.+?)(?:\.|$)',
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, info_text, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()[:50]  # Limit length
+    
+    return None
+
+
+def generate_html_map(nodes, output_file='nodemap.html'):
+    """
+    Generate interactive Leaflet HTML map.
+    
+    Note: Requires internet connection to load map tiles and Leaflet library.
+    """
+    # Build node data with coordinates
+    map_nodes = []
+    connections = []
+    
+    for callsign, node_data in nodes.items():
+        location = node_data.get('location', {})
+        grid = location.get('grid', '')
+        
+        coords = grid_to_latlon(grid)
+        if not coords:
+            continue
+        
+        lat, lon = coords
+        
+        # Extract node info for popup
+        info_text = node_data.get('info', '')
+        sponsor = extract_sponsor(info_text)
+        city = location.get('city', '')
+        state = location.get('state', '')
+        node_type = node_data.get('type', 'Unknown')
+        applications = node_data.get('applications', [])
+        
+        # Get frequencies from ports
+        frequencies = []
+        for port in node_data.get('ports', []):
+            if port.get('is_rf') and port.get('frequency'):
+                freq = port['frequency']
+                band = get_band_name(freq)
+                frequencies.append("{} MHz ({})".format(freq, band))
+        
+        # Get SSIDs
+        ssids = []
+        for alias in node_data.get('own_aliases', []):
+            if ':' in alias:
+                ssids.append(alias.split(':')[1])
+        netrom_ssids = node_data.get('netrom_ssids', {})
+        for ssid in netrom_ssids.values():
+            if ssid and ssid not in ssids:
+                ssids.append(ssid)
+        
+        map_nodes.append({
+            'callsign': callsign,
+            'lat': lat,
+            'lon': lon,
+            'grid': grid,
+            'city': city,
+            'state': state,
+            'type': node_type,
+            'sponsor': sponsor,
+            'applications': applications,
+            'frequencies': frequencies,
+            'ssids': ssids,
+            'neighbors': node_data.get('neighbors', [])
+        })
+        
+        # Build connections (only between nodes we have coordinates for)
+        for neighbor in node_data.get('neighbors', []):
+            if neighbor in nodes:
+                neighbor_loc = nodes[neighbor].get('location', {})
+                neighbor_grid = neighbor_loc.get('grid', '')
+                neighbor_coords = grid_to_latlon(neighbor_grid)
+                
+                if neighbor_coords:
+                    # Get frequency for this connection (from port data)
+                    conn_freq = None
+                    for port in node_data.get('ports', []):
+                        if port.get('is_rf') and port.get('frequency'):
+                            conn_freq = port['frequency']
+                            break
+                    
+                    connections.append({
+                        'from': callsign,
+                        'to': neighbor,
+                        'from_lat': lat,
+                        'from_lon': lon,
+                        'to_lat': neighbor_coords[0],
+                        'to_lon': neighbor_coords[1],
+                        'color': get_band_color(conn_freq),
+                        'frequency': conn_freq
+                    })
+    
+    if not map_nodes:
+        print("Error: No nodes with valid grid squares found.")
+        return False
+    
+    # Calculate map center
+    avg_lat = sum(n['lat'] for n in map_nodes) / len(map_nodes)
+    avg_lon = sum(n['lon'] for n in map_nodes) / len(map_nodes)
+    
+    # Generate HTML
+    html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packet Radio Network Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        .legend {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            line-height: 1.6;
+        }
+        .legend-item { display: flex; align-items: center; margin: 3px 0; }
+        .legend-color { width: 20px; height: 3px; margin-right: 8px; }
+        .popup-content h3 { margin: 0 0 8px 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .popup-content p { margin: 4px 0; font-size: 13px; }
+        .popup-content .label { font-weight: bold; color: #666; }
+        .popup-content .apps { color: #2196F3; }
+        .popup-content .freqs { color: #FF9800; }
+        .info-box {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        // Node data
+        var nodes = ''' + json.dumps(map_nodes) + ''';
+        var connections = ''' + json.dumps(connections) + ''';
+        
+        // Initialize map
+        var map = L.map('map').setView([''' + str(avg_lat) + ''', ''' + str(avg_lon) + '''], 8);
+        
+        // Add tile layer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors | Packet Network Map'
+        }).addTo(map);
+        
+        // Draw connections first (so they're under markers)
+        connections.forEach(function(conn) {
+            var line = L.polyline([
+                [conn.from_lat, conn.from_lon],
+                [conn.to_lat, conn.to_lon]
+            ], {
+                color: conn.color,
+                weight: 2,
+                opacity: 0.7
+            }).addTo(map);
+            
+            var freq = conn.frequency ? conn.frequency + ' MHz' : 'Unknown';
+            line.bindTooltip(conn.from + ' ↔ ' + conn.to + '<br>' + freq);
+        });
+        
+        // Add node markers
+        nodes.forEach(function(node) {
+            var marker = L.circleMarker([node.lat, node.lon], {
+                radius: 8,
+                fillColor: '#e53935',
+                color: '#b71c1c',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+            
+            // Build popup content
+            var popup = '<div class="popup-content">';
+            popup += '<h3>' + node.callsign + '</h3>';
+            
+            if (node.city || node.state) {
+                popup += '<p><span class="label">Location:</span> ' + 
+                         (node.city ? node.city + ', ' : '') + (node.state || '') + '</p>';
+            }
+            popup += '<p><span class="label">Grid:</span> ' + node.grid + '</p>';
+            popup += '<p><span class="label">Type:</span> ' + node.type + '</p>';
+            
+            if (node.sponsor) {
+                popup += '<p><span class="label">Sponsor:</span> ' + node.sponsor + '</p>';
+            }
+            
+            if (node.ssids && node.ssids.length > 0) {
+                popup += '<p><span class="label">SSIDs:</span> ' + node.ssids.join(', ') + '</p>';
+            }
+            
+            if (node.frequencies && node.frequencies.length > 0) {
+                popup += '<p><span class="label">Frequencies:</span><br>' + 
+                         '<span class="freqs">' + node.frequencies.join('<br>') + '</span></p>';
+            }
+            
+            if (node.applications && node.applications.length > 0) {
+                var apps = node.applications.slice(0, 10);  // Limit display
+                popup += '<p><span class="label">Applications:</span><br>' + 
+                         '<span class="apps">' + apps.join(', ') + '</span></p>';
+            }
+            
+            popup += '<p><span class="label">Neighbors:</span> ' + node.neighbors.length + '</p>';
+            popup += '</div>';
+            
+            marker.bindPopup(popup, { maxWidth: 300 });
+            marker.bindTooltip(node.callsign, { permanent: false, direction: 'top' });
+        });
+        
+        // Add legend
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = '<strong>Band Colors</strong><br>' +
+                '<div class="legend-item"><div class="legend-color" style="background:#2196F3"></div>2m (144-148 MHz)</div>' +
+                '<div class="legend-item"><div class="legend-color" style="background:#FF9800"></div>70cm (420-450 MHz)</div>' +
+                '<div class="legend-item"><div class="legend-color" style="background:#9C27B0"></div>1.25m (222-225 MHz)</div>' +
+                '<div class="legend-item"><div class="legend-color" style="background:#4CAF50"></div>6m (50-54 MHz)</div>' +
+                '<div class="legend-item"><div class="legend-color" style="background:#888888"></div>Other/Unknown</div>';
+            return div;
+        };
+        legend.addTo(map);
+        
+        // Add info box
+        var info = L.control({ position: 'topright' });
+        info.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info-box');
+            div.innerHTML = '<strong>Packet Radio Network</strong><br>' +
+                'Nodes: ' + nodes.length + '<br>' +
+                'Connections: ' + connections.length + '<br>' +
+                '<small>Generated by nodemap-html.py</small>';
+            return div;
+        };
+        info.addTo(map);
+        
+        // Fit bounds to show all nodes
+        if (nodes.length > 1) {
+            var bounds = L.latLngBounds(nodes.map(function(n) { return [n.lat, n.lon]; }));
+            map.fitBounds(bounds, { padding: [20, 20] });
+        }
+    </script>
+</body>
+</html>'''
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(html)
+    
+    print("Generated {} ({} nodes, {} connections)".format(output_file, len(map_nodes), len(connections)))
+    return True
+
+
+def generate_svg_map(nodes, output_file='nodemap.svg'):
+    """
+    Generate static SVG map (fully offline, no external dependencies).
+    
+    Uses simple coordinate projection for regional coverage.
+    """
+    # Build node data with coordinates
+    map_nodes = []
+    connections = []
+    
+    for callsign, node_data in nodes.items():
+        location = node_data.get('location', {})
+        grid = location.get('grid', '')
+        
+        coords = grid_to_latlon(grid)
+        if not coords:
+            continue
+        
+        lat, lon = coords
+        
+        # Get primary frequency for node color
+        primary_freq = None
+        for port in node_data.get('ports', []):
+            if port.get('is_rf') and port.get('frequency'):
+                primary_freq = port['frequency']
+                break
+        
+        # Build frequency list for tooltip
+        freq_list = []
+        for port in node_data.get('ports', []):
+            if port.get('is_rf') and port.get('frequency'):
+                freq_list.append("{} MHz".format(port['frequency']))
+        
+        map_nodes.append({
+            'callsign': callsign,
+            'lat': lat,
+            'lon': lon,
+            'grid': grid,
+            'frequency': primary_freq,
+            'frequencies': freq_list,
+            'type': node_data.get('type', 'Unknown'),
+            'neighbors': node_data.get('neighbors', [])
+        })
+        
+        # Build connections
+        for neighbor in node_data.get('neighbors', []):
+            if neighbor in nodes:
+                neighbor_loc = nodes[neighbor].get('location', {})
+                neighbor_grid = neighbor_loc.get('grid', '')
+                neighbor_coords = grid_to_latlon(neighbor_grid)
+                
+                if neighbor_coords:
+                    connections.append({
+                        'from': callsign,
+                        'to': neighbor,
+                        'from_lat': lat,
+                        'from_lon': lon,
+                        'to_lat': neighbor_coords[0],
+                        'to_lon': neighbor_coords[1],
+                        'color': get_band_color(primary_freq)
+                    })
+    
+    if not map_nodes:
+        print("Error: No nodes with valid grid squares found.")
+        return False
+    
+    # Calculate bounds
+    min_lat = min(n['lat'] for n in map_nodes)
+    max_lat = max(n['lat'] for n in map_nodes)
+    min_lon = min(n['lon'] for n in map_nodes)
+    max_lon = max(n['lon'] for n in map_nodes)
+    
+    # Add padding
+    lat_padding = (max_lat - min_lat) * 0.1 or 0.5
+    lon_padding = (max_lon - min_lon) * 0.1 or 0.5
+    min_lat -= lat_padding
+    max_lat += lat_padding
+    min_lon -= lon_padding
+    max_lon += lon_padding
+    
+    # SVG dimensions
+    width = 800
+    height = 600
+    
+    def project(lat, lon):
+        """Simple Mercator-like projection to SVG coordinates."""
+        x = (lon - min_lon) / (max_lon - min_lon) * (width - 100) + 50
+        y = (max_lat - lat) / (max_lat - min_lat) * (height - 100) + 50
+        return (x, y)
+    
+    # Generate SVG
+    svg_lines = []
+    svg_lines.append('<?xml version="1.0" encoding="UTF-8"?>')
+    svg_lines.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {} {}" width="{}" height="{}">'.format(width, height, width, height))
+    svg_lines.append('  <style>')
+    svg_lines.append('    .node { cursor: pointer; }')
+    svg_lines.append('    .node:hover circle { r: 10; }')
+    svg_lines.append('    .node text { font-family: sans-serif; font-size: 10px; }')
+    svg_lines.append('    .connection { stroke-opacity: 0.6; }')
+    svg_lines.append('    .legend text { font-family: sans-serif; font-size: 11px; }')
+    svg_lines.append('    .title { font-family: sans-serif; font-size: 16px; font-weight: bold; }')
+    svg_lines.append('  </style>')
+    
+    # Background
+    svg_lines.append('  <rect width="100%" height="100%" fill="#f5f5f5"/>')
+    
+    # Title
+    svg_lines.append('  <text x="{}" y="25" class="title" text-anchor="middle">Packet Radio Network Map</text>'.format(width/2))
+    
+    # Draw connections
+    svg_lines.append('  <g class="connections">')
+    drawn_connections = set()
+    for conn in connections:
+        # Avoid duplicate lines (A-B and B-A)
+        key = tuple(sorted([conn['from'], conn['to']]))
+        if key in drawn_connections:
+            continue
+        drawn_connections.add(key)
+        
+        x1, y1 = project(conn['from_lat'], conn['from_lon'])
+        x2, y2 = project(conn['to_lat'], conn['to_lon'])
+        svg_lines.append('    <line x1="{:.1f}" y1="{:.1f}" x2="{:.1f}" y2="{:.1f}" stroke="{}" stroke-width="2" class="connection">'.format(
+            x1, y1, x2, y2, conn['color']))
+        svg_lines.append('      <title>{} - {}</title>'.format(conn['from'], conn['to']))
+        svg_lines.append('    </line>')
+    svg_lines.append('  </g>')
+    
+    # Draw nodes
+    svg_lines.append('  <g class="nodes">')
+    for node in map_nodes:
+        x, y = project(node['lat'], node['lon'])
+        color = get_band_color(node['frequency'])
+        
+        # Build tooltip
+        tooltip = "{} ({})".format(node['callsign'], node['grid'])
+        if node['frequencies']:
+            tooltip += "\\n" + ", ".join(node['frequencies'])
+        tooltip += "\\nNeighbors: {}".format(len(node['neighbors']))
+        
+        svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})">'.format(x, y))
+        svg_lines.append('      <circle r="6" fill="{}" stroke="#333" stroke-width="1.5">'.format(color))
+        svg_lines.append('        <title>{}</title>'.format(tooltip.replace('"', '&quot;')))
+        svg_lines.append('      </circle>')
+        svg_lines.append('      <text x="8" y="4">{}</text>'.format(node['callsign']))
+        svg_lines.append('    </g>')
+    svg_lines.append('  </g>')
+    
+    # Legend
+    legend_x = width - 150
+    legend_y = height - 140
+    svg_lines.append('  <g class="legend" transform="translate({},{})">'.format(legend_x, legend_y))
+    svg_lines.append('    <rect x="-5" y="-15" width="140" height="130" fill="white" stroke="#ccc" rx="5"/>')
+    svg_lines.append('    <text y="0" font-weight="bold">Band Colors</text>')
+    
+    bands = [
+        ('#2196F3', '2m (144-148 MHz)'),
+        ('#FF9800', '70cm (420-450 MHz)'),
+        ('#9C27B0', '1.25m (222-225 MHz)'),
+        ('#4CAF50', '6m (50-54 MHz)'),
+        ('#888888', 'Other/Unknown'),
+    ]
+    for i, (color, label) in enumerate(bands):
+        y_offset = 20 + i * 20
+        svg_lines.append('    <line x1="0" y1="{}" x2="20" y2="{}" stroke="{}" stroke-width="3"/>'.format(y_offset, y_offset, color))
+        svg_lines.append('    <text x="25" y="{}">{}</text>'.format(y_offset + 4, label))
+    svg_lines.append('  </g>')
+    
+    # Stats
+    svg_lines.append('  <text x="10" y="{}" font-family="sans-serif" font-size="10" fill="#666">'.format(height - 10))
+    svg_lines.append('    Nodes: {} | Connections: {} | Generated by nodemap-html.py'.format(len(map_nodes), len(drawn_connections)))
+    svg_lines.append('  </text>')
+    
+    svg_lines.append('</svg>')
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(svg_lines))
+    
+    print("Generated {} ({} nodes, {} connections)".format(output_file, len(map_nodes), len(drawn_connections)))
+    return True
+
+
+def show_help():
+    """Display help information."""
+    print("Node Map HTML Generator v{}".format(__version__))
+    print("=" * 50)
+    print("")
+    print("Generates visual maps from nodemap.json data.")
+    print("")
+    print("Usage: {} [OPTIONS]".format(sys.argv[0]))
+    print("")
+    print("Options:")
+    print("  --html FILE     Generate interactive HTML map (default: nodemap.html)")
+    print("  --svg FILE      Generate static SVG map (default: nodemap.svg)")
+    print("  --input FILE    Input JSON file (default: nodemap.json)")
+    print("  --all           Generate both HTML and SVG")
+    print("  --help, -h, /?  Show this help message")
+    print("")
+    print("Examples:")
+    print("  {} --all                    # Generate both formats".format(sys.argv[0]))
+    print("  {} --html network.html      # Custom HTML filename".format(sys.argv[0]))
+    print("  {} --svg --input data.json  # SVG from custom input".format(sys.argv[0]))
+    print("")
+    print("Output Files:")
+    print("  nodemap.html - Interactive Leaflet map")
+    print("                 REQUIRES INTERNET for map tiles")
+    print("                 Click nodes for detailed info")
+    print("                 Color-coded by frequency band")
+    print("")
+    print("  nodemap.svg  - Static vector map")
+    print("                 FULLY OFFLINE - no dependencies")
+    print("                 Hover nodes for basic info")
+    print("                 Can be embedded in HTML pages")
+    print("")
+    print("BPQ Web Server Setup:")
+    print("  1. Copy nodemap.html to your BPQ HTML directory:")
+    print("     cp nodemap.html ~/linbpq/HTML/")
+    print("")
+    print("  2. Add link in your BPQ web interface index.html:")
+    print('     <a href="nodemap.html">Network Map</a>')
+    print("")
+    print("  3. Or add custom page in bpq32.cfg (HTML section):")
+    print("     FILE=/HTML/nodemap.html,nodemap.html")
+    print("")
+    print("Note on Offline Use:")
+    print("  The HTML map requires internet to load OpenStreetMap tiles.")
+    print("  For fully offline operation, use the SVG output instead.")
+    print("  The SVG can be viewed in any web browser without connectivity.")
+
+
+def main():
+    """Main entry point."""
+    # Parse arguments
+    args = sys.argv[1:]
+    
+    if not args or '--help' in args or '-h' in args or '/?' in args:
+        show_help()
+        return
+    
+    input_file = 'nodemap.json'
+    html_file = None
+    svg_file = None
+    
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        
+        if arg == '--input' and i + 1 < len(args):
+            input_file = args[i + 1]
+            i += 2
+        elif arg == '--html':
+            if i + 1 < len(args) and not args[i + 1].startswith('-'):
+                html_file = args[i + 1]
+                i += 2
+            else:
+                html_file = 'nodemap.html'
+                i += 1
+        elif arg == '--svg':
+            if i + 1 < len(args) and not args[i + 1].startswith('-'):
+                svg_file = args[i + 1]
+                i += 2
+            else:
+                svg_file = 'nodemap.svg'
+                i += 1
+        elif arg == '--all':
+            html_file = 'nodemap.html'
+            svg_file = 'nodemap.svg'
+            i += 1
+        else:
+            i += 1
+    
+    # Default to --all if no output specified
+    if html_file is None and svg_file is None:
+        html_file = 'nodemap.html'
+        svg_file = 'nodemap.svg'
+    
+    # Load data
+    nodes = load_nodemap(input_file)
+    if not nodes:
+        return
+    
+    print("Loaded {} nodes from {}".format(len(nodes), input_file))
+    
+    # Count nodes with grid squares
+    nodes_with_grid = sum(1 for n in nodes.values() if n.get('location', {}).get('grid'))
+    print("Nodes with grid squares: {}".format(nodes_with_grid))
+    
+    if nodes_with_grid == 0:
+        print("")
+        print("Warning: No nodes have grid square data.")
+        print("Grid squares are extracted from node INFO text.")
+        print("Nodes without grid squares cannot be mapped.")
+        return
+    
+    print("")
+    
+    # Generate outputs
+    if html_file:
+        generate_html_map(nodes, html_file)
+    
+    if svg_file:
+        generate_svg_map(nodes, svg_file)
+    
+    print("")
+    print("Map generation complete!")
+
+
+if __name__ == '__main__':
+    main()
