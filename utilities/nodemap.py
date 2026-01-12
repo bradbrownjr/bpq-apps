@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.25'
+__version__ = '1.3.26'
 
 import sys
 import telnetlib
@@ -1001,21 +1001,25 @@ class NodeCrawler:
             
             # Update global NetRom SSID map and alias mappings
             # Build reverse lookup: base callsign -> NetRom alias
-            # Strategy: Use aliases from NODES, but prefer SSIDs we've actually connected to
-            # Don't overwrite SSIDs extracted from prompts (those are the real node SSIDs)
+            # Strategy: Prefer node SSIDs (-15) over application SSIDs (-2, -10, -13, etc.)
+            # Prompt-based SSIDs (from actual connections) take highest precedence
             for alias, full_call in aliases.items():
                 base_call = full_call.split('-')[0]
                 
-                # Skip application SSIDs: -2 (BBS), -10 (RMS), -11 (PBBS)
-                # Don't store aliases or SSIDs for applications
-                is_application_ssid = False
+                # Categorize SSIDs: node vs application
+                # Node SSIDs: typically -15 (or no SSID)
+                # Application SSIDs: -2 (BBS), -4 (CHAT), -5 (CHAT), -10 (RMS), -11 (PBBS), -13 (CHAT)
+                ssid_num = None
+                is_node_ssid = True  # Assume node SSID unless proven otherwise
                 if '-' in full_call:
-                    ssid = int(full_call.split('-')[1])
-                    if ssid in [2, 10, 11]:
-                        is_application_ssid = True
+                    ssid_num = int(full_call.split('-')[1])
+                    # Application SSIDs to avoid for connections
+                    if ssid_num in [2, 4, 5, 10, 11, 13]:
+                        is_node_ssid = False
                 
-                if is_application_ssid:
-                    continue  # Skip this alias entirely
+                # Skip application SSIDs for alias mappings (but still note them)
+                if not is_node_ssid:
+                    continue
                 
                 # Store alias mapping (prompt-based takes precedence)
                 if base_call not in self.call_to_alias:
@@ -1023,10 +1027,20 @@ class NodeCrawler:
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
                 
-                # Only store SSID mapping if we don't already have one from a prompt
-                # Prompt-based SSIDs are authoritative (we actually connected to them)
+                # SSID mapping priority:
+                # 1. Prompt-based (from actual connection) - highest priority
+                # 2. -15 SSID (standard node SSID)
+                # 3. Other node SSIDs (not application SSIDs)
                 if base_call not in self.netrom_ssid_map:
+                    # No SSID stored yet, use this one
                     self.netrom_ssid_map[base_call] = full_call
+                elif ssid_num == 15:
+                    # This is a -15 SSID, prefer it over existing (unless existing is from prompt)
+                    # Check if existing is from a prompt (would have been set during connection)
+                    # For now, just prefer -15 over other SSIDs
+                    existing = self.netrom_ssid_map[base_call]
+                    if '-' not in existing or int(existing.split('-')[1]) != 15:
+                        self.netrom_ssid_map[base_call] = full_call
             
             # Filter out the current node from neighbors (including different SSIDs of same callsign)
             # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
