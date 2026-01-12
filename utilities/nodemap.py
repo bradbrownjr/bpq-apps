@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.42'
+__version__ = '1.3.43'
 
 import sys
 import telnetlib
@@ -738,6 +738,8 @@ class NodeCrawler:
         # Find unexplored neighbors from each visited node
         for callsign, node_data in nodes_data.items():
             unexplored_neighbors = node_data.get('unexplored_neighbors', [])
+            if self.verbose and unexplored_neighbors:
+                print("Node {} has {} unexplored neighbors: {}".format(callsign, len(unexplored_neighbors), ', '.join(unexplored_neighbors)))
             
             # Also check neighbors that were never visited
             all_neighbors = node_data.get('neighbors', [])
@@ -1313,16 +1315,20 @@ class NodeCrawler:
                         print("    Port info from MHEARD: {} on port {}".format(call, port))
             
             # Mark which neighbors will be explored vs skipped
-            # A neighbor is explored if: not visited, not failed, within hop limit
+            # A neighbor is explored if: visited or failed (actual exploration attempt made)
+            # A neighbor is unexplored if: not visited, not failed, but either exceeds hop limit or will be queued
             explored_neighbors = []
             unexplored_neighbors = []
             for neighbor in all_neighbors:
                 if neighbor in self.visited or neighbor in self.failed:
+                    # Actually visited or connection attempt failed
                     explored_neighbors.append(neighbor)
                 elif hop_count + 1 > self.max_hops:
+                    # Beyond hop limit, won't be visited
                     unexplored_neighbors.append(neighbor)
                 else:
-                    explored_neighbors.append(neighbor)
+                    # Within hop limit, will be queued for future exploration
+                    unexplored_neighbors.append(neighbor)
             
             # Get INFO
             if check_deadline():
@@ -1472,7 +1478,12 @@ class NodeCrawler:
             unexplored = self._load_unexplored_nodes(resume_filename)
             
             if not unexplored:
-                print("No unexplored nodes found. Nothing to do.")
+                print("No unexplored nodes found.")
+                if len(self.visited) > 0:
+                    print("All {} previously crawled nodes have been fully explored.".format(len(self.visited)))
+                    print("Use normal mode to start a fresh crawl or increase max hops.")
+                else:
+                    print("No previous crawl data found. Use normal mode to start a fresh crawl.")
                 return
             
             # Queue all unexplored nodes
