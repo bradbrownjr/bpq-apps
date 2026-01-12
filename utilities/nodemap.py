@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.17'
+__version__ = '1.3.18'
 
 import sys
 import telnetlib
@@ -93,6 +93,7 @@ class NodeCrawler:
         self.alias_to_call = {}  # Global alias->callsign-SSID mapping: {'CHABUR': 'KS1R-13'}
         self.call_to_alias = {}  # Reverse lookup: {'KS1R': 'CHABUR'}
         self.last_heard = {}  # MHEARD timestamps: {callsign: seconds_ago}
+        self.intermittent_links = {}  # Failed connections: {(from, to): [attempts]}
         self.queue = deque()  # BFS queue for crawling
         self.timeout = 10  # Telnet timeout in seconds
         
@@ -927,13 +928,29 @@ class NodeCrawler:
         tn = self._connect_to_node(connect_path)
         if not tn:
             print("  Skipping {} (connection failed)".format(callsign))
-            self.failed.add(callsign)
+            
+            # Track this as an intermittent/unreliable link
+            # Don't add to self.failed - node may be reachable from other paths
+            if path:
+                # Multi-hop: track connection from last hop
+                link_key = (path[-1], callsign)
+            else:
+                # Direct: track from local node
+                link_key = (self.callsign if self.callsign else 'LOCAL', callsign)
+            
+            if link_key not in self.intermittent_links:
+                self.intermittent_links[link_key] = []
+            self.intermittent_links[link_key].append(time.strftime('%Y-%m-%d %H:%M:%S'))
+            
             # Show who failed to reach whom
             if not path:
                 fail_msg = "Failed: {} unreachable".format(callsign)
             else:
                 fail_msg = "{} failed to reach {}".format(path[-1], callsign)
             self._send_notification(fail_msg)
+            
+            # Note: NOT adding to self.failed - node can still be explored from other neighbors
+            # This allows mapping intermittent/poor connections while still discovering the node
             return
         
         # Set overall operation timeout (commands + processing)
@@ -1064,11 +1081,20 @@ class NodeCrawler:
             # Store node data
             # Note: INFO-derived data (location, applications, type from keywords) is marked
             # with 'source' to indicate reliability. Structured command data is preferred.
+            
+            # Find which neighbors are intermittent (failed connections from this node)
+            intermittent_neighbors = []
+            for neighbor in all_neighbors:
+                link_key = (callsign, neighbor)
+                if link_key in self.intermittent_links:
+                    intermittent_neighbors.append(neighbor)
+            
             self.nodes[callsign] = {
                 'info': info_output.strip(),
                 'neighbors': all_neighbors,  # From MHEARD (reliable)
                 'explored_neighbors': explored_neighbors,  # Neighbors that were/will be visited
                 'unexplored_neighbors': unexplored_neighbors,  # Neighbors skipped (hop limit)
+                'intermittent_neighbors': intermittent_neighbors,  # Neighbors with failed connections
                 'hop_distance': hop_count,  # RF hops from start node
                 'location': location,  # From INFO (unreliable, sysop-entered)
                 'location_source': 'info',  # Mark as low-confidence
@@ -1086,16 +1112,22 @@ class NodeCrawler:
             
             # Record connections
             for neighbor in all_neighbors:
+                link_key = (callsign, neighbor)
+                is_intermittent = link_key in self.intermittent_links
+                
                 self.connections.append({
                     'from': callsign,
                     'to': neighbor,
                     'port': None,
-                    'quality': routes.get(neighbor, 0)
+                    'quality': routes.get(neighbor, 0),
+                    'intermittent': is_intermittent  # Mark unreliable/failed connections
                 })
                 
                 # Add unvisited neighbors to queue with shortest path optimization
                 # Only queue if within hop limit (next hop would be hop_count + 1)
-                if neighbor not in self.visited and neighbor not in self.failed and hop_count + 1 <= self.max_hops:
+                # Note: We don't check self.failed here - nodes with intermittent connections
+                # can still be explored from other neighbors (better paths)
+                if neighbor not in self.visited and hop_count + 1 <= self.max_hops:
                     # Determine path to this neighbor (intermediate hops only, not target)
                     # If we're at local node WS1EC (path=[]), queue KC1JMH with path=[]
                     #   (direct connection from local, no intermediate hops)
@@ -1298,9 +1330,16 @@ class NodeCrawler:
         for callsign, node_data in self.nodes.items():
             nodes_data[callsign] = node_data
         
+        # Convert intermittent_links keys to strings for JSON serialization
+        intermittent_serialized = {}
+        for (from_call, to_call), attempts in self.intermittent_links.items():
+            key = "{}>{}".format(from_call, to_call)
+            intermittent_serialized[key] = attempts
+        
         data = {
             'nodes': nodes_data,
             'connections': self.connections,
+            'intermittent_links': intermittent_serialized,  # Failed/unreliable connections
             'crawl_info': {
                 'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'start_node': self.callsign,
@@ -1320,7 +1359,7 @@ class NodeCrawler:
         """Export connections to CSV."""
         with open(filename, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['From', 'To', 'Port', 'Quality', 'To_Explored', 'From_Grid', 'To_Grid', 'From_Type', 'To_Type'])
+            writer.writerow(['From', 'To', 'Port', 'Quality', 'Intermittent', 'To_Explored', 'From_Grid', 'To_Grid', 'From_Type', 'To_Type'])
             
             for conn in self.connections:
                 from_node = self.nodes.get(conn['from'], {})
@@ -1335,6 +1374,7 @@ class NodeCrawler:
                     conn['to'],
                     conn['port'],
                     conn.get('quality', 0),
+                    'Yes' if conn.get('intermittent', False) else 'No',
                     to_explored,
                     from_node.get('location', {}).get('grid', ''),
                     to_node.get('location', {}).get('grid', ''),
