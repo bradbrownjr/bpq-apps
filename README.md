@@ -37,7 +37,19 @@ See [games/README.md](games/README.md) for game documentation and setup instruct
 
 Sysop tools for BBS management and network monitoring:
 
-* **nodemap.py** - Advanced network topology crawler that discovers packet radio network structure by connecting to nodes via RF and analyzing routing tables, neighbor lists, and application availability. Intelligently merges data from multiple operator perspectives to create comprehensive network maps.
+* **nodemap.py** - Advanced network topology crawler with intelligent staleness detection. Discovers packet radio network structure by connecting to nodes via RF, analyzing routing tables and neighbor lists. Features resume capability for large networks, adaptive timeouts, and multi-operator data merging for comprehensive coverage.
+
+**Recommended Commands:**
+```bash
+# Initial crawl
+./nodemap.py 10 -v -l traffic.log -n https://notify.lynwood.us/packet
+
+# Resume interrupted crawl (recommended for large networks)
+./nodemap.py --resume -v -l traffic.log -n https://notify.lynwood.us/packet
+
+# Merge multiple operator perspectives
+./nodemap.py -m remote_*.json
+```
 
 See [utilities/README.md](utilities/README.md) for detailed documentation.
 
