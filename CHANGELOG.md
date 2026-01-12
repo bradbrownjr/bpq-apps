@@ -28,6 +28,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Connection lines between neighboring nodes
 - Legend showing frequency bands and node count
 
+## [1.3.54] - 2026-01-12
+### Fixed
+- Pre-load route information when starting crawl from remote node (not local)
+- Now correctly retrieves port numbers and SSIDs from existing nodemap.json
+- Fixes "C N1REX-15 (fallback)" error when starting with: nodemap.py 1 N1REX
+- Remote node crawls now use direct connection: "C 1 N1REX-15" (with port) instead of fallback
+
 ## [1.3.53] - 2026-01-12
 ### Fixed
 - Fixed hop count off-by-one error: nodes at max_hops+1 were incorrectly included

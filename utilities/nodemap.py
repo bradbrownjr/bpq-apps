@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.53'
+__version__ = '1.3.54'
 
 import sys
 import telnetlib
@@ -1586,6 +1586,28 @@ class NodeCrawler:
                     return
                 starting_callsign = start_node.upper()
                 print("Starting network crawl from: {}...".format(starting_callsign))
+                
+                # Pre-load route information from existing nodemap.json if available
+                # This ensures we have port numbers and SSIDs for connecting to the start node
+                existing = self._load_existing_data('nodemap.json')
+                if existing and 'nodes' in existing:
+                    nodes_data = existing['nodes']
+                    
+                    # Restore SSID mappings and route ports from all nodes
+                    for node_call, node_info in nodes_data.items():
+                        # Restore netrom_ssids (for connection commands)
+                        for base_call, full_call in node_info.get('netrom_ssids', {}).items():
+                            if base_call not in self.netrom_ssid_map:
+                                self.netrom_ssid_map[base_call] = full_call
+                        
+                        # Restore route_ports (port numbers for neighbors)
+                        for neighbor_call, port_num in node_info.get('heard_on_ports', []):
+                            if port_num is not None and neighbor_call not in self.route_ports:
+                                self.route_ports[neighbor_call] = port_num
+                    
+                    if self.route_ports:
+                        if self.verbose:
+                            print("Loaded {} port mappings from existing nodemap.json".format(len(self.route_ports)))
             else:
                 if not self.callsign:
                     print("Error: Could not determine local node callsign from bpq32.cfg.")
