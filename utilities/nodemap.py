@@ -1052,6 +1052,10 @@ class NodeCrawler:
             # Discard neighbors_from_nodes - NODES is routing table, not neighbor list
             time.sleep(inter_cmd_delay)
             
+            # Base callsign without SSID (for filtering self from neighbors)
+            # e.g., when on KC1JMH-15, base_callsign = KC1JMH
+            base_callsign = callsign.split('-')[0] if '-' in callsign else callsign
+            
             # Separate this node's own aliases from other nodes' aliases
             # Own aliases: entries where the callsign matches current node's base callsign
             # Example: On WS1EC, own aliases are CCEMA:WS1EC-15, CCEBBS:WS1EC-2, etc.
@@ -1074,10 +1078,6 @@ class NodeCrawler:
                     self.call_to_alias[base_call] = alias
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
-            
-            # Filter out the current node from neighbors (including different SSIDs of same callsign)
-            # e.g., when on KC1JMH-15, don't list KC1JMH-2 or KC1JMH-10 as neighbors
-            base_callsign = callsign.split('-')[0] if '-' in callsign else callsign
             
             # Get ROUTES for path optimization (BPQ only)
             if check_deadline():
