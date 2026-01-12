@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.33'
+__version__ = '1.3.34'
 
 import sys
 import telnetlib
@@ -965,13 +965,23 @@ class NodeCrawler:
         """
         Parse ROUTES output to find best paths to destinations.
         
+        ROUTES is the AUTHORITATIVE source for node SSIDs!
+        Direct neighbor entries (lines starting with >) show the actual node SSID,
+        not application SSIDs like BBS (-2), RMS (-10), or CHAT (-13).
+        
+        Example:
+            > 1 K1NYY-15  200 13!   <- K1NYY-15 is the NODE (not K1NYY-2 BBS or K1NYY-10 RMS)
+            > 1 KS1R-15   200 20!   <- KS1R-15 is the NODE (not KS1R-13 CHAT)
+        
         Returns:
-            Tuple of (routes dict, ports dict)
+            Tuple of (routes dict, ports dict, ssids dict)
             - routes: {callsign: quality} for all routes
-            - ports: {callsign: port_number} for direct neighbors only (lines starting with >)
+            - ports: {callsign: port_number} for direct neighbors only
+            - ssids: {base_callsign: full_callsign-ssid} for direct neighbors (AUTHORITATIVE)
         """
         routes = {}
         ports = {}
+        ssids = {}  # NEW: Store authoritative node SSIDs from ROUTES
         lines = output.split('\n')
         
         for line in lines:
@@ -990,6 +1000,7 @@ class NodeCrawler:
                     if self._is_valid_callsign(base_call):
                         routes[base_call] = quality
                         ports[base_call] = port_num  # Store port for direct neighbors
+                        ssids[base_call] = full_call  # AUTHORITATIVE node SSID
                         continue
             
             # Look for other route lines with quality indicators
@@ -1004,7 +1015,7 @@ class NodeCrawler:
                 if dest not in routes:  # Don't overwrite direct neighbor entries
                     routes[dest] = quality
         
-        return routes, ports
+        return routes, ports, ssids
     
     def crawl_node(self, callsign, path=[]):
         """
@@ -1146,35 +1157,39 @@ class NodeCrawler:
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
             
-            # Pre-populate netrom_ssid_map with NODES alias data (e.g., CCEBBS:WS1EC-2)
-            # These are known-good SSIDs from aliases, but won't include all nodes
-            # MHEARD will fill in the rest, preferring higher SSIDs (node SSIDs like -15)
-            for call, ssid in netrom_ssids_from_nodes.items():
-                if call not in self.netrom_ssid_map:
-                    self.netrom_ssid_map[call] = ssid
-                    if self.verbose:
-                        print("    Node SSID from NODES alias: {} = {}".format(call, ssid))
+            # NOTE: Do NOT pre-populate netrom_ssid_map from NODES aliases here!
+            # NODES aliases include BBS (-2), RMS (-10), CHAT (-13) etc.
+            # These are APPLICATION SSIDs, not NODE SSIDs.
+            # ROUTES is the authoritative source for node SSIDs (see below).
             
             # Get ROUTES for path optimization (BPQ only)
+            # ROUTES is AUTHORITATIVE for node SSIDs - direct neighbor entries show actual node SSID
             if check_deadline():
                 return
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout, expect_content='Routes')
-            routes, route_ports = self._parse_routes(routes_output)
+            routes, route_ports, routes_ssids = self._parse_routes(routes_output)
             # Update global route_ports with direct neighbor port info from this node
             self.route_ports.update(route_ports)
+            
+            # ROUTES SSIDs are AUTHORITATIVE for node connections
+            # These are the actual node SSIDs (e.g., K1NYY-15), not app SSIDs (K1NYY-2 BBS, K1NYY-10 RMS)
+            for call, ssid in routes_ssids.items():
+                if call not in self.netrom_ssid_map or call in routes_ssids:
+                    # Always prefer ROUTES SSID - it's the definitive node SSID
+                    self.netrom_ssid_map[call] = ssid
+                    if self.verbose:
+                        print("    Node SSID from ROUTES: {} = {} (authoritative)".format(call, ssid))
             time.sleep(inter_cmd_delay)
             
             # Get MHEARD from each RF port to find actual RF neighbors
             # MHEARD shows stations recently heard on RF - actual connectivity
             # Also extract port numbers for each neighbor AND their SSIDs (for connections)
             # 
-            # SSID Selection Strategy:
-            # - NODES routing table is authoritative for node SSIDs (entries are nodes)
-            # - MHEARD shows all heard traffic (nodes, applications, operators)
-            # - If callsign is in NODES, use that SSID (it's a crawlable node)
-            # - If callsign is ONLY in MHEARD, it may be an operator connection
-            #   (e.g., N1LJK-1 might be an operator, N1LJK-15 is the node)
-            # - Don't update netrom_ssid_map from MHEARD if NODES already has it
+            # SSID Selection Priority:
+            # 1. ROUTES (authoritative for direct neighbors - shows actual node SSID)
+            # 2. MHEARD (fallback - what was heard on RF, may include apps/operators)
+            # 
+            # Do NOT use NODES aliases for SSIDs - they include app SSIDs like BBS, RMS, CHAT
             mheard_neighbors = []
             mheard_ports = {}  # {callsign: port_num}
             mheard_ssids = {}  # {base_callsign: 'CALLSIGN-SSID'} - from actual RF
@@ -1208,21 +1223,21 @@ class NodeCrawler:
                             # They can't be crawled as nodes (no BPQ commands)
                             has_ssid = '-' in full_callsign
                             
-                            # SSID Selection: Prefer NODES routing table over MHEARD
-                            # Entries in NODES are known nodes; MHEARD may include operators
-                            if base_call in netrom_ssids_from_nodes:
-                                # Already have authoritative SSID from NODES - use it
+                            # SSID Selection: Prefer ROUTES over MHEARD
+                            # ROUTES shows actual node SSIDs; MHEARD may include apps/operators
+                            if base_call in routes_ssids:
+                                # Already have authoritative SSID from ROUTES - use it
                                 if base_call not in mheard_ssids:
-                                    mheard_ssids[base_call] = netrom_ssids_from_nodes[base_call]
+                                    mheard_ssids[base_call] = routes_ssids[base_call]
                                     if self.verbose:
-                                        print("    {} in NODES as {} (authoritative)".format(base_call, netrom_ssids_from_nodes[base_call]))
+                                        print("    {} in ROUTES as {} (authoritative)".format(base_call, routes_ssids[base_call]))
                             elif base_call not in mheard_ssids:
-                                # First MHEARD entry for this callsign, not in NODES
+                                # First MHEARD entry for this callsign, not in ROUTES
                                 # Accept it but mark as potentially not a node
                                 mheard_ssids[base_call] = full_callsign
                                 if self.verbose:
                                     if has_ssid:
-                                        print("    MHEARD SSID for {}: {} (not in NODES - may be operator)".format(base_call, full_callsign))
+                                        print("    MHEARD SSID for {}: {} (not in ROUTES - may be app/operator)".format(base_call, full_callsign))
                                     else:
                                         print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
                             elif self.verbose and has_ssid:
@@ -1238,21 +1253,14 @@ class NodeCrawler:
                                 if base_call not in mheard_ports:
                                     mheard_ports[base_call] = port_num
             
-            # Update global netrom_ssid_map with MHEARD/NODES data
-            # Priority: 1) NODES routing table (authoritative for nodes)
-            #           2) MHEARD (only if not in NODES and not already mapped)
-            # Don't overwrite existing entries - first connection established the correct SSID
+            # Update global netrom_ssid_map with MHEARD data
+            # Priority: 1) ROUTES (already stored above - authoritative for direct neighbors)
+            #           2) MHEARD (only if not already mapped from ROUTES)
+            # Don't overwrite existing entries - ROUTES already has correct node SSIDs
             for call, ssid in mheard_ssids.items():
                 if call not in self.netrom_ssid_map:
-                    # Only add to global map if it's from NODES (known node)
-                    # or if we have no other info
-                    if call in netrom_ssids_from_nodes:
-                        # Authoritative: from NODES routing table
-                        self.netrom_ssid_map[call] = netrom_ssids_from_nodes[call]
-                    else:
-                        # MHEARD-only entry, may be operator
-                        # Still add it, but it's less reliable
-                        self.netrom_ssid_map[call] = ssid
+                    # Not in ROUTES, use MHEARD SSID (may be app/operator)
+                    self.netrom_ssid_map[call] = ssid
             
             # Use MHEARD exclusively for neighbors (stations actually heard on RF with SSIDs)
             # Remove duplicates and exclude self (all SSIDs)

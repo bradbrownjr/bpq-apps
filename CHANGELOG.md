@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.34] - 2025-06-25
+
+### Fixed
+- nodemap.py: SSID selection now uses ROUTES as authoritative source (not NODES aliases)
+- nodemap.py: NODES aliases contain APP SSIDs (BBS -2, RMS -10, CHAT -13), not node SSIDs
+- nodemap.py: ROUTES direct neighbor entries (> lines) show actual node SSIDs (e.g., K1NYY-15)
+
+### Changed
+- nodemap.py: _parse_routes now returns SSIDs dict in addition to routes and ports
+- nodemap.py: Removed NODES alias pre-population of netrom_ssid_map (was using app SSIDs)
+- nodemap.py: MHEARD SSID selection now defers to ROUTES (not NODES) for authoritative SSIDs
+
 ## [1.3.33] - 2025-06-25
 
 ### Fixed
