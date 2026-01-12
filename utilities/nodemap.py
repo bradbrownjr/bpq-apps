@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.21'
+__version__ = '1.3.22'
 
 import sys
 import telnetlib
@@ -1269,21 +1269,29 @@ class NodeCrawler:
         
         # Display summary table
         if self.nodes:
-            print("\n" + "=" * 88)
+            print("\n" + "=" * 96)
             print("NETWORK SUMMARY")
-            print("=" * 88)
-            print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<6} {:<10} {:<30}".format(
-                "CALLSIGN", "HOPS", "PORTS", "CMDS", "NBRS", "FAILED", "UNEXPLRD", "GRID/LOCATION"
+            print("=" * 96)
+            print("{:<10} {:<4} {:<6} {:<5} {:<5} {:<6} {:<6} {:<10} {:<30}".format(
+                "CALLSIGN", "HOPS", "PORTS", "APPS", "CMDS", "NBRS", "FAILED", "UNEXPLRD", "GRID/LOCATION"
             ))
-            print("-" * 88)
+            print("-" * 96)
             
             for callsign in sorted(self.nodes.keys()):
                 node = self.nodes[callsign]
                 hop_dist = node.get('hop_distance', 0)
                 ports = len([p for p in node.get('ports', []) if p.get('is_rf')])
-                commands = len(node.get('commands', []))  # Count commands from ? (reliable)
+                apps = len(node.get('applications', []))  # Apps from INFO parsing
+                commands = len(node.get('commands', []))  # Commands from ? (reliable)
                 neighbors = len(node.get('neighbors', []))
-                failed = len(node.get('intermittent_neighbors', []))  # Failed connections
+                
+                # Recalculate failed connections from intermittent_links
+                # Count links where this node (callsign) tried to reach neighbors
+                failed = 0
+                for (from_call, to_call) in self.intermittent_links.keys():
+                    if from_call == callsign:
+                        failed += 1
+                
                 unexplored = len(node.get('unexplored_neighbors', []))
                 location = node.get('location', {})
                 grid = location.get('grid', '')
@@ -1298,10 +1306,11 @@ class NodeCrawler:
                 else:
                     loc_str = ""
                 
-                print("{:<10} {:<4} {:<6} {:<5} {:<6} {:<6} {:<10} {:<30}".format(
+                print("{:<10} {:<4} {:<6} {:<5} {:<5} {:<6} {:<6} {:<10} {:<30}".format(
                     callsign,
                     hop_dist,
                     ports,
+                    apps,
                     commands,
                     neighbors,
                     failed if failed > 0 else '',
@@ -1309,12 +1318,12 @@ class NodeCrawler:
                     loc_str[:30]
                 ))
             
-            print("=" * 88)
+            print("=" * 96)
             print("Total: {} nodes, {} connections".format(
                 len(self.nodes),
                 len(self.connections)
             ))
-            print("=" * 88)
+            print("=" * 96)
     
     def export_json(self, filename='nodemap.json', merge=False):
         """Export network map to JSON.
