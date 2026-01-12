@@ -1156,6 +1156,8 @@ class NodeCrawler:
                             
                             # Store SSID info from MHEARD (what was actually heard on RF)
                             # This is the SSID that node uses for node-to-node connections
+                            # Don't overwrite - first SSID seen is typically the node SSID
+                            # (subsequent entries might be user applications like -8, -2, etc.)
                             if base_call not in mheard_ssids:
                                 mheard_ssids[base_call] = full_callsign
                                 if self.verbose:
@@ -1163,6 +1165,8 @@ class NodeCrawler:
                                         print("    MHEARD SSID for {}: {}".format(base_call, full_callsign))
                                     else:
                                         print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
+                            elif self.verbose and has_ssid and mheard_ssids[base_call] != full_callsign:
+                                print("    Ignoring {} (already have {})".format(full_callsign, mheard_ssids[base_call]))
                             
                             # Only add to neighbor list if it has an SSID (is a node)
                             # Stations without SSIDs can't be crawled
@@ -1175,7 +1179,10 @@ class NodeCrawler:
             
             # Update global netrom_ssid_map with MHEARD data (what was heard on RF)
             # This is the correct SSID to use for connections (not from NODES routing table)
-            self.netrom_ssid_map.update(mheard_ssids)
+            # Don't overwrite existing entries - first connection established the correct SSID
+            for call, ssid in mheard_ssids.items():
+                if call not in self.netrom_ssid_map:
+                    self.netrom_ssid_map[call] = ssid
             
             # Use MHEARD exclusively for neighbors (stations actually heard on RF with SSIDs)
             # Remove duplicates and exclude self (all SSIDs)
