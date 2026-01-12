@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.44'
+__version__ = '1.3.45'
 
 import sys
 import telnetlib
@@ -734,6 +734,30 @@ class NodeCrawler:
             self.visited.add(callsign)
         
         print("Loaded {} previously visited nodes".format(len(self.visited)))
+        
+        # Restore SSID mappings from previous crawl data
+        # This is critical for resume functionality - connections need proper SSIDs
+        for callsign, node_data in nodes_data.items():
+            # Restore netrom_ssids from each node's discovered SSID data
+            node_ssids = node_data.get('netrom_ssids', {})
+            for base_call, full_call in node_ssids.items():
+                if base_call not in self.netrom_ssid_map:
+                    self.netrom_ssid_map[base_call] = full_call
+                    if self.verbose:
+                        print("Restored SSID mapping: {} = {}".format(base_call, full_call))
+            
+            # Also restore route_ports for direct connections
+            routes = node_data.get('routes', {})
+            for neighbor, quality in routes.items():
+                if neighbor not in self.route_ports and quality > 0:
+                    # Find port from the node's neighbors data
+                    neighbors = node_data.get('neighbors', [])
+                    if neighbor in neighbors:
+                        # Use port 1 as default for now - could be improved
+                        self.route_ports[neighbor] = 1
+        
+        if self.verbose and self.netrom_ssid_map:
+            print("Restored {} SSID mappings from previous crawl".format(len(self.netrom_ssid_map)))
         
         # Find unexplored neighbors from each visited node
         for callsign, node_data in nodes_data.items():
