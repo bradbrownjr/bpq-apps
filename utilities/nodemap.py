@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.39'
+__version__ = '1.3.40'
 
 import sys
 import telnetlib
@@ -1831,12 +1831,25 @@ def main():
             if '*' in pattern or '?' in pattern:
                 matched_files = glob.glob(pattern)
                 if matched_files:
-                    merge_files.extend(matched_files)
-                    print("Wildcard '{}' matched {} files: {}".format(pattern, len(matched_files), ', '.join(matched_files)))
+                    # Filter out the default output file to avoid self-merge
+                    filtered_files = [f for f in matched_files if f != 'nodemap.json']
+                    if len(filtered_files) != len(matched_files):
+                        excluded = [f for f in matched_files if f == 'nodemap.json']
+                        print("Wildcard '{}' matched {} files, excluding output file: {}".format(
+                            pattern, len(matched_files), ', '.join(excluded)))
+                    merge_files.extend(filtered_files)
+                    if filtered_files:
+                        print("Wildcard '{}' matched {} files: {}".format(pattern, len(filtered_files), ', '.join(filtered_files)))
+                    else:
+                        print("Warning: Wildcard pattern '{}' matched no usable files (output file excluded)".format(pattern))
                 else:
                     print("Warning: Wildcard pattern '{}' matched no files".format(pattern))
             else:
-                merge_files.append(pattern)
+                # For explicit filenames, also check if it's the output file
+                if pattern != 'nodemap.json':
+                    merge_files.append(pattern)
+                else:
+                    print("Warning: Skipping '{}' - cannot merge output file into itself".format(pattern))
             i += 2
         else:
             i += 1

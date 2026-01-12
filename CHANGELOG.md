@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3.40] - 2026-01-12
+### Added
+- Safety check to prevent merging output file (nodemap.json) into itself
+- Automatic filtering of output file from wildcard patterns (*.json)
+- Warning messages when output file merge attempts are blocked
+
+### Changed
+- Wildcard merge now shows count of excluded files for transparency
+
 ## [1.3.39] - 2026-01-12
 ### Added
 - Support for -m as shorthand alias for --merge option
