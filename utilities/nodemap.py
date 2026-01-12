@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.52'
+__version__ = '1.3.53'
 
 import sys
 import telnetlib
@@ -1613,15 +1613,24 @@ class NodeCrawler:
             callsign, path = self.queue.popleft()
             
             # Limit depth to prevent excessive crawling
-            # path contains intermediate hops, so len(path)+1 = hop distance from start
-            # For local node: path=[] means 0 hops, path=[KC1JMH] means 1 hop to next node
-            # In resume mode, starting_callsign is None, so calculate hops from path length
+            # path contains intermediate hops, target node is not in path
+            # Hop distance = path length + 1 (for the target node itself)
+            # Example: WS1EC->KC1JMH->KS1R->W1LH: path=['KC1JMH','KS1R'], W1LH is at hop 3
             if starting_callsign is None:
-                # Resume mode: hop distance is path length + 1 (unless path is empty and it's local node)
-                hop_distance = len(path) if path else (0 if callsign == self.callsign else 1)
+                # Resume mode: calculate from path length
+                if not path:
+                    # Empty path: either local node (0 hops) or direct neighbor (1 hop)
+                    hop_distance = 0 if callsign == self.callsign else 1
+                else:
+                    # Path has intermediates: distance = path length + 1 for target
+                    hop_distance = len(path) + 1
             else:
                 # Normal mode: compare with actual starting callsign
-                hop_distance = len(path) if path else (0 if callsign == starting_callsign else 1)
+                if not path:
+                    hop_distance = 0 if callsign == starting_callsign else 1
+                else:
+                    hop_distance = len(path) + 1
+            
             if hop_distance > self.max_hops:
                 print("Skipping {} ({} hops > max {})".format(callsign, hop_distance, self.max_hops))
                 continue

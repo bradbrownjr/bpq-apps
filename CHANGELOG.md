@@ -28,6 +28,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Connection lines between neighboring nodes
 - Legend showing frequency bands and node count
 
+## [1.3.53] - 2026-01-12
+### Fixed
+- Fixed hop count off-by-one error: nodes at max_hops+1 were incorrectly included
+- Corrected hop distance calculation: now properly counts target node (len(path) + 1)
+- With max_hops=2, now correctly stops at 2 hops instead of crawling to 3
+
 ## [1.3.52] - 2026-01-12
 ### Fixed
 - Fixed infinite hang when tn.write() blocks on dead TCP connections during multi-hop
