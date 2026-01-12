@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.47'
+__version__ = '1.3.48'
 
 import sys
 import telnetlib
@@ -56,7 +56,7 @@ class Colors:
 def colored_print(message, color=None):
     """Print message with color if stdout is a terminal."""
     if color and hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
-        print(f"{color}{message}{Colors.RESET}")
+        print("{}{}{}".format(color, message, Colors.RESET))
     else:
         print(message)
 
