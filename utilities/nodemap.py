@@ -871,7 +871,9 @@ class NodeCrawler:
         Parse ? command output to get list of available commands/applications.
         
         Returns:
-            List of command names available on the node
+            Tuple of (commands list, applications list)
+            - commands: All available commands
+            - applications: Subset that are actual applications (BBS, CHAT, RMS, etc.)
         """
         commands = []
         lines = output.split('\n')
@@ -892,7 +894,12 @@ class NodeCrawler:
                     if cmd and cmd not in commands:
                         commands.append(cmd)
         
-        return commands
+        # Identify actual applications (interactive services)
+        # Common packet radio applications
+        app_keywords = ['BBS', 'CHAT', 'RMS', 'PBBS', 'MAIL', 'GATEWAY', 'NODE', 'DX', 'TELNET']
+        applications = [cmd for cmd in commands if cmd.upper() in app_keywords]
+        
+        return commands, applications
     
     def _parse_routes(self, output):
         """
@@ -1176,14 +1183,13 @@ class NodeCrawler:
                 return
             info_output = self._send_command(tn, 'INFO', timeout=cmd_timeout)
             location = self._parse_info(info_output)
-            applications = self._parse_applications(info_output)
             time.sleep(inter_cmd_delay)
             
             # Get available commands (? command)
             if check_deadline():
                 return
             commands_output = self._send_command(tn, '?', timeout=cmd_timeout)
-            commands = self._parse_commands(commands_output)
+            commands, applications = self._parse_commands(commands_output)
             
             # Detect node type
             node_type = self._detect_node_type(info_output, '>:')
@@ -1216,9 +1222,8 @@ class NodeCrawler:
                 'own_aliases': own_aliases,  # This node's aliases (CCEMA:WS1EC-15, etc.)
                 'seen_aliases': other_aliases,  # Other nodes' aliases seen in NODES
                 'netrom_ssids': mheard_ssids,  # From MHEARD (actual RF transmissions)
-                'applications': applications,  # From INFO (unreliable, sysop-entered)
-                'applications_source': 'info',  # Mark as low-confidence
-                'commands': commands  # From ? command (reliable)
+                'applications': applications,  # From ? command (BBS, CHAT, RMS, etc.)
+                'commands': commands  # From ? command (all available commands)
             }
             
             # Record connections
@@ -1270,7 +1275,7 @@ class NodeCrawler:
             ))
             print("  Node type: {}".format(node_type))
             print("  RF Ports: {}".format(len([p for p in ports_list if p['is_rf']])))
-            print("  Applications: {}".format(len(applications)))
+            print("  Applications: {} ({})".format(len(applications), ', '.join(applications) if applications else 'none'))
             print("  Commands: {}".format(len(commands)))
             if own_aliases:
                 print("  Own Aliases: {}".format(len(own_aliases)))
@@ -1391,8 +1396,8 @@ class NodeCrawler:
                 node = self.nodes[callsign]
                 hop_dist = node.get('hop_distance', 0)
                 ports = len([p for p in node.get('ports', []) if p.get('is_rf')])
-                apps = len(node.get('applications', []))  # Apps from INFO parsing
-                commands = len(node.get('commands', []))  # Commands from ? (reliable)
+                apps = len(node.get('applications', []))  # Apps from ? command (BBS, CHAT, RMS, etc.)
+                commands = len(node.get('commands', []))  # All commands from ? (reliable)
                 neighbors = len(node.get('neighbors', []))
                 
                 # Recalculate failed connections from intermittent_links
