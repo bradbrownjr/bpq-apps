@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.64] - 2026-01-12
+### Fixed
+- Display mode now correctly extracts alias from own_aliases and gridsquare from location dict
+- Was looking in wrong fields - alias is in own_aliases{}, gridsquare is in location{'grid'}
+
 ## [nodemap 1.3.63] - 2026-01-12
 ### Improved
 - Display mode now shows unexplored neighbors column

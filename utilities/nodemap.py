@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.63'
+__version__ = '1.3.64'
 
 import sys
 import telnetlib
@@ -2289,11 +2289,20 @@ def main():
             # Sort by callsign for consistent display
             for callsign in sorted(nodes_data.keys()):
                 node = nodes_data[callsign]
-                # Get alias from node data or netrom data
-                alias = node.get('alias', '') or netrom_data.get(callsign, {}).get('alias', '')
+                
+                # Get alias from own_aliases (first one) or netrom data
+                own_aliases = node.get('own_aliases', {})
+                if own_aliases:
+                    alias = list(own_aliases.keys())[0] if own_aliases else ''
+                else:
+                    alias = netrom_data.get(callsign, {}).get('alias', '')
+                
                 hops = node.get('hop_distance', '')
-                # Get gridsquare from node data or netrom data
-                grid = node.get('gridsquare', '') or netrom_data.get(callsign, {}).get('gridsquare', '')
+                
+                # Get gridsquare from location dict or netrom data
+                location = node.get('location', {})
+                grid = location.get('grid', '') or netrom_data.get(callsign, {}).get('gridsquare', '')
+                
                 neighbors = node.get('neighbors', [])
                 
                 # Find unexplored neighbors
