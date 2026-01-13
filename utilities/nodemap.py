@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.82
+Version: 1.3.83
 """
 
-__version__ = '1.3.82'
+__version__ = '1.3.83'
 
 import sys
 import telnetlib
@@ -79,7 +79,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, resume=False, crawl_mode='update'):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, resume=False, crawl_mode='update', exclude=None):
         """
         Initialize crawler.
         
@@ -95,6 +95,7 @@ class NodeCrawler:
             log_file: File to log all telnet traffic to (default: None)
             resume: Resume from unexplored nodes in existing nodemap.json (default: False)
             crawl_mode: How to handle existing nodes: 'update' (skip known), 'reaudit' (re-crawl all), 'new-only' (only new nodes)
+            exclude: Set of callsigns to exclude from crawling (default: None)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -109,6 +110,7 @@ class NodeCrawler:
         self.resume = resume
         self.resume_file = None  # Set externally if specific file needed
         self.crawl_mode = crawl_mode  # 'update', 'reaudit', or 'new-only'
+        self.exclude = exclude if exclude else set()  # Nodes to skip
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -1472,6 +1474,12 @@ class NodeCrawler:
             callsign: Node callsign to crawl
             path: Connection path to reach this node
         """
+        # Check if node is excluded
+        if callsign in self.exclude:
+            if self.verbose:
+                print("  Skipping {} (excluded via --exclude)".format(callsign))
+            return
+        
         # Check if already visited based on crawl mode
         if callsign in self.visited:
             if self.crawl_mode == 'reaudit':
@@ -2477,6 +2485,8 @@ def main():
         print("                   update: skip already-visited nodes (fastest)")
         print("                   reaudit: re-crawl all nodes to verify/update data")
         print("                   new-only: auto-load nodemap.json, queue unexplored neighbors")
+        print("  --exclude CALLS, -x CALLS  Exclude comma-separated callsigns from crawling")
+        print("                   Example: --exclude AB1KI,N1REX,K1NYY")
         print("  --display-nodes, -d  Display nodes table from nodemap.json and exit")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
@@ -2634,6 +2644,7 @@ def main():
     notify_url = None
     log_file = None
     crawl_mode = 'update'  # Default to 'update' mode
+    exclude_nodes = set()  # Nodes to exclude from crawling
     merge_files = []  # List of files to merge
     resume_file = None  # File to resume from (None = auto-detect)
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
@@ -2667,6 +2678,14 @@ def main():
             i += 2
         elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
             log_file = sys.argv[i + 1]
+            i += 2
+        elif (arg == '--exclude' or arg == '-x') and i + 1 < len(sys.argv):
+            # Parse comma-separated list of callsigns to exclude
+            exclude_str = sys.argv[i + 1]
+            for call in exclude_str.split(','):
+                call = call.strip().upper()
+                if call:
+                    exclude_nodes.add(call)
             i += 2
         elif arg == '--mode' and i + 1 < len(sys.argv):
             mode_arg = sys.argv[i + 1].lower()
@@ -2730,12 +2749,16 @@ def main():
     # Merge mode is default; use --overwrite to disable
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
-    # Create crawler with specified crawl mode
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume, crawl_mode=crawl_mode)
+    # Create crawler with specified crawl mode and exclusions
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes)
     
     # Set resume file if specified
     if resume_file:
         crawler.resume_file = resume_file
+    
+    # Display excluded nodes if any
+    if exclude_nodes:
+        print("Excluding nodes: {}".format(', '.join(sorted(exclude_nodes))))
     
     # Handle merge-only mode (no crawling, just merge files)
     if merge_files and not resume and not start_node and max_hops == 10:

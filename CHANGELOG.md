@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.83] - 2026-01-13
+### Added
+- `--exclude` or `-x` flag to skip specific nodes during crawl
+- Accepts comma-separated list of callsigns: `--exclude AB1KI,N1REX,K1NYY`
+- Useful for excluding offline or problematic nodes
+- Displays excluded nodes at start of crawl
+
 ## [nodemap 1.3.82] - 2026-01-13
 ### Fixed
 - Connection timeout enforcement now properly exits wait loops

@@ -88,6 +88,9 @@ chmod +x nodemap.py nodemap-html.py
   - `update`: Skip already-visited nodes in current session (fastest)
   - `reaudit`: Re-crawl all nodes to verify/update data
   - `new-only`: Auto-load nodemap.json, queue only unexplored neighbors
+- `--exclude CALLS` or `-x CALLS` - Exclude callsigns from crawling (comma-separated)
+  - Example: `--exclude AB1KI,N1REX,K1NYY`
+  - Useful for skipping offline or problematic nodes
 - `--merge FILE` - Combine data from another operator's nodemap.json
 - `--verbose` or `-v` - Show detailed command/response output
 - `--notify URL` - Send progress notifications to webhook
@@ -150,6 +153,11 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py 5 --mode new-only    # Only discover new nodes (saves RF bandwidth)
 ./nodemap.py 10 --mode reaudit    # Re-verify all nodes (update existing data)
 ./nodemap.py 3 --mode update      # Default: skip visited nodes in this session
+
+# Excluding problematic nodes
+./nodemap.py 5 --exclude AB1KI           # Skip one node
+./nodemap.py 5 -x AB1KI,N1REX,K1NYY      # Skip multiple nodes (comma-separated)
+./nodemap.py 10 --mode new-only -x AB1KI # Combine with other options
 
 # Resume interrupted crawls
 ./nodemap.py --resume             # Continue from unexplored nodes
