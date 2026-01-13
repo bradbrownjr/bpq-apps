@@ -8,6 +8,17 @@ Sysop tools for BBS management, network mapping, and maintenance tasks.
 
 Advanced packet radio network discovery tool that crawls through BPQ nodes via RF connections to map topology, applications, and connectivity. Creates comprehensive network maps by analyzing routing tables, MHEARD lists, and node information.
 
+### Quick Install
+
+Download all nodemap scripts:
+```bash
+cd ~/utilities
+wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py
+wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap-html.py
+wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/map_boundaries.py
+chmod +x nodemap.py nodemap-html.py
+```
+
 ### Key Features
 
 - **RF-Only Discovery**: Uses actual RF connections, ignoring IP/Telnet ports
@@ -53,10 +64,16 @@ Advanced packet radio network discovery tool that crawls through BPQ nodes via R
 **Options:**
 - `--overwrite` or `-o` - Replace existing data (default: merge mode)
 - `--resume` or `-r` - Continue from unexplored nodes in existing data
+- `--mode MODE` - Crawl mode: `update` (default), `reaudit`, `new-only`
+  - `update`: Skip already-visited nodes in current session (fastest)
+  - `reaudit`: Re-crawl all nodes to verify/update data
+  - `new-only`: Auto-load nodemap.json, queue only unexplored neighbors
 - `--merge FILE` - Combine data from another operator's nodemap.json
 - `--verbose` or `-v` - Show detailed command/response output
 - `--notify URL` - Send progress notifications to webhook
 - `--log FILE` - Log all telnet traffic for debugging
+- `--user USERNAME` - Telnet login username (default: prompt if needed)
+- `--pass PASSWORD` - Telnet login password (default: prompt if needed)
 
 ### Multi-Node Mapping Workflow
 
@@ -109,6 +126,11 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py 10 WS1EC            # Crawl 10 hops starting from WS1EC
 ./nodemap.py 5 --overwrite       # Crawl and replace existing data
 
+# Crawl modes (bandwidth optimization)
+./nodemap.py 5 --mode new-only    # Only discover new nodes (saves RF bandwidth)
+./nodemap.py 10 --mode reaudit    # Re-verify all nodes (update existing data)
+./nodemap.py 3 --mode update      # Default: skip visited nodes in this session
+
 # Resume interrupted crawls
 ./nodemap.py --resume             # Continue from unexplored nodes
 ./nodemap.py 15 KC1JMH           # Resume/expand from previous crawl
@@ -121,6 +143,7 @@ For comprehensive network coverage, coordinate with other operators:
 # Advanced options
 ./nodemap.py 10 --verbose --log debug.txt         # Detailed logging
 ./nodemap.py 5 --notify https://my.webhook.com    # Progress notifications
+./nodemap.py 10 --user KC1JMH --pass mypass       # With authentication
 ```
 
 ### Output Files
@@ -153,10 +176,31 @@ For each node:
 
 ### Timeout Protection
 
-Commands scale timeouts based on hop count:
+Adaptive timeouts for 1200 baud simplex RF:
+- **Connection timeout:** 30s + 30s per hop (max 180s)
 - **Command timeout:** 5s + 10s per hop (max 60s)
 - **Operation timeout:** 5min + 2min per hop
+- **Prompt wait:** 30s (allows multi-hop banner data)
 - Prevents hangs on poor RF conditions or unresponsive nodes
+
+### Crawl Modes
+
+**Update mode** (default):
+- Skips nodes already visited in current session
+- Fastest for normal crawling
+- Best for initial network discovery
+
+**Reaudit mode** (`--mode reaudit`):
+- Re-crawls all reachable nodes
+- Updates/verifies existing data
+- Use periodically to refresh network map
+
+**New-only mode** (`--mode new-only`):
+- Auto-loads nodemap.json
+- Queues only unexplored neighbors
+- Skips all known nodes
+- Minimal RF bandwidth usage
+- Perfect for 1200 baud simplex networks
 
 ### Requirements
 
