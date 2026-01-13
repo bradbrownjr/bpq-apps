@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.85] - 2026-01-13
+### Changed
+- Added ANSI color codes to all error (red), warning (yellow), and success (green) messages
+- Improved visibility of critical messages in terminal output
+
+## [nodemap-html 1.1.4] - 2026-01-13
+### Changed
+- Added ANSI color codes to all error (red) and warning (yellow) messages
+- Improved visibility of critical messages in terminal output
+
 ## [nodemap 1.3.84] - 2026-01-13
 ### Added
 - Prompt at script start to generate HTML/SVG maps after crawl completes

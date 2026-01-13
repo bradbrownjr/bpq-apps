@@ -14,16 +14,33 @@ For BPQ Web Server:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.3
+Version: 1.1.4
 """
 
-__version__ = '1.1.3'
+__version__ = '1.1.4'
 
 import sys
 import json
 import os
 import math
 import re
+
+
+class Colors:
+    """ANSI color codes for console output."""
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    GREEN = '\033[92m'
+    RESET = '\033[0m'
+
+
+def colored_print(message, color=None):
+    """Print message with color if stdout is a terminal."""
+    if color and hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        print("{}{}{}".format(color, message, Colors.RESET))
+    else:
+        print(message)
+
 
 # Try to import boundary data (optional)
 try:
@@ -34,7 +51,7 @@ except ImportError:
 
 # Check Python version
 if sys.version_info < (3, 5):
-    print("Error: This script requires Python 3.5 or later.")
+    colored_print("Error: This script requires Python 3.5 or later.", Colors.RED)
     sys.exit(1)
 
 
@@ -136,7 +153,7 @@ def get_band_name(frequency):
 def load_nodemap(filename='nodemap.json'):
     """Load nodemap.json and return nodes dict."""
     if not os.path.exists(filename):
-        print("Error: {} not found".format(filename))
+        colored_print("Error: {} not found".format(filename), Colors.RED)
         print("Run nodemap.py first to generate network data.")
         return None
     
@@ -269,7 +286,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
                     })
     
     if not map_nodes:
-        print("Error: No nodes with valid grid squares found.")
+        colored_print("Error: No nodes with valid grid squares found.", Colors.RED)
         return False
     
     # Calculate map center
@@ -504,7 +521,7 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
                     })
     
     if not map_nodes:
-        print("Error: No nodes with valid grid squares found.")
+        colored_print("Error: No nodes with valid grid squares found.", Colors.RED)
         return False
     
     # Calculate bounds from nodes
@@ -810,7 +827,7 @@ def main():
     
     if nodes_with_grid == 0:
         print("")
-        print("Warning: No nodes have grid square data.")
+        colored_print("Warning: No nodes have grid square data.", Colors.YELLOW)
         print("Grid squares are extracted from node INFO text.")
         print("Nodes without grid squares cannot be mapped.")
         return

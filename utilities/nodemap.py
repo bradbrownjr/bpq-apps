@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.84
+Version: 1.3.85
 """
 
-__version__ = '1.3.84'
+__version__ = '1.3.85'
 
 import sys
 import telnetlib
@@ -211,7 +211,7 @@ class NodeCrawler:
             try:
                 self.log_handle = open(self.log_file, 'a')
             except Exception as e:
-                print("Warning: Could not open log file {}: {}".format(self.log_file, e))
+                colored_print("Warning: Could not open log file {}: {}".format(self.log_file, e), Colors.YELLOW)
                 self.log_file = None
                 return
         
@@ -1028,7 +1028,7 @@ class NodeCrawler:
             with open(filename, 'r') as f:
                 return json.load(f)
         except Exception as e:
-            print("Warning: Could not load {}: {}".format(filename, e))
+            colored_print("Warning: Could not load {}: {}".format(filename, e), Colors.YELLOW)
             return None
     
     def _find_path_to_node(self, target_callsign, nodes_data):
@@ -1969,7 +1969,7 @@ class NodeCrawler:
             if start_node:
                 # Validate provided callsign
                 if not self._is_valid_callsign(start_node):
-                    print("Error: Invalid callsign format: {}".format(start_node))
+                    colored_print("Error: Invalid callsign format: {}".format(start_node), Colors.RED)
                     return
                 starting_callsign = start_node.upper()
                 print("Starting network crawl from: {}...".format(starting_callsign))
@@ -2124,7 +2124,7 @@ class NodeCrawler:
                         
                         if not found_path:
                             if self.verbose:
-                                print("Warning: {} not found in any known node's neighbor list".format(target_base))
+                                colored_print("Warning: {} not found in any known node's neighbor list".format(target_base), Colors.YELLOW)
                             # Fallback: Check if we have a NetRom alias for direct connection
                             if target_base in self.call_to_alias:
                                 if self.verbose:
@@ -2139,9 +2139,9 @@ class NodeCrawler:
                         print("Will attempt NetRom discovery when connecting to local node")
             else:
                 if not self.callsign:
-                    print("Error: Could not determine local node callsign from bpq32.cfg.")
-                    print("Please ensure NODECALL is set in your bpq32.cfg file.")
-                    print("Or provide a starting callsign: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]))
+                    colored_print("Error: Could not determine local node callsign from bpq32.cfg.", Colors.RED)
+                    colored_print("Please ensure NODECALL is set in your bpq32.cfg file.", Colors.RED)
+                    colored_print("Or provide a starting callsign: {} [MAX_HOPS] [START_NODE]".format(sys.argv[0]), Colors.RED)
                     return
                 starting_callsign = self.callsign
                 colored_print("Starting network crawl from local node: {}...".format(starting_callsign), Colors.GREEN)
@@ -2379,7 +2379,7 @@ class NodeCrawler:
         try:
             external_data = self._load_existing_data(filename)
             if not external_data or 'nodes' not in external_data:
-                print("Error: Invalid or missing nodemap data in {}".format(filename))
+                colored_print("Error: Invalid or missing nodemap data in {}".format(filename), Colors.RED)
                 return -1
             
             external_nodes = external_data['nodes']
@@ -2458,7 +2458,7 @@ class NodeCrawler:
             return len(external_nodes)
             
         except Exception as e:
-            print("Error merging {}: {}".format(filename, e))
+            colored_print("Error merging {}: {}".format(filename, e), Colors.RED)
             return -1
 
 
@@ -2532,8 +2532,8 @@ def main():
     # Check for display-only mode first (fast exit)
     if '--display-nodes' in sys.argv or '-d' in sys.argv:
         if not os.path.exists('nodemap.json'):
-            print("Error: nodemap.json not found")
-            print("Run a crawl first to generate network data")
+            colored_print("Error: nodemap.json not found", Colors.RED)
+            colored_print("Run a crawl first to generate network data", Colors.RED)
             sys.exit(1)
         
         try:
@@ -2628,10 +2628,10 @@ def main():
             print("Total connections: {}".format(len(data.get('connections', []))))
             
         except json.JSONDecodeError as e:
-            print("Error parsing nodemap.json: {}".format(e))
+            colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)
             sys.exit(1)
         except Exception as e:
-            print("Error reading nodemap.json: {}".format(e))
+            colored_print("Error reading nodemap.json: {}".format(e), Colors.RED)
             sys.exit(1)
         
         sys.exit(0)
@@ -2694,7 +2694,7 @@ def main():
                 crawl_mode = mode_arg
                 i += 2
             else:
-                print("Error: Invalid mode '{}'. Must be 'update', 'reaudit', or 'new-only'.".format(sys.argv[i + 1]))
+                colored_print("Error: Invalid mode '{}'. Must be 'update', 'reaudit', or 'new-only'.".format(sys.argv[i + 1]), Colors.RED)
                 print("Run '{} --help' for usage information.".format(sys.argv[0]))
                 sys.exit(1)
         elif (arg == '--resume' or arg == '-r'):
@@ -2721,15 +2721,15 @@ def main():
                     if filtered_files:
                         print("Wildcard '{}' matched {} files: {}".format(pattern, len(filtered_files), ', '.join(filtered_files)))
                     else:
-                        print("Warning: Wildcard pattern '{}' matched no usable files (output file excluded)".format(pattern))
+                        colored_print("Warning: Wildcard pattern '{}' matched no usable files (output file excluded)".format(pattern), Colors.YELLOW)
                 else:
-                    print("Warning: Wildcard pattern '{}' matched no files".format(pattern))
+                    colored_print("Warning: Wildcard pattern '{}' matched no files".format(pattern), Colors.YELLOW)
             else:
                 # For explicit filenames, also check if it's the output file
                 if pattern != 'nodemap.json':
                     merge_files.append(pattern)
                 else:
-                    print("Warning: Skipping '{}' - cannot merge output file into itself".format(pattern))
+                    colored_print("Warning: Skipping '{}' - cannot merge output file into itself".format(pattern), Colors.YELLOW)
             i += 2
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:
             # Known flags without arguments
@@ -2743,7 +2743,7 @@ def main():
     
     # Check for unknown arguments
     if unknown_args:
-        print("Error: Unknown argument(s): {}".format(', '.join(unknown_args)))
+        colored_print("Error: Unknown argument(s): {}".format(', '.join(unknown_args)), Colors.RED)
         print("Run '{} --help' for usage information.".format(sys.argv[0]))
         sys.exit(1)
     
@@ -2859,7 +2859,7 @@ def main():
             for merge_file in merge_files:
                 result = crawler.merge_external_data(merge_file)
                 if result > 0:
-                    print("Successfully merged {} nodes from {}".format(result, merge_file))
+                    colored_print("Successfully merged {} nodes from {}".format(result, merge_file), Colors.GREEN)
             
             # Re-export with merged data
             crawler.export_json(merge=merge_mode)
@@ -2878,11 +2878,11 @@ def main():
                 import subprocess
                 result = subprocess.call(['python3', html_script, '--all'])
                 if result == 0:
-                    print("Maps generated successfully!")
+                    colored_print("Maps generated successfully!", Colors.GREEN)
                 else:
-                    print("Warning: Map generation exited with code {}".format(result))
+                    colored_print("Warning: Map generation exited with code {}".format(result), Colors.YELLOW)
             except Exception as e:
-                print("Error generating maps: {}".format(e))
+                colored_print("Error generating maps: {}".format(e), Colors.RED)
         
         # Notify successful completion
         crawler._send_notification("Successfully crawled {} nodes!".format(len(crawler.nodes)))
