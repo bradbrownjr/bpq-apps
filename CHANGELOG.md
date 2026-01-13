@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.75] - 2026-01-13
+### Added
+- Send `?` command first to discover available commands on node
+- Some nodes don't support standard BPQ sysop commands
+- Helps identify non-BPQ or differently configured nodes
+
 ## [nodemap 1.3.74] - 2026-01-13
 ### Fixed
 - Increased timeouts for 1200 baud simplex RF: 30s base + 30s per hop (was 20s+20s)

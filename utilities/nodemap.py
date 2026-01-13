@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.74'
+__version__ = '1.3.75'
 
 import sys
 import telnetlib
@@ -1514,6 +1514,19 @@ class NodeCrawler:
             # Inter-command delay scales with hop count
             # Over multi-hop RF, need time for responses to fully arrive
             inter_cmd_delay = 0.5 + (hop_count * 0.5)  # 0.5s base + 0.5s per hop
+            
+            # First, try ? to discover available commands
+            # Some nodes may not support standard BPQ commands
+            if check_deadline():
+                return
+            try:
+                help_output = self._send_command(tn, '?', timeout=cmd_timeout, expect_content=None)
+                if self.verbose:
+                    print("  Available commands: {}".format(' '.join(help_output.split()[:20])))  # Show first 20 words
+                time.sleep(inter_cmd_delay)
+            except Exception as e:
+                if self.verbose:
+                    print("  Note: ? command not available or failed: {}".format(e))
             
             # Get PORTS to identify RF ports
             if check_deadline():
