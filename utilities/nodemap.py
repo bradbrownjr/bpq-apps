@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.1
+Version: 1.3.76
 """
 
-__version__ = '1.3.75'
+__version__ = '1.3.76'
 
 import sys
 import telnetlib
@@ -79,7 +79,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, resume=False):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, resume=False, crawl_mode='update'):
         """
         Initialize crawler.
         
@@ -94,6 +94,7 @@ class NodeCrawler:
             notify_url: URL to POST notifications to (default: None)
             log_file: File to log all telnet traffic to (default: None)
             resume: Resume from unexplored nodes in existing nodemap.json (default: False)
+            crawl_mode: How to handle existing nodes: 'update' (skip known), 'reaudit' (re-crawl all), 'new-only' (only new nodes)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -107,6 +108,7 @@ class NodeCrawler:
         self.log_handle = None
         self.resume = resume
         self.resume_file = None  # Set externally if specific file needed
+        self.crawl_mode = crawl_mode  # 'update', 'reaudit', or 'new-only'
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
@@ -1424,8 +1426,16 @@ class NodeCrawler:
             callsign: Node callsign to crawl
             path: Connection path to reach this node
         """
+        # Check if already visited based on crawl mode
         if callsign in self.visited:
-            return
+            if self.crawl_mode == 'reaudit':
+                # Re-audit mode: allow re-crawling known nodes
+                if self.verbose:
+                    print("  Re-auditing {} (reaudit mode)".format(callsign))
+                self.visited.remove(callsign)  # Remove so we can re-crawl
+            else:
+                # Update or new-only mode: skip already visited
+                return
         
         # Build readable path description
         if not path:
@@ -2405,6 +2415,10 @@ def main():
         print("  --resume FILE    Resume from specific JSON file")
         print("  --merge FILE, -m Merge another nodemap.json file into current data")
         print("                   Supports wildcards: --merge *.json")
+        print("  --mode MODE      Crawl mode: update (default), reaudit, new-only")
+        print("                   update: skip already-visited nodes (fastest)")
+        print("                   reaudit: re-crawl all nodes to verify/update data")
+        print("                   new-only: only crawl nodes not in nodemap.json")
         print("  --display-nodes, -d  Display nodes table from nodemap.json and exit")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
@@ -2561,6 +2575,7 @@ def main():
     password = None
     notify_url = None
     log_file = None
+    crawl_mode = 'update'  # Default to 'update' mode
     merge_files = []  # List of files to merge
     resume_file = None  # File to resume from (None = auto-detect)
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
@@ -2594,6 +2609,14 @@ def main():
         elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
             log_file = sys.argv[i + 1]
             i += 2
+        elif arg == '--mode' and i + 1 < len(sys.argv):
+            mode_arg = sys.argv[i + 1].lower()
+            if mode_arg in ['update', 'reaudit', 'new-only']:
+                crawl_mode = mode_arg
+                i += 2
+            else:
+                print("Error: Invalid mode '{}'. Must be 'update', 'reaudit', or 'new-only'.".format(sys.argv[i + 1]))
+                sys.exit(1)
         elif (arg == '--resume' or arg == '-r'):
             resume = True
             # Check if next arg is a filename (not another option)
@@ -2634,8 +2657,8 @@ def main():
     # Merge mode is default; use --overwrite to disable
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
-    # Create crawler
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume)
+    # Create crawler with specified crawl mode
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume, crawl_mode=crawl_mode)
     
     # Set resume file if specified
     if resume_file:
@@ -2703,6 +2726,14 @@ def main():
         print("Mode: Merge (updating existing nodemap.json)")
     else:
         print("Mode: Overwrite (replacing all data)")
+    
+    # Display crawl mode
+    mode_descriptions = {
+        'update': 'Update (skip visited nodes)',
+        'reaudit': 'Reaudit (re-crawl all nodes)',
+        'new-only': 'New-Only (skip existing nodes in nodemap.json)'
+    }
+    print("Crawl Mode: {}".format(mode_descriptions.get(crawl_mode, crawl_mode)))
     
     # Crawl network
     try:

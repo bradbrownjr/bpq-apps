@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.76] - 2026-01-13
+### Added
+- Crawl mode selection: `--mode update|reaudit|new-only`
+- `update` mode (default): Skip already-visited nodes in current session
+- `reaudit` mode: Re-crawl all nodes to verify and update network data
+- `new-only` mode: Only crawl nodes not already in nodemap.json
+- Reduces RF bandwidth usage when only discovering new network nodes
+- Useful for limited bandwidth (1200 baud simplex) operations
+
 ## [nodemap 1.3.75] - 2026-01-13
 ### Added
 - Send `?` command first to discover available commands on node
