@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.80] - 2026-01-13
+### Fixed
+- Unexplored neighbors now use correct multi-hop paths to parent nodes
+- Added BFS path-finding to reconstruct routes through network topology
+- Previously assumed direct connection to parent node, causing connection failures
+- Matches behavior of "start from callsign" path resolution
+
 ## [nodemap 1.3.79] - 2026-01-13
 ### Changed
 - Cleaned up verbose output during data restoration

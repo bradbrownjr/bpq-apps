@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.79
+Version: 1.3.80
 """
 
-__version__ = '1.3.79'
+__version__ = '1.3.80'
 
 import sys
 import telnetlib
@@ -1019,6 +1019,43 @@ class NodeCrawler:
             print("Warning: Could not load {}: {}".format(filename, e))
             return None
     
+    def _find_path_to_node(self, target_callsign, nodes_data):
+        """Find shortest path from local node to target node using BFS.
+        
+        Args:
+            target_callsign: Target node to reach
+            nodes_data: Dictionary of node data from nodemap.json
+            
+        Returns:
+            List of intermediate callsigns (not including local or target), or None if not found
+        """
+        if not self.callsign:
+            return None
+        
+        if target_callsign == self.callsign:
+            return []
+        
+        # BFS to find shortest path
+        queue = [(self.callsign, [])]  # (current_node, path_to_current)
+        visited = {self.callsign}
+        
+        while queue:
+            current, path = queue.pop(0)
+            current_info = nodes_data.get(current, {})
+            neighbors = current_info.get('neighbors', [])
+            
+            for neighbor in neighbors:
+                if neighbor == target_callsign:
+                    # Found target - path doesn't include local or target
+                    return path
+                
+                if neighbor not in visited and neighbor in nodes_data:
+                    visited.add(neighbor)
+                    queue.append((neighbor, path + [neighbor]))
+        
+        # Target not reachable through known neighbors
+        return None
+    
     def _load_unexplored_nodes(self, filename='nodemap.json'):
         """Load unexplored nodes from existing nodemap data.
         
@@ -1099,15 +1136,21 @@ class NodeCrawler:
             for neighbor in all_neighbors:
                 if neighbor not in self.visited and neighbor not in [u for u, _ in unexplored]:
                     # Calculate path to this neighbor through the visited node
-                    # We need to reconstruct the path to reach the parent node first
+                    # We need to reconstruct the path to reach the parent node first using BFS
                     hop_distance = node_data.get('hop_distance', 0)
                     if hop_distance == 0:
-                        # Parent is local node, direct connection
+                        # Parent is local node, direct connection to neighbor
                         path = []
                     else:
-                        # For now, use direct path through parent
-                        # Could be optimized by finding shortest path
-                        path = [callsign]
+                        # Use BFS to find path from local node to parent node
+                        # Then neighbor is reached via parent
+                        parent_path = self._find_path_to_node(callsign, nodes_data)
+                        if parent_path is not None:
+                            # Path to neighbor = path to parent + parent itself
+                            path = parent_path + [callsign]
+                        else:
+                            # Fallback: assume direct connection to parent
+                            path = [callsign]
                     
                     unexplored.append((neighbor, path))
         
