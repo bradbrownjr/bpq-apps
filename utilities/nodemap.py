@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.73'
+__version__ = '1.3.74'
 
 import sys
 import telnetlib
@@ -246,15 +246,16 @@ class NodeCrawler:
     def _calculate_connection_timeout(self, hop_count):
         """
         Calculate connection timeout based on number of hops.
-        At 1200 baud RF: ~20s per hop for connection establishment.
+        At 1200 baud simplex RF: ~30s per hop for connection establishment.
+        Simplex means each packet must be ACKed before next can be sent.
         
         Args:
             hop_count: Number of hops in the path
             
         Returns:
-            Timeout in seconds (base 20s + 20s per hop, max 120s)
+            Timeout in seconds (base 30s + 30s per hop, max 180s)
         """
-        return min(20 + (hop_count * 20), 120)
+        return min(30 + (hop_count * 30), 180)
     
     def _verify_netrom_route(self, tn, target):
         """
@@ -621,7 +622,12 @@ class NodeCrawler:
                         return None
                 
                 if not connected:
-                    print("  Connection to {} (via {}) timed out (no CONNECTED response)".format(callsign, connect_target))
+                    elapsed = time.time() - connection_start_time
+                    if self.verbose:
+                        print("  Connection to {} (via {}) timed out after {:.1f}s (expected timeout: {}s)".format(
+                            callsign, connect_target, elapsed, conn_timeout))
+                    else:
+                        print("  Connection to {} (via {}) timed out (no CONNECTED response)".format(callsign, connect_target))
                     
                     # If direct port connection failed, try NetRom alias as fallback
                     if port_num and self.call_to_alias.get(lookup_call):
@@ -686,7 +692,10 @@ class NodeCrawler:
                 # This tells us the actual node SSID in use
                 try:
                     # Look for BPQ remote prompt: "} " at end of banner
-                    prompt_data = tn.read_until(b'} ', timeout=10)
+                    # Allow 30s for banner at 1200 baud over RF hops
+                    if self.verbose:
+                        print("    Waiting for remote node prompt (30s timeout)...")
+                    prompt_data = tn.read_until(b'} ', timeout=30)
                     self._log('RECV', prompt_data)
                     prompt_text = prompt_data.decode('ascii', errors='replace')
                     
@@ -710,18 +719,28 @@ class NodeCrawler:
                     
                     # Always consume any remaining buffered data after prompt
                     # This prevents leftover banner/info text from contaminating first command response
-                    time.sleep(0.5)  # Give any trailing data time to arrive
+                    time.sleep(1.5)  # Give trailing data time to arrive over 1200 baud RF
                     extra_data = tn.read_very_eager()
                     if extra_data:
                         self._log('RECV', extra_data)
                         if self.verbose:
                             print("    Cleared {} bytes of buffered data".format(len(extra_data)))
-                except:
-                    # If no prompt received, just consume whatever is buffered
+                except socket.timeout:
+                    if self.verbose:
+                        print("    Timeout waiting for prompt - node may be slow or connection unstable")
+                    # Consume whatever is buffered
                     buffered = tn.read_very_eager()
                     self._log('RECV', buffered)
                     if self.verbose:
-                        print("    No clear prompt, consumed {} bytes".format(len(buffered)))
+                        print("    Consumed {} bytes of buffered data".format(len(buffered)))
+                except Exception as e:
+                    # If no prompt received, just consume whatever is buffered
+                    if self.verbose:
+                        print("    Error reading prompt: {}".format(e))
+                    buffered = tn.read_very_eager()
+                    self._log('RECV', buffered)
+                    if self.verbose:
+                        print("    Consumed {} bytes".format(len(buffered)))
             
             return tn
             

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.74] - 2026-01-13
+### Fixed
+- Increased timeouts for 1200 baud simplex RF: 30s base + 30s per hop (was 20s+20s)
+- Simplex RF requires packet acknowledgment before next transmission (slower)
+- Prompt wait timeout increased from 10s to 30s for multi-hop connections
+- Post-connection delay increased to 1.5s to allow banner data arrival
+- Added verbose timeout messages showing elapsed time vs expected timeout
+- Better error messages when prompt read times out or fails
+
 ## [nodemap 1.3.73] - 2026-01-13
 ### Fixed
 - Improved error message when target is user station (no SSID)
