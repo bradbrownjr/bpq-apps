@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.61] - 2026-01-12
+### Added
+- NetRom alias fallback when direct port connection times out
+- Automatically retries with C ALIAS if C PORT SSID fails to connect
+
 ## [nodemap 1.3.60] - 2026-01-22
 ### Fixed
 - SSID priority: Node's own SSID now takes precedence over what neighbors heard on MHEARD

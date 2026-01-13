@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.60'
+__version__ = '1.3.61'
 
 import sys
 import telnetlib
@@ -539,8 +539,59 @@ class NodeCrawler:
                 
                 if not connected:
                     print("  Connection to {} (via {}) timed out (no CONNECTED response)".format(callsign, connect_target))
-                    tn.close()
-                    return None
+                    
+                    # If direct port connection failed, try NetRom alias as fallback
+                    if port_num and self.call_to_alias.get(lookup_call):
+                        alias = self.call_to_alias.get(lookup_call)
+                        if self.verbose:
+                            print("    Direct port connection failed - trying NetRom alias: {}".format(alias))
+                        
+                        # Clear any buffered data
+                        try:
+                            tn.read_very_eager()
+                        except:
+                            pass
+                        
+                        # Try NetRom connection
+                        cmd = "C {}\r".format(alias).encode('ascii')
+                        try:
+                            tn.write(cmd)
+                        except:
+                            tn.close()
+                            return None
+                        
+                        # Wait for connection with same timeout
+                        start_time = time.time()
+                        connected = False
+                        response = ""
+                        
+                        if self.verbose:
+                            print("    Waiting for NetRom connection (timeout: {}s)...".format(conn_timeout))
+                        
+                        while time.time() - start_time < conn_timeout:
+                            try:
+                                chunk = tn.read_some()
+                                response += chunk.decode('ascii', errors='ignore')
+                                
+                                if 'CONNECTED' in response.upper():
+                                    connected = True
+                                    print("  Connected to {} via NetRom alias {}".format(callsign, alias))
+                                    break
+                                
+                                if any(x in response.upper() for x in ['BUSY', 'FAILED', 'NO ROUTE', 
+                                                                         'TIMEOUT', 'DISCONNECTED',
+                                                                         'NOT HEARD', 'NO ANSWER']):
+                                    break
+                                
+                                time.sleep(0.5)
+                            except socket.timeout:
+                                pass
+                            except EOFError:
+                                break
+                    
+                    if not connected:
+                        tn.close()
+                        return None
                 
                 # Wait for remote node prompt after connection
                 # BPQ remote nodes use "ALIAS:CALLSIGN-SSID} " prompt format
