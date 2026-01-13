@@ -4,6 +4,26 @@ Sysop tools for BBS management, network mapping, and maintenance tasks.
 
 **Installation**: See [docs/INSTALLATION.md#utilities-installation](../docs/INSTALLATION.md#utilities-installation) for setup instructions and directory layout.
 
+## Table of Contents
+
+- [nodemap.py - Network Topology Mapper](#nodemappy---network-topology-mapper)
+  - [Quick Install](#quick-install)
+  - [Key Features](#key-features)
+  - [Network Assumptions](#network-assumptions)
+  - [Usage](#usage)
+  - [Multi-Node Mapping Workflow](#multi-node-mapping-workflow)
+  - [Data Storage Modes](#data-storage-modes)
+  - [Examples](#examples)
+  - [Output Files](#output-files)
+  - [Captured Data](#captured-data)
+  - [Timeout Protection](#timeout-protection)
+  - [Crawl Modes](#crawl-modes)
+  - [Requirements](#requirements)
+- [nodemap-html.py - Interactive Map Generator](#nodemap-htmlpy---interactive-map-generator)
+  - [Features](#features)
+  - [Usage](#usage-1)
+  - [Output](#output)
+
 ## nodemap.py - Network Topology Mapper
 
 Advanced packet radio network discovery tool that crawls through BPQ nodes via RF connections to map topology, applications, and connectivity. Creates comprehensive network maps by analyzing routing tables, MHEARD lists, and node information.
@@ -207,3 +227,78 @@ Adaptive timeouts for 1200 baud simplex RF:
 - Python 3.5.3+
 - Access to BPQ telnet port (default: 8010)
 - `bpq32.cfg` readable by script
+
+---
+
+## nodemap-html.py - Interactive Map Generator
+
+Converts nodemap.json data into an interactive HTML map with Leaflet.js visualization. Shows node locations, RF connections, and network topology on an OpenStreetMap base layer.
+
+### Features
+
+- **Interactive Map**: Pan, zoom, click nodes for details
+- **RF Connection Lines**: Visual representation of network links
+- **Node Markers**: Color-coded by type (BPQ, FBB, JNOS)
+- **Info Popups**: Callsign, location, ports, frequencies, applications
+- **Boundary Support**: Optional state/region boundaries overlay
+- **Standalone HTML**: Single-file output, no server required
+- **Mobile Friendly**: Responsive design works on phones/tablets
+
+### Usage
+
+```bash
+./nodemap-html.py [OPTIONS]
+```
+
+**Options:**
+- `--input FILE` or `-i FILE` - Input nodemap.json file (default: nodemap.json)
+- `--output FILE` or `-o FILE` - Output HTML file (default: nodemap.html)
+- `--boundaries FILE` or `-b FILE` - GeoJSON boundaries file (optional)
+- `--title TEXT` - Map title (default: "Packet Radio Network Map")
+
+**Examples:**
+```bash
+# Basic map generation
+./nodemap-html.py
+
+# Custom input/output files
+./nodemap-html.py -i network_data.json -o map.html
+
+# With state boundaries
+./nodemap-html.py -b map_boundaries.py
+
+# Custom title
+./nodemap-html.py --title "Maine Packet Radio Network"
+```
+
+### Output
+
+**nodemap.html** - Interactive map containing:
+- OpenStreetMap base layer
+- Node markers with callsigns
+- RF connection lines between nodes
+- Info popups with node details (click markers)
+- Legend showing node types
+- Optional state/region boundaries
+
+**Viewing:**
+- Open nodemap.html in any web browser
+- No web server required (uses CDN for Leaflet.js)
+- Works offline after initial load
+- Share file via email, BBS, or web hosting
+
+**Node Colors:**
+- 🔵 Blue: BPQ nodes
+- 🟢 Green: FBB nodes  
+- 🟡 Yellow: JNOS nodes
+- ⚫ Gray: Unknown type
+
+**Connection Lines:**
+- Solid lines: Active RF connections
+- Thickness indicates connection quality (if available)
+
+### Requirements
+
+- Python 3.5.3+
+- nodemap.json from nodemap.py
+- Modern web browser for viewing output
