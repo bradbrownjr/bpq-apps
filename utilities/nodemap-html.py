@@ -783,6 +783,10 @@ def main():
     
     print("")
     print("Map generation complete!")
+    print("")
+    print("To deploy to BPQ Web Server:")
+    print("  cp nodemap.html nodemap.svg ../linbpq/HTML/")
+    print("  (or manually copy files to your linbpq HTML directory)")
 
 
 if __name__ == '__main__':
