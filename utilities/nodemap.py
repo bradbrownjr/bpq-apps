@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.80
+Version: 1.3.81
 """
 
-__version__ = '1.3.80'
+__version__ = '1.3.81'
 
 import sys
 import telnetlib
@@ -1134,7 +1134,8 @@ class NodeCrawler:
             # Also check neighbors that were never visited
             all_neighbors = node_data.get('neighbors', [])
             for neighbor in all_neighbors:
-                if neighbor not in self.visited and neighbor not in [u for u, _ in unexplored]:
+                # Allow multiple paths to same node - try alternate routes if first fails
+                if neighbor not in self.visited:
                     # Calculate path to this neighbor through the visited node
                     # We need to reconstruct the path to reach the parent node first using BFS
                     hop_distance = node_data.get('hop_distance', 0)
@@ -1154,16 +1155,14 @@ class NodeCrawler:
                     
                     unexplored.append((neighbor, path))
         
-        # Remove duplicates (same callsign might appear as neighbor of multiple nodes)
-        seen = set()
-        unique_unexplored = []
-        for call, path in unexplored:
-            if call not in seen:
-                seen.add(call)
-                unique_unexplored.append((call, path))
+        # Sort by multiple criteria to try best paths first:
+        # 1. Hop count (fewer hops = more reliable)
+        # 2. Node callsign (for deterministic ordering)
+        # This allows multiple attempts to same node via different paths
+        unexplored.sort(key=lambda x: (len(x[1]), x[0]))
         
-        print("Found {} unexplored neighbors".format(len(unique_unexplored)))
-        return unique_unexplored
+        print("Found {} path(s) to {} unique neighbor(s)".format(len(unexplored), len(set(call for call, _ in unexplored))))
+        return unexplored
     
     def _parse_ports(self, output):
         """
@@ -1491,7 +1490,8 @@ class NodeCrawler:
         
         colored_print("Crawling {}{}".format(callsign, path_desc), Colors.CYAN)
         
-        self.visited.add(callsign)
+        # Don't add to visited yet - only after successful connection
+        # This allows retrying via alternate paths if this path fails
         
         # Calculate command timeout based on path length
         # At 1200 baud simplex: ~10s per hop for command/response cycle
@@ -1892,6 +1892,9 @@ class NodeCrawler:
             else:
                 notify_msg = "{}: {} neighbors".format(callsign, len(all_neighbors))
             self._send_notification(notify_msg)
+            
+            # Mark as successfully visited after crawl completes
+            self.visited.add(callsign)
             
         finally:
             # Disconnect

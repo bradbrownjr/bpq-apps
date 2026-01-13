@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.81] - 2026-01-13
+### Added
+- Multiple path attempts for unreachable nodes
+- Queues all paths to each unexplored neighbor (not just first path found)
+- Automatically retries via alternate parent nodes if connection fails
+- Paths prioritized by hop count (fewer hops tried first)
+
+### Changed
+- Node only marked as "visited" after successful crawl completion
+- Failed connection no longer prevents retry via different path
+- Better utilization of redundant network topology
+
+### Fixed
+- Nodes reachable from multiple parents now get multiple connection attempts
+- Example: AB1KI unreachable via N1QFY will retry via KS1R or K1NYY
+
 ## [nodemap 1.3.80] - 2026-01-13
 ### Fixed
 - Unexplored neighbors now use correct multi-hop paths to parent nodes
