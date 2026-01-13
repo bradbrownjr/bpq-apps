@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.71'
+__version__ = '1.3.72'
 
 import sys
 import telnetlib
@@ -1935,6 +1935,14 @@ class NodeCrawler:
                     if starting_callsign != self.callsign:
                         # Not the local node - need to find how to reach it
                         target_base = starting_callsign.split('-')[0] if '-' in starting_callsign else starting_callsign
+                        
+                        # If user provided base callsign, look up the node SSID
+                        if '-' not in starting_callsign and target_base in self.netrom_ssid_map:
+                            resolved_ssid = self.netrom_ssid_map.get(target_base)
+                            if resolved_ssid and '-' in resolved_ssid:
+                                starting_callsign = resolved_ssid
+                                if self.verbose:
+                                    print("Resolved {} to node SSID: {}".format(target_base, resolved_ssid))
                         
                         # Check if target is actually a node (has SSID) vs user station
                         target_ssid = self.netrom_ssid_map.get(target_base)

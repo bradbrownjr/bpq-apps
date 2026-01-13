@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.72] - 2026-01-13
+### Fixed
+- Auto-resolve base callsign to node SSID when available in network data
+- User can now specify "wd1f" and script will find "WD1F-15" if known
+- Matches behavior of unexplored neighbor list (shows base callsigns)
+
 ## [nodemap 1.3.71] - 2026-01-13
 ### Fixed
 - Detect user stations (callsigns without SSID) and abort crawl with helpful error
