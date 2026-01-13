@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.83
+Version: 1.3.84
 """
 
-__version__ = '1.3.83'
+__version__ = '1.3.84'
 
 import sys
 import telnetlib
@@ -2649,6 +2649,7 @@ def main():
     resume_file = None  # File to resume from (None = auto-detect)
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     resume = '--resume' in sys.argv or '-r' in sys.argv
+    generate_maps = False  # Will be set by user prompt
     
     # Parse positional and optional arguments
     i = 1
@@ -2831,6 +2832,19 @@ def main():
     }
     print("Crawl Mode: {}".format(mode_descriptions.get(crawl_mode, crawl_mode)))
     
+    # Check if nodemap-html.py exists and prompt to generate maps after crawl
+    html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
+    if os.path.isfile(html_script):
+        print("")
+        try:
+            response = input("Generate HTML/SVG maps after crawl? (Y/n): ").strip().lower()
+            if response == '' or response == 'y' or response == 'yes':
+                generate_maps = True
+                print("Maps will be generated after crawl completes")
+        except (KeyboardInterrupt, EOFError):
+            print("")
+            print("Skipping map generation")
+    
     # Crawl network
     try:
         crawler.crawl_network(start_node=start_node)
@@ -2855,6 +2869,20 @@ def main():
         print("\nNetwork map complete!")
         print("Nodes discovered: {}".format(len(crawler.nodes)))
         print("Connections found: {}".format(len(crawler.connections)))
+        
+        # Generate HTML/SVG maps if user opted in
+        if generate_maps:
+            print("\nGenerating maps...")
+            html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
+            try:
+                import subprocess
+                result = subprocess.call(['python3', html_script, '--all'])
+                if result == 0:
+                    print("Maps generated successfully!")
+                else:
+                    print("Warning: Map generation exited with code {}".format(result))
+            except Exception as e:
+                print("Error generating maps: {}".format(e))
         
         # Notify successful completion
         crawler._send_notification("Successfully crawled {} nodes!".format(len(crawler.nodes)))

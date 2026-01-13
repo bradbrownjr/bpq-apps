@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.84] - 2026-01-13
+### Added
+- Prompt at script start to generate HTML/SVG maps after crawl completes
+- Auto-detects nodemap-html.py in same directory
+- Runs map generation automatically if user opts in (default: yes)
+- Allows unattended operation from prompt to completion
+
 ## [nodemap-html 1.1.3] - 2026-01-13
 ### Changed
 - NetRom access entries now displayed in separate "NetRom Access:" section
