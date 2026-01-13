@@ -1866,10 +1866,11 @@ class NodeCrawler:
         Args:
             start_node: Callsign to start crawl from (default: local node)
         """
-        # Resume mode: load unexplored nodes from existing data
-        if self.resume:
+        # Resume mode OR new-only mode: load unexplored nodes from existing data
+        if self.resume or self.crawl_mode == 'new-only':
             resume_filename = self.resume_file if self.resume_file else 'nodemap.json'
-            print("Resume mode: Loading unexplored nodes from {}...".format(resume_filename))
+            mode_name = "Resume" if self.resume else "New-only"
+            print("{} mode: Loading unexplored nodes from {}...".format(mode_name, resume_filename))
             unexplored = self._load_unexplored_nodes(resume_filename)
             
             if not unexplored:
@@ -1886,9 +1887,10 @@ class NodeCrawler:
                 self.queue.append((callsign, path))
             
             colored_print("Queued {} unexplored nodes for crawling".format(len(unexplored)), Colors.GREEN)
-            self._send_notification("Resume crawl: {} unexplored nodes".format(len(unexplored)))
+            mode_name = "Resume" if self.resume else "New-only"
+            self._send_notification("{} crawl: {} unexplored nodes".format(mode_name, len(unexplored)))
             
-            # In resume mode, we don't have a single starting callsign
+            # In resume/new-only mode, we don't have a single starting callsign
             starting_callsign = None
             
             # Skip the normal start node logic
@@ -2418,7 +2420,7 @@ def main():
         print("  --mode MODE      Crawl mode: update (default), reaudit, new-only")
         print("                   update: skip already-visited nodes (fastest)")
         print("                   reaudit: re-crawl all nodes to verify/update data")
-        print("                   new-only: only crawl nodes not in nodemap.json")
+        print("                   new-only: auto-load nodemap.json, queue unexplored neighbors")
         print("  --display-nodes, -d  Display nodes table from nodemap.json and exit")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
@@ -2731,7 +2733,7 @@ def main():
     mode_descriptions = {
         'update': 'Update (skip visited nodes)',
         'reaudit': 'Reaudit (re-crawl all nodes)',
-        'new-only': 'New-Only (skip existing nodes in nodemap.json)'
+        'new-only': 'New-Only (queue unexplored neighbors from nodemap.json)'
     }
     print("Crawl Mode: {}".format(mode_descriptions.get(crawl_mode, crawl_mode)))
     
