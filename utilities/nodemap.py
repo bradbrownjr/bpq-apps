@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.67'
+__version__ = '1.3.68'
 
 import sys
 import telnetlib
@@ -610,8 +610,10 @@ class NodeCrawler:
                         time.sleep(0.5)
                         
                     except socket.timeout:
-                        # Socket read timed out, but we're still within conn_timeout
-                        # Just continue waiting for more data
+                        # Socket read timed out - check if total timeout exceeded
+                        if time.time() - connection_start_time >= conn_timeout:
+                            break
+                        # Still within total timeout, continue waiting
                         pass
                     except EOFError:
                         print("  Connection lost to {}".format(callsign))
@@ -667,6 +669,9 @@ class NodeCrawler:
                                 
                                 time.sleep(0.5)
                             except socket.timeout:
+                                # Check if total timeout exceeded
+                                if time.time() - connection_start_time >= conn_timeout:
+                                    break
                                 pass
                             except EOFError:
                                 break

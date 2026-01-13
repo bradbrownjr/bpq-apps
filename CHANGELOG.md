@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.68] - 2026-01-13
+### Fixed
+- Actually enforce timeout by checking elapsed time in socket.timeout exception handler
+- Previous fix calculated timeout correctly but didn't break out of loop when socket kept timing out
+- Now explicitly checks if total timeout exceeded when read_some() times out
+
 ## [nodemap 1.3.67] - 2026-01-13
 ### Fixed
 - Skip NRR route verification for direct neighbors with known port numbers
