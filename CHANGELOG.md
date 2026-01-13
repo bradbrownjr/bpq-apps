@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.70] - 2026-01-13
+### Fixed
+- Use node SSID from own_aliases instead of netrom_ssids when loading existing data
+- Prevents connecting to service SSIDs (e.g., KC1JMH-8) instead of node SSID (KC1JMH-15)
+- Node's own_aliases contains authoritative SSID, netrom_ssids may have stale observations
+
 ## [nodemap 1.3.69] - 2026-01-13
 ### Fixed
 - Path-finding now uses BFS to build multi-hop routes through network topology

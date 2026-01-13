@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.69'
+__version__ = '1.3.70'
 
 import sys
 import telnetlib
@@ -1886,11 +1886,28 @@ class NodeCrawler:
                     for node_call in node_calls_sorted:
                         node_info = nodes_data[node_call]
                         
+                        # Get node's own SSID from own_aliases (most authoritative)
+                        # Look for the node alias (not service aliases like BBS, RMS, etc)
+                        own_aliases = node_info.get('own_aliases', {})
+                        node_ssid = None
+                        for alias, full_call in own_aliases.items():
+                            # Node aliases typically end with the callsign or a variation
+                            # Service aliases end with BBS, RMS, CHAT, etc
+                            if not any(full_call.endswith(svc) for svc in ['-2', '-4', '-5', '-10']):
+                                # This looks like the node SSID (usually -15)
+                                base = full_call.split('-')[0]
+                                if base == node_call and '-' in full_call:
+                                    node_ssid = full_call
+                                    break
+                        
+                        # Store node's own SSID first (authoritative)
+                        if node_ssid:
+                            self.netrom_ssid_map[node_call] = node_ssid
+                        
                         # Restore netrom_ssids (for connection commands)
                         for base_call, full_call in node_info.get('netrom_ssids', {}).items():
-                            # For the node itself, always use its own SSID (authoritative)
-                            # For others, only if not already set
-                            if base_call == node_call or base_call not in self.netrom_ssid_map:
+                            # Only set if not already set (node's own SSID takes precedence)
+                            if base_call not in self.netrom_ssid_map:
                                 self.netrom_ssid_map[base_call] = full_call
                         
                         # Restore route_ports (port numbers for neighbors)
