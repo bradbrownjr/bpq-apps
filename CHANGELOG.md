@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.78] - 2026-01-13
+### Added
+- Unknown argument detection with helpful error message
+- Now exits with error and suggests `--help` for invalid arguments
+- Prevents silent failures from typos like `--mode: new-only`
+
 ## [nodemap 1.3.77] - 2026-01-13
 ### Fixed
 - `new-only` mode now correctly skips nodes already in self.nodes (from nodemap.json)

@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.77
+Version: 1.3.78
 """
 
-__version__ = '1.3.77'
+__version__ = '1.3.78'
 
 import sys
 import telnetlib
@@ -2603,6 +2603,7 @@ def main():
     
     # Parse options
     i = 1
+    unknown_args = []
     while i < len(sys.argv):
         arg = sys.argv[i]
         if arg == '--user' and i + 1 < len(sys.argv):
@@ -2624,6 +2625,7 @@ def main():
                 i += 2
             else:
                 print("Error: Invalid mode '{}'. Must be 'update', 'reaudit', or 'new-only'.".format(sys.argv[i + 1]))
+                print("Run '{} --help' for usage information.".format(sys.argv[0]))
                 sys.exit(1)
         elif (arg == '--resume' or arg == '-r'):
             resume = True
@@ -2659,8 +2661,21 @@ def main():
                 else:
                     print("Warning: Skipping '{}' - cannot merge output file into itself".format(pattern))
             i += 2
+        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:
+            # Known flags without arguments
+            i += 1
+        elif arg.startswith('-') and not arg.isdigit():
+            # Unknown option
+            unknown_args.append(arg)
+            i += 1
         else:
             i += 1
+    
+    # Check for unknown arguments
+    if unknown_args:
+        print("Error: Unknown argument(s): {}".format(', '.join(unknown_args)))
+        print("Run '{} --help' for usage information.".format(sys.argv[0]))
+        sys.exit(1)
     
     # Merge mode is default; use --overwrite to disable
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
