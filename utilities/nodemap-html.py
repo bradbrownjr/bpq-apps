@@ -14,7 +14,7 @@ For BPQ Web Server:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.1
+Version: 1.1.2
 """
 
 __version__ = '1.1.0'
@@ -670,11 +670,12 @@ def show_help():
     print("Usage: {} [OPTIONS]".format(sys.argv[0]))
     print("")
     print("Options:")
-    print("  --html FILE     Generate interactive HTML map (default: nodemap.html)")
-    print("  --svg FILE      Generate static SVG map (default: nodemap.svg)")
-    print("  --input FILE    Input JSON file (default: nodemap.json)")
-    print("  --all           Generate both HTML and SVG")
-    print("  --help, -h, /?  Show this help message")
+    print("  --html FILE       Generate interactive HTML map (default: nodemap.html)")
+    print("  --svg FILE        Generate static SVG map (default: nodemap.svg)")
+    print("  --input FILE      Input JSON file (default: nodemap.json)")
+    print("  --output-dir DIR  Save files to directory (prompts for ../linbpq/HTML)")
+    print("  --all             Generate both HTML and SVG")
+    print("  --help, -h, /?    Show this help message")
     print("")
     print("Examples:")
     print("  {} --all                    # Generate both formats".format(sys.argv[0]))
@@ -720,6 +721,7 @@ def main():
     input_file = 'nodemap.json'
     html_file = None
     svg_file = None
+    output_dir = None
     
     i = 0
     while i < len(args):
@@ -727,6 +729,9 @@ def main():
         
         if arg == '--input' and i + 1 < len(args):
             input_file = args[i + 1]
+            i += 2
+        elif arg == '--output-dir' and i + 1 < len(args):
+            output_dir = args[i + 1]
             i += 2
         elif arg == '--html':
             if i + 1 < len(args) and not args[i + 1].startswith('-'):
@@ -753,6 +758,28 @@ def main():
     if html_file is None and svg_file is None:
         html_file = 'nodemap.html'
         svg_file = 'nodemap.svg'
+    
+    # Check for linbpq HTML directory and prompt user
+    if output_dir is None:
+        linbpq_html = os.path.join('..', 'linbpq', 'HTML')
+        if os.path.isdir(linbpq_html):
+            print("")
+            print("Found linbpq HTML directory: {}".format(os.path.abspath(linbpq_html)))
+            try:
+                response = input("Save files there? (Y/n): ").strip().lower()
+                if response == '' or response == 'y' or response == 'yes':
+                    output_dir = linbpq_html
+                    print("Files will be saved to {}".format(os.path.abspath(output_dir)))
+            except (KeyboardInterrupt, EOFError):
+                print("")
+                print("Using current directory")
+    
+    # Prepend output directory to filenames if specified
+    if output_dir:
+        if html_file:
+            html_file = os.path.join(output_dir, os.path.basename(html_file))
+        if svg_file:
+            svg_file = os.path.join(output_dir, os.path.basename(svg_file))
     
     # Load data
     nodes = load_nodemap(input_file)
@@ -783,10 +810,13 @@ def main():
     
     print("")
     print("Map generation complete!")
-    print("")
-    print("To deploy to BPQ Web Server:")
-    print("  cp nodemap.html nodemap.svg ../linbpq/HTML/")
-    print("  (or manually copy files to your linbpq HTML directory)")
+    
+    # Only show deployment reminder if not already saved to linbpq
+    if output_dir is None or 'linbpq' not in output_dir.lower():
+        print("")
+        print("To deploy to BPQ Web Server:")
+        print("  cp nodemap.html nodemap.svg ../linbpq/HTML/")
+        print("  (or manually copy files to your linbpq HTML directory)")
 
 
 if __name__ == '__main__':

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.1.2] - 2026-01-13
+### Added
+- Auto-detects ../linbpq/HTML directory and prompts to save files there
+- `--output-dir DIR` option to specify custom output directory
+- Skips deployment reminder if files already saved to linbpq directory
+
+### Changed
+- Default behavior now offers to save directly to BPQ web server location
+
 ## [nodemap-html 1.1.1] - 2026-01-13
 ### Fixed
 - SSIDs field now shows only node's own service SSIDs (from own_aliases)
