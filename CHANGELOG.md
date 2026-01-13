@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.82] - 2026-01-13
+### Fixed
+- Connection timeout enforcement now properly exits wait loops
+- Added elapsed time check at start of each I/O loop iteration
+- Prevents 5+ minute hangs when connections fail to respond
+- Timeouts now respect configured values (60-120s) instead of hanging indefinitely
+- Affects both direct port connections and NetRom fallback attempts
+
 ## [nodemap 1.3.81] - 2026-01-13
 ### Added
 - Multiple path attempts for unreachable nodes

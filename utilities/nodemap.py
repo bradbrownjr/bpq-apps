@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.81
+Version: 1.3.82
 """
 
-__version__ = '1.3.81'
+__version__ = '1.3.82'
 
 import sys
 import telnetlib
@@ -585,6 +585,11 @@ class NodeCrawler:
                 tn.sock.settimeout(2.0)
                 
                 while time.time() - connection_start_time < conn_timeout:
+                    # Check timeout FIRST before any I/O operations
+                    elapsed = time.time() - connection_start_time
+                    if elapsed >= conn_timeout:
+                        break
+                    
                     try:
                         chunk = tn.read_some()
                         response += chunk.decode('ascii', errors='ignore')
@@ -661,6 +666,11 @@ class NodeCrawler:
                             print("    Waiting for NetRom connection (timeout: {}s remaining)...".format(int(remaining_timeout)))
                         
                         while time.time() - connection_start_time < conn_timeout:
+                            # Check timeout FIRST before any I/O operations
+                            elapsed = time.time() - connection_start_time
+                            if elapsed >= conn_timeout:
+                                break
+                            
                             try:
                                 chunk = tn.read_some()
                                 response += chunk.decode('ascii', errors='ignore')
