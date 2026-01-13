@@ -17,7 +17,7 @@ Date: January 2026
 Version: 1.1.2
 """
 
-__version__ = '1.1.0'
+__version__ = '1.1.2'
 
 import sys
 import json
