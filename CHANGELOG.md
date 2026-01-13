@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.1.1] - 2026-01-13
+### Fixed
+- SSIDs field now shows only node's own service SSIDs (from own_aliases)
+- Previously displayed neighbors' SSIDs from netrom_ssids
+- Frequency displays now color-coded by band (blue=2m, orange=70cm, purple=1.25m)
+- Colors match connection line colors in legend
+
 ## [nodemap 1.3.83] - 2026-01-13
 ### Added
 - `--exclude` or `-x` flag to skip specific nodes during crawl

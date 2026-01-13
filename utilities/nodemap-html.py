@@ -14,7 +14,7 @@ For BPQ Web Server:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.0
+Version: 1.1.1
 """
 
 __version__ = '1.1.0'
@@ -196,23 +196,25 @@ def generate_html_map(nodes, output_file='nodemap.html'):
         node_type = node_data.get('type', 'Unknown')
         applications = node_data.get('applications', [])
         
-        # Get frequencies from ports
+        # Get frequencies from ports (with band color)
         frequencies = []
         for port in node_data.get('ports', []):
             if port.get('is_rf') and port.get('frequency'):
                 freq = port['frequency']
                 band = get_band_name(freq)
-                frequencies.append("{} MHz ({})".format(freq, band))
+                color = get_band_color(freq)
+                frequencies.append({
+                    'text': "{} MHz ({})".format(freq, band),
+                    'color': color
+                })
         
-        # Get SSIDs
+        # Get SSIDs (only node's own service SSIDs from own_aliases)
         ssids = []
         for alias in node_data.get('own_aliases', []):
             if ':' in alias:
-                ssids.append(alias.split(':')[1])
-        netrom_ssids = node_data.get('netrom_ssids', {})
-        for ssid in netrom_ssids.values():
-            if ssid and ssid not in ssids:
-                ssids.append(ssid)
+                ssid = alias.split(':')[1]
+                if ssid not in ssids:
+                    ssids.append(ssid)
         
         map_nodes.append({
             'callsign': callsign,
@@ -360,8 +362,12 @@ def generate_html_map(nodes, output_file='nodemap.html'):
             }
             
             if (node.frequencies && node.frequencies.length > 0) {
-                popup += '<p><span class="label">Frequencies:</span><br>' + 
-                         '<span class="freqs">' + node.frequencies.join('<br>') + '</span></p>';
+                popup += '<p><span class="label">Frequencies:</span><br>';
+                node.frequencies.forEach(function(freq) {
+                    popup += '<span class="freqs" style="color:' + freq.color + ';">' + 
+                             freq.text + '</span><br>';
+                });
+                popup += '</p>';
             }
             
             if (node.applications && node.applications.length > 0) {
