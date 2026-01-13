@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.4
+Version: 1.1.5
 """
 
-__version__ = '1.1.4'
+__version__ = '1.1.5'
 
 import sys
 import json
@@ -345,7 +345,13 @@ def generate_html_map(nodes, output_file='nodemap.html'):
         }).addTo(map);
         
         // Draw connections first (so they're under markers)
+        var drawnConnections = new Set();
         connections.forEach(function(conn) {
+            // Deduplicate bidirectional connections
+            var key = [conn.from, conn.to].sort().join('-');
+            if (drawnConnections.has(key)) return;
+            drawnConnections.add(key);
+            
             var line = L.polyline([
                 [conn.from_lat, conn.from_lon],
                 [conn.to_lat, conn.to_lon]
@@ -510,6 +516,13 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
                 neighbor_coords = grid_to_latlon(neighbor_grid)
                 
                 if neighbor_coords:
+                    # Get frequency for this specific connection (from port data)
+                    conn_freq = None
+                    for port in node_data.get('ports', []):
+                        if port.get('is_rf') and port.get('frequency'):
+                            conn_freq = port['frequency']
+                            break
+                    
                     connections.append({
                         'from': callsign,
                         'to': neighbor,
@@ -517,7 +530,8 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
                         'from_lon': lon,
                         'to_lat': neighbor_coords[0],
                         'to_lon': neighbor_coords[1],
-                        'color': get_band_color(primary_freq)
+                        'color': get_band_color(conn_freq),
+                        'frequency': conn_freq
                     })
     
     if not map_nodes:
@@ -633,9 +647,10 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
         
         x1, y1 = project(conn['from_lat'], conn['from_lon'])
         x2, y2 = project(conn['to_lat'], conn['to_lon'])
+        freq_label = "{} MHz".format(conn['frequency']) if conn.get('frequency') else "Unknown"
         svg_lines.append('    <line x1="{:.1f}" y1="{:.1f}" x2="{:.1f}" y2="{:.1f}" stroke="{}" stroke-width="2" class="connection">'.format(
             x1, y1, x2, y2, conn['color']))
-        svg_lines.append('      <title>{} - {}</title>'.format(conn['from'], conn['to']))
+        svg_lines.append('      <title>{} ↔ {} ({})</title>'.format(conn['from'], conn['to'], freq_label))
         svg_lines.append('    </line>')
     svg_lines.append('  </g>')
     
@@ -645,11 +660,15 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
         x, y = project(node['lat'], node['lon'])
         color = get_band_color(node['frequency'])
         
-        # Build tooltip
-        tooltip = "{} ({})".format(node['callsign'], node['grid'])
+        # Build tooltip with same structure as HTML popups
+        tooltip_lines = []
+        tooltip_lines.append("{} ({})".format(node['callsign'], node['grid']))
+        if node['type']:
+            tooltip_lines.append("Type: {}".format(node['type']))
         if node['frequencies']:
-            tooltip += "\\n" + ", ".join(node['frequencies'])
-        tooltip += "\\nNeighbors: {}".format(len(node['neighbors']))
+            tooltip_lines.append("Frequencies: {}".format(", ".join(node['frequencies'])))
+        tooltip_lines.append("Neighbors: {}".format(len(node['neighbors'])))
+        tooltip = "&#10;".join(tooltip_lines)  # &#10; is XML newline
         
         svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})">'.format(x, y))
         svg_lines.append('      <circle r="6" fill="{}" stroke="#333" stroke-width="1.5">'.format(color))

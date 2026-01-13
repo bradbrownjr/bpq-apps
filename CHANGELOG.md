@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.1.5] - 2026-01-13
+### Fixed
+- HTML map now deduplicates bidirectional connections (was showing 14, now shows 7)
+- SVG connection colors now match per-connection frequencies (not just first port)
+- SVG tooltips cleaned up to match HTML format (Type, Frequencies, Neighbors)
+- SVG connection tooltips now show frequency like HTML version
+- Both HTML and SVG now display identical connection counts and colors
+
 ## [nodemap 1.3.86] - 2026-01-13
 ### Fixed
 - Resume mode now filters out user station SSIDs (e.g., KC1JMH-7) from unexplored neighbors
