@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.76
+Version: 1.3.77
 """
 
-__version__ = '1.3.76'
+__version__ = '1.3.77'
 
 import sys
 import telnetlib
@@ -1436,6 +1436,12 @@ class NodeCrawler:
             else:
                 # Update or new-only mode: skip already visited
                 return
+        
+        # In new-only mode, also skip nodes already in self.nodes (from nodemap.json)
+        if self.crawl_mode == 'new-only' and callsign in self.nodes:
+            if self.verbose:
+                print("  Skipping {} (already in nodemap.json, new-only mode)".format(callsign))
+            return
         
         # Build readable path description
         if not path:

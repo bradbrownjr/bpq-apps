@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.77] - 2026-01-13
+### Fixed
+- `new-only` mode now correctly skips nodes already in self.nodes (from nodemap.json)
+- Previously only checked self.visited (current session), causing re-crawl of known nodes
+
 ## [nodemap 1.3.76] - 2026-01-13
 ### Added
 - Crawl mode selection: `--mode update|reaudit|new-only`
