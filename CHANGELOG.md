@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.60] - 2026-01-22
+### Fixed
+- SSID priority: Node's own SSID now takes precedence over what neighbors heard on MHEARD
+- Process nodes sorted by hop_distance to load authoritative data first
+- Prevents using operator SSIDs (e.g., KC1JMH-8) instead of node SSIDs (KC1JMH-15)
+
 ## [nodemap 1.3.59] - 2026-01-22
 ### Added
 - On-demand NetRom alias discovery when no existing data available

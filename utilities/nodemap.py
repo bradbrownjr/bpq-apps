@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.59'
+__version__ = '1.3.60'
 
 import sys
 import telnetlib
@@ -362,13 +362,89 @@ class NodeCrawler:
                                 print("    Found NetRom alias: {} -> {}".format(lookup_call, alias))
                                 print("    Issuing command: C {} (discovered NetRom alias, hop {}/{})".format(alias, i+1, len(path)))
                         else:
-                            # Still no alias found - this will likely fail
-                            full_callsign = self.netrom_ssid_map.get(lookup_call, callsign)
-                            cmd = "C {}\r".format(full_callsign).encode('ascii')
-                            connect_target = "{} (no route found)".format(full_callsign)
+                            # Still no alias found - try connecting to known nodes to discover more
                             if self.verbose:
-                                print("    No NetRom alias found for {} - connection likely to fail".format(lookup_call))
-                                print("    Issuing command: C {} (no known route, hop {}/{})".format(full_callsign, i+1, len(path)))
+                                print("    {} not in local NetRom table - trying known nodes...".format(lookup_call))
+                            
+                            # Try connecting to known nodes to expand NetRom discovery
+                            found_via_neighbor = False
+                            for alias, full_call in all_aliases.items():
+                                neighbor_base = full_call.split('-')[0]
+                                if neighbor_base != self.callsign:  # Skip self
+                                    try:
+                                        if self.verbose:
+                                            print("    Trying {} ({}) for expanded NetRom discovery...".format(alias, full_call))
+                                        
+                                        # Connect to neighbor
+                                        neighbor_cmd = "C {}\r".format(alias).encode('ascii')
+                                        tn.write(neighbor_cmd)
+                                        time.sleep(1)
+                                        
+                                        # Look for CONNECTED response
+                                        response = ""
+                                        start_time = time.time()
+                                        while time.time() - start_time < 10:  # Short timeout
+                                            try:
+                                                chunk = tn.read_some()
+                                                response += chunk.decode('ascii', errors='ignore')
+                                                if 'CONNECTED' in response.upper():
+                                                    if self.verbose:
+                                                        print("    Connected to {} - getting NODES...".format(alias))
+                                                    
+                                                    # Wait for prompt and get NODES
+                                                    tn.read_until(b'} ', timeout=5)
+                                                    neighbor_nodes = self._send_command(tn, 'NODES', timeout=10, expect_content=':')
+                                                    neighbor_aliases, neighbor_ssids, _ = self._parse_nodes_aliases(neighbor_nodes)
+                                                    
+                                                    # Check if our target is in this node's table
+                                                    for n_alias, n_full_call in neighbor_aliases.items():
+                                                        n_base = n_full_call.split('-')[0]
+                                                        if n_base == lookup_call:
+                                                            if self.verbose:
+                                                                print("    Found {} via {}: {} -> {}".format(lookup_call, alias, n_alias, n_full_call))
+                                                            # Disconnect from neighbor and use its alias
+                                                            tn.write(b'BYE\r')
+                                                            time.sleep(0.5)
+                                                            tn.read_very_eager()  # Clear response
+                                                            
+                                                            # Now connect using the discovered alias
+                                                            cmd = "C {}\r".format(n_alias).encode('ascii')
+                                                            connect_target = "{} (via {})".format(n_alias, alias)
+                                                            found_via_neighbor = True
+                                                            if self.verbose:
+                                                                print("    Issuing command: C {} (found via {}, hop {}/{})".format(n_alias, alias, i+1, len(path)))
+                                                            break
+                                                    
+                                                    if found_via_neighbor:
+                                                        break
+                                                    else:
+                                                        # Target not found, disconnect
+                                                        tn.write(b'BYE\r')
+                                                        time.sleep(0.5)
+                                                        tn.read_very_eager()
+                                                        break
+                                                
+                                            except socket.timeout:
+                                                pass
+                                            except EOFError:
+                                                break
+                                        
+                                        if found_via_neighbor:
+                                            break
+                                            
+                                    except Exception as e:
+                                        if self.verbose:
+                                            print("    Failed to query {}: {}".format(alias, e))
+                                        continue
+                            
+                            if not found_via_neighbor:
+                                # Still no route - final fallback
+                                full_callsign = self.netrom_ssid_map.get(lookup_call, callsign)
+                                cmd = "C {}\r".format(full_callsign).encode('ascii')
+                                connect_target = "{} (no route found - will fail)".format(full_callsign)
+                                if self.verbose:
+                                    print("    No route found after expanded search")
+                                    print("    Issuing command: C {} (final fallback - will likely fail, hop {}/{})".format(full_callsign, i+1, len(path)))
                     
                     except Exception as e:
                         if self.verbose:
@@ -1659,10 +1735,18 @@ class NodeCrawler:
                             ', '.join(sorted(nodes_data.keys()))))
                     
                     # Restore SSID mappings and route ports from all nodes
-                    for node_call, node_info in nodes_data.items():
+                    # Process in two passes: first nodes themselves (authoritative), then neighbors' observations
+                    node_calls_sorted = sorted(nodes_data.keys(), 
+                                              key=lambda k: (nodes_data[k].get('hop_distance', 999), k))
+                    
+                    for node_call in node_calls_sorted:
+                        node_info = nodes_data[node_call]
+                        
                         # Restore netrom_ssids (for connection commands)
                         for base_call, full_call in node_info.get('netrom_ssids', {}).items():
-                            if base_call not in self.netrom_ssid_map:
+                            # For the node itself, always use its own SSID (authoritative)
+                            # For others, only if not already set
+                            if base_call == node_call or base_call not in self.netrom_ssid_map:
                                 self.netrom_ssid_map[base_call] = full_call
                         
                         # Restore route_ports (port numbers for neighbors)
