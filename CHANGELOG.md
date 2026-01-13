@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.66] - 2026-01-13
+### Fixed
+- Connection timeout now properly enforced - was using 2s socket timeout in loop but not checking total elapsed time correctly
+- NetRom fallback path was resetting timer instead of using original start time, allowing connections to run indefinitely
+- Timeout now calculated based on actual hop count: base 20s + 20s per remaining hop (max 120s)
+- Verbose output shows expected timeout with hop count: "timeout: 40s for 2 hops"
+
+### Added
+- NetRom route verification using NRR command before attempting connections
+- Prevents long waits for non-existent routes - warns if NRR reports "Not found"
+- Shows actual route path and hop count from NRR response when available
+- Helper method `_calculate_connection_timeout()` to standardize timeout calculations
+- Helper method `_verify_netrom_route()` to check routes using NRR command
+
 ## [nodemap 1.3.65] - 2026-01-12
 ### Added
 - Now extracts alias and gridsquare to top-level fields in node data

@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.65'
+__version__ = '1.3.66'
 
 import sys
 import telnetlib
@@ -242,6 +242,59 @@ class NodeCrawler:
             if self.verbose:
                 print("    Notification failed: {}".format(e))
     
+    def _calculate_connection_timeout(self, hop_count):
+        """
+        Calculate connection timeout based on number of hops.
+        At 1200 baud RF: ~20s per hop for connection establishment.
+        
+        Args:
+            hop_count: Number of hops in the path
+            
+        Returns:
+            Timeout in seconds (base 20s + 20s per hop, max 120s)
+        """
+        return min(20 + (hop_count * 20), 120)
+    
+    def _verify_netrom_route(self, tn, target):
+        """
+        Verify NetRom route to target using NRR command.
+        
+        Args:
+            tn: Active telnet connection
+            target: Target callsign or alias
+            
+        Returns:
+            Tuple of (route_exists, hop_count, route_path)
+            route_path is list of callsigns in route, or None if not found
+        """
+        try:
+            # Try NRR command (NetRom Route Request)
+            # Response format: "NRR Response: CALL1 CALL2* CALL3" where * marks destination
+            cmd = "NRR {}".format(target)
+            response = self._send_command(tn, cmd, timeout=10, expect_content='Response')
+            
+            # Check for "Not found" or "Ok" response
+            if 'not found' in response.lower():
+                return (False, 0, None)
+            
+            # Parse route response: "NRR Response: CALL1 CALL2* CALL3"
+            # The * marks the destination node
+            match = re.search(r'NRR Response:\s*(.+)', response, re.IGNORECASE)
+            if match:
+                route_str = match.group(1).strip()
+                # Split by whitespace and remove the * marker
+                route_calls = [c.replace('*', '') for c in route_str.split()]
+                # Hop count is number of intermediate nodes (exclude source and destination)
+                hop_count = max(0, len(route_calls) - 2)
+                return (True, hop_count, route_calls)
+            
+            return (False, 0, None)
+            
+        except Exception as e:
+            if self.verbose:
+                print("    NRR command failed: {}".format(e))
+            return (False, 0, None)
+    
     def _connect_to_node(self, path=[]):
         """
         Connect to a node via telnet.
@@ -302,6 +355,30 @@ class NodeCrawler:
             # If no path, just return (connecting to local node)
             if not path:
                 return tn
+            
+            # Verify NetRom route to first hop before attempting connection
+            # This prevents long waits for non-existent routes
+            if len(path) > 0 and self.verbose:
+                first_hop = path[0]
+                lookup_call = first_hop.split('-')[0] if '-' in first_hop else first_hop
+                
+                # Try to verify route using NRR command
+                # First try with alias if we have it
+                target_for_nrr = self.call_to_alias.get(lookup_call, first_hop)
+                
+                print("  Verifying route to {} (using NRR {})...".format(first_hop, target_for_nrr))
+                route_exists, verified_hops, route_path = self._verify_netrom_route(tn, target_for_nrr)
+                
+                if route_exists and route_path:
+                    print("  Route found: {} ({} hop{})".format(' -> '.join(route_path), verified_hops, 's' if verified_hops != 1 else ''))
+                    # Update timeout calculation based on verified route
+                    if verified_hops > len(path):
+                        if self.verbose:
+                            print("  Note: Actual route has {} hops (expected {})".format(verified_hops, len(path)))
+                elif not route_exists:
+                    print("  Warning: NRR reports no route to {} - connection may fail".format(target_for_nrr))
+                    if self.verbose:
+                        print("  Will attempt connection anyway (direct port method may still work)")
             
             # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):
@@ -487,20 +564,22 @@ class NodeCrawler:
                 
                 # Wait for connection response (scale timeout with hop count)
                 # At 1200 baud RF: ~20s per hop for connection establishment
-                # Base 20s + 20s per hop, max 2 minutes
-                conn_timeout = min(20 + (i * 20), 120)
-                start_time = time.time()
+                # Calculate timeout based on total path length (this hop + remaining hops)
+                remaining_hops = len(path) - i
+                conn_timeout = self._calculate_connection_timeout(remaining_hops)
+                connection_start_time = time.time()
                 connected = False
                 response = ""
                 
                 if self.verbose:
-                    print("    Waiting for connection (timeout: {}s)...".format(conn_timeout))
+                    print("    Waiting for connection (timeout: {}s for {} hop{})...".format(
+                        conn_timeout, remaining_hops, 's' if remaining_hops != 1 else ''))
                 
                 # Set socket timeout to prevent read_some() from blocking forever
                 # Use short timeout so we can check elapsed time in the loop
                 tn.sock.settimeout(2.0)
                 
-                while time.time() - start_time < conn_timeout:
+                while time.time() - connection_start_time < conn_timeout:
                     try:
                         chunk = tn.read_some()
                         response += chunk.decode('ascii', errors='ignore')
@@ -560,15 +639,16 @@ class NodeCrawler:
                             tn.close()
                             return None
                         
-                        # Wait for connection with same timeout
-                        start_time = time.time()
+                        # Calculate remaining timeout from original start time
+                        elapsed = time.time() - connection_start_time
+                        remaining_timeout = max(5, conn_timeout - elapsed)  # At least 5s for fallback
                         connected = False
                         response = ""
                         
                         if self.verbose:
-                            print("    Waiting for NetRom connection (timeout: {}s)...".format(conn_timeout))
+                            print("    Waiting for NetRom connection (timeout: {}s remaining)...".format(int(remaining_timeout)))
                         
-                        while time.time() - start_time < conn_timeout:
+                        while time.time() - connection_start_time < conn_timeout:
                             try:
                                 chunk = tn.read_some()
                                 response += chunk.decode('ascii', errors='ignore')
