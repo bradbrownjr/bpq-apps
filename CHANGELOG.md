@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.1.3] - 2026-01-13
+### Changed
+- NetRom access entries now displayed in separate "NetRom Access:" section
+- Applications list no longer includes NetRom aliases for cleaner display
+- NetRom entries identified by format "ALIAS:CALLSIGN-SSID" matching node callsign
+
 ## [nodemap-html 1.1.2] - 2026-01-13
 ### Added
 - Auto-detects ../linbpq/HTML directory and prompts to save files there

@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.1.2
+Version: 1.1.3
 """
 
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 
 import sys
 import json
@@ -194,7 +194,17 @@ def generate_html_map(nodes, output_file='nodemap.html'):
         city = location.get('city', '')
         state = location.get('state', '')
         node_type = node_data.get('type', 'Unknown')
-        applications = node_data.get('applications', [])
+        
+        # Split applications into NetRom access and other apps
+        all_apps = node_data.get('applications', [])
+        netrom_access = []
+        applications = []
+        for app in all_apps:
+            # NetRom entries are in format "ALIAS:CALLSIGN-SSID" or just contain node callsign
+            if ':' in app and app.split(':')[1].startswith(callsign):
+                netrom_access.append(app)
+            else:
+                applications.append(app)
         
         # Get frequencies from ports (with band color)
         frequencies = []
@@ -225,6 +235,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
             'state': state,
             'type': node_type,
             'sponsor': sponsor,
+            'netrom_access': netrom_access,
             'applications': applications,
             'frequencies': frequencies,
             'ssids': ssids,
@@ -368,6 +379,11 @@ def generate_html_map(nodes, output_file='nodemap.html'):
                              freq.text + '</span><br>';
                 });
                 popup += '</p>';
+            }
+            
+            if (node.netrom_access && node.netrom_access.length > 0) {
+                popup += '<p><span class="label">NetRom Access:</span><br>' + 
+                         '<span class="apps">' + node.netrom_access.join(', ') + '</span></p>';
             }
             
             if (node.applications && node.applications.length > 0) {
