@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.66'
+__version__ = '1.3.67'
 
 import sys
 import telnetlib
@@ -358,28 +358,29 @@ class NodeCrawler:
                 return tn
             
             # Verify NetRom route to first hop before attempting connection
-            # This prevents long waits for non-existent routes
+            # Only check NRR if we don't have direct port info
+            # NRR only works for nodes in NetRom routing table, not direct neighbors
             if len(path) > 0 and self.verbose:
                 first_hop = path[0]
                 lookup_call = first_hop.split('-')[0] if '-' in first_hop else first_hop
                 
-                # Try to verify route using NRR command
-                # First try with alias if we have it
-                target_for_nrr = self.call_to_alias.get(lookup_call, first_hop)
-                
-                print("  Verifying route to {} (using NRR {})...".format(first_hop, target_for_nrr))
-                route_exists, verified_hops, route_path = self._verify_netrom_route(tn, target_for_nrr)
-                
-                if route_exists and route_path:
-                    print("  Route found: {} ({} hop{})".format(' -> '.join(route_path), verified_hops, 's' if verified_hops != 1 else ''))
-                    # Update timeout calculation based on verified route
-                    if verified_hops > len(path):
-                        if self.verbose:
+                # Skip NRR check if we have port info (direct neighbor)
+                port_num = self.route_ports.get(lookup_call)
+                if not port_num and lookup_call in self.call_to_alias:
+                    # Only verify NetRom routes when we need NetRom routing
+                    target_for_nrr = self.call_to_alias.get(lookup_call)
+                    
+                    print("  Verifying NetRom route to {} (using NRR {})...".format(first_hop, target_for_nrr))
+                    route_exists, verified_hops, route_path = self._verify_netrom_route(tn, target_for_nrr)
+                    
+                    if route_exists and route_path:
+                        print("  Route found: {} ({} hop{})".format(' -> '.join(route_path), verified_hops, 's' if verified_hops != 1 else ''))
+                        if verified_hops > len(path):
                             print("  Note: Actual route has {} hops (expected {})".format(verified_hops, len(path)))
-                elif not route_exists:
-                    print("  Warning: NRR reports no route to {} - connection may fail".format(target_for_nrr))
-                    if self.verbose:
-                        print("  Will attempt connection anyway (direct port method may still work)")
+                    elif not route_exists:
+                        print("  Warning: NRR reports no route to {}".format(target_for_nrr))
+                elif port_num:
+                    print("  Using direct port connection to {} on port {}".format(first_hop, port_num))
             
             # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):

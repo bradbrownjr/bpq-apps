@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.67] - 2026-01-13
+### Fixed
+- Skip NRR route verification for direct neighbors with known port numbers
+- NRR only works for NetRom routing table entries, not direct RF connections
+- Shows "Using direct port connection" message instead of misleading NRR warning
+
 ## [nodemap 1.3.66] - 2026-01-13
 ### Fixed
 - Connection timeout now properly enforced - was using 2s socket timeout in loop but not checking total elapsed time correctly
