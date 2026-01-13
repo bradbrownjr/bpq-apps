@@ -1599,6 +1599,11 @@ class NodeCrawler:
                 if existing and 'nodes' in existing:
                     nodes_data = existing['nodes']
                     
+                    if self.verbose:
+                        print("Loaded existing data with {} nodes: {}".format(
+                            len(nodes_data), 
+                            ', '.join(sorted(nodes_data.keys()))))
+                    
                     # Restore SSID mappings and route ports from all nodes
                     for node_call, node_info in nodes_data.items():
                         # Restore netrom_ssids (for connection commands)
@@ -1621,9 +1626,17 @@ class NodeCrawler:
                         # Not the local node - need to find how to reach it
                         target_base = starting_callsign.split('-')[0] if '-' in starting_callsign else starting_callsign
                         
+                        if self.verbose:
+                            print("Looking for path to {} among known neighbors...".format(target_base))
+                        
+                        found_path = False
                         for node_call, node_info in nodes_data.items():
+                            neighbors = node_info.get('neighbors', [])
+                            if self.verbose:
+                                print("  {} has neighbors: {}".format(node_call, ', '.join(neighbors) if neighbors else 'none'))
+                            
                             # Check if this node has the target as a neighbor
-                            if target_base in node_info.get('neighbors', []):
+                            if target_base in neighbors:
                                 # Found a node that can reach the target
                                 if node_call == self.callsign:
                                     # Target is direct neighbor of local node
@@ -1635,7 +1648,11 @@ class NodeCrawler:
                                     starting_path = [node_call]
                                     if self.verbose:
                                         print("Found {} reachable via {}".format(target_base, node_call))
+                                found_path = True
                                 break
+                        
+                        if not found_path and self.verbose:
+                            print("Warning: {} not found in any known node's neighbor list".format(target_base))
             else:
                 if not self.callsign:
                     print("Error: Could not determine local node callsign from bpq32.cfg.")
@@ -1651,7 +1668,10 @@ class NodeCrawler:
             
             # Start with specified or local node (with path if remote)
             # path contains intermediate hops only (not the target node itself)
-            self.queue.append((starting_callsign, starting_path if start_node else []))
+            queue_entry = (starting_callsign, starting_path if start_node else [])
+            if self.verbose and start_node:
+                print("Queuing {} with path: {}".format(starting_callsign, starting_path if starting_path else "(direct)"))
+            self.queue.append(queue_entry)
         
         # BFS traversal with priority sorting by MHEARD recency
         while self.queue:
