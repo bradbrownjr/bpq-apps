@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.59] - 2026-01-22
+### Added
+- On-demand NetRom alias discovery when no existing data available
+- NODES command executed from local node to find routing aliases
+- Better error handling when BPQ rejects commands without port numbers
+
+### Fixed
+- "C COMMAND REQUIRES A PORT NUMBER" error by using NetRom aliases instead
+
 ## [nodemap 1.3.58] - 2026-01-22
 ### Added
 - NetRom alias fallback for remote node connections

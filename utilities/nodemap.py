@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.58'
+__version__ = '1.3.59'
 
 import sys
 import telnetlib
@@ -331,6 +331,54 @@ class NodeCrawler:
                     if self.verbose:
                         full_call = self.alias_to_call.get(alias, 'unknown')
                         print("    Issuing command: C {} (NetRom alias for {}, hop {}/{})".format(alias, full_call, i+1, len(path)))
+                elif i == 0:  # Only try NetRom discovery for first hop
+                    # No known path - try NetRom discovery from local node
+                    if self.verbose:
+                        print("    No known route to {} - attempting NetRom discovery...".format(callsign))
+                    
+                    # Get NODES command to discover aliases
+                    try:
+                        nodes_output = self._send_command(tn, 'NODES', timeout=10, expect_content=':')
+                        all_aliases, discovered_ssids, _ = self._parse_nodes_aliases(nodes_output)
+                        
+                        # Update global mappings
+                        for alias, full_call in all_aliases.items():
+                            base_call = full_call.split('-')[0]
+                            if base_call not in self.call_to_alias:
+                                self.call_to_alias[base_call] = alias
+                                self.alias_to_call[alias] = full_call
+                        
+                        # Update SSID mappings
+                        for base_call, full_call in discovered_ssids.items():
+                            if base_call not in self.netrom_ssid_map:
+                                self.netrom_ssid_map[base_call] = full_call
+                        
+                        # Try again with discovered aliases
+                        if lookup_call in self.call_to_alias:
+                            alias = self.call_to_alias[lookup_call]
+                            cmd = "C {}\r".format(alias).encode('ascii')
+                            connect_target = alias
+                            if self.verbose:
+                                print("    Found NetRom alias: {} -> {}".format(lookup_call, alias))
+                                print("    Issuing command: C {} (discovered NetRom alias, hop {}/{})".format(alias, i+1, len(path)))
+                        else:
+                            # Still no alias found - this will likely fail
+                            full_callsign = self.netrom_ssid_map.get(lookup_call, callsign)
+                            cmd = "C {}\r".format(full_callsign).encode('ascii')
+                            connect_target = "{} (no route found)".format(full_callsign)
+                            if self.verbose:
+                                print("    No NetRom alias found for {} - connection likely to fail".format(lookup_call))
+                                print("    Issuing command: C {} (no known route, hop {}/{})".format(full_callsign, i+1, len(path)))
+                    
+                    except Exception as e:
+                        if self.verbose:
+                            print("    NetRom discovery failed: {}".format(e))
+                        # Fall back to basic connection attempt
+                        full_callsign = callsign
+                        cmd = "C {}\r".format(full_callsign).encode('ascii')
+                        connect_target = "{} (discovery failed)".format(full_callsign)
+                        if self.verbose:
+                            print("    Issuing command: C {} (discovery failed, hop {}/{})".format(full_callsign, i+1, len(path)))
                 else:
                     # Fallback: use callsign-SSID without port
                     # May fail if not a direct neighbor
@@ -339,10 +387,16 @@ class NodeCrawler:
                         if self.verbose:
                             print("    No NetRom SSID found for {}, using base callsign".format(callsign))
                     
-                    cmd = "C {}\r".format(full_callsign).encode('ascii')
-                    connect_target = "{} (no port)".format(full_callsign)
+                    # IMPORTANT: Don't use "C CALLSIGN-SSID" without port - BPQ requires port number
+                    # Instead, suggest user find NetRom alias or add to existing network data
                     if self.verbose:
-                        print("    Issuing command: C {} (fallback, hop {}/{})".format(full_callsign, i+1, len(path)))
+                        print("    Warning: No port or NetRom alias for {} - connection will likely fail".format(callsign))
+                        print("    Suggestion: Connect to a known node first, get NODES list to find aliases")
+                    
+                    cmd = "C {}\r".format(full_callsign).encode('ascii')
+                    connect_target = "{} (no port - likely to fail)".format(full_callsign)
+                    if self.verbose:
+                        print("    Issuing command: C {} (fallback without port - BPQ may reject, hop {}/{})".format(full_callsign, i+1, len(path)))
                 
                 # Set socket timeout before write to prevent blocking on dead connections
                 # TCP write() can block if remote end's receive buffer is full
@@ -1676,6 +1730,7 @@ class NodeCrawler:
                 else:
                     if self.verbose:
                         print("No existing nodemap.json found or no nodes in it")
+                        print("Will attempt NetRom discovery when connecting to local node")
             else:
                 if not self.callsign:
                     print("Error: Could not determine local node callsign from bpq32.cfg.")
