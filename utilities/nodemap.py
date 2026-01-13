@@ -21,6 +21,7 @@ Network Resources:
 - Network Map: https://n1xp.com/HAM/content/pkt/MEPktNtMap.pdf
 - Station Map: https://n1xp.com/HAM/content/pkt/MEPktStMap.pdf
 - BPQ Commands: https://cheatography.com/gcremerius/cheat-sheets/bpq-user-and-sysop-commands/
+- BPQ Node Commands: https://www.cantab.net/users/john.wiseman/Documents/NodeCommands.html
 
 Author: Brad Brown KC1JMH
 Date: January 2026
