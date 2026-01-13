@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.55'
+__version__ = '1.3.56'
 
 import sys
 import telnetlib
@@ -1582,6 +1582,8 @@ class NodeCrawler:
         else:
             # Normal mode: start from specified or local node
             # Determine starting node
+            starting_path = []  # Path to reach the starting node
+            
             if start_node:
                 # Validate provided callsign
                 if not self._is_valid_callsign(start_node):
@@ -1593,6 +1595,7 @@ class NodeCrawler:
                 # Pre-load route information from existing nodemap.json if available
                 # This ensures we have port numbers and SSIDs for connecting to the start node
                 existing = self._load_existing_data('nodemap.json')
+                
                 if existing and 'nodes' in existing:
                     nodes_data = existing['nodes']
                     
@@ -1611,6 +1614,28 @@ class NodeCrawler:
                     if self.route_ports:
                         if self.verbose:
                             print("Loaded {} port mappings from existing nodemap.json".format(len(self.route_ports)))
+                    
+                    # Find path to remote start node through existing network
+                    # Look for a node that has the start_node as a neighbor
+                    if starting_callsign != self.callsign:
+                        # Not the local node - need to find how to reach it
+                        target_base = starting_callsign.split('-')[0] if '-' in starting_callsign else starting_callsign
+                        
+                        for node_call, node_info in nodes_data.items():
+                            # Check if this node has the target as a neighbor
+                            if target_base in node_info.get('neighbors', []):
+                                # Found a node that can reach the target
+                                if node_call == self.callsign:
+                                    # Target is direct neighbor of local node
+                                    starting_path = []
+                                    if self.verbose:
+                                        print("Found {} as direct neighbor of local node {}".format(target_base, self.callsign))
+                                else:
+                                    # Target is neighbor of another node - route through that node
+                                    starting_path = [node_call]
+                                    if self.verbose:
+                                        print("Found {} reachable via {}".format(target_base, node_call))
+                                break
             else:
                 if not self.callsign:
                     print("Error: Could not determine local node callsign from bpq32.cfg.")
@@ -1624,8 +1649,9 @@ class NodeCrawler:
             print("Max hops: {}".format(self.max_hops))
             print("-" * 50)
             
-            # Start with specified or local node
-            self.queue.append((starting_callsign, []))
+            # Start with specified or local node (with path if remote)
+            # path contains intermediate hops only (not the target node itself)
+            self.queue.append((starting_callsign, starting_path if start_node else []))
         
         # BFS traversal with priority sorting by MHEARD recency
         while self.queue:
