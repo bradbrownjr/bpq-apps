@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.69] - 2026-01-13
+### Fixed
+- Path-finding now uses BFS to build multi-hop routes through network topology
+- Previous logic only found single-hop paths, causing direct connection attempts to unreachable nodes
+- Now properly routes through intermediate nodes (e.g., WS1EC → KC1JMH → KS1R → WD1F)
+- Uses neighbor data from nodemap.json to calculate reachable paths
+
 ## [nodemap 1.3.68] - 2026-01-13
 ### Fixed
 - Actually enforce timeout by checking elapsed time in socket.timeout exception handler

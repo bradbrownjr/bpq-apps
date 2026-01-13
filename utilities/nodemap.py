@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.68'
+__version__ = '1.3.69'
 
 import sys
 import telnetlib
@@ -1914,7 +1914,7 @@ class NodeCrawler:
                             print("Loaded {} NetRom aliases from existing nodemap.json".format(len(self.call_to_alias)))
                     
                     # Find path to remote start node through existing network
-                    # Look for a node that has the start_node as a neighbor
+                    # Use BFS to find shortest path from local node to target
                     if starting_callsign != self.callsign:
                         # Not the local node - need to find how to reach it
                         target_base = starting_callsign.split('-')[0] if '-' in starting_callsign else starting_callsign
@@ -1922,27 +1922,52 @@ class NodeCrawler:
                         if self.verbose:
                             print("Looking for path to {} among known neighbors...".format(target_base))
                         
+                        # BFS to find shortest path
+                        queue = [(self.callsign, [])]  # (current_node, path_to_current)
+                        visited = {self.callsign}
                         found_path = False
-                        for node_call, node_info in nodes_data.items():
-                            neighbors = node_info.get('neighbors', [])
-                            if self.verbose:
-                                print("  {} has neighbors: {}".format(node_call, ', '.join(neighbors) if neighbors else 'none'))
+                        
+                        while queue and not found_path:
+                            current, path = queue.pop(0)
+                            current_info = nodes_data.get(current, {})
+                            neighbors = current_info.get('neighbors', [])
                             
-                            # Check if this node has the target as a neighbor
-                            if target_base in neighbors:
-                                # Found a node that can reach the target
-                                if node_call == self.callsign:
-                                    # Target is direct neighbor of local node
-                                    starting_path = []
+                            if self.verbose and neighbors:
+                                print("  {} has neighbors: {}".format(current, ', '.join(neighbors)))
+                            
+                            for neighbor in neighbors:
+                                if neighbor in visited:
+                                    continue
+                                visited.add(neighbor)
+                                
+                                # Build path to this neighbor
+                                new_path = path + [neighbor]
+                                
+                                # Check if this neighbor is the target
+                                if neighbor == target_base:
+                                    # Found target - use path excluding target itself
+                                    starting_path = path if path else []
                                     if self.verbose:
-                                        print("Found {} as direct neighbor of local node {}".format(target_base, self.callsign))
-                                else:
-                                    # Target is neighbor of another node - route through that node
-                                    starting_path = [node_call]
+                                        if starting_path:
+                                            print("Found {} reachable via: {}".format(target_base, ' -> '.join(starting_path)))
+                                        else:
+                                            print("Found {} as direct neighbor of local node {}".format(target_base, self.callsign))
+                                    found_path = True
+                                    break
+                                
+                                # Check if this neighbor node has the target as ITS neighbor
+                                neighbor_info = nodes_data.get(neighbor, {})
+                                neighbor_neighbors = neighbor_info.get('neighbors', [])
+                                if target_base in neighbor_neighbors:
+                                    # Target is neighbor of this node - path goes through this node
+                                    starting_path = new_path
                                     if self.verbose:
-                                        print("Found {} reachable via {}".format(target_base, node_call))
-                                found_path = True
-                                break
+                                        print("Found {} reachable via: {}".format(target_base, ' -> '.join(starting_path)))
+                                    found_path = True
+                                    break
+                                
+                                # Add to queue for further exploration
+                                queue.append((neighbor, new_path))
                         
                         if not found_path:
                             if self.verbose:
