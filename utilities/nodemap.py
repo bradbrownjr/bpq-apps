@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.57'
+__version__ = '1.3.58'
 
 import sys
 import telnetlib
@@ -1615,10 +1615,21 @@ class NodeCrawler:
                         for neighbor_call, port_num in node_info.get('heard_on_ports', []):
                             if port_num is not None and neighbor_call not in self.route_ports:
                                 self.route_ports[neighbor_call] = port_num
+                        
+                        # Restore call_to_alias mappings (for NetRom routing)
+                        for alias, full_call in node_info.get('seen_aliases', {}).items():
+                            base_call = full_call.split('-')[0]
+                            if base_call not in self.call_to_alias:
+                                self.call_to_alias[base_call] = alias
+                                self.alias_to_call[alias] = full_call
                     
                     if self.route_ports:
                         if self.verbose:
                             print("Loaded {} port mappings from existing nodemap.json".format(len(self.route_ports)))
+                    
+                    if self.call_to_alias:
+                        if self.verbose:
+                            print("Loaded {} NetRom aliases from existing nodemap.json".format(len(self.call_to_alias)))
                     
                     # Find path to remote start node through existing network
                     # Look for a node that has the start_node as a neighbor
@@ -1651,8 +1662,20 @@ class NodeCrawler:
                                 found_path = True
                                 break
                         
-                        if not found_path and self.verbose:
-                            print("Warning: {} not found in any known node's neighbor list".format(target_base))
+                        if not found_path:
+                            if self.verbose:
+                                print("Warning: {} not found in any known node's neighbor list".format(target_base))
+                            # Fallback: Check if we have a NetRom alias for direct connection
+                            if target_base in self.call_to_alias:
+                                if self.verbose:
+                                    print("Found NetRom alias for {}: {}".format(target_base, self.call_to_alias[target_base]))
+                                # Leave starting_path=[] for direct NetRom connection
+                            else:
+                                if self.verbose:
+                                    print("No NetRom alias found for {}, will try direct fallback".format(target_base))
+                else:
+                    if self.verbose:
+                        print("No existing nodemap.json found or no nodes in it")
             else:
                 if not self.callsign:
                     print("Error: Could not determine local node callsign from bpq32.cfg.")

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.58] - 2026-01-22
+### Added
+- NetRom alias fallback for remote node connections
+- Diagnostic output showing path finding process
+- Restoration of call_to_alias mappings from nodemap.json
+
+### Fixed
+- Better handling when target node not found in neighbor lists
+
 ## [nodemap 1.3.57] - 2026-01-22
 ### Fixed
 - Hop limit no longer prevents reaching remote start node
