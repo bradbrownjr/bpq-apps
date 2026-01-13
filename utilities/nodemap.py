@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.62'
+__version__ = '1.3.63'
 
 import sys
 import telnetlib
@@ -2264,42 +2264,76 @@ def main():
                 data = json.load(f)
             
             nodes_data = data.get('nodes', {})
+            netrom_data = data.get('netrom_nodes', {})
             if not nodes_data:
                 print("No nodes found in nodemap.json")
                 sys.exit(0)
             
+            # Build set of explored nodes
+            explored = set(nodes_data.keys())
+            
+            # Build set of all mentioned neighbors
+            all_neighbors = set()
+            for node in nodes_data.values():
+                all_neighbors.update(node.get('neighbors', []))
+            
+            # Unexplored = neighbors not in explored nodes
+            unexplored = all_neighbors - explored
+            
             # Print nodes table
             print("\nNodes in nodemap.json ({} total):\n".format(len(nodes_data)))
-            print("{:<12} {:<6} {:<10} {:<20} {:<30}".format("Callsign", "Hops", "Alias", "Gridsquare", "Neighbors"))
-            print("-" * 80)
+            print("{:<12} {:<6} {:<10} {:<12} {:<25} {:<25}".format(
+                "Callsign", "Hops", "Alias", "Gridsquare", "Neighbors", "Unexplored"))
+            print("-" * 105)
             
             # Sort by callsign for consistent display
             for callsign in sorted(nodes_data.keys()):
                 node = nodes_data[callsign]
-                alias = node.get('alias', '')
+                # Get alias from node data or netrom data
+                alias = node.get('alias', '') or netrom_data.get(callsign, {}).get('alias', '')
                 hops = node.get('hop_distance', '')
-                grid = node.get('gridsquare', '')
+                # Get gridsquare from node data or netrom data
+                grid = node.get('gridsquare', '') or netrom_data.get(callsign, {}).get('gridsquare', '')
                 neighbors = node.get('neighbors', [])
                 
-                # Format neighbors list (first 3, then count)
-                if len(neighbors) <= 3:
+                # Find unexplored neighbors
+                unexplored_neighbors = [n for n in neighbors if n in unexplored]
+                
+                # Format neighbors list (first 2, then count)
+                if len(neighbors) == 0:
+                    neighbor_str = '-'
+                elif len(neighbors) <= 2:
                     neighbor_str = ', '.join(neighbors)
                 else:
-                    neighbor_str = '{}, {} (+{} more)'.format(
+                    neighbor_str = '{} (+{})'.format(
                         ', '.join(neighbors[:2]),
-                        neighbors[2],
-                        len(neighbors) - 3
+                        len(neighbors) - 2
                     )
                 
-                print("{:<12} {:<6} {:<10} {:<20} {:<30}".format(
+                # Format unexplored list (first 2, then count)
+                if len(unexplored_neighbors) == 0:
+                    unexplored_str = '-'
+                elif len(unexplored_neighbors) <= 2:
+                    unexplored_str = ', '.join(unexplored_neighbors)
+                else:
+                    unexplored_str = '{} (+{})'.format(
+                        ', '.join(unexplored_neighbors[:2]),
+                        len(unexplored_neighbors) - 2
+                    )
+                
+                print("{:<12} {:<6} {:<10} {:<12} {:<25} {:<25}".format(
                     callsign,
                     str(hops) if hops != '' else '-',
                     alias[:10],
-                    grid[:20],
-                    neighbor_str[:30]
+                    grid[:12],
+                    neighbor_str[:25],
+                    unexplored_str[:25]
                 ))
             
             print("\nTotal nodes: {}".format(len(nodes_data)))
+            print("Unexplored neighbors: {}".format(len(unexplored)))
+            if unexplored:
+                print("Unexplored: {}".format(', '.join(sorted(unexplored))))
             print("Total connections: {}".format(len(data.get('connections', []))))
             
         except json.JSONDecodeError as e:
