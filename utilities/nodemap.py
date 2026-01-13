@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.72'
+__version__ = '1.3.73'
 
 import sys
 import telnetlib
@@ -1946,11 +1946,22 @@ class NodeCrawler:
                         
                         # Check if target is actually a node (has SSID) vs user station
                         target_ssid = self.netrom_ssid_map.get(target_base)
-                        if target_ssid and '-' not in target_ssid:
+                        if not target_ssid or '-' not in target_ssid:
                             # No SSID means it's a user station, not a node
                             colored_print("Error: {} appears to be a user station, not a node (no SSID in network data)".format(target_base), Colors.RED)
                             colored_print("User stations don't run BPQ node software and can't be crawled.", Colors.YELLOW)
-                            colored_print("Hint: Check if this is the sysop callsign instead of the node callsign.", Colors.YELLOW)
+                            
+                            # Suggest other unexplored neighbors that ARE nodes
+                            other_unexplored = []
+                            for node_call, node_info in nodes_data.items():
+                                for neighbor in node_info.get('unexplored_neighbors', []):
+                                    neighbor_ssid = self.netrom_ssid_map.get(neighbor)
+                                    if neighbor != target_base and neighbor_ssid and '-' in neighbor_ssid:
+                                        if neighbor not in other_unexplored:
+                                            other_unexplored.append(neighbor)
+                            
+                            if other_unexplored:
+                                colored_print("Try one of these unexplored nodes instead: {}".format(', '.join(sorted(other_unexplored)[:10])), Colors.CYAN)
                             return
                         
                         if self.verbose:

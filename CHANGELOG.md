@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.73] - 2026-01-13
+### Fixed
+- Improved error message when target is user station (no SSID)
+- Now suggests other unexplored nodes that ARE actually nodes
+- Helps user pick valid crawl targets instead of user stations
+
 ## [nodemap 1.3.72] - 2026-01-13
 ### Fixed
 - Auto-resolve base callsign to node SSID when available in network data
