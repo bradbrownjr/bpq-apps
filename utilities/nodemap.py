@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.56'
+__version__ = '1.3.57'
 
 import sys
 import telnetlib
@@ -1663,28 +1663,39 @@ class NodeCrawler:
             
             callsign, path = self.queue.popleft()
             
-            # Limit depth to prevent excessive crawling
+            # Limit depth to prevent excessive crawling from discovered neighbors
+            # BUT: Don't apply limit to the initial starting node (even if remote)
+            # max_hops means "explore neighbors to this depth FROM starting node"
+            # not "can only reach nodes at this depth"
+            # 
             # path contains intermediate hops, target node is not in path
             # Hop distance = path length + 1 (for the target node itself)
             # Example: WS1EC->KC1JMH->KS1R->W1LH: path=['KC1JMH','KS1R'], W1LH is at hop 3
-            if starting_callsign is None:
-                # Resume mode: calculate from path length
-                if not path:
-                    # Empty path: either local node (0 hops) or direct neighbor (1 hop)
-                    hop_distance = 0 if callsign == self.callsign else 1
-                else:
-                    # Path has intermediates: distance = path length + 1 for target
-                    hop_distance = len(path) + 1
-            else:
-                # Normal mode: compare with actual starting callsign
-                if not path:
-                    hop_distance = 0 if callsign == starting_callsign else 1
-                else:
-                    hop_distance = len(path) + 1
             
-            if hop_distance > self.max_hops:
-                print("Skipping {} ({} hops > max {})".format(callsign, hop_distance, self.max_hops))
-                continue
+            # Skip hop check for initial starting node (allow reaching it regardless of hops)
+            is_starting_node = (starting_callsign is not None and 
+                               callsign.split('-')[0] == starting_callsign.split('-')[0])
+            
+            if not is_starting_node:
+                # Not the starting node - apply hop limit to neighbors discovered from it
+                if starting_callsign is None:
+                    # Resume mode: calculate from path length
+                    if not path:
+                        # Empty path: either local node (0 hops) or direct neighbor (1 hop)
+                        hop_distance = 0 if callsign == self.callsign else 1
+                    else:
+                        # Path has intermediates: distance = path length + 1 for target
+                        hop_distance = len(path) + 1
+                else:
+                    # Normal mode: compare with actual starting callsign
+                    if not path:
+                        hop_distance = 0 if callsign == starting_callsign else 1
+                    else:
+                        hop_distance = len(path) + 1
+                
+                if hop_distance > self.max_hops:
+                    print("Skipping {} ({} hops > max {})".format(callsign, hop_distance, self.max_hops))
+                    continue
             
             self.crawl_node(callsign, path)
             time.sleep(2)  # Be polite, don't hammer network

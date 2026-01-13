@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.57] - 2026-01-22
+### Fixed
+- Hop limit no longer prevents reaching remote start node
+- max_hops now means "explore FROM start node to this depth", not "can only reach at this depth"
+- Remote start nodes can be reached regardless of hop distance, hop limit applies only to neighbors discovered from start node
+
 ## [nodemap 1.3.56] - 2026-01-22
 ### Fixed
 - Remote node start mode now finds proper path through existing network
