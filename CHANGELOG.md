@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.79] - 2026-01-13
+### Changed
+- Cleaned up verbose output during data restoration
+- Removed per-item SSID/port restoration messages (too noisy)
+- Added summary counts for restored SSIDs and route ports
+- Improved unexplored neighbors display (shows which node has which unexplored neighbors)
+- Limited unexplored neighbor lists to first 5 items with '...' if more
+
 ## [nodemap 1.3.78] - 2026-01-13
 ### Added
 - Unknown argument detection with helpful error message
