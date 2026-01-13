@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.61'
+__version__ = '1.3.62'
 
 import sys
 import telnetlib
@@ -2210,6 +2210,7 @@ def main():
         print("  --resume FILE    Resume from specific JSON file")
         print("  --merge FILE, -m Merge another nodemap.json file into current data")
         print("                   Supports wildcards: --merge *.json")
+        print("  --display-nodes, -d  Display nodes table from nodemap.json and exit")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --notify URL     Send notifications to webhook URL")
@@ -2250,6 +2251,65 @@ def main():
     
     print("BPQ Node Map Crawler v{}".format(__version__))
     print("=" * 50)
+    
+    # Check for display-only mode first (fast exit)
+    if '--display-nodes' in sys.argv or '-d' in sys.argv:
+        if not os.path.exists('nodemap.json'):
+            print("Error: nodemap.json not found")
+            print("Run a crawl first to generate network data")
+            sys.exit(1)
+        
+        try:
+            with open('nodemap.json', 'r') as f:
+                data = json.load(f)
+            
+            nodes_data = data.get('nodes', {})
+            if not nodes_data:
+                print("No nodes found in nodemap.json")
+                sys.exit(0)
+            
+            # Print nodes table
+            print("\nNodes in nodemap.json ({} total):\n".format(len(nodes_data)))
+            print("{:<12} {:<6} {:<10} {:<20} {:<30}".format("Callsign", "Hops", "Alias", "Gridsquare", "Neighbors"))
+            print("-" * 80)
+            
+            # Sort by callsign for consistent display
+            for callsign in sorted(nodes_data.keys()):
+                node = nodes_data[callsign]
+                alias = node.get('alias', '')
+                hops = node.get('hop_distance', '')
+                grid = node.get('gridsquare', '')
+                neighbors = node.get('neighbors', [])
+                
+                # Format neighbors list (first 3, then count)
+                if len(neighbors) <= 3:
+                    neighbor_str = ', '.join(neighbors)
+                else:
+                    neighbor_str = '{}, {} (+{} more)'.format(
+                        ', '.join(neighbors[:2]),
+                        neighbors[2],
+                        len(neighbors) - 3
+                    )
+                
+                print("{:<12} {:<6} {:<10} {:<20} {:<30}".format(
+                    callsign,
+                    str(hops) if hops != '' else '-',
+                    alias[:10],
+                    grid[:20],
+                    neighbor_str[:30]
+                ))
+            
+            print("\nTotal nodes: {}".format(len(nodes_data)))
+            print("Total connections: {}".format(len(data.get('connections', []))))
+            
+        except json.JSONDecodeError as e:
+            print("Error parsing nodemap.json: {}".format(e))
+            sys.exit(1)
+        except Exception as e:
+            print("Error reading nodemap.json: {}".format(e))
+            sys.exit(1)
+        
+        sys.exit(0)
     
     # Parse command line args
     max_hops = 10

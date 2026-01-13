@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.62] - 2026-01-12
+### Added
+- Display-only mode: `--display-nodes` / `-d` shows nodes table from nodemap.json
+- Quick way to review discovered nodes without re-crawling
+
 ## [nodemap 1.3.61] - 2026-01-12
 ### Added
 - NetRom alias fallback when direct port connection times out
