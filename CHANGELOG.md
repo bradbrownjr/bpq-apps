@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.65] - 2026-01-12
+### Added
+- Now extracts alias and gridsquare to top-level fields in node data
+- Makes data more accessible without digging into nested dicts
+- Display mode uses top-level fields with fallbacks to nested data
+
 ## [nodemap 1.3.64] - 2026-01-12
 ### Fixed
 - Display mode now correctly extracts alias from own_aliases and gridsquare from location dict

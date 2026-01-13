@@ -27,7 +27,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.64'
+__version__ = '1.3.65'
 
 import sys
 import telnetlib
@@ -1617,8 +1617,14 @@ class NodeCrawler:
                 if link_key in self.intermittent_links:
                     intermittent_neighbors.append(neighbor)
             
+            # Extract top-level fields for convenience
+            primary_alias = list(own_aliases.keys())[0] if own_aliases else None
+            gridsquare = location.get('grid', None)
+            
             self.nodes[callsign] = {
                 'info': info_output.strip(),
+                'alias': primary_alias,  # Primary NetRom alias (extracted from own_aliases)
+                'gridsquare': gridsquare,  # Maidenhead locator (extracted from location)
                 'neighbors': all_neighbors,  # Direct RF neighbors from MHEARD (with SSIDs only)
                 'explored_neighbors': explored_neighbors,  # Neighbors that were/will be visited
                 'unexplored_neighbors': unexplored_neighbors,  # Neighbors skipped (hop limit)
@@ -2290,18 +2296,23 @@ def main():
             for callsign in sorted(nodes_data.keys()):
                 node = nodes_data[callsign]
                 
-                # Get alias from own_aliases (first one) or netrom data
-                own_aliases = node.get('own_aliases', {})
-                if own_aliases:
+                # Get alias - prefer top-level field, fallback to own_aliases or netrom data
+                alias = node.get('alias', '')
+                if not alias:
+                    own_aliases = node.get('own_aliases', {})
                     alias = list(own_aliases.keys())[0] if own_aliases else ''
-                else:
+                if not alias:
                     alias = netrom_data.get(callsign, {}).get('alias', '')
                 
                 hops = node.get('hop_distance', '')
                 
-                # Get gridsquare from location dict or netrom data
-                location = node.get('location', {})
-                grid = location.get('grid', '') or netrom_data.get(callsign, {}).get('gridsquare', '')
+                # Get gridsquare - prefer top-level field, fallback to location dict or netrom data
+                grid = node.get('gridsquare', '')
+                if not grid:
+                    location = node.get('location', {})
+                    grid = location.get('grid', '')
+                if not grid:
+                    grid = netrom_data.get(callsign, {}).get('gridsquare', '')
                 
                 neighbors = node.get('neighbors', [])
                 
