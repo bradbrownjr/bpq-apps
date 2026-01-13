@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.86] - 2026-01-13
+### Fixed
+- Resume mode now filters out user station SSIDs (e.g., KC1JMH-7) from unexplored neighbors
+- Only queues neighbors that have known node SSIDs from netrom_ssids data
+- Prevents attempts to connect to application/user SSIDs as nodes
+- Adds verbose logging when skipping non-node SSIDs
+
 ## [nodemap 1.3.85] - 2026-01-13
 ### Changed
 - Added ANSI color codes to all error (red), warning (yellow), and success (green) messages

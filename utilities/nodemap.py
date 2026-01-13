@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.85
+Version: 1.3.86
 """
 
-__version__ = '1.3.85'
+__version__ = '1.3.86'
 
 import sys
 import telnetlib
@@ -1146,26 +1146,48 @@ class NodeCrawler:
             # Also check neighbors that were never visited
             all_neighbors = node_data.get('neighbors', [])
             for neighbor in all_neighbors:
-                # Allow multiple paths to same node - try alternate routes if first fails
-                if neighbor not in self.visited:
-                    # Calculate path to this neighbor through the visited node
-                    # We need to reconstruct the path to reach the parent node first using BFS
-                    hop_distance = node_data.get('hop_distance', 0)
-                    if hop_distance == 0:
-                        # Parent is local node, direct connection to neighbor
-                        path = []
+                # Skip if already visited or excluded
+                if neighbor in self.visited or neighbor in self.exclude:
+                    continue
+                
+                # Filter out non-node SSIDs using netrom_ssids mapping
+                # Only queue neighbors that have node SSIDs (appeared in ROUTES/NODES commands)
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                
+                # Check if this neighbor has a known node SSID
+                has_node_ssid = False
+                
+                # Check netrom_ssids from all nodes to see if neighbor is a known node
+                for node_call, n_data in nodes_data.items():
+                    node_ssids = n_data.get('netrom_ssids', {})
+                    if neighbor_base in node_ssids:
+                        has_node_ssid = True
+                        break
+                
+                # If no node SSID found, skip this neighbor (likely a user station)
+                if not has_node_ssid:
+                    if self.verbose:
+                        print("    Skipping {} (no node SSID found, likely user station)".format(neighbor))
+                    continue
+                
+                # Calculate path to this neighbor through the visited node
+                # We need to reconstruct the path to reach the parent node first using BFS
+                hop_distance = node_data.get('hop_distance', 0)
+                if hop_distance == 0:
+                    # Parent is local node, direct connection to neighbor
+                    path = []
+                else:
+                    # Use BFS to find path from local node to parent node
+                    # Then neighbor is reached via parent
+                    parent_path = self._find_path_to_node(callsign, nodes_data)
+                    if parent_path is not None:
+                        # Path to neighbor = path to parent + parent itself
+                        path = parent_path + [callsign]
                     else:
-                        # Use BFS to find path from local node to parent node
-                        # Then neighbor is reached via parent
-                        parent_path = self._find_path_to_node(callsign, nodes_data)
-                        if parent_path is not None:
-                            # Path to neighbor = path to parent + parent itself
-                            path = parent_path + [callsign]
-                        else:
-                            # Fallback: assume direct connection to parent
-                            path = [callsign]
-                    
-                    unexplored.append((neighbor, path))
+                        # Fallback: assume direct connection to parent
+                        path = [callsign]
+                
+                unexplored.append((neighbor, path))
         
         # Sort by multiple criteria to try best paths first:
         # 1. Hop count (fewer hops = more reliable)
