@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.71] - 2026-01-13
+### Fixed
+- Detect user stations (callsigns without SSID) and abort crawl with helpful error
+- WD1F has no SSID in network data (sysop callsign, not node callsign)
+- Prevents attempting to crawl non-node stations that can't respond to BPQ commands
+
 ## [nodemap 1.3.70] - 2026-01-13
 ### Fixed
 - Use node SSID from own_aliases instead of netrom_ssids when loading existing data

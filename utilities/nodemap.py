@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.3.1
 """
 
-__version__ = '1.3.70'
+__version__ = '1.3.71'
 
 import sys
 import telnetlib
@@ -1935,6 +1935,15 @@ class NodeCrawler:
                     if starting_callsign != self.callsign:
                         # Not the local node - need to find how to reach it
                         target_base = starting_callsign.split('-')[0] if '-' in starting_callsign else starting_callsign
+                        
+                        # Check if target is actually a node (has SSID) vs user station
+                        target_ssid = self.netrom_ssid_map.get(target_base)
+                        if target_ssid and '-' not in target_ssid:
+                            # No SSID means it's a user station, not a node
+                            colored_print("Error: {} appears to be a user station, not a node (no SSID in network data)".format(target_base), Colors.RED)
+                            colored_print("User stations don't run BPQ node software and can't be crawled.", Colors.YELLOW)
+                            colored_print("Hint: Check if this is the sysop callsign instead of the node callsign.", Colors.YELLOW)
+                            return
                         
                         if self.verbose:
                             print("Looking for path to {} among known neighbors...".format(target_base))
