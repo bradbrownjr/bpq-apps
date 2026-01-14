@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.89] - 2026-01-13
+### Fixed
+- Notification errors now display in red color for better visibility
+
+## [Unreleased]
+
+## [nodemap 1.3.89] - 2026-01-13
+### Fixed
+- Notification errors now display in red color for better visibility
+
 ## [map_boundaries.py & download_boundaries.py] - 2026-01-13
 ### Changed
 - Replaced heavily simplified boundary coordinates with accurate Natural Earth 1:10m data

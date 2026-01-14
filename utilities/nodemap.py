@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.88
+Version: 1.3.89
 """
 
-__version__ = '1.3.88'
+__version__ = '1.3.89'
 
 import sys
 import telnetlib
@@ -245,7 +245,7 @@ class NodeCrawler:
                 urllib2.urlopen(self.notify_url, data=message, timeout=5)
         except Exception as e:
             if self.verbose:
-                print("    Notification failed: {}".format(e))
+                colored_print("Notification failed: {}".format(e), Colors.RED)
     
     def _calculate_connection_timeout(self, hop_count):
         """
