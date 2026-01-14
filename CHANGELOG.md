@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.92] - 2026-01-14
+### Fixed
+- Connection timeout now properly enforced using read_very_eager() instead of read_some()
+- Prevents indefinite hangs when connecting to offline/unreachable nodes (e.g., N1REX)
+- Added exception handling for socket errors during connection attempts
+
 ## [nodemap 1.3.91] - 2026-01-14
 ### Fixed
 - Resume mode now uses node SSID from ROUTES table when queuing unexplored neighbors

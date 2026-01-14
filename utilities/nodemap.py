@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.91
+Version: 1.3.92
 """
 
-__version__ = '1.3.91'
+__version__ = '1.3.92'
 
 import sys
 import telnetlib
@@ -584,7 +584,11 @@ class NodeCrawler:
                 
                 # Set socket timeout to prevent read_some() from blocking forever
                 # Use short timeout so we can check elapsed time in the loop
-                tn.sock.settimeout(2.0)
+                try:
+                    if tn.sock:
+                        tn.sock.settimeout(2.0)
+                except:
+                    pass
                 
                 while time.time() - connection_start_time < conn_timeout:
                     # Check timeout FIRST before any I/O operations
@@ -593,8 +597,10 @@ class NodeCrawler:
                         break
                     
                     try:
-                        chunk = tn.read_some()
-                        response += chunk.decode('ascii', errors='ignore')
+                        # Use read_very_eager() instead of read_some() - it's non-blocking
+                        chunk = tn.read_very_eager()
+                        if chunk:
+                            response += chunk.decode('ascii', errors='ignore')
                         
                         # Check for connection success
                         if 'CONNECTED' in response.upper():
@@ -617,18 +623,22 @@ class NodeCrawler:
                             tn.close()
                             return None
                         
+                        # Sleep between checks to avoid busy-waiting
+                        # Sleep between checks to avoid busy-waiting
                         time.sleep(0.5)
                         
-                    except socket.timeout:
-                        # Socket read timed out - check if total timeout exceeded
-                        if time.time() - connection_start_time >= conn_timeout:
-                            break
-                        # Still within total timeout, continue waiting
-                        pass
                     except EOFError:
                         print("  Connection lost to {}".format(callsign))
                         tn.close()
                         return None
+                    except Exception as e:
+                        # Any other exception during read
+                        if self.verbose:
+                            print("  Read error: {}".format(e))
+                        # Check if we've exceeded timeout
+                        if time.time() - connection_start_time >= conn_timeout:
+                            break
+                        time.sleep(0.5)
                 
                 if not connected:
                     elapsed = time.time() - connection_start_time
