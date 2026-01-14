@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.100
+Version: 1.3.101
 """
 
-__version__ = '1.3.100'
+__version__ = '1.3.101'
 
 import sys
 import socket
@@ -1162,7 +1162,11 @@ class NodeCrawler:
             # Second priority: restore route-based SSIDs (actual node SSIDs)
             routes = node_data.get('routes', {})
             for route_call in routes.keys():
-                base_call = route_call.split('-')[0] if '-' in route_call else route_call
+                # Only use routes that have SSIDs (e.g., "KC1JMH-15", not "KC1JMH")
+                # Old JSON format may have routes without SSIDs
+                if '-' not in route_call:
+                    continue  # Skip routes without SSID suffix
+                base_call = route_call.split('-')[0]
                 # Only update if not already set by own_aliases
                 if base_call not in self.netrom_ssid_map:
                     self.netrom_ssid_map[base_call] = route_call

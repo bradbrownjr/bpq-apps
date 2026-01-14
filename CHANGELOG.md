@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.101] - 2026-01-14
+### Fixed
+- Skip routes without SSID suffix when restoring netrom_ssid_map
+- Prevents old JSON routes ("KC1JMH": 168) from overwriting netrom_ssids ("KC1JMH": "KC1JMH-15")
+- Now correctly uses netrom_ssids from node's MHEARD data for connections
+
 ## [nodemap 1.3.100] - 2026-01-14
 ### Fixed
 - SSID restoration now prioritizes own_aliases (node's own SSID) over routes
