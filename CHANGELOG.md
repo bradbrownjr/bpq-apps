@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.104] - 2026-01-14
+### Fixed
+- Fixed timeout issue with large NODES responses over multi-hop paths. Reduced per-read timeout from full cmd_timeout to 3s max and increased retry attempts proportional to overall timeout. Prevents premature timeout when NODES list hasn't finished transmitting before ROUTES command sent.
+
 ## [nodemap 1.3.103] - 2026-01-14
 ### Changed
 - SSID restoration now uses consensus from all nodes' ROUTES tables (authoritative)

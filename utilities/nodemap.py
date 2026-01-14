@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.103
+Version: 1.3.104
 """
 
-__version__ = '1.3.103'
+__version__ = '1.3.104'
 
 import sys
 import socket
@@ -812,9 +812,12 @@ class NodeCrawler:
             
             # Read all available data with retries
             # Over RF, responses arrive in chunks with gaps
+            # For large responses (NODES, ROUTES), use short per-read timeout to avoid blocking
+            # and calculate attempts based on overall timeout
             response = b''
             read_attempts = 0
-            max_attempts = 5  # Try multiple times to get complete response (increased for large NODES output)
+            per_read_timeout = min(3, timeout)  # Short timeout per read (2-3s) to check frequently
+            max_attempts = max(5, int(timeout / 2))  # Scale attempts with overall timeout
             last_response_len = 0
             stable_count = 0  # Count consecutive attempts with no growth
             
@@ -822,13 +825,13 @@ class NodeCrawler:
                 read_attempts += 1
                 
                 try:
-                    # Try to read until prompt
-                    chunk = tn.read_until(b'} ', timeout=timeout)
+                    # Try to read until prompt (use short timeout to avoid blocking on large output)
+                    chunk = tn.read_until(b'} ', timeout=per_read_timeout)
                     self._log('RECV', chunk)
                     response += chunk
                     
                     # Try to get second prompt (actual response follows first prompt)
-                    chunk2 = tn.read_until(b'} ', timeout=timeout)
+                    chunk2 = tn.read_until(b'} ', timeout=per_read_timeout)
                     self._log('RECV', chunk2)
                     response += chunk2
                 except:
