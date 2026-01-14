@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.4.1] - 2026-01-14
+### Fixed
+- `--callsign` forced SSIDs now survive resume mode (were being overwritten by JSON data)
+- CLI-forced SSIDs now correctly override any discovered SSIDs from previous crawls
+
 ## [nodemap 1.4.0] - 2026-01-14
 ### Added
 - `--callsign CALL-SSID` CLI option to force specific node SSID (e.g., `--callsign NG1P-4`)

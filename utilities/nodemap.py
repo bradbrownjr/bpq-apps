@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.4.0
+Version: 1.4.1
 """
 
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 
 import sys
 import socket
@@ -141,6 +141,7 @@ class NodeCrawler:
         self.queue = deque()  # BFS queue for crawling: entries are (callsign, path, quality)
         self.queued_paths = set()  # Track queued paths to avoid duplicates: {(callsign, tuple(path))}
         self.timeout = 10  # Telnet timeout in seconds
+        self.cli_forced_ssids = {}  # SSIDs forced via --callsign CLI option: {base_call: full_ssid}
         
     def _find_bpq_port(self):
         """Find BPQ telnet port from bpq32.cfg (Telnet Server port only)."""
@@ -1193,6 +1194,13 @@ class NodeCrawler:
             # Also restore route_ports from routes data (for any additional entries)
             routes = node_data.get('routes', {})
             for neighbor, quality in routes.items():
+        
+        # Restore CLI-forced SSIDs (these override anything from JSON)
+        for base_call, forced_ssid in self.cli_forced_ssids.items():
+            self.netrom_ssid_map[base_call] = forced_ssid
+            self.ssid_source[base_call] = ('cli', time.time())
+            if self.verbose:
+                print("Restored CLI-forced SSID: {} = {}".format(base_call, forced_ssid))
                 if neighbor not in self.route_ports and quality > 0:
                     # Use port 1 as fallback if no MHEARD data available
                     self.route_ports[neighbor] = 1
@@ -3170,14 +3178,20 @@ def main():
     # Crawl network
     try:
         # If user forced a specific SSID, pre-populate the map
+        # Save it to restore after resume (which rebuilds map from JSON)
+        cli_forced_ssids = {}
         if forced_ssid:
             base_call = forced_ssid.split('-')[0]
             crawler.netrom_ssid_map[base_call] = forced_ssid
             crawler.ssid_source[base_call] = ('cli', time.time())
+            cli_forced_ssids[base_call] = forced_ssid
             colored_print("Forcing SSID: {} (will update SSID map for future crawls)".format(forced_ssid), Colors.GREEN)
             # Use base callsign if no start_node specified
             if not start_node:
                 start_node = base_call
+        
+        # Pass CLI-forced SSIDs to crawler so they survive resume
+        crawler.cli_forced_ssids = cli_forced_ssids
         
         crawler.crawl_network(start_node=start_node)
         
