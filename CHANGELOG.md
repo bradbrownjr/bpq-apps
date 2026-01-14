@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.93] - 2026-01-14
+### Changed
+- Added future-proofing for telnetlib removal in Python 3.13+
+- Automatically falls back to telnetlib3 if stdlib telnetlib unavailable
+- Added informative error message with installation instructions
+- Works seamlessly on Python 3.5.3 through 3.13+
+
 ## [nodemap 1.3.92] - 2026-01-14
 ### Fixed
 - Connection timeout now properly enforced using read_very_eager() instead of read_some()

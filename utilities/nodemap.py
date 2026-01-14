@@ -25,13 +25,12 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.92
+Version: 1.3.93
 """
 
-__version__ = '1.3.92'
+__version__ = '1.3.93'
 
 import sys
-import telnetlib
 import socket
 import time
 import json
@@ -40,6 +39,21 @@ import glob
 import re
 import os
 from collections import deque
+
+# Telnet library import with future-proofing for Python 3.13+
+# Note: telnetlib was deprecated in Python 3.11 and removed in 3.13
+# For Python 3.13+, install telnetlib3: pip install telnetlib3
+# Then use: from telnetlib3.telnetlib import Telnet (drop-in replacement)
+try:
+    import telnetlib
+except ImportError:
+    # Python 3.13+ - telnetlib removed from stdlib
+    try:
+        from telnetlib3.telnetlib import Telnet as telnetlib
+        print("Note: Using telnetlib3 (telnetlib not available in Python 3.13+)")
+    except ImportError:
+        print("Error: telnetlib not available. For Python 3.13+, install: pip install telnetlib3")
+        sys.exit(1)
 
 
 class Colors:
