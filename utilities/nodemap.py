@@ -1172,7 +1172,7 @@ class NodeCrawler:
                 # If no routing entry found, skip this neighbor (likely user/BBS station)
                 if not has_node_route:
                     if self.verbose:
-                        print("    Skipping {} (no routing entry found, likely user/BBS station)".format(neighbor))
+                        print("    Skipping {} (no routing entry found)".format(neighbor))
                     continue
                 
                 # Calculate path to this neighbor through the visited node
