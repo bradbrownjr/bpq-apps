@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.87] - 2026-01-13
+### Fixed
+- Resume mode now checks ROUTES data instead of netrom_ssids to identify nodes
+- Prevents connection attempts to BBS/application SSIDs (e.g., KB1TAE with only KB1TAE-2/KB1TAE-4)
+- Only queues neighbors that have routing entries (actual nodes, not just services)
+- Fixes issue where script connected to KB1TAE PBBS instead of recognizing it's not a node
+
 ## [nodemap-html 1.1.5] - 2026-01-13
 ### Fixed
 - HTML map now deduplicates bidirectional connections (was showing 14, now shows 7)

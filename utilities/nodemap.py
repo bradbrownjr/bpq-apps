@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.86
+Version: 1.3.87
 """
 
-__version__ = '1.3.86'
+__version__ = '1.3.87'
 
 import sys
 import telnetlib
@@ -1150,24 +1150,29 @@ class NodeCrawler:
                 if neighbor in self.visited or neighbor in self.exclude:
                     continue
                 
-                # Filter out non-node SSIDs using netrom_ssids mapping
-                # Only queue neighbors that have node SSIDs (appeared in ROUTES/NODES commands)
+                # Filter out non-node SSIDs by checking ROUTES data
+                # Only queue neighbors that appear in ROUTES commands (actual nodes)
                 neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
                 
-                # Check if this neighbor has a known node SSID
-                has_node_ssid = False
+                # Check if this neighbor appears in any node's ROUTES as a node
+                # ROUTES entries indicate routing capability (= node), not just BBS/application SSIDs
+                has_node_route = False
                 
-                # Check netrom_ssids from all nodes to see if neighbor is a known node
                 for node_call, n_data in nodes_data.items():
-                    node_ssids = n_data.get('netrom_ssids', {})
-                    if neighbor_base in node_ssids:
-                        has_node_ssid = True
+                    routes = n_data.get('routes', {})
+                    # Check if neighbor base appears in routes (with any quality)
+                    for route_call in routes.keys():
+                        route_base = route_call.split('-')[0] if '-' in route_call else route_call
+                        if route_base == neighbor_base:
+                            has_node_route = True
+                            break
+                    if has_node_route:
                         break
                 
-                # If no node SSID found, skip this neighbor (likely a user station)
-                if not has_node_ssid:
+                # If no routing entry found, skip this neighbor (likely user/BBS station)
+                if not has_node_route:
                     if self.verbose:
-                        print("    Skipping {} (no node SSID found, likely user station)".format(neighbor))
+                        print("    Skipping {} (no routing entry found, likely user/BBS station)".format(neighbor))
                     continue
                 
                 # Calculate path to this neighbor through the visited node
