@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.100] - 2026-01-14
+### Fixed
+- SSID restoration now prioritizes own_aliases (node's own SSID) over routes
+- Fixes KC1JMH resolving to KC1JMH-15 instead of KC1JMH-7 from old netrom_ssids
+- Extracts node SSID from primary alias in own_aliases (e.g., CMBWBK:KC1JMH-15)
+
 ## [nodemap 1.3.99] - 2026-01-14
 ### Fixed
 - Resume mode now checks if **parent node** has valid route (quality > 0) to neighbor

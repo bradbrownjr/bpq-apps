@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.99
+Version: 1.3.100
 """
 
-__version__ = '1.3.99'
+__version__ = '1.3.100'
 
 import sys
 import socket
@@ -1145,19 +1145,32 @@ class NodeCrawler:
         
         # Restore SSID mappings from previous crawl data
         # This is critical for resume functionality - connections need proper SSIDs
-        # Priority: ROUTES data (node SSIDs) > netrom_ssids (may include user SSIDs)
+        # Priority: own_aliases (node's own SSID) > ROUTES data > netrom_ssids
         for callsign, node_data in nodes_data.items():
-            # First, restore route-based SSIDs (highest priority - these are actual node SSIDs)
+            # Highest priority: Extract node's own SSID from own_aliases
+            # own_aliases contains the node's own SSIDs (CMBWBK:KC1JMH-15, etc.)
+            own_aliases = node_data.get('own_aliases', {})
+            if own_aliases:
+                # Find the node SSID (typically ends in -15, but check all)
+                # The "primary" alias is usually the node itself
+                node_alias = node_data.get('alias')  # Primary alias like "CMBWBK"
+                if node_alias and node_alias in own_aliases:
+                    full_node_ssid = own_aliases[node_alias]  # e.g., "KC1JMH-15"
+                    base_call = full_node_ssid.split('-')[0] if '-' in full_node_ssid else full_node_ssid
+                    self.netrom_ssid_map[base_call] = full_node_ssid
+            
+            # Second priority: restore route-based SSIDs (actual node SSIDs)
             routes = node_data.get('routes', {})
             for route_call in routes.keys():
                 base_call = route_call.split('-')[0] if '-' in route_call else route_call
-                # Always update netrom_ssid_map with route data (authoritative)
-                self.netrom_ssid_map[base_call] = route_call
+                # Only update if not already set by own_aliases
+                if base_call not in self.netrom_ssid_map:
+                    self.netrom_ssid_map[base_call] = route_call
             
-            # Then restore netrom_ssids (lower priority - may contain user/operator SSIDs)
+            # Lowest priority: restore netrom_ssids (may contain user/operator SSIDs)
             node_ssids = node_data.get('netrom_ssids', {})
             for base_call, full_call in node_ssids.items():
-                # Only use if not already set by routes
+                # Only use if not already set by own_aliases or routes
                 if base_call not in self.netrom_ssid_map:
                     self.netrom_ssid_map[base_call] = full_call
             
