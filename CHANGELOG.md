@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.4.2] - 2026-01-14
+### Fixed
+- CLI-forced SSIDs (`--callsign`) now respected during reconnection attempts after timeouts/disconnects
+  - Previously: node disconnects mid-crawl, script reconnects using stale SSID from `netrom_ssid_map`
+  - Now: checks `cli_forced_ssids` first before falling back to discovered SSIDs on all connection attempts
+
 ## [nodemap 1.4.1] - 2026-01-14
 ### Fixed
 - `--callsign` forced SSIDs now survive resume mode (were being overwritten by JSON data)

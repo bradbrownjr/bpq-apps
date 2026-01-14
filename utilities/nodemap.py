@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.4.1
+Version: 1.4.2
 """
 
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 
 import sys
 import socket
@@ -414,7 +414,8 @@ class NodeCrawler:
                 lookup_call = callsign.split('-')[0] if '-' in callsign else callsign
                 
                 port_num = self.route_ports.get(lookup_call)
-                full_callsign = self.netrom_ssid_map.get(lookup_call, callsign)
+                # CLI-forced SSIDs always take precedence over discovered SSIDs
+                full_callsign = self.cli_forced_ssids.get(lookup_call) or self.netrom_ssid_map.get(lookup_call, callsign)
                 
                 if port_num and full_callsign:
                     # Direct neighbor with known port and SSID: C PORT CALLSIGN-SSID
