@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.94
+Version: 1.3.95
 """
 
-__version__ = '1.3.94'
+__version__ = '1.3.95'
 
 import sys
 import socket
@@ -814,8 +814,9 @@ class NodeCrawler:
             # Over RF, responses arrive in chunks with gaps
             response = b''
             read_attempts = 0
-            max_attempts = 3  # Try multiple times to get complete response
+            max_attempts = 5  # Try multiple times to get complete response (increased for large NODES output)
             last_response_len = 0
+            stable_count = 0  # Count consecutive attempts with no growth
             
             while read_attempts < max_attempts:
                 read_attempts += 1
@@ -834,7 +835,7 @@ class NodeCrawler:
                     pass
                 
                 # Consume any extra buffered data
-                time.sleep(0.5)  # Give time for trailing data to arrive
+                time.sleep(1.0)  # Give more time for trailing data to arrive over RF
                 try:
                     extra = tn.read_very_eager()
                     if extra:
@@ -843,18 +844,26 @@ class NodeCrawler:
                 except:
                     pass
                 
-                # Check if we have enough data (response stopped growing)
+                # Check if response stopped growing
                 if len(response) > 0 and len(response) == last_response_len:
-                    break
+                    stable_count += 1
+                    # Need 2 consecutive stable readings to confirm done (2 seconds with no data)
+                    if stable_count >= 2:
+                        break
+                else:
+                    stable_count = 0  # Reset if we got more data
                 last_response_len = len(response)
                 
                 # If we have expected content, check for it
                 decoded_check = response.decode('ascii', errors='ignore')
                 if expect_content and expect_content.lower() in decoded_check.lower():
-                    break  # Found what we're looking for
+                    # Still wait for stable response even if we found expected content
+                    # (there might be more data after it)
+                    if stable_count >= 1:
+                        break
                 
-                # Small delay before retry
-                if read_attempts < max_attempts:
+                # Delay before retry (already did 1.0s above)
+                if read_attempts < max_attempts and stable_count == 0:
                     time.sleep(0.5)
             
             decoded = response.decode('ascii', errors='ignore')

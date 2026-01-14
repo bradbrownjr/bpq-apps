@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.95] - 2026-01-14
+### Fixed
+- Improved command response handling for large outputs (NODES, ROUTES)
+- Increased wait time between read attempts from 0.5s to 1.0s for slow RF links
+- Requires 2 consecutive stable readings (2s total) before considering response complete
+- Prevents premature command interruption on multi-hop simplex RF connections
+
 ## [nodemap 1.3.94] - 2026-01-14
 ### Fixed
 - Frequency parsing now handles formats without "MHz" suffix (e.g., "144.990" from KY2D-15)
