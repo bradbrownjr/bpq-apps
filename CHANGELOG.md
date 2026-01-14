@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.0.1] - 2026-01-14
+### Added
+- HTML map now displays unmapped nodes (nodes without gridsquare data) in info box with orange header.
+- Unmapped nodes listed separately to explain why some crawled nodes don't appear on map.
+
 ## [nodemap 1.3.106] - 2026-01-14
 ### Changed
 - Improved application detection: Now correctly identifies custom apps (GOPHER, EANHUB, TEST, FORMS, etc.) vs standard BPQ commands. Uses set for faster lookups.
