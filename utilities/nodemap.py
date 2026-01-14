@@ -2867,7 +2867,7 @@ def main():
                     node_data = nodes_data[query_call]
             
             # Display node info
-            print("\\n" + "=" * 60)
+            print("\n" + "=" * 60)
             print("Node: {}".format(query_call))
             print("=" * 60)
             
@@ -2903,14 +2903,14 @@ def main():
                 # Filter out NetRom aliases
                 apps = [a for a in applications if ':' not in a and '}' not in a]
                 if apps:
-                    print("\\nApplications ({}):\n  {}".format(len(apps), ', '.join(apps)))
+                    print("\nApplications ({}):\n  {}".format(len(apps), ', '.join(apps)))
             
             # Neighbors
             neighbors = node_data.get('neighbors', [])
             explored = node_data.get('explored_neighbors', [])
             unexplored = node_data.get('unexplored_neighbors', [])
             
-            print("\\nNeighbors ({} total):".format(len(neighbors)))
+            print("\nNeighbors ({} total):".format(len(neighbors)))
             if explored:
                 print("  Explored: {}".format(', '.join(sorted(explored))))
             if unexplored:
@@ -2919,7 +2919,7 @@ def main():
             # Routes with quality
             routes = node_data.get('routes', {})
             if routes:
-                print("\\nRoutes ({} reachable nodes):".format(len(routes)))
+                print("\nRoutes ({} reachable nodes):".format(len(routes)))
                 # Show top 10 by quality
                 sorted_routes = sorted(routes.items(), key=lambda x: (-x[1], x[0]))[:10]
                 for route_call, quality in sorted_routes:
@@ -2931,12 +2931,12 @@ def main():
             ports = node_data.get('ports', [])
             rf_ports = [p for p in ports if p.get('is_rf')]
             if rf_ports:
-                print("\\nRF Ports ({}):".format(len(rf_ports)))
+                print("\nRF Ports ({}):".format(len(rf_ports)))
                 for port in rf_ports:
                     freq = port.get('frequency', 'Unknown')
                     print("  Port {}: {} MHz".format(port.get('port_num'), freq))
             
-            print("=" * 60 + "\\n")
+            print("=" * 60)
             
         except json.JSONDecodeError as e:
             colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)
