@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [map_boundaries.py & download_boundaries.py] - 2026-01-13
+### Changed
+- Replaced heavily simplified boundary coordinates with accurate Natural Earth 1:10m data
+- Updated to Natural Earth Data (Public Domain) from naturalearthdata.com
+- Improved boundary accuracy for SVG offline maps
+- Added download_boundaries.py utility to regenerate boundaries from source
+- Implemented Douglas-Peucker simplification algorithm for manageable file sizes
+- Filtered to 14 northeastern US states (ME, NH, VT, MA, CT, RI, NY, PA, NJ, MD, DE, VA, WV, DC)
+- Note: County boundaries still require separate processing from Census TIGER/Line files
+
 ## [nodemap 1.3.88] - 2026-01-13
 ### Changed
 - Simplified verbose skip message to remove redundant explanation
