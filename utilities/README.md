@@ -54,8 +54,15 @@ for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://
 
 **SSID Selection Priority:**
 1. **ROUTES command** (authoritative) - Shows actual node SSIDs for connections
-2. **MHEARD data** (fallback) - What was heard on RF, may include apps/operators
-3. **NODES aliases** (ignored for connections) - Often contain app SSIDs like BBS (-2), RMS (-10)
+2. **Newer MHEARD data** (can update old MHEARD) - What was heard on RF within 1 hour
+3. **Older MHEARD data** (fallback) - Stale RF observations
+4. **NODES aliases** (ignored for connections) - Often contain app SSIDs like BBS (-2), RMS (-10)
+
+**SSID Tracking:**
+- Tracks source of each SSID: ROUTES (authoritative), MHEARD (RF observed), or CLI (user-forced)
+- ROUTES always wins, newer MHEARD (>1hr) can update older MHEARD
+- Prevents stale SSID discovery from causing incorrect connections
+- Use `--callsign CALL-SSID` to force correct SSID when known
 
 **Path Quality:**
 - **Quality > 0**: Route is available and usable
@@ -80,6 +87,13 @@ for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://
 **Options:**
 - `--overwrite` or `-o` - Replace existing data (default: merge mode)
 - `--resume` or `-r` - Continue from unexplored nodes in existing data
+- `--callsign CALL-SSID` - Force specific node SSID (e.g., `--callsign NG1P-4`)
+  - Use when node has multiple SSIDs (BBS vs node port)
+  - Overrides auto-discovered SSID and updates map for future crawls
+- `--query CALL` or `-q CALL` - Query node info without crawling
+  - Shows neighbors (explored/unexplored), apps, routes, best path
+  - Use to check nodes from nodemap-html.py "unmapped nodes" list
+  - Fast lookup: `./nodemap.py -q NG1P`
 - `--mode MODE` - Crawl mode: `update` (default), `reaudit`, `new-only`
   - `update`: Skip already-visited nodes in current session (fastest)
   - `reaudit`: Re-crawl all nodes to verify/update data
@@ -168,6 +182,14 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py 10 --verbose --log debug.txt         # Detailed logging
 ./nodemap.py 5 --notify https://my.webhook.com    # Progress notifications
 ./nodemap.py 10 --user KC1JMH --pass mypass       # With authentication
+
+# Force specific SSID (when node has multiple)
+./nodemap.py 5 --callsign NG1P-4                  # Connect to NG1P-4 (node) not NG1P-1 (BBS)
+./nodemap.py 10 WS1EC --callsign WS1EC-15         # Force node port SSID
+
+# Query node information
+./nodemap.py -q NG1P                              # Show what we know about NG1P
+./nodemap.py --query KC1JMH                       # Neighbors, apps, routes, best path
 ```
 
 ### Output Files
