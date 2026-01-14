@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.89
+Version: 1.3.90
 """
 
-__version__ = '1.3.89'
+__version__ = '1.3.90'
 
 import sys
 import telnetlib
@@ -250,16 +250,16 @@ class NodeCrawler:
     def _calculate_connection_timeout(self, hop_count):
         """
         Calculate connection timeout based on number of hops.
-        At 1200 baud simplex RF: ~30s per hop for connection establishment.
+        At 1200 baud simplex RF: ~45s per hop for connection establishment.
         Simplex means each packet must be ACKed before next can be sent.
         
         Args:
             hop_count: Number of hops in the path
             
         Returns:
-            Timeout in seconds (base 30s + 30s per hop, max 180s)
+            Timeout in seconds (base 45s + 45s per hop, max 240s)
         """
-        return min(30 + (hop_count * 30), 180)
+        return min(45 + (hop_count * 45), 240)
     
     def _verify_netrom_route(self, tn, target):
         """
@@ -1597,9 +1597,9 @@ class NodeCrawler:
         
         # Set overall operation timeout (commands + processing)
         # Allow more generous timeout for nodes with many neighbors
-        # 3 minutes base + 2 minutes per hop (was 2min + 1min/hop)
+        # 4 minutes base + 3 minutes per hop (was 3min + 2min/hop)
         # This gives more time for processing routes, mheard, and neighbor analysis
-        operation_deadline = time.time() + 180 + (hop_count * 120)
+        operation_deadline = time.time() + 240 + (hop_count * 180)
         
         try:
             # Helper to check if we've exceeded deadline
@@ -1611,7 +1611,7 @@ class NodeCrawler:
             
             # Inter-command delay scales with hop count
             # Over multi-hop RF, need time for responses to fully arrive
-            inter_cmd_delay = 0.5 + (hop_count * 0.5)  # 0.5s base + 0.5s per hop
+            inter_cmd_delay = 1.0 + (hop_count * 0.5)  # 1s base + 0.5s per hop
             
             # First, try ? to discover available commands
             # Some nodes may not support standard BPQ commands

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.90] - 2026-01-13
+### Changed
+- Increased connection timeout per hop from 30s to 45s (max 240s)
+- Increased operation timeout from 3min+2min/hop to 4min+3min/hop
+- Increased inter-command delay from 0.5s+0.5s/hop to 1s+0.5s/hop
+- Allows more time for slow RF links to complete multi-hop operations
+
 ## [nodemap-html 1.1.6] - 2026-01-13
 ### Fixed
 - HTML map output now reports deduplicated connection count (matching SVG count)
