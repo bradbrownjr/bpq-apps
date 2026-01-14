@@ -32,11 +32,7 @@ Advanced packet radio network discovery tool that crawls through BPQ nodes via R
 
 Download all nodemap scripts:
 ```bash
-cd ~/utilities
-wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py
-wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap-html.py
-wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/map_boundaries.py
-chmod +x nodemap.py nodemap-html.py
+for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/$f"; done && chmod +x nodemap.py nodemap-html.py
 ```
 
 ### Key Features
