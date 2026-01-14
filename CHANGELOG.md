@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.106] - 2026-01-14
+### Changed
+- Improved application detection: Now correctly identifies custom apps (GOPHER, EANHUB, TEST, FORMS, etc.) vs standard BPQ commands. Uses set for faster lookups.
+- Fixed nodemap-html.py to display all applications properly (was incorrectly filtering NetRom aliases that didn't match node callsign).
+
+### Added
+- Partial crawl data now saved on timeout. If node times out mid-crawl, partial PORTS, ROUTES, and neighbor data is preserved for future analysis.
+- Track partial crawls with 'partial': True flag in node data.
+
 ## [nodemap 1.3.105] - 2026-01-14
 ### Changed
 - Queue entries now include route quality from BPQ ROUTES command. Queue sorted by quality (desc), hop count (asc), then MHEARD recency.

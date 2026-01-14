@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.105
+Version: 1.3.106
 """
 
-__version__ = '1.3.105'
+__version__ = '1.3.106'
 
 import sys
 import socket
@@ -1499,30 +1499,41 @@ class NodeCrawler:
         # Identify actual applications (interactive services)
         # Exclude standard BPQ/JNOS/FBB commands - only keep user-facing applications
         # Standard commands that are NOT applications:
-        standard_commands = [
+        standard_commands = {
             # BPQ User Commands
             'BYE', 'CONNECT', 'C', 'DISCONNECT', 'D', 'INFO', 'I', 'NODES', 'N',
             'PORTS', 'ROUTES', 'USERS', 'U', 'MHEARD', 'MH', 'LINKS', 'L',
             'SESSION', 'S', 'YAPP', 'UNPROTO', 'VERSION', 'V', 'HOME', 'CQ',
-            # BPQ Sysop Commands
+            # BPQ Sysop Commands (uppercase only - avoids filtering 'Sysop' as text)
             'SYSOP', 'ATTACH', 'DETACH', 'RECONNECT', 'RESPTIME', 'FRACK',
             'FRACKS', 'PACLEN', 'MAXFRAME', 'RETRIES', 'RESET',
             # JNOS Commands
             'ARP', 'DIALER', 'DOMAIN', 'EXIT', 'FINGER', 'FTP', 'HELP',
             'HOPCHECK', 'IFCONFIG', 'IP', 'KICK', 'LOG', 'NETROM', 'PING',
-            'PPP', 'RECORD', 'REMOTE', 'RESET', 'ROUTE', 'SMTP', 'START',
+            'PPP', 'RECORD', 'REMOTE', 'ROUTE', 'SMTP', 'START',
             'STOP', 'TCP', 'TRACE', 'UDP', 'UPLOAD',
             # FBB Commands
             'ABORT', 'CHECK', 'DIR', 'EXPERT', 'HELP', 'KILL', 'LIST',
             'READ', 'REPLY', 'SEND', 'STATS', 'TALK', 'VERBOSE', 'WHO'
-        ]
+        }
         
-        # Built-in BPQ applications that should be counted as apps
-        builtin_apps = ['BBS', 'CHAT', 'RMS', 'APRS']
+        # Built-in BPQ applications that should ALWAYS be counted as apps
+        builtin_apps = {'BBS', 'CHAT', 'RMS', 'APRS', 'CHATSVR', 'MAIL'}
         
-        # Filter: include if NOT in standard commands OR if in builtin apps
-        applications = [cmd for cmd in commands 
-                       if cmd.upper() not in standard_commands or cmd.upper() in builtin_apps]
+        # Filter applications: Include if:
+        # 1. In builtin_apps (BBS, CHAT, RMS, etc.)
+        # 2. Not in standard_commands (custom apps like GOPHER, EANHUB, TEST, FORMS, etc.)
+        applications = []
+        for cmd in commands:
+            cmd_upper = cmd.upper()
+            # Always include builtins
+            if cmd_upper in builtin_apps:
+                applications.append(cmd)
+            # Include if not a standard command
+            elif cmd_upper not in standard_commands:
+                # Exclude node prompts (contain ':' or '}' like "CCEMA:WS1EC-15}")
+                if ':' not in cmd and '}' not in cmd:
+                    applications.append(cmd)
         
         return commands, applications
     
@@ -1698,11 +1709,26 @@ class NodeCrawler:
         # This gives more time for processing routes, mheard, and neighbor analysis
         operation_deadline = time.time() + 240 + (hop_count * 180)
         
+        # Track partial crawl data in case of timeout
+        partial_data = {
+            'callsign': callsign,
+            'path': path,
+            'hop_distance': hop_count,
+            'successful_path': path if path else ([] if callsign == self.callsign else [callsign]),
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'partial': True  # Mark as incomplete
+        }
+        
         try:
             # Helper to check if we've exceeded deadline
             def check_deadline():
                 if time.time() > operation_deadline:
                     colored_print("  Operation timeout for {} ({} hops)".format(callsign, hop_count), Colors.YELLOW)
+                    # Save partial data before timeout
+                    if partial_data.get('info') or partial_data.get('ports') or partial_data.get('neighbors'):
+                        colored_print("  Saving partial crawl data for {}...".format(callsign), Colors.YELLOW)
+                        self.nodes[callsign] = partial_data
+                        self.visited.add(callsign)  # Mark as visited to avoid re-crawl loops
                     return True
                 return False
             
@@ -1728,6 +1754,7 @@ class NodeCrawler:
                 return
             ports_output = self._send_command(tn, 'PORTS', timeout=cmd_timeout, expect_content='Port')
             ports_list = self._parse_ports(ports_output)
+            partial_data['ports'] = ports_list  # Save partial
             time.sleep(inter_cmd_delay)
             
             # Get NODES for alias mappings only (not for neighbor discovery)
@@ -1777,6 +1804,7 @@ class NodeCrawler:
                 return
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
             routes, route_ports, routes_ssids = self._parse_routes(routes_output)
+            partial_data['routes'] = routes  # Save partial
             # Update global route_ports with direct neighbor port info from this node
             self.route_ports.update(route_ports)
             

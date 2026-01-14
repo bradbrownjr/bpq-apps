@@ -217,10 +217,13 @@ def generate_html_map(nodes, output_file='nodemap.html'):
         netrom_access = []
         applications = []
         for app in all_apps:
-            # NetRom entries are in format "ALIAS:CALLSIGN-SSID" or just contain node callsign
-            if ':' in app and app.split(':')[1].startswith(callsign):
+            # NetRom entries contain ":" (like "CCEMA:WS1EC-15}") or "}" (prompt)
+            # These are aliases, not applications
+            if (':' in app or '}' in app) and app.split(':')[0] if ':' in app else '':
+                # This is a NetRom alias
                 netrom_access.append(app)
             else:
+                # This is an actual application (BBS, CHAT, GOPHER, EANHUB, etc.)
                 applications.append(app)
         
         # Get frequencies from ports (with band color)
