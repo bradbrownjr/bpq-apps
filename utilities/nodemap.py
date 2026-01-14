@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.87
+Version: 1.3.88
 """
 
-__version__ = '1.3.87'
+__version__ = '1.3.88'
 
 import sys
 import telnetlib

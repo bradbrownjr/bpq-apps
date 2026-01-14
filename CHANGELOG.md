@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.88] - 2026-01-13
+### Changed
+- Simplified verbose skip message to remove redundant explanation
+
 ## [nodemap 1.3.87] - 2026-01-13
 ### Fixed
 - Resume mode now checks ROUTES data instead of netrom_ssids to identify nodes
