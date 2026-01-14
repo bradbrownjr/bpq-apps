@@ -301,6 +301,9 @@ def generate_html_map(nodes, output_file='nodemap.html'):
             unmapped_nodes.append(callsign)
     unmapped_nodes.sort()
     
+    if unmapped_nodes:
+        colored_print("Nodes without gridsquare: {}".format(', '.join(unmapped_nodes)), Colors.YELLOW)
+    
     # Calculate map center
     avg_lat = sum(n['lat'] for n in map_nodes) / len(map_nodes)
     avg_lon = sum(n['lon'] for n in map_nodes) / len(map_nodes)
