@@ -1195,6 +1195,9 @@ class NodeCrawler:
             # Also restore route_ports from routes data (for any additional entries)
             routes = node_data.get('routes', {})
             for neighbor, quality in routes.items():
+                if neighbor not in self.route_ports and quality > 0:
+                    # Use port 1 as fallback if no MHEARD data available
+                    self.route_ports[neighbor] = 1
         
         # Restore CLI-forced SSIDs (these override anything from JSON)
         for base_call, forced_ssid in self.cli_forced_ssids.items():
@@ -1202,9 +1205,6 @@ class NodeCrawler:
             self.ssid_source[base_call] = ('cli', time.time())
             if self.verbose:
                 print("Restored CLI-forced SSID: {} = {}".format(base_call, forced_ssid))
-                if neighbor not in self.route_ports and quality > 0:
-                    # Use port 1 as fallback if no MHEARD data available
-                    self.route_ports[neighbor] = 1
         
         if self.netrom_ssid_map:
             print("Restored {} SSID mappings from previous crawl".format(len(self.netrom_ssid_map)))
