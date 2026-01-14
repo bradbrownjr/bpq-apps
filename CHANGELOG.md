@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.102] - 2026-01-14
+### Fixed
+- SSID restoration from own_aliases now searches for -15 suffix (node SSID)
+- Fixes KC1JMH-4 (CHAT) being used instead of KC1JMH-15 (node)
+- Primary alias field may point to application SSID, not node SSID
+
 ## [nodemap 1.3.101] - 2026-01-14
 ### Fixed
 - Skip routes without SSID suffix when restoring netrom_ssid_map

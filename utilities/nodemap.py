@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.101
+Version: 1.3.102
 """
 
-__version__ = '1.3.101'
+__version__ = '1.3.102'
 
 import sys
 import socket
@@ -1151,13 +1151,14 @@ class NodeCrawler:
             # own_aliases contains the node's own SSIDs (CMBWBK:KC1JMH-15, etc.)
             own_aliases = node_data.get('own_aliases', {})
             if own_aliases:
-                # Find the node SSID (typically ends in -15, but check all)
-                # The "primary" alias is usually the node itself
-                node_alias = node_data.get('alias')  # Primary alias like "CMBWBK"
-                if node_alias and node_alias in own_aliases:
-                    full_node_ssid = own_aliases[node_alias]  # e.g., "KC1JMH-15"
-                    base_call = full_node_ssid.split('-')[0] if '-' in full_node_ssid else full_node_ssid
-                    self.netrom_ssid_map[base_call] = full_node_ssid
+                # Find the node SSID (ends in -15 by convention)
+                # Look through all aliases to find the node SSID
+                for alias_name, full_ssid in own_aliases.items():
+                    if full_ssid.endswith('-15'):
+                        # Found the node SSID
+                        base_call = full_ssid.split('-')[0] if '-' in full_ssid else full_ssid
+                        self.netrom_ssid_map[base_call] = full_ssid
+                        break
             
             # Second priority: restore route-based SSIDs (actual node SSIDs)
             routes = node_data.get('routes', {})
