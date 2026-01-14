@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.93
+Version: 1.3.94
 """
 
-__version__ = '1.3.93'
+__version__ = '1.3.94'
 
 import sys
 import socket
@@ -1272,11 +1272,15 @@ class NodeCrawler:
                 speed = int(speed_match.group(1))
             
             # Try to extract frequency from description
-            # Look for patterns like "433.300 MHz", "145.050 MHz", "144.930 MHz"
+            # Look for patterns like "433.300 MHz", "145.050 MHz", "144.930 MHz", "144.990" (MHz implied)
             frequency = None
-            freq_match = re.search(r'(\d+\.\d+)\s*MHz', rest, re.IGNORECASE)
+            freq_match = re.search(r'(\d+\.\d+)\s*(?:MHz)?', rest, re.IGNORECASE)
             if freq_match:
-                frequency = float(freq_match.group(1))
+                freq_str = freq_match.group(1)
+                # Only parse if it looks like a frequency (30-3000 MHz range for amateur radio)
+                freq_val = float(freq_str)
+                if 30.0 <= freq_val <= 3000.0:
+                    frequency = freq_val
             
             # Full description is everything after port number
             description = rest

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.94] - 2026-01-14
+### Fixed
+- Frequency parsing now handles formats without "MHz" suffix (e.g., "144.990" from KY2D-15)
+- Added frequency validation (30-3000 MHz range) to avoid false positives
+
 ## [nodemap 1.3.93] - 2026-01-14
 ### Changed
 - Added future-proofing for telnetlib removal in Python 3.13+
