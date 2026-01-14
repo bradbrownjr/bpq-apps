@@ -2714,10 +2714,7 @@ def main():
         print("  Staleness filter: Skips nodes not heard in >24 hours")
         sys.exit(0)
     
-    print("BPQ Node Map Crawler v{}".format(__version__))
-    print("=" * 50)
-    
-    # Check for display-only mode first (fast exit)
+    # Check for display-nodes mode first (fast exit)
     if '--display-nodes' in sys.argv or '-d' in sys.argv:
         if not os.path.exists('nodemap.json'):
             colored_print("Error: nodemap.json not found", Colors.RED)
@@ -2948,6 +2945,10 @@ def main():
             sys.exit(1)
         
         sys.exit(0)
+    
+    # Print header for normal operation (after fast-exit modes)
+    print("BPQ Node Map Crawler v{}".format(__version__))
+    print("=" * 50)
     
     # Parse command line args
     max_hops = 10
