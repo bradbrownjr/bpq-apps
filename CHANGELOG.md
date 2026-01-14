@@ -6,13 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.1.6] - 2026-01-13
+### Fixed
+- HTML map output now reports deduplicated connection count (matching SVG count)
+- Eliminates confusion from bidirectional connections being counted twice
+
 ## [nodemap 1.3.89] - 2026-01-13
 ### Fixed
 - Notification errors now display in red color for better visibility
-
-## [Unreleased]
-
-## [nodemap 1.3.89] - 2026-01-13
 ### Fixed
 - Notification errors now display in red color for better visibility
 

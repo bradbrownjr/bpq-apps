@@ -12,12 +12,12 @@ For BPQ Web Server:
   Copy nodemap.html to your BPQ HTML directory and add menu link.
   See --help for BPQ configuration instructions.
 
-Author: Brad Brown KC1JMH
+Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.1.5
+Version: 1.1.6
 """
 
-__version__ = '1.1.5'
+__version__ = '1.1.6'
 
 import sys
 import json
@@ -460,7 +460,13 @@ def generate_html_map(nodes, output_file='nodemap.html'):
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html)
     
-    print("Generated {} ({} nodes, {} connections)".format(output_file, len(map_nodes), len(connections)))
+    # Count unique connections (deduplicated)
+    unique_connections = set()
+    for conn in connections:
+        key = tuple(sorted([conn['from'], conn['to']]))
+        unique_connections.add(key)
+    
+    print("Generated {} ({} nodes, {} connections)".format(output_file, len(map_nodes), len(unique_connections)))
     return True
 
 
