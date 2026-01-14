@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.96
+Version: 1.3.97
 """
 
-__version__ = '1.3.96'
+__version__ = '1.3.97'
 
 import sys
 import socket
@@ -1223,21 +1223,32 @@ class NodeCrawler:
                 neighbor_to_queue = node_ssid
                 
                 # Calculate path to this neighbor through the visited node
-                # We need to reconstruct the path to reach the parent node first using BFS
-                hop_distance = node_data.get('hop_distance', 0)
-                if hop_distance == 0:
-                    # Parent is local node, direct connection to neighbor
-                    path = []
-                else:
-                    # Use BFS to find path from local node to parent node
-                    # Then neighbor is reached via parent
-                    parent_path = self._find_path_to_node(callsign, nodes_data)
-                    if parent_path is not None:
-                        # Path to neighbor = path to parent + parent itself
-                        path = parent_path + [callsign]
+                # Prefer successful_path if available (proven working path), otherwise reconstruct via BFS
+                parent_successful_path = node_data.get('successful_path')
+                if parent_successful_path is not None:
+                    # Use the proven successful path from previous crawl
+                    if callsign == self.callsign:
+                        # Parent is local node
+                        path = []
                     else:
-                        # Fallback: assume direct connection to parent
-                        path = [callsign]
+                        # Path to neighbor = proven path to parent + parent itself
+                        path = parent_successful_path + [callsign]
+                else:
+                    # Fallback to BFS reconstruction
+                    hop_distance = node_data.get('hop_distance', 0)
+                    if hop_distance == 0:
+                        # Parent is local node, direct connection to neighbor
+                        path = []
+                    else:
+                        # Use BFS to find path from local node to parent node
+                        # Then neighbor is reached via parent
+                        parent_path = self._find_path_to_node(callsign, nodes_data)
+                        if parent_path is not None:
+                            # Path to neighbor = path to parent + parent itself
+                            path = parent_path + [callsign]
+                        else:
+                            # Fallback: assume direct connection to parent
+                            path = [callsign]
                 
                 unexplored.append((neighbor_to_queue, path))
         
@@ -1889,6 +1900,9 @@ class NodeCrawler:
             primary_alias = list(own_aliases.keys())[0] if own_aliases else None
             gridsquare = location.get('grid', None)
             
+            # Get successful connection path from shortest_paths (if available)
+            successful_path = self.shortest_paths.get(callsign, path)
+            
             self.nodes[callsign] = {
                 'info': info_output.strip(),
                 'alias': primary_alias,  # Primary NetRom alias (extracted from own_aliases)
@@ -1898,6 +1912,7 @@ class NodeCrawler:
                 'unexplored_neighbors': unexplored_neighbors,  # Neighbors skipped (hop limit)
                 'intermittent_neighbors': intermittent_neighbors,  # Neighbors with failed connections
                 'hop_distance': hop_count,  # RF hops from start node
+                'successful_path': successful_path,  # Intermediate nodes used to reach this node
                 'location': location,  # From INFO (unreliable, sysop-entered)
                 'location_source': 'info',  # Mark as low-confidence
                 'ports': ports_list,  # From PORTS (reliable)

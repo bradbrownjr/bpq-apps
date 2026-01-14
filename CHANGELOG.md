@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.97] - 2026-01-14
+### Added
+- Track successful connection path for each node in `successful_path` field
+- Resume mode now uses proven working paths from previous crawls
+- Reduces failed connection attempts by reusing known-good routes (e.g., KC1JMH > K1NYY > AB1KI)
+
 ## [nodemap 1.3.96] - 2026-01-14
 ### Fixed
 - Resume mode now respects quality 0 (blocked) routes
