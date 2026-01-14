@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.4.3] - 2026-01-14
+### Changed
+- CLI-forced SSIDs (`--callsign`) now update the node's `netrom_ssids` in saved JSON
+  - Allows correcting bad SSID data in existing nodemap.json files
+  - Forced SSID persists for future crawls even without the CLI flag
+  - Verbose mode shows "Updated netrom_ssids: CALL = CALL-SSID (CLI-forced)"
+
 ## [nodemap 1.4.2] - 2026-01-14
 ### Fixed
 - CLI-forced SSIDs (`--callsign`) now respected during reconnection attempts after timeouts/disconnects

@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.4.2
+Version: 1.4.3
 """
 
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 
 import sys
 import socket
@@ -2002,6 +2002,15 @@ class NodeCrawler:
                 'applications': applications,  # From ? command (BBS, CHAT, RMS, etc.)
                 'commands': commands  # From ? command (all available commands)
             }
+            
+            # If this node was crawled with a CLI-forced SSID, update its netrom_ssids entry
+            # This ensures the corrected SSID persists in the JSON for future crawls
+            base_call = callsign.split('-')[0] if '-' in callsign else callsign
+            if base_call in self.cli_forced_ssids:
+                forced_ssid = self.cli_forced_ssids[base_call]
+                self.nodes[callsign]['netrom_ssids'][base_call] = forced_ssid
+                if self.verbose:
+                    print("  Updated netrom_ssids: {} = {} (CLI-forced)".format(base_call, forced_ssid))
             
             # Record connections
             for neighbor in all_neighbors:
