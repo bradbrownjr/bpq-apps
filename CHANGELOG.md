@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.99] - 2026-01-14
+### Fixed
+- Resume mode now checks if **parent node** has valid route (quality > 0) to neighbor
+- Prevents queuing N1REX via KC1JMH when KC1JMH has quality 0 route
+- Will correctly queue N1REX via N1QFY (which has quality 200 route) instead
+
 ## [nodemap 1.3.98] - 2026-01-14
 ### Fixed
 - Resume mode now prioritizes neighbor's own successful_path over parent reconstruction

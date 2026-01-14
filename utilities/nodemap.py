@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.98
+Version: 1.3.99
 """
 
-__version__ = '1.3.98'
+__version__ = '1.3.99'
 
 import sys
 import socket
@@ -1192,44 +1192,37 @@ class NodeCrawler:
                 if neighbor in self.visited or neighbor in self.exclude:
                     continue
                 
-                # Filter out non-node SSIDs by checking ROUTES data
-                # Only queue neighbors that appear in ROUTES commands (actual nodes)
+                # Check if THIS node (current parent) has a valid route to the neighbor
+                # Don't queue via this parent if route is quality 0 (blocked) from this node
                 neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                parent_routes = node_data.get('routes', {})
                 
-                # Check if this neighbor appears in any node's ROUTES as a node
-                # ROUTES entries indicate routing capability (= node), not just BBS/application SSIDs
-                # Also capture the node SSID from routes for accurate connection
-                # Skip quality 0 routes (sysop blocked)
-                node_ssid = None
-                route_quality = None
+                # Find if parent has route to neighbor
+                parent_has_route = False
+                parent_route_quality = 0
+                parent_route_ssid = None
                 
-                for node_call, n_data in nodes_data.items():
-                    routes = n_data.get('routes', {})
-                    # Check if neighbor base appears in routes
-                    for route_call, quality in routes.items():
-                        route_base = route_call.split('-')[0] if '-' in route_call else route_call
-                        if route_base == neighbor_base:
-                            # Found it - use the SSID from routes (authoritative)
-                            node_ssid = route_call
-                            route_quality = quality
-                            break
-                    if node_ssid:
+                for route_call, quality in parent_routes.items():
+                    route_base = route_call.split('-')[0] if '-' in route_call else route_call
+                    if route_base == neighbor_base:
+                        parent_has_route = True
+                        parent_route_quality = quality
+                        parent_route_ssid = route_call
                         break
                 
-                # If no routing entry found, skip this neighbor (likely user/BBS station)
-                if not node_ssid:
+                # Skip if parent doesn't have route or route is quality 0 (blocked)
+                if not parent_has_route:
                     if self.verbose:
-                        print("    Skipping {} (no routing entry found)".format(neighbor))
+                        print("    Skipping {} from {} (no route in parent)".format(neighbor, callsign))
+                    continue
+                    
+                if parent_route_quality == 0:
+                    if self.verbose:
+                        print("    Skipping {} from {} (quality 0 - parent has blocked route)".format(neighbor, callsign))
                     continue
                 
-                # Skip quality 0 routes (sysop has blocked this route)
-                if route_quality == 0:
-                    if self.verbose:
-                        print("    Skipping {} (quality 0 - sysop blocked route)".format(node_ssid))
-                    continue
-                
-                # Use the node SSID from routes (not the neighbor name which might lack SSID)
-                neighbor_to_queue = node_ssid
+                # Use the node SSID from parent's routes (authoritative)
+                neighbor_to_queue = parent_route_ssid
                 
                 # Calculate path to this neighbor
                 # Priority:
