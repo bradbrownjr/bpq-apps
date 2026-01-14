@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.95
+Version: 1.3.96
 """
 
-__version__ = '1.3.95'
+__version__ = '1.3.96'
 
 import sys
 import socket
@@ -1190,16 +1190,19 @@ class NodeCrawler:
                 # Check if this neighbor appears in any node's ROUTES as a node
                 # ROUTES entries indicate routing capability (= node), not just BBS/application SSIDs
                 # Also capture the node SSID from routes for accurate connection
+                # Skip quality 0 routes (sysop blocked)
                 node_ssid = None
+                route_quality = None
                 
                 for node_call, n_data in nodes_data.items():
                     routes = n_data.get('routes', {})
-                    # Check if neighbor base appears in routes (with any quality)
-                    for route_call in routes.keys():
+                    # Check if neighbor base appears in routes
+                    for route_call, quality in routes.items():
                         route_base = route_call.split('-')[0] if '-' in route_call else route_call
                         if route_base == neighbor_base:
                             # Found it - use the SSID from routes (authoritative)
                             node_ssid = route_call
+                            route_quality = quality
                             break
                     if node_ssid:
                         break
@@ -1208,6 +1211,12 @@ class NodeCrawler:
                 if not node_ssid:
                     if self.verbose:
                         print("    Skipping {} (no routing entry found)".format(neighbor))
+                    continue
+                
+                # Skip quality 0 routes (sysop has blocked this route)
+                if route_quality == 0:
+                    if self.verbose:
+                        print("    Skipping {} (quality 0 - sysop blocked route)".format(node_ssid))
                     continue
                 
                 # Use the node SSID from routes (not the neighbor name which might lack SSID)

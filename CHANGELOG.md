@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.96] - 2026-01-14
+### Fixed
+- Resume mode now respects quality 0 (blocked) routes
+- Prevents queuing nodes with sysop-blocked routes (e.g., N1REX from KC1JMH)
+- Aligns resume behavior with normal crawl mode route filtering
+
 ## [nodemap 1.3.95] - 2026-01-14
 ### Fixed
 - Improved command response handling for large outputs (NODES, ROUTES)
