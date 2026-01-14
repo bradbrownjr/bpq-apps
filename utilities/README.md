@@ -63,6 +63,14 @@ for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://
 - ROUTES always wins, newer MHEARD (>1hr) can update older MHEARD
 - Prevents stale SSID discovery from causing incorrect connections
 - Use `--callsign CALL-SSID` to force correct SSID when known
+- CLI-forced SSIDs persist through disconnects/reconnections and update JSON permanently
+
+**Correcting Bad SSID Data:**
+If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
+1. Use `--callsign` flag to force correct SSID: `./nodemap.py 5 --callsign NG1P-4`
+2. Script will connect to correct SSID for all attempts (initial + reconnects)
+3. Upon successful crawl, updates node's `netrom_ssids` in JSON
+4. Future crawls use corrected SSID automatically (no flag needed)
 
 **Path Quality:**
 - **Quality > 0**: Route is available and usable
@@ -89,7 +97,9 @@ for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://
 - `--resume` or `-r` - Continue from unexplored nodes in existing data
 - `--callsign CALL-SSID` - Force specific node SSID (e.g., `--callsign NG1P-4`)
   - Use when node has multiple SSIDs (BBS vs node port)
-  - Overrides auto-discovered SSID and updates map for future crawls
+  - Overrides auto-discovered SSID for all connection attempts (including reconnects)
+  - Updates node's `netrom_ssids` in JSON to correct bad data permanently
+  - Forced SSID persists for future crawls even without the flag
 - `--query CALL` or `-q CALL` - Query node info without crawling
   - Shows neighbors (explored/unexplored), apps, routes, best path
   - Use to check nodes from nodemap-html.py "unmapped nodes" list
