@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.106
+Version: 1.4.0
 """
 
-__version__ = '1.3.106'
+__version__ = '1.4.0'
 
 import sys
 import socket
@@ -133,6 +133,7 @@ class NodeCrawler:
         self.route_ports = {}  # Port numbers for direct neighbors: {callsign: port_number}
         self.shortest_paths = {}  # Shortest discovered path to each node: {callsign: [path]}
         self.netrom_ssid_map = {}  # Global NetRom SSID mapping: {base_callsign: 'CALLSIGN-SSID'}
+        self.ssid_source = {}  # Track SSID source: {base_callsign: ('routes'|'mheard', timestamp)}
         self.alias_to_call = {}  # Global alias->callsign-SSID mapping: {'CHABUR': 'KS1R-13'}
         self.call_to_alias = {}  # Reverse lookup: {'KS1R': 'CHABUR'}
         self.last_heard = {}  # MHEARD timestamps: {callsign: seconds_ago}
@@ -1811,11 +1812,11 @@ class NodeCrawler:
             # ROUTES SSIDs are AUTHORITATIVE for node connections
             # These are the actual node SSIDs (e.g., K1NYY-15), not app SSIDs (K1NYY-2 BBS, K1NYY-10 RMS)
             for call, ssid in routes_ssids.items():
-                if call not in self.netrom_ssid_map or call in routes_ssids:
-                    # Always prefer ROUTES SSID - it's the definitive node SSID
-                    self.netrom_ssid_map[call] = ssid
-                    if self.verbose:
-                        print("    Node SSID from ROUTES: {} = {} (authoritative)".format(call, ssid))
+                # Always update from ROUTES - it's authoritative
+                self.netrom_ssid_map[call] = ssid
+                self.ssid_source[call] = ('routes', time.time())
+                if self.verbose:
+                    print("    Node SSID from ROUTES: {} = {} (authoritative)".format(call, ssid))
             time.sleep(inter_cmd_delay)
             
             # Get MHEARD from each RF port to find actual RF neighbors
@@ -1896,13 +1897,16 @@ class NodeCrawler:
                                     mheard_ports[base_call] = port_num
             
             # Update global netrom_ssid_map with MHEARD data
-            # Priority: 1) ROUTES (already stored above - authoritative for direct neighbors)
-            #           2) MHEARD (only if not already mapped from ROUTES)
-            # Don't overwrite existing entries - ROUTES already has correct node SSIDs
+            # Priority: 1) ROUTES (already stored above - authoritative)
+            #           2) Newer MHEARD (can overwrite older MHEARD, but not ROUTES)
             for call, ssid in mheard_ssids.items():
-                if call not in self.netrom_ssid_map:
-                    # Not in ROUTES, use MHEARD SSID (may be app/operator)
+                source, timestamp = self.ssid_source.get(call, (None, 0))
+                # Update if: no existing SSID, OR existing is from MHEARD and this is newer
+                if call not in self.netrom_ssid_map or (source == 'mheard' and time.time() > timestamp + 3600):
                     self.netrom_ssid_map[call] = ssid
+                    self.ssid_source[call] = ('mheard', time.time())
+                    if self.verbose and call in self.netrom_ssid_map:
+                        print("    Updated SSID from newer MHEARD: {} = {}".format(call, ssid))
             
             # Use MHEARD exclusively for neighbors (stations actually heard on RF with SSIDs)
             # Remove duplicates and exclude self (all SSIDs)
@@ -2225,6 +2229,9 @@ class NodeCrawler:
                                 starting_callsign = resolved_ssid
                                 if self.verbose:
                                     print("Resolved {} to node SSID: {}".format(target_base, resolved_ssid))
+                        
+                        # User can force specific SSID via netrom_ssid_map (pre-populated by --callsign)
+                        # This overrides any discovered SSID
                         
                         # Check if target is actually a node (has SSID) vs user station
                         target_ssid = self.netrom_ssid_map.get(target_base)
@@ -2667,6 +2674,8 @@ def main():
         print("  --display-nodes, -d  Display nodes table from nodemap.json and exit")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
+        print("  --callsign CALL  Force specific SSID for start node (e.g., --callsign NG1P-4)")
+        print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log FILE, -l   Log all telnet traffic to file")
@@ -2681,6 +2690,8 @@ def main():
         print("  {} -m *.json      # Merge all JSON files in current directory".format(sys.argv[0]))
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
         print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
+        print("  {} --callsign NG1P-4  # Force connection to specific SSID".format(sys.argv[0]))
+        print("  {} -q NG1P  # Query what we know about NG1P".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
         print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
@@ -2813,9 +2824,135 @@ def main():
         
         sys.exit(0)
     
+    # Check for query mode first (fast exit)
+    if '--query' in sys.argv or '-q' in sys.argv:
+        query_call = None
+        for i, arg in enumerate(sys.argv):
+            if (arg == '--query' or arg == '-q') and i + 1 < len(sys.argv):
+                query_call = sys.argv[i + 1].upper()
+                break
+        
+        if not query_call:
+            colored_print("Error: --query requires a callsign", Colors.RED)
+            sys.exit(1)
+        
+        if not os.path.exists('nodemap.json'):
+            colored_print("Error: nodemap.json not found", Colors.RED)
+            colored_print("Run a crawl first to generate network data", Colors.RED)
+            sys.exit(1)
+        
+        try:
+            with open('nodemap.json', 'r') as f:
+                data = json.load(f)
+            
+            nodes_data = data.get('nodes', {})
+            base_call = query_call.split('-')[0] if '-' in query_call else query_call
+            
+            # Find node by base callsign or exact match
+            node_data = nodes_data.get(query_call)
+            if not node_data:
+                # Try base callsign
+                matches = [k for k in nodes_data.keys() if k.split('-')[0] == base_call]
+                if not matches:
+                    colored_print("Node {} not found in nodemap.json".format(query_call), Colors.RED)
+                    colored_print("Hint: Run crawl with --callsign {}-SSID to force specific SSID".format(base_call), Colors.YELLOW)
+                    sys.exit(1)
+                elif len(matches) > 1:
+                    colored_print("Multiple SSIDs found for {}: {}".format(base_call, ', '.join(matches)), Colors.YELLOW)
+                    query_call = matches[0]
+                    node_data = nodes_data[query_call]
+                    print("Showing: {}".format(query_call))
+                else:
+                    query_call = matches[0]
+                    node_data = nodes_data[query_call]
+            
+            # Display node info
+            print("\\n" + "=" * 60)
+            print("Node: {}".format(query_call))
+            print("=" * 60)
+            
+            # Basic info
+            alias = node_data.get('alias', 'N/A')
+            node_type = node_data.get('type', 'Unknown')
+            hop_distance = node_data.get('hop_distance', '?')
+            print("Alias: {}".format(alias))
+            print("Type: {}".format(node_type))
+            print("Hop Distance: {}".format(hop_distance))
+            
+            # Location
+            location = node_data.get('location', {})
+            if location:
+                grid = location.get('grid', 'N/A')
+                city = location.get('city', '')
+                state = location.get('state', '')
+                print("Grid Square: {}".format(grid))
+                if city or state:
+                    print("Location: {}{}".format(city, ', ' + state if state else ''))
+            
+            # Best route
+            successful_path = node_data.get('successful_path')
+            if successful_path:
+                if successful_path:
+                    print("Best Route: {}".format(' > '.join(successful_path + [query_call])))
+                else:
+                    print("Best Route: Direct")
+            
+            # Applications
+            applications = node_data.get('applications', [])
+            if applications:
+                # Filter out NetRom aliases
+                apps = [a for a in applications if ':' not in a and '}' not in a]
+                if apps:
+                    print("\\nApplications ({}):\n  {}".format(len(apps), ', '.join(apps)))
+            
+            # Neighbors
+            neighbors = node_data.get('neighbors', [])
+            explored = node_data.get('explored_neighbors', [])
+            unexplored = node_data.get('unexplored_neighbors', [])
+            
+            print("\\nNeighbors ({} total):".format(len(neighbors)))
+            if explored:
+                print("  Explored: {}".format(', '.join(sorted(explored))))
+            if unexplored:
+                print("  Unexplored: {}".format(', '.join(sorted(unexplored))))
+            
+            # Routes with quality
+            routes = node_data.get('routes', {})
+            if routes:
+                print("\\nRoutes ({} reachable nodes):".format(len(routes)))
+                # Show top 10 by quality
+                sorted_routes = sorted(routes.items(), key=lambda x: (-x[1], x[0]))[:10]
+                for route_call, quality in sorted_routes:
+                    print("  {:<15} quality: {}".format(route_call, quality))
+                if len(routes) > 10:
+                    print("  ... ({} more)".format(len(routes) - 10))
+            
+            # Ports
+            ports = node_data.get('ports', [])
+            rf_ports = [p for p in ports if p.get('is_rf')]
+            if rf_ports:
+                print("\\nRF Ports ({}):".format(len(rf_ports)))
+                for port in rf_ports:
+                    freq = port.get('frequency', 'Unknown')
+                    print("  Port {}: {} MHz".format(port.get('port_num'), freq))
+            
+            print("=" * 60 + "\\n")
+            
+        except json.JSONDecodeError as e:
+            colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)
+            sys.exit(1)
+        except Exception as e:
+            colored_print("Error reading nodemap.json: {}".format(e), Colors.RED)
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+        
+        sys.exit(0)
+    
     # Parse command line args
     max_hops = 10
     start_node = None
+    forced_ssid = None  # User-specified SSID to override discovery
     username = None
     password = None
     notify_url = None
@@ -2907,6 +3044,13 @@ def main():
                     merge_files.append(pattern)
                 else:
                     colored_print("Warning: Skipping '{}' - cannot merge output file into itself".format(pattern), Colors.YELLOW)
+            i += 2
+        elif arg == '--callsign' and i + 1 < len(sys.argv):
+            forced_ssid = sys.argv[i + 1].upper()
+            # Validate format: CALL-SSID
+            if '-' not in forced_ssid:
+                colored_print("Error: --callsign requires SSID (e.g., NG1P-4)", Colors.RED)
+                sys.exit(1)
             i += 2
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:
             # Known flags without arguments
@@ -3024,6 +3168,16 @@ def main():
     
     # Crawl network
     try:
+        # If user forced a specific SSID, pre-populate the map
+        if forced_ssid:
+            base_call = forced_ssid.split('-')[0]
+            crawler.netrom_ssid_map[base_call] = forced_ssid
+            crawler.ssid_source[base_call] = ('cli', time.time())
+            colored_print("Forcing SSID: {} (will update SSID map for future crawls)".format(forced_ssid), Colors.GREEN)
+            # Use base callsign if no start_node specified
+            if not start_node:
+                start_node = base_call
+        
         crawler.crawl_network(start_node=start_node)
         
         # Export results

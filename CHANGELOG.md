@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.4.0] - 2026-01-14
+### Added
+- `--callsign CALL-SSID` CLI option to force specific node SSID (e.g., `--callsign NG1P-4`)
+- `--query CALL` or `-q CALL` to display node info: neighbors, apps, routes, best path
+- SSID source tracking: now tracks whether SSID came from ROUTES, MHEARD, or CLI
+
+### Changed
+- MHEARD SSIDs can now update older MHEARD entries (>1hr old) but never overwrite ROUTES
+- ROUTES SSIDs always take priority as most authoritative source
+- Fixes issue where stale SSID discovery prevented correct node connections
+
+### Fixed
+- Nodes with multiple SSIDs (e.g., NG1P-1 BBS vs NG1P-4 node) now correctly connect to node SSID
+- SSID map now updates during crawl instead of only at startup
+
 ## [nodemap-html 1.0.1] - 2026-01-14
 ### Added
 - HTML map now displays unmapped nodes (nodes without gridsquare data) in info box with orange header.
