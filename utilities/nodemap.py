@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.90
+Version: 1.3.91
 """
 
-__version__ = '1.3.90'
+__version__ = '1.3.91'
 
 import sys
 import telnetlib
@@ -1156,7 +1156,8 @@ class NodeCrawler:
                 
                 # Check if this neighbor appears in any node's ROUTES as a node
                 # ROUTES entries indicate routing capability (= node), not just BBS/application SSIDs
-                has_node_route = False
+                # Also capture the node SSID from routes for accurate connection
+                node_ssid = None
                 
                 for node_call, n_data in nodes_data.items():
                     routes = n_data.get('routes', {})
@@ -1164,16 +1165,20 @@ class NodeCrawler:
                     for route_call in routes.keys():
                         route_base = route_call.split('-')[0] if '-' in route_call else route_call
                         if route_base == neighbor_base:
-                            has_node_route = True
+                            # Found it - use the SSID from routes (authoritative)
+                            node_ssid = route_call
                             break
-                    if has_node_route:
+                    if node_ssid:
                         break
                 
                 # If no routing entry found, skip this neighbor (likely user/BBS station)
-                if not has_node_route:
+                if not node_ssid:
                     if self.verbose:
                         print("    Skipping {} (no routing entry found)".format(neighbor))
                     continue
+                
+                # Use the node SSID from routes (not the neighbor name which might lack SSID)
+                neighbor_to_queue = node_ssid
                 
                 # Calculate path to this neighbor through the visited node
                 # We need to reconstruct the path to reach the parent node first using BFS
@@ -1192,7 +1197,7 @@ class NodeCrawler:
                         # Fallback: assume direct connection to parent
                         path = [callsign]
                 
-                unexplored.append((neighbor, path))
+                unexplored.append((neighbor_to_queue, path))
         
         # Sort by multiple criteria to try best paths first:
         # 1. Hop count (fewer hops = more reliable)

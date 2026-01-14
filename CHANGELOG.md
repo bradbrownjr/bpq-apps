@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.91] - 2026-01-14
+### Fixed
+- Resume mode now uses node SSID from ROUTES table when queuing unexplored neighbors
+- Prevents attempting to connect to wrong SSIDs (e.g., KC1JMH-7 instead of KC1JMH-15)
+- Ensures authoritative SSID from routing tables is used for connections
+
 ## [nodemap 1.3.90] - 2026-01-13
 ### Changed
 - Increased connection timeout per hop from 30s to 45s (max 240s)
