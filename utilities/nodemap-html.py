@@ -219,7 +219,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
         for app in all_apps:
             # NetRom entries contain ":" (like "CCEMA:WS1EC-15}") or "}" (prompt)
             # These are aliases, not applications
-            if (':' in app or '}' in app) and app.split(':')[0] if ':' in app else '':
+            if ':' in app or '}' in app:
                 # This is a NetRom alias
                 netrom_access.append(app)
             else:
