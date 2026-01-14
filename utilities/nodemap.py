@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.97
+Version: 1.3.98
 """
 
-__version__ = '1.3.97'
+__version__ = '1.3.98'
 
 import sys
 import socket
@@ -1145,10 +1145,19 @@ class NodeCrawler:
         
         # Restore SSID mappings from previous crawl data
         # This is critical for resume functionality - connections need proper SSIDs
+        # Priority: ROUTES data (node SSIDs) > netrom_ssids (may include user SSIDs)
         for callsign, node_data in nodes_data.items():
-            # Restore netrom_ssids from each node's discovered SSID data
+            # First, restore route-based SSIDs (highest priority - these are actual node SSIDs)
+            routes = node_data.get('routes', {})
+            for route_call in routes.keys():
+                base_call = route_call.split('-')[0] if '-' in route_call else route_call
+                # Always update netrom_ssid_map with route data (authoritative)
+                self.netrom_ssid_map[base_call] = route_call
+            
+            # Then restore netrom_ssids (lower priority - may contain user/operator SSIDs)
             node_ssids = node_data.get('netrom_ssids', {})
             for base_call, full_call in node_ssids.items():
+                # Only use if not already set by routes
                 if base_call not in self.netrom_ssid_map:
                     self.netrom_ssid_map[base_call] = full_call
             
@@ -1222,33 +1231,44 @@ class NodeCrawler:
                 # Use the node SSID from routes (not the neighbor name which might lack SSID)
                 neighbor_to_queue = node_ssid
                 
-                # Calculate path to this neighbor through the visited node
-                # Prefer successful_path if available (proven working path), otherwise reconstruct via BFS
-                parent_successful_path = node_data.get('successful_path')
-                if parent_successful_path is not None:
-                    # Use the proven successful path from previous crawl
-                    if callsign == self.callsign:
-                        # Parent is local node
-                        path = []
-                    else:
-                        # Path to neighbor = proven path to parent + parent itself
-                        path = parent_successful_path + [callsign]
+                # Calculate path to this neighbor
+                # Priority:
+                # 1. If neighbor was previously visited successfully, use its own successful_path
+                # 2. Otherwise, use parent's successful_path + parent callsign
+                # 3. Fallback to BFS reconstruction
+                neighbor_node_data = nodes_data.get(neighbor_to_queue)
+                if neighbor_node_data and 'successful_path' in neighbor_node_data:
+                    # Use the neighbor's own proven successful path (highest priority)
+                    path = neighbor_node_data['successful_path']
+                    if self.verbose:
+                        print("    Using proven path for {}: {}".format(neighbor_to_queue, ' > '.join(path) if path else '(direct)'))
                 else:
-                    # Fallback to BFS reconstruction
-                    hop_distance = node_data.get('hop_distance', 0)
-                    if hop_distance == 0:
-                        # Parent is local node, direct connection to neighbor
-                        path = []
-                    else:
-                        # Use BFS to find path from local node to parent node
-                        # Then neighbor is reached via parent
-                        parent_path = self._find_path_to_node(callsign, nodes_data)
-                        if parent_path is not None:
-                            # Path to neighbor = path to parent + parent itself
-                            path = parent_path + [callsign]
+                    # Reconstruct path via parent node
+                    parent_successful_path = node_data.get('successful_path')
+                    if parent_successful_path is not None:
+                        # Use the proven successful path from previous crawl
+                        if callsign == self.callsign:
+                            # Parent is local node
+                            path = []
                         else:
-                            # Fallback: assume direct connection to parent
-                            path = [callsign]
+                            # Path to neighbor = proven path to parent + parent itself
+                            path = parent_successful_path + [callsign]
+                    else:
+                        # Fallback to BFS reconstruction
+                        hop_distance = node_data.get('hop_distance', 0)
+                        if hop_distance == 0:
+                            # Parent is local node, direct connection to neighbor
+                            path = []
+                        else:
+                            # Use BFS to find path from local node to parent node
+                            # Then neighbor is reached via parent
+                            parent_path = self._find_path_to_node(callsign, nodes_data)
+                            if parent_path is not None:
+                                # Path to neighbor = path to parent + parent itself
+                                path = parent_path + [callsign]
+                            else:
+                                # Fallback: assume direct connection to parent
+                                path = [callsign]
                 
                 unexplored.append((neighbor_to_queue, path))
         

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.98] - 2026-01-14
+### Fixed
+- Resume mode now prioritizes neighbor's own successful_path over parent reconstruction
+- SSID restoration now prioritizes ROUTES data (node SSIDs) over netrom_ssids (may contain user SSIDs)
+- Fixes KC1JMH-7 issue - now correctly uses KC1JMH-15 (node SSID) from ROUTES
+- Prevents attempting blocked routes when better proven paths exist
+
 ## [nodemap 1.3.97] - 2026-01-14
 ### Added
 - Track successful connection path for each node in `successful_path` field
