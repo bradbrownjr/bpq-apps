@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.105] - 2026-01-14
+### Changed
+- Queue entries now include route quality from BPQ ROUTES command. Queue sorted by quality (desc), hop count (asc), then MHEARD recency.
+- Allow multiple paths to same node (queue all valid paths, not just shortest). Enables fallback to alternate paths when primary route fails.
+- Skip quality 0 routes (sysop-blocked) during neighbor discovery.
+- Track queued paths to prevent duplicate queue entries for same path.
+
 ## [nodemap 1.3.104] - 2026-01-14
 ### Fixed
 - Fixed timeout issue with large NODES responses over multi-hop paths. Reduced per-read timeout from full cmd_timeout to 3s max and increased retry attempts proportional to overall timeout. Prevents premature timeout when NODES list hasn't finished transmitting before ROUTES command sent.

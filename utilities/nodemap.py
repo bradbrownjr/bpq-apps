@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.104
+Version: 1.3.105
 """
 
-__version__ = '1.3.104'
+__version__ = '1.3.105'
 
 import sys
 import socket
@@ -137,7 +137,8 @@ class NodeCrawler:
         self.call_to_alias = {}  # Reverse lookup: {'KS1R': 'CHABUR'}
         self.last_heard = {}  # MHEARD timestamps: {callsign: seconds_ago}
         self.intermittent_links = {}  # Failed connections: {(from, to): [attempts]}
-        self.queue = deque()  # BFS queue for crawling
+        self.queue = deque()  # BFS queue for crawling: entries are (callsign, path, quality)
+        self.queued_paths = set()  # Track queued paths to avoid duplicates: {(callsign, tuple(path))}
         self.timeout = 10  # Telnet timeout in seconds
         
     def _find_bpq_port(self):
@@ -1974,7 +1975,8 @@ class NodeCrawler:
                     'intermittent': is_intermittent  # Mark unreliable/failed connections
                 })
                 
-                # Add unvisited neighbors to queue with shortest path optimization
+                # Add unvisited neighbors to queue - allow multiple paths per node
+                # Queue all valid paths, prioritized by route quality from current node
                 # Only queue if within hop limit (next hop would be hop_count + 1)
                 # Note: We don't check self.failed here - nodes with intermittent connections
                 # can still be explored from other neighbors (better paths)
@@ -1998,24 +2000,41 @@ class NodeCrawler:
                         # Need to route through this node to reach its neighbors
                         new_path = [callsign]
                     
-                    # Check if this is a shorter path than previously discovered
+                    # Track shortest path for reference (but queue all paths)
                     if neighbor not in self.shortest_paths or len(new_path) < len(self.shortest_paths[neighbor]):
                         self.shortest_paths[neighbor] = new_path
-                        
-                        # Skip nodes that haven't been heard in over 24 hours (likely offline)
-                        # 86400 seconds = 24 hours
-                        stale_threshold = 86400
-                        neighbor_age = self.last_heard.get(neighbor, 0)
-                        
-                        if neighbor_age > stale_threshold:
-                            if self.verbose:
-                                days = neighbor_age // 86400
-                                hours = (neighbor_age % 86400) // 3600
-                                print("    Skipping {} (stale: {}d {}h ago)".format(neighbor, days, hours))
-                            continue
-                        
-                        # Only queue if this is a new or shorter path
-                        self.queue.append((neighbor, new_path))
+                    
+                    # Get route quality from current node to this neighbor
+                    route_quality = routes.get(neighbor, 0)
+                    
+                    # Skip quality 0 routes (sysop-blocked/poor paths)
+                    if route_quality == 0:
+                        if self.verbose:
+                            print("    Skipping {} via {} (route quality 0)".format(neighbor, callsign))
+                        continue
+                    
+                    # Check if we've already queued this exact path
+                    path_key = (neighbor, tuple(new_path))
+                    if path_key in self.queued_paths:
+                        if self.verbose:
+                            print("    Skipping duplicate path to {} via {}".format(neighbor, ' > '.join(new_path) if new_path else 'direct'))
+                        continue
+                    
+                    # Skip nodes that haven't been heard in over 24 hours (likely offline)
+                    # 86400 seconds = 24 hours
+                    stale_threshold = 86400
+                    neighbor_age = self.last_heard.get(neighbor, 0)
+                    
+                    if neighbor_age > stale_threshold:
+                        if self.verbose:
+                            days = neighbor_age // 86400
+                            hours = (neighbor_age % 86400) // 3600
+                            print("    Skipping {} (stale: {}d {}h ago)".format(neighbor, days, hours))
+                        continue
+                    
+                    # Queue this path with quality (for prioritization)
+                    self.queue.append((neighbor, new_path, route_quality))
+                    self.queued_paths.add(path_key)
             
             print("  Found {} neighbors: {}".format(
                 len(all_neighbors),
@@ -2073,9 +2092,9 @@ class NodeCrawler:
                     colored_print("No previous crawl data found. Use normal mode to start a fresh crawl.", Colors.RED)
                 return
             
-            # Queue all unexplored nodes
+            # Queue all unexplored nodes (with default quality for resume)
             for callsign, path in unexplored:
-                self.queue.append((callsign, path))
+                self.queue.append((callsign, path, 255))  # Default high quality for resume paths
             
             colored_print("Queued {} unexplored nodes for crawling".format(len(unexplored)), Colors.GREEN)
             mode_name = "Resume" if self.resume else "New-only"
@@ -2279,20 +2298,23 @@ class NodeCrawler:
             
             # Start with specified or local node (with path if remote)
             # path contains intermediate hops only (not the target node itself)
-            queue_entry = (starting_callsign, starting_path if start_node else [])
+            queue_entry = (starting_callsign, starting_path if start_node else [], 255)  # Default high quality
             if self.verbose and start_node:
                 print("Queuing {} with path: {}".format(starting_callsign, starting_path if starting_path else "(direct)"))
             self.queue.append(queue_entry)
         
-        # BFS traversal with priority sorting by MHEARD recency
+        # BFS traversal with priority sorting:
+        # 1. Route quality (higher = better, 0 = blocked)
+        # 2. Hop count (fewer = faster/more reliable)
+        # 3. MHEARD recency (more recent = likely still active)
         while self.queue:
-            # Sort queue by last_heard timestamp (most recent first)
-            # Nodes not in last_heard go to end (never heard, likely stale)
+            # Sort queue by quality (desc), then hop count (asc), then MHEARD recency (asc)
+            # Quality 255 = excellent, 192 = good, 0 = blocked
             queue_list = list(self.queue)
-            queue_list.sort(key=lambda x: self.last_heard.get(x[0], 999999))
+            queue_list.sort(key=lambda x: (-x[2], len(x[1]), self.last_heard.get(x[0], 999999)))
             self.queue = deque(queue_list)
             
-            callsign, path = self.queue.popleft()
+            callsign, path, quality = self.queue.popleft()
             
             # Limit depth to prevent excessive crawling from discovered neighbors
             # BUT: Don't apply limit to the initial starting node (even if remote)
