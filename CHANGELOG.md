@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.3.103] - 2026-01-14
+### Changed
+- SSID restoration now uses consensus from all nodes' ROUTES tables (authoritative)
+- No longer assumes -15 for node SSIDs (can be any 0-15)
+- Picks most common SSID when multiple nodes route to same callsign
+- Fallback to netrom_ssids (MHEARD) only if not in any routes
+
 ## [nodemap 1.3.102] - 2026-01-14
 ### Fixed
 - SSID restoration from own_aliases now searches for -15 suffix (node SSID)

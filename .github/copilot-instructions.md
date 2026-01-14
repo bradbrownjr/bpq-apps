@@ -36,6 +36,11 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 **Callsigns**: 1-2 prefix letters, digit, 1-3 suffix letters, optional -SSID (0-15)
 - Regex: `^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$`
 - Examples: `KC1JMH`, `W1ABC-5`, `N2XY`, `G8BPQ-10`
+- **SSID Usage**: No standard convention for node SSIDs
+  - Node SSID can be ANY number (0-15), not always -15
+  - BBS often -2, RMS often -10, CHAT often -4, but varies by sysop
+  - **Authoritative source**: Other nodes' ROUTES tables (consensus)
+  - Never assume SSID based on convention - extract from network data
 
 **Gridsquares**: 2 letters (field), 2 digits (square), 2 letters (subsquare)
 - Regex: `^[A-R]{2}[0-9]{2}[a-x]{2}$`

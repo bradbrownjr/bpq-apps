@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.3.102
+Version: 1.3.103
 """
 
-__version__ = '1.3.102'
+__version__ = '1.3.103'
 
 import sys
 import socket
@@ -1145,37 +1145,37 @@ class NodeCrawler:
         
         # Restore SSID mappings from previous crawl data
         # This is critical for resume functionality - connections need proper SSIDs
-        # Priority: own_aliases (node's own SSID) > ROUTES data > netrom_ssids
+        # Priority: Aggregate from all nodes' ROUTES (most authoritative) > netrom_ssids (MHEARD)
+        
+        # First pass: Build SSID map from all nodes' ROUTES
+        # When multiple nodes route to the same callsign, they reveal the node SSID
+        ssid_candidates = {}  # {base_call: {full_ssid: count}}
+        
         for callsign, node_data in nodes_data.items():
-            # Highest priority: Extract node's own SSID from own_aliases
-            # own_aliases contains the node's own SSIDs (CMBWBK:KC1JMH-15, etc.)
-            own_aliases = node_data.get('own_aliases', {})
-            if own_aliases:
-                # Find the node SSID (ends in -15 by convention)
-                # Look through all aliases to find the node SSID
-                for alias_name, full_ssid in own_aliases.items():
-                    if full_ssid.endswith('-15'):
-                        # Found the node SSID
-                        base_call = full_ssid.split('-')[0] if '-' in full_ssid else full_ssid
-                        self.netrom_ssid_map[base_call] = full_ssid
-                        break
-            
-            # Second priority: restore route-based SSIDs (actual node SSIDs)
             routes = node_data.get('routes', {})
             for route_call in routes.keys():
-                # Only use routes that have SSIDs (e.g., "KC1JMH-15", not "KC1JMH")
-                # Old JSON format may have routes without SSIDs
+                # Only process routes with SSIDs
                 if '-' not in route_call:
-                    continue  # Skip routes without SSID suffix
+                    continue
                 base_call = route_call.split('-')[0]
-                # Only update if not already set by own_aliases
-                if base_call not in self.netrom_ssid_map:
-                    self.netrom_ssid_map[base_call] = route_call
-            
-            # Lowest priority: restore netrom_ssids (may contain user/operator SSIDs)
+                if base_call not in ssid_candidates:
+                    ssid_candidates[base_call] = {}
+                if route_call not in ssid_candidates[base_call]:
+                    ssid_candidates[base_call][route_call] = 0
+                ssid_candidates[base_call][route_call] += 1
+        
+        # Use the most common SSID for each base callsign (consensus from routes)
+        for base_call, ssid_counts in ssid_candidates.items():
+            if ssid_counts:
+                # Pick the SSID that appears in the most routes (consensus)
+                most_common_ssid = max(ssid_counts.items(), key=lambda x: x[1])[0]
+                self.netrom_ssid_map[base_call] = most_common_ssid
+        
+        # Second pass: Fill in from each node's own netrom_ssids (MHEARD data)
+        for callsign, node_data in nodes_data.items():
             node_ssids = node_data.get('netrom_ssids', {})
             for base_call, full_call in node_ssids.items():
-                # Only use if not already set by own_aliases or routes
+                # Only use if not already set by routes consensus
                 if base_call not in self.netrom_ssid_map:
                     self.netrom_ssid_map[base_call] = full_call
             
