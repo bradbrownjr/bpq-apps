@@ -1347,6 +1347,29 @@ class NodeCrawler:
         print("Found {} path(s) to {} unique neighbor(s)".format(len(unexplored), len(set(call for call, _ in unexplored))))
         return unexplored
     
+    def _is_service_ssid(self, full_callsign):
+        """
+        Check if a callsign-SSID is a service SSID (BBS, RMS, CHAT, etc.).
+        
+        Service SSIDs: -2 (BBS), -4/-5/-13 (CHAT), -10 (RMS/Winlink)
+        Node SSIDs: typically -15 but can be any other number
+        
+        Args:
+            full_callsign: Full callsign with SSID (e.g., 'KS1R-13')
+            
+        Returns:
+            True if service SSID, False if node SSID or no SSID
+        """
+        if '-' not in full_callsign:
+            return False
+        
+        try:
+            ssid = int(full_callsign.rsplit('-', 1)[1])
+            # Common service SSIDs
+            return ssid in [2, 4, 5, 10, 13]
+        except (ValueError, IndexError):
+            return False
+    
     def _parse_ports(self, output):
         """
         Parse PORTS output to extract port details.
