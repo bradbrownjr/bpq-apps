@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.11
+Version: 1.6.0
 """
 
-__version__ = '1.5.11'
+__version__ = '1.6.0'
 
 import sys
 import socket
@@ -2954,6 +2954,7 @@ def main():
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --callsign CALL  Force specific SSID for start node (e.g., --callsign NG1P-4)")
         print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
+        print("  --cleanup        Clean up nodemap.json (remove duplicates, incomplete nodes)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log FILE, -l   Log all telnet traffic to file")
@@ -2990,6 +2991,116 @@ def main():
         print("  Connection timeout: 20s + 20s/hop (max 2min)")
         print("  Operation timeout: 2min + 1min/hop (max ~12min for 10 hops)")
         print("  Staleness filter: Skips nodes not heard in >24 hours")
+        sys.exit(0)
+    
+    # Check for cleanup mode
+    if '--cleanup' in sys.argv:
+        if not os.path.exists('nodemap.json'):
+            colored_print("Error: nodemap.json not found", Colors.RED)
+            sys.exit(1)
+        
+        print("BPQ Node Map Cleanup v{}".format(__version__))
+        print("=" * 50)
+        
+        try:
+            with open('nodemap.json', 'r') as f:
+                data = json.load(f)
+            
+            nodes_data = data.get('nodes', {})
+            removed = []
+            
+            # Find base callsigns with multiple SSID entries
+            base_calls = {}
+            for call in nodes_data.keys():
+                base = call.split('-')[0]
+                if base not in base_calls:
+                    base_calls[base] = []
+                base_calls[base].append(call)
+            
+            # For each base call with duplicates, keep the best one
+            for base, variants in base_calls.items():
+                if len(variants) > 1:
+                    print("\nFound duplicate entries for {}: {}".format(base, ', '.join(variants)))
+                    
+                    # Score each variant: neighbors count + (has_location ? 100 : 0) + (has_apps ? 50 : 0)
+                    scored = []
+                    for variant in variants:
+                        node = nodes_data[variant]
+                        score = len(node.get('neighbors', []))
+                        if node.get('location', {}).get('grid'):
+                            score += 100
+                        if node.get('applications', []):
+                            score += 50
+                        scored.append((variant, score, node))
+                    
+                    # Sort by score (highest first)
+                    scored.sort(key=lambda x: -x[1])
+                    keep = scored[0][0]
+                    
+                    print("  Keeping: {} (score: {}, {} neighbors, {} apps)".format(
+                        keep, scored[0][1], 
+                        len(scored[0][2].get('neighbors', [])),
+                        len(scored[0][2].get('applications', []))
+                    ))
+                    
+                    for variant, score, node in scored[1:]:
+                        print("  Removing: {} (score: {}, {} neighbors, {} apps)".format(
+                            variant, score,
+                            len(node.get('neighbors', [])),
+                            len(node.get('applications', []))
+                        ))
+                        removed.append(variant)
+            
+            # Remove empty/incomplete nodes (no neighbors, no location, no apps)
+            print("\nChecking for incomplete nodes...")
+            for call, node in list(nodes_data.items()):
+                if call in removed:
+                    continue
+                neighbors = node.get('neighbors', [])
+                location = node.get('location', {})
+                apps = node.get('applications', [])
+                
+                if len(neighbors) == 0 and not location.get('grid') and len(apps) == 0:
+                    print("  Removing incomplete: {} (no data)".format(call))
+                    removed.append(call)
+            
+            if removed:
+                # Remove nodes
+                for call in removed:
+                    del nodes_data[call]
+                
+                # Update connections (remove references to deleted nodes)
+                original_conn_count = len(data.get('connections', []))
+                data['connections'] = [c for c in data.get('connections', []) 
+                                      if c['from'] not in removed and c['to'] not in removed]
+                removed_conns = original_conn_count - len(data['connections'])
+                
+                # Backup original
+                import shutil
+                backup_file = 'nodemap.json.backup'
+                shutil.copy('nodemap.json', backup_file)
+                print("\nBacked up original to: {}".format(backup_file))
+                
+                # Save cleaned data
+                with open('nodemap.json', 'w') as f:
+                    json.dump(data, f, indent=2)
+                
+                print("\nCleanup complete!")
+                print("  Removed {} duplicate/incomplete nodes".format(len(removed)))
+                print("  Removed {} orphaned connections".format(removed_conns))
+                print("  Remaining nodes: {}".format(len(nodes_data)))
+                
+                if removed:
+                    print("\nRemoved nodes: {}".format(', '.join(sorted(removed))))
+            else:
+                print("\nNo cleanup needed - nodemap.json is clean!")
+            
+        except Exception as e:
+            colored_print("Error during cleanup: {}".format(e), Colors.RED)
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+        
         sys.exit(0)
     
     # Check for display-nodes mode first (fast exit)

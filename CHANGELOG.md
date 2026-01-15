@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.0] - 2026-01-15
+### Added
+- `--cleanup` option to automatically clean nodemap.json
+- Removes duplicate base callsign entries (keeps most complete one)
+- Removes incomplete nodes (no neighbors, no location, no apps)
+- Creates backup file before cleaning
+- Scores duplicates by: neighbor count + location (100 pts) + apps (50 pts)
+
 ## [nodemap 1.5.11] - 2026-01-15
 ### Added
 - Manual callsign input as final fallback when all automatic path finding fails
