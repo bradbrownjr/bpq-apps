@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.7.5
+Version: 1.7.6
 """
 
-__version__ = '1.7.5'
+__version__ = '1.7.6'
 
 import sys
 import socket
@@ -2909,8 +2909,42 @@ class NodeCrawler:
         # Add new connections from current crawl
         connections_data.extend(self.connections)
         
-        # Update with current crawl data (overwrites duplicates)
+        # Deduplicate nodes before merge: check if base callsign exists with different SSID
+        # If N1QFY exists and we're adding N1QFY-15 (or vice versa), merge to SSID version
         for callsign, node_data in self.nodes.items():
+            base_call = callsign.split('-')[0] if '-' in callsign else callsign
+            
+            # Check if a different SSID variant already exists
+            existing_key = None
+            if callsign in nodes_data:
+                # Exact match - will overwrite
+                existing_key = callsign
+            else:
+                # Check for base or SSID variants
+                for existing_call in list(nodes_data.keys()):
+                    existing_base = existing_call.split('-')[0] if '-' in existing_call else existing_call
+                    if existing_base == base_call:
+                        # Found variant - prefer SSID version over base
+                        if '-' in callsign and '-' not in existing_call:
+                            # New has SSID, existing is base - use new, delete existing
+                            if self.verbose:
+                                print("  Deduplicating: {} replaces {}".format(callsign, existing_call))
+                            del nodes_data[existing_call]
+                            existing_key = None
+                        elif '-' in existing_call and '-' not in callsign:
+                            # Existing has SSID, new is base - keep existing, skip new
+                            if self.verbose:
+                                print("  Deduplicating: keeping {} over {}".format(existing_call, callsign))
+                            existing_key = existing_call
+                        else:
+                            # Both have SSID or both base - overwrite
+                            existing_key = existing_call
+                        break
+            
+            # Add or update node
+            if existing_key and existing_key != callsign:
+                # Merge into existing SSID variant
+                continue
             nodes_data[callsign] = node_data
         
         # Convert intermittent_links keys to strings for JSON serialization

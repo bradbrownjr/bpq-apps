@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.6] - 2026-01-15
+### Fixed
+- Deduplicate nodes during merge when base callsign and SSID variant both exist
+- N1QFY and N1QFY-15 now correctly consolidated (prefers SSID version)
+- Prevents duplicate node circles and connections on map
+- Map no longer shows darker overlapping nodes from duplicate entries
+
 ## [nodemap 1.7.5] - 2026-01-15
 ### Added
 - Separate --debug-log FILE option for verbose debug output only
