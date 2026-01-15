@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.11] - 2026-01-15
+### Added
+- Manual callsign input as final fallback when all automatic path finding fails
+- Validates manual input exists in topology and finds path to it
+
+### Fixed
+- No longer shows empty prompt "(1-0)" when no nodes found
+- Gracefully handles case where topology data is incomplete
+
 ## [nodemap 1.5.10] - 2026-01-15
 ### Fixed
 - MHEARD parsing now prefers SSID entries over non-SSID entries (e.g., KB1TAE-4 over KB1TAE)

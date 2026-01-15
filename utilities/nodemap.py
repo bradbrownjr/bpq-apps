@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.10
+Version: 1.5.11
 """
 
-__version__ = '1.5.10'
+__version__ = '1.5.11'
 
 import sys
 import socket
@@ -2431,41 +2431,45 @@ class NodeCrawler:
                                     # Sort by hop count (closest first), then alphabetically
                                     sorted_nodes = sorted(node_hop_quality, key=lambda x: (x[1], x[0]))
                                     
-                                    print("")
-                                    print("{} has been heard by these nodes:".format(target_base))
-                                    for i, (node, hops, path) in enumerate(sorted_nodes, 1):
-                                        node_info = nodes_data.get(node, {})
-                                        grid = node_info.get('location', {}).get('grid', 'unknown')
-                                        hop_str = "{} hop{}".format(hops, '' if hops == 1 else 's')
-                                        print("  {}) {} ({}, {})".format(i, node, grid, hop_str))
-                                    print("")
-                                    
-                                    # Prompt user to choose intermediate node
-                                    try:
-                                        choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
-                                        
-                                        if not choice:
-                                            colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
-                                            return
-                                        
-                                        choice_idx = int(choice) - 1
-                                        if choice_idx < 0 or choice_idx >= len(sorted_nodes):
-                                            colored_print("Error: Invalid choice", Colors.RED)
-                                            return
-                                        
-                                        intermediate_node, hops, intermediate_path = sorted_nodes[choice_idx]
-                                        print("Selected: {} -> {}".format(intermediate_node, target_base))
-                                        
-                                        # Build complete path: intermediate_path + target
-                                        starting_path = intermediate_path + [target_ssid]
-                                        if self.verbose:
-                                            print("Built path: {}".format(' -> '.join(starting_path)))
-                                        found_path = True
-                                            
-                                    except (ValueError, KeyboardInterrupt, EOFError):
+                                    if sorted_nodes:
                                         print("")
-                                        colored_print("Cancelled", Colors.YELLOW)
-                                        return
+                                        print("{} has been heard by these nodes:".format(target_base))
+                                        for i, (node, hops, path) in enumerate(sorted_nodes, 1):
+                                            node_info = nodes_data.get(node, {})
+                                            grid = node_info.get('location', {}).get('grid', 'unknown')
+                                            hop_str = "{} hop{}".format(hops, '' if hops == 1 else 's')
+                                            print("  {}) {} ({}, {})".format(i, node, grid, hop_str))
+                                        print("")
+                                        
+                                        # Prompt user to choose intermediate node
+                                        try:
+                                            choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
+                                            
+                                            if not choice:
+                                                colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
+                                                return
+                                            
+                                            choice_idx = int(choice) - 1
+                                            if choice_idx < 0 or choice_idx >= len(sorted_nodes):
+                                                colored_print("Error: Invalid choice", Colors.RED)
+                                                return
+                                            
+                                            intermediate_node, hops, intermediate_path = sorted_nodes[choice_idx]
+                                            print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                            
+                                            # Build complete path: intermediate_path + target
+                                            starting_path = intermediate_path + [target_ssid]
+                                            if self.verbose:
+                                                print("Built path: {}".format(' -> '.join(starting_path)))
+                                            found_path = True
+                                                
+                                        except (ValueError, KeyboardInterrupt, EOFError):
+                                            print("")
+                                            colored_print("Cancelled", Colors.YELLOW)
+                                            return
+                                    else:
+                                        # No nodes heard it - continue to all-nodes fallback
+                                        pass
                                 else:
                                     # Truly unknown - not heard by anyone
                                     # Fall back to manual selection from all known nodes
@@ -2530,7 +2534,59 @@ class NodeCrawler:
                                             return
                                     else:
                                         colored_print("Error: No nodes in topology to route through", Colors.RED)
+                                        colored_print("Try crawling more nodes first to build the network topology", Colors.YELLOW)
                                         return
+                                    
+                                    # If we got here and still no path, allow manual callsign entry
+                                    if not found_path:
+                                        print("")
+                                        colored_print("Unable to find automatic path to {}".format(target_base), Colors.YELLOW)
+                                        print("You can manually specify an intermediate node callsign.")
+                                        print("")
+                                        
+                                        try:
+                                            manual_node = input("Enter intermediate node callsign (or blank to cancel): ").strip().upper()
+                                            
+                                            if not manual_node:
+                                                colored_print("Cancelled", Colors.YELLOW)
+                                                return
+                                            
+                                            # Validate it's in the topology
+                                            if manual_node not in nodes_data:
+                                                colored_print("Error: {} not found in network topology".format(manual_node), Colors.RED)
+                                                return
+                                            
+                                            print("Selected: {} -> {}".format(manual_node, target_base))
+                                            
+                                            # Find path to manual node
+                                            queue_to_manual = [(self.callsign, [])]
+                                            visited_to_manual = {self.callsign}
+                                            path_to_manual = None
+                                            
+                                            while queue_to_manual:
+                                                curr, path = queue_to_manual.pop(0)
+                                                if curr == manual_node:
+                                                    path_to_manual = path
+                                                    break
+                                                curr_info = nodes_data.get(curr, {})
+                                                for nbr in curr_info.get('neighbors', []):
+                                                    if nbr not in visited_to_manual:
+                                                        visited_to_manual.add(nbr)
+                                                        queue_to_manual.append((nbr, path + [nbr]))
+                                            
+                                            if path_to_manual is not None:
+                                                starting_path = path_to_manual + [target_ssid]
+                                                if self.verbose:
+                                                    print("Built path: {}".format(' -> '.join(starting_path)))
+                                                found_path = True
+                                            else:
+                                                colored_print("Error: Cannot find path to {}".format(manual_node), Colors.RED)
+                                                return
+                                                
+                                        except (KeyboardInterrupt, EOFError):
+                                            print("")
+                                            colored_print("Cancelled", Colors.YELLOW)
+                                            return
                 else:
                     if self.verbose:
                         print("No existing nodemap.json found or no nodes in it")
