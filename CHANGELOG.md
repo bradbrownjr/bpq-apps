@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.12] - 2026-01-15
+### Fixed
+- Added missing _is_service_ssid() method that was referenced but not included in v1.7.9
+- Fixes AttributeError when crawling with service alias filtering enabled
+
 ## [nodemap 1.7.11] - 2026-01-15
 ### Changed
 - Map generation prompt moved to after crawl completes and summary is displayed
