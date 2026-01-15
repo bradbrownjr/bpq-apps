@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.13] - 2026-01-15
+### Fixed
+- Prioritize node's own SSID from topology keys over netrom_ssids mappings
+- Prevents using MHEARD SSIDs (e.g., KC1JMH-7) when authoritative node SSID exists (KC1JMH-15)
+- Fixes forced_target path connections to use correct node SSIDs
+
+## [nodemap 1.6.12] - 2026-01-15
+### Fixed
+- Prioritize node's own SSID from topology keys over netrom_ssids mappings
+- Prevents using MHEARD SSIDs (e.g., KC1JMH-7) when authoritative node SSID exists (KC1JMH-15)
+- Fixes forced_target path connections to use correct node SSIDs
+
 ## [nodemap 1.6.12] - 2026-01-15
 ### Fixed
 - Only create connections for neighbors in ROUTES table with non-zero quality

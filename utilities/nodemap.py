@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.12
+Version: 1.6.13
 """
 
-__version__ = '1.6.12'
+__version__ = '1.6.13'
 
 import sys
 import socket
@@ -2632,11 +2632,22 @@ class NodeCrawler:
                     return
                 
                 # Populate netrom_ssid_map and route_ports from topology data
+                # Priority: 1) Node's own SSID (from routes where it's listed as direct neighbor)
+                #           2) netrom_ssids from other nodes
                 for node_call, node_info in nodes_data.items():
-                    # Store node's netrom SSIDs for connection routing
+                    # First, store the node's own SSID (this is authoritative)
+                    # The key in nodes_data IS the authoritative SSID (e.g., "KC1JMH-15")
+                    base_node = node_call.split('-')[0] if '-' in node_call else node_call
+                    if '-' in node_call and base_node not in self.netrom_ssid_map:
+                        self.netrom_ssid_map[base_node] = node_call
+                        self.ssid_source[base_node] = ('routes', time.time())
+                    
+                    # Then store SSIDs this node knows about (secondary)
                     for base_call, full_call in node_info.get('netrom_ssids', {}).items():
+                        # Only set if we don't have an authoritative source already
                         if base_call not in self.netrom_ssid_map:
                             self.netrom_ssid_map[base_call] = full_call
+                            self.ssid_source[base_call] = ('topology', time.time())
                     
                     # Store route ports (which port neighbors are heard on)
                     for neighbor_call, port_num in node_info.get('heard_on_ports', []):
