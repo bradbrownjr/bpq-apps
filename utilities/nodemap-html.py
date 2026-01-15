@@ -246,8 +246,12 @@ def generate_html_map(nodes, output_file='nodemap.html'):
                 if ssid not in ssids:
                     ssids.append(ssid)
         
+        # Extract base callsign for display (without SSID)
+        display_call = callsign.split('-')[0] if '-' in callsign else callsign
+        
         map_nodes.append({
             'callsign': callsign,
+            'display_call': display_call,  # Base callsign for map labels
             'lat': lat,
             'lon': lon,
             'grid': grid,
@@ -440,7 +444,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
             popup += '</div>';
             
             marker.bindPopup(popup, { maxWidth: 300 });
-            marker.bindTooltip(node.callsign, { permanent: false, direction: 'top' });
+            marker.bindTooltip(node.display_call, { permanent: false, direction: 'top' });
         });
         
         // Add legend
@@ -533,8 +537,12 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
             if port.get('is_rf') and port.get('frequency'):
                 freq_list.append("{} MHz".format(port['frequency']))
         
+        # Extract base callsign for display (without SSID)
+        display_call = callsign.split('-')[0] if '-' in callsign else callsign
+        
         map_nodes.append({
             'callsign': callsign,
+            'display_call': display_call,  # Base callsign for SVG labels
             'lat': lat,
             'lon': lon,
             'grid': grid,
@@ -735,7 +743,7 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
         svg_lines.append('      <circle r="6" fill="{}" stroke="#333" stroke-width="1.5">'.format(color))
         svg_lines.append('        <title>{}</title>'.format(tooltip.replace('"', '&quot;')))
         svg_lines.append('      </circle>')
-        svg_lines.append('      <text x="8" y="4">{}</text>'.format(node['callsign']))
+        svg_lines.append('      <text x="8" y="4">{}</text>'.format(node['display_call']))
         svg_lines.append('    </g>')
     svg_lines.append('  </g>')
     
