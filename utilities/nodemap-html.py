@@ -272,26 +272,37 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
+    # Build reverse lookup: base callsign -> full callsign
+    # Connections use base callsigns, nodes dict uses full SSIDs
+    base_to_full = {}
+    for full_call in nodes.keys():
+        base_call = full_call.split('-')[0] if '-' in full_call else full_call
+        base_to_full[base_call] = full_call
+    
     for conn in connections:
         from_call = conn['from']
         to_call = conn['to']
         
+        # Resolve base callsigns to full SSIDs
+        from_full = base_to_full.get(from_call, from_call)
+        to_full = base_to_full.get(to_call, to_call)
+        
         # Only include if both nodes have coordinates
-        if from_call in node_coords and to_call in node_coords:
-            from_lat, from_lon = node_coords[from_call]
-            to_lat, to_lon = node_coords[to_call]
+        if from_full in node_coords and to_full in node_coords:
+            from_lat, from_lon = node_coords[from_full]
+            to_lat, to_lon = node_coords[to_full]
             
             # Get frequency for color coding (from source node's ports)
             conn_freq = None
-            if from_call in nodes:
-                for port in nodes[from_call].get('ports', []):
+            if from_full in nodes:
+                for port in nodes[from_full].get('ports', []):
                     if port.get('is_rf') and port.get('frequency'):
                         conn_freq = port['frequency']
                         break
             
             map_connections.append({
-                'from': from_call,
-                'to': to_call,
+                'from': from_full,
+                'to': to_full,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
@@ -565,26 +576,36 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
+    # Build reverse lookup: base callsign -> full callsign
+    base_to_full = {}
+    for full_call in nodes.keys():
+        base_call = full_call.split('-')[0] if '-' in full_call else full_call
+        base_to_full[base_call] = full_call
+    
     for conn in connections:
         from_call = conn['from']
         to_call = conn['to']
         
+        # Resolve base callsigns to full SSIDs
+        from_full = base_to_full.get(from_call, from_call)
+        to_full = base_to_full.get(to_call, to_call)
+        
         # Only include if both nodes have coordinates
-        if from_call in node_coords and to_call in node_coords:
-            from_lat, from_lon = node_coords[from_call]
-            to_lat, to_lon = node_coords[to_call]
+        if from_full in node_coords and to_full in node_coords:
+            from_lat, from_lon = node_coords[from_full]
+            to_lat, to_lon = node_coords[to_full]
             
             # Get frequency for color coding (from source node's ports)
             conn_freq = None
-            if from_call in nodes:
-                for port in nodes[from_call].get('ports', []):
+            if from_full in nodes:
+                for port in nodes[from_full].get('ports', []):
                     if port.get('is_rf') and port.get('frequency'):
                         conn_freq = port['frequency']
                         break
             
             map_connections.append({
-                'from': from_call,
-                'to': to_call,
+                'from': from_full,
+                'to': to_full,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
@@ -847,6 +868,10 @@ def show_help():
 
 def main():
     """Main entry point."""
+    print("")
+    print("Node Map HTML Generator v{}".format(__version__))
+    print("")
+    
     # Parse arguments
     args = sys.argv[1:]
     

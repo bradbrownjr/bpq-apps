@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Previously displayed all MHEARD neighbors as connections, even if not in ROUTES table
 - Maps now correctly show only ROUTES-validated connections that passed nodemap.py cleanup
 - Fixes maps displaying invalid/stale connections despite clean JSON data
+- Added SSID resolution: Connections use base callsigns, nodes use full SSIDs (e.g., "N1QFY" -> "N1QFY-15")
+
+### Added
+- Version display on startup (shows "Node Map HTML Generator v1.2.0")
 
 ## [nodemap 1.7.0] - 2026-01-15
 ### Changed
