@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.8
+Version: 1.5.9
 """
 
-__version__ = '1.5.8'
+__version__ = '1.5.9'
 
 import sys
 import socket
@@ -1718,9 +1718,9 @@ class NodeCrawler:
         
         # Set overall operation timeout (commands + processing)
         # Allow more generous timeout for nodes with many neighbors
-        # 4 minutes base + 3 minutes per hop (was 3min + 2min/hop)
-        # This gives more time for processing routes, mheard, and neighbor analysis
-        operation_deadline = time.time() + 240 + (hop_count * 180)
+        # 6 minutes base + 4 minutes per hop (was 4min + 3min/hop)
+        # RF at 1200 baud is slow; need patience for multi-hop responses
+        operation_deadline = time.time() + 360 + (hop_count * 240)
         
         # Track partial crawl data in case of timeout
         partial_data = {

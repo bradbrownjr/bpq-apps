@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.9] - 2026-01-15
+### Changed
+- Increased operation timeout: 6min base + 4min/hop (was 4min + 3min/hop)
+- Prevents premature timeouts on slow RF networks at 1200 baud
+- 1 hop now gets 10min (was 7min), 2 hops get 14min (was 10min)
+
 ## [nodemap 1.5.8] - 2026-01-15
 ### Fixed
 - Path building now uses CLI-forced SSID (--callsign) instead of discovered SSID from JSON
