@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.3
+Version: 1.6.4
 """
 
-__version__ = '1.6.3'
+__version__ = '1.6.4'
 
 import sys
 import socket
@@ -2175,6 +2175,10 @@ class NodeCrawler:
             # Determine starting node
             starting_path = []  # Path to reach the starting node
             
+            # Pre-load route information from existing nodemap.json if available
+            # Needed for both start_node and forced_target path-finding
+            existing = self._load_existing_data('nodemap.json')
+            
             if start_node:
                 # Validate provided callsign
                 if not self._is_valid_callsign(start_node):
@@ -2182,10 +2186,6 @@ class NodeCrawler:
                     return
                 starting_callsign = start_node.upper()
                 print("Starting network crawl from: {}...".format(starting_callsign))
-                
-                # Pre-load route information from existing nodemap.json if available
-                # This ensures we have port numbers and SSIDs for connecting to the start node
-                existing = self._load_existing_data('nodemap.json')
                 
                 if existing and 'nodes' in existing:
                     nodes_data = existing['nodes']

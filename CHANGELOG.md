@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.4] - 2026-01-15
+### Fixed
+- Fixed UnboundLocalError when using --callsign (existing variable scope issue)
+
 ## [nodemap 1.6.3] - 2026-01-15
 ### Fixed
 - `--callsign` now properly crawls TO target node instead of starting FROM it
