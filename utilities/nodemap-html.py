@@ -293,12 +293,18 @@ def generate_html_map(nodes, output_file='nodemap.html'):
         return False
     
     # Build list of unmapped nodes (no valid gridsquare)
+    # Deduplicate by base callsign to avoid showing NG1P and NG1P-4 separately
     unmapped_nodes = []
+    seen_base_calls = set()
     for callsign, node_data in nodes.items():
         location = node_data.get('location', {})
         grid = location.get('grid', '')
         if not grid_to_latlon(grid):
-            unmapped_nodes.append(callsign)
+            # Extract base callsign (without SSID) for deduplication
+            base_call = callsign.split('-')[0] if '-' in callsign else callsign
+            if base_call not in seen_base_calls:
+                unmapped_nodes.append(callsign)
+                seen_base_calls.add(base_call)
     unmapped_nodes.sort()
     
     if unmapped_nodes:
