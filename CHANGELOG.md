@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.10] - 2026-01-15
+### Fixed
+- MHEARD parsing now prefers SSID entries over non-SSID entries (e.g., KB1TAE-4 over KB1TAE)
+- Non-SSID entries no longer block SSID entries for same base callsign
+- Upgrades existing non-SSID entry when SSID entry found later in MHEARD list
+
 ## [nodemap 1.5.9] - 2026-01-15
 ### Changed
 - Increased operation timeout: 6min base + 4min/hop (was 4min + 3min/hop)

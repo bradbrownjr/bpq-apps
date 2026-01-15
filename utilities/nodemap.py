@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.9
+Version: 1.5.10
 """
 
-__version__ = '1.5.9'
+__version__ = '1.5.10'
 
 import sys
 import socket
@@ -1889,15 +1889,25 @@ class NodeCrawler:
                                 continue
                             elif base_call not in mheard_ssids:
                                 # First MHEARD entry for this callsign, not in ROUTES
-                                mheard_ssids[base_call] = full_callsign
-                                if self.verbose:
-                                    if has_ssid:
+                                if has_ssid:
+                                    mheard_ssids[base_call] = full_callsign
+                                    if self.verbose:
                                         print("    MHEARD SSID for {}: {} (not in ROUTES table)".format(base_call, full_callsign))
-                                    else:
+                                else:
+                                    # No SSID - likely user station, skip it
+                                    if self.verbose:
                                         print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
+                                    continue
                             elif self.verbose and has_ssid:
-                                # Already have SSID, ignore subsequent entries
-                                print("    Ignoring {} (already have {})".format(full_callsign, mheard_ssids[base_call]))
+                                # Already have SSID for this base call
+                                existing = mheard_ssids[base_call]
+                                existing_has_ssid = '-' in existing
+                                # If we already have a no-SSID entry, replace with SSID entry
+                                if not existing_has_ssid and has_ssid:
+                                    mheard_ssids[base_call] = full_callsign
+                                    print("    Upgraded {} to {} (found SSID)".format(existing, full_callsign))
+                                else:
+                                    print("    Ignoring {} (already have {})".format(full_callsign, existing))
                             
                             # Only add to neighbor list if it has an SSID (is a node)
                             # Stations without SSIDs can't be crawled
