@@ -2132,7 +2132,7 @@ class NodeCrawler:
                 pass
             tn.close()
     
-    def crawl_network(self, start_node=None):
+    def crawl_network(self, start_node=None, forced_target=None):
         """
         Crawl entire network starting from specified or local node.
         
@@ -2600,14 +2600,82 @@ class NodeCrawler:
                 starting_callsign = self.callsign
                 colored_print("Starting network crawl from local node: {}...".format(starting_callsign), Colors.GREEN)
             
+            # Handle forced_target (from --callsign flag)
+            # This means we want to crawl TO a specific target node, not start FROM it
+            if forced_target and not start_node:
+                # Find path to forced target through existing topology
+                target_base = forced_target
+                target_ssid = self.cli_forced_ssids.get(target_base) or self.netrom_ssid_map.get(target_base)
+                
+                if not target_ssid:
+                    colored_print("Error: No SSID found for {} in network data".format(target_base), Colors.RED)
+                    return
+                
+                if self.verbose:
+                    print("Finding path to forced target: {} ({})".format(target_base, target_ssid))
+                
+                # Use the same BFS path-finding logic from start_node handling
+                nodes_data = existing.get('nodes', {}) if existing else {}
+                if not nodes_data:
+                    colored_print("Error: No topology data available for path finding", Colors.RED)
+                    colored_print("Run a full crawl first to build network map", Colors.YELLOW)
+                    return
+                
+                # BFS to find shortest path
+                queue = [(self.callsign, [])]
+                visited = {self.callsign}
+                found_path = False
+                forced_path = []
+                
+                while queue and not found_path:
+                    current, path = queue.pop(0)
+                    current_info = nodes_data.get(current, {})
+                    neighbors = current_info.get('neighbors', [])
+                    
+                    for neighbor in neighbors:
+                        if neighbor in visited:
+                            continue
+                        visited.add(neighbor)
+                        new_path = path + [neighbor]
+                        
+                        if neighbor == target_base:
+                            forced_path = path
+                            found_path = True
+                            if self.verbose:
+                                if forced_path:
+                                    print("Found {} reachable via: {}".format(target_base, ' -> '.join(forced_path)))
+                                else:
+                                    print("Found {} as direct neighbor".format(target_base))
+                            break
+                        
+                        neighbor_info = nodes_data.get(neighbor, {})
+                        if target_base in neighbor_info.get('neighbors', []):
+                            forced_path = new_path
+                            found_path = True
+                            if self.verbose:
+                                print("Found {} reachable via: {}".format(target_base, ' -> '.join(forced_path)))
+                            break
+                        
+                        queue.append((neighbor, new_path))
+                
+                if found_path:
+                    # Queue the target with found path
+                    starting_callsign = target_ssid
+                    starting_path = forced_path
+                    if self.verbose:
+                        print("Queuing {} with path: {}".format(target_ssid, ' -> '.join(forced_path) if forced_path else "(direct)"))
+                else:
+                    colored_print("Error: Cannot find path to {} in topology".format(target_base), Colors.RED)
+                    return
+            
             print("BPQ node: {}:{}".format(self.host, self.port))
             print("Max hops: {}".format(self.max_hops))
             print("-" * 50)
             
             # Start with specified or local node (with path if remote)
             # path contains intermediate hops only (not the target node itself)
-            queue_entry = (starting_callsign, starting_path if start_node else [], 255)  # Default high quality
-            if self.verbose and start_node:
+            queue_entry = (starting_callsign, starting_path if start_node or forced_target else [], 255)  # Default high quality
+            if self.verbose and (start_node or forced_target):
                 print("Queuing {} with path: {}".format(starting_callsign, starting_path if starting_path else "(direct)"))
             self.queue.append(queue_entry)
         
@@ -3567,20 +3635,22 @@ def main():
         # If user forced a specific SSID, pre-populate the map
         # Save it to restore after resume (which rebuilds map from JSON)
         cli_forced_ssids = {}
+        forced_target = None  # Target node to crawl (for --callsign)
         if forced_ssid:
             base_call = forced_ssid.split('-')[0]
             crawler.netrom_ssid_map[base_call] = forced_ssid
             crawler.ssid_source[base_call] = ('cli', time.time())
             cli_forced_ssids[base_call] = forced_ssid
             colored_print("Forcing SSID: {} (will update SSID map for future crawls)".format(forced_ssid), Colors.GREEN)
-            # Use base callsign if no start_node specified
+            # --callsign means crawl TO this node, not start FROM it
+            # Store as target, don't set start_node
             if not start_node:
-                start_node = base_call
+                forced_target = base_call
         
         # Pass CLI-forced SSIDs to crawler so they survive resume
         crawler.cli_forced_ssids = cli_forced_ssids
         
-        crawler.crawl_network(start_node=start_node)
+        crawler.crawl_network(start_node=start_node, forced_target=forced_target)
         
         # Export results
         crawler.export_json(merge=merge_mode)
