@@ -6,12 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [nodemap 1.7.2] - 2026-01-15
+## [nodemap 1.7.3] - 2026-01-15
 ### Fixed
-- Strip port-specific SSIDs (e.g., KC1JMH-7) from intermediate hops in connection paths
-- Port-specific SSIDs may require authentication that cannot be provided for multi-hop connections
-- Only preserves SSID for final destination or CLI --callsign overrides
-- Prevents repeated connection failures to auth-required intermediate nodes
+- Direct port connections (C PORT CALL) now only used for first hop from localhost
+- Subsequent hops correctly use NetRom routing (C ALIAS) via AX.25 connections
+- Prevents attempting localhost telnet auth for multi-hop NetRom paths
+- Auth only needed once for localhost telnet, then inherited by all AX.25 connections
+
+### Reverted
+- v1.7.2 incorrect SSID stripping logic (auth doesn't work that way)
 
 ## [nodemap 1.7.1] - 2026-01-15
 ### Added

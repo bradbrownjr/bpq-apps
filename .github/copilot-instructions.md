@@ -48,16 +48,17 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Precision: 6-char (~5x2.5 mi), 4-char (~70x50 mi)
 
 ## Nodemap Crawler Constraints
-**Authentication**: Only localhost supports auth prompts (username/password)
-- Port-specific SSIDs (KC1JMH-7 on port 1) may require auth
-- Intermediate hops CANNOT authenticate - connection will timeout
-- **Fix**: Use base callsign (KC1JMH) or non-auth routes in paths
-- Don't repeatedly attempt connections to nodes requiring intermediate auth
+**Authentication**: Only localhost telnet requires auth (username/password)
+- Once connected to local node via telnet, all AX.25 NetRom connections inherit auth
+- Direct port connections (C PORT CALL) only valid for first hop from localhost
+- Subsequent hops MUST use NetRom routing (C ALIAS) - never "C PORT CALL" after first hop
+- Port-specific SSIDs (KC1JMH-7) are for MHEARD tracking, not connection routing
 
 **Path Building**: Uses successful_path from previous crawls
-- If path includes auth-required node, skip or find alternate route
-- Check route_ports for direct connections (bypass NetRom)
-- Prefer routes through nodes with established successful_path
+- SSIDs determined from network ROUTES tables (authoritative source)
+- Never assume SSID conventions (BBS=-2, RMS=-10, etc.) - always query network
+- Use NetRom aliases from NODES output for multi-hop connections
+- route_ports only for localhost → first hop direct connections
 
 ## Repository Structure
 ```

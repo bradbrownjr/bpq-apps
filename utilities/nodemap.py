@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.7.2
+Version: 1.7.3
 """
 
-__version__ = '1.7.2'
+__version__ = '1.7.3'
 
 import sys
 import socket
@@ -406,21 +406,6 @@ class NodeCrawler:
             
             # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):
-                # IMPORTANT: Strip port-specific SSIDs from intermediate hops
-                # Port-specific SSIDs (like KC1JMH-7 for port 1) may require authentication
-                # that cannot be provided for intermediate hops. Use base callsign instead.
-                # Only preserve SSID if:
-                # 1. It's the final destination (i == len(path) - 1)
-                # 2. It's from CLI --callsign override (in cli_forced_ssids)
-                is_final_hop = (i == len(path) - 1)
-                lookup_call = callsign.split('-')[0] if '-' in callsign else callsign
-                
-                # Use base callsign for intermediate hops unless CLI-forced
-                if not is_final_hop and '-' in callsign and lookup_call not in self.cli_forced_ssids:
-                    if self.verbose:
-                        print("    Stripping SSID from intermediate hop {} -> {}".format(callsign, lookup_call))
-                    callsign = lookup_call
-                
                 # Strategy: Prefer direct connection (C PORT CALL-SSID) when we have port info
                 # This bypasses NetRom routing and is faster for direct neighbors
                 # Fallback to NetRom alias (C ALIAS) if no port info available
@@ -432,7 +417,9 @@ class NodeCrawler:
                 # CLI-forced SSIDs always take precedence over discovered SSIDs
                 full_callsign = self.cli_forced_ssids.get(lookup_call) or self.netrom_ssid_map.get(lookup_call, callsign)
                 
-                if port_num and full_callsign:
+                # Direct port connection (C PORT CALL) only for first hop from localhost
+                # Subsequent hops MUST use NetRom routing (already connected via AX.25)
+                if i == 0 and port_num and full_callsign:
                     # Direct neighbor with known port and SSID: C PORT CALLSIGN-SSID
                     # Fastest method - goes straight to neighbor, no NetRom routing
                     cmd = "C {} {}\r".format(port_num, full_callsign).encode('ascii')
