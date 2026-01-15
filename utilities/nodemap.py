@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.5
+Version: 1.6.6
 """
 
-__version__ = '1.6.5'
+__version__ = '1.6.6'
 
 import sys
 import socket
