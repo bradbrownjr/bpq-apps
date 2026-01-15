@@ -23,12 +23,12 @@ Network Resources:
 - BPQ Commands: https://cheatography.com/gcremerius/cheat-sheets/bpq-user-and-sysop-commands/
 - BPQ Node Commands: https://www.cantab.net/users/john.wiseman/Documents/NodeCommands.html
 
-Author: Brad Brown KC1JMH
+Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.8
+Version: 1.7.9
 """
 
-__version__ = '1.7.8'
+__version__ = '1.7.9'
 
 import sys
 import socket
@@ -470,10 +470,21 @@ class NodeCrawler:
                         nodes_output = self._send_command(tn, 'NODES', timeout=10, expect_content=':')
                         all_aliases, discovered_ssids, _ = self._parse_nodes_aliases(nodes_output)
                         
-                        # Update global mappings
+                        # Update global mappings, preferring node aliases over service aliases
                         for alias, full_call in all_aliases.items():
                             base_call = full_call.split('-')[0]
+                            is_service = self._is_service_ssid(full_call)
+                            
+                            # Add or update mapping, preferring node aliases
                             if base_call not in self.call_to_alias:
+                                # New entry - add it
+                                self.call_to_alias[base_call] = alias
+                                self.alias_to_call[alias] = full_call
+                            elif is_service:
+                                # Service SSID - skip if we already have a mapping (could be node alias)
+                                pass
+                            else:
+                                # Node alias - replace existing (even if service)
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
                         
@@ -1824,12 +1835,20 @@ class NodeCrawler:
             
             # Update global alias mappings from NODES (routing table)
             # These are useful for routing to other nodes
+            # Prefer node aliases over service aliases (BBS, RMS, CHAT)
             for alias, full_call in other_aliases.items():
                 base_call = full_call.split('-')[0]
+                is_service = self._is_service_ssid(full_call)
                 
                 # Store alias mapping for documentation
                 if base_call not in self.call_to_alias:
+                    # New entry - add it
                     self.call_to_alias[base_call] = alias
+                elif not is_service:
+                    # Node alias - replace existing service alias
+                    self.call_to_alias[base_call] = alias
+                # else: service alias and we already have a mapping - skip it
+                
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
             
@@ -2270,11 +2289,20 @@ class NodeCrawler:
                                 self.route_ports[neighbor_call] = port_num
                         
                         # Restore call_to_alias mappings (for NetRom routing)
+                        # Prefer node aliases over service aliases
                         for alias, full_call in node_info.get('seen_aliases', {}).items():
                             base_call = full_call.split('-')[0]
+                            is_service = self._is_service_ssid(full_call)
+                            
                             if base_call not in self.call_to_alias:
+                                # New entry - add it
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
+                            elif not is_service:
+                                # Node alias - replace existing service alias
+                                self.call_to_alias[base_call] = alias
+                                self.alias_to_call[alias] = full_call
+                            # else: service alias and we already have a mapping - skip it
                     
                     if self.route_ports:
                         if self.verbose:

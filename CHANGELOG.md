@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.9] - 2026-01-15
+### Fixed
+- Connection logic now prefers node aliases (e.g., BURG:KS1R-15) over service aliases (CHABUR:KS1R-13, BBSBUR:KS1R-2)
+- Prevents connecting to CHAT, BBS, or RMS services when intending to crawl nodes
+- Fixes map corruption when crawling with callsign-SSID as start node (e.g., ./nodemap.py KS1R-15)
+### Added
+- Helper method _is_service_ssid() to identify service SSIDs: -2 (BBS), -4/-5/-13 (CHAT), -10 (RMS)
+
 ## [nodemap 1.7.8] - 2026-01-15
 ### Added
 - Short option -D for --debug-log (lowercase -d already used for --display-nodes)
