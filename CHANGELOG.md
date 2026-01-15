@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.0] - 2026-01-15
+### Changed
+- **Default max_hops reduced from 10 to 4** (realistic for 1200 baud RF with acceptable latency)
+- **`--callsign` now defaults to max_hops=0** (correction mode: fix one node without crawling neighbors)
+  - Example: `./nodemap.py --callsign NG1P-4` automatically sets max_hops=0 and start_node=NG1P
+  - To crawl neighbors too: `./nodemap.py 5 --callsign NG1P-4` (explicit max_hops overrides)
+- `--callsign` behavior: correction tool for fixing bad SSID data, not a full network crawl
+
+### Fixed
+- nodemap-html: Deduplicate unmapped nodes by base callsign (prevents showing NG1P and NG1P-4 separately)
+
 ## [nodemap 1.4.5] - 2026-01-14
 ### Fixed
 - Improved timeout handling for long MHEARD/INFO responses over multi-hop RF

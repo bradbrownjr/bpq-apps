@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.4.5
+Version: 1.5.0
 """
 
-__version__ = '1.4.5'
+__version__ = '1.5.0'
 
 import sys
 import socket
@@ -2678,7 +2678,7 @@ def main():
         print("\nAutomatically crawls packet radio network to discover topology.")
         print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
         print("\nArguments:")
-        print("  MAX_HOPS         Maximum RF hops from start (default: 10)")
+        print("  MAX_HOPS         Maximum RF hops from start (default: 4, 0 with --callsign)")
         print("                   0=local only, 1=direct neighbors, 2=neighbors+their neighbors")
         print("  START_NODE       Callsign to begin crawl (default: local node)")
         print("\nOptions:")
@@ -2974,7 +2974,8 @@ def main():
     print("=" * 50)
     
     # Parse command line args
-    max_hops = 10
+    max_hops = 4  # Default reduced from 10 to 4 (realistic for 1200 baud RF)
+    max_hops_explicit = False  # Track if user explicitly set max_hops
     start_node = None
     forced_ssid = None  # User-specified SSID to override discovery
     username = None
@@ -2997,6 +2998,7 @@ def main():
             break
         if i == 1 and arg.isdigit():
             max_hops = int(arg)
+            max_hops_explicit = True  # User explicitly set max_hops
         elif i == 2:
             start_node = arg.upper()
         i += 1
@@ -3075,6 +3077,10 @@ def main():
             if '-' not in forced_ssid:
                 colored_print("Error: --callsign requires SSID (e.g., NG1P-4)", Colors.RED)
                 sys.exit(1)
+            # If max_hops wasn't explicitly set, default to 0 for --callsign (correction mode)
+            # --callsign is a correction tool to fix one node's SSID, not a full crawl
+            if not max_hops_explicit:
+                max_hops = 0
             i += 2
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:
             # Known flags without arguments
@@ -3148,7 +3154,7 @@ def main():
         print("\nError: Could not determine local node callsign.")
         print("Ensure NODECALL is set in bpq32.cfg or provide a starting callsign.")
         print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
-        print("  MAX_HOPS: Maximum traversal depth (default: 10)")
+        print("  MAX_HOPS: Maximum traversal depth (default: 4, auto-set to 0 with --callsign)")
         print("  START_NODE: Callsign to begin crawl (default: local node)")
         print("  --overwrite, -o: Overwrite existing data (default: merge)")
         print("  --user USERNAME: Telnet login username (default: NODECALL)")
