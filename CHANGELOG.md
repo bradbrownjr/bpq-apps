@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.5] - 2026-01-15
+### Added
+- Separate --debug-log FILE option for verbose debug output only
+- --log remains for telnet traffic only (raw send/recv)
+- --debug-log captures what you see with -v flag
+
+### Changed
+- Clarified --log logs telnet traffic, not verbose output
+- _vprint() helper now writes to debug_log instead of log_file
+
 ## [nodemap 1.7.4] - 2026-01-15
 ### Added
 - Verbose output (-v) now captured to log file when both -v and -l used

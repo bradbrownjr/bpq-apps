@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.7.4
+Version: 1.7.5
 """
 
-__version__ = '1.7.4'
+__version__ = '1.7.5'
 
 import sys
 import socket
@@ -93,7 +93,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, resume=False, crawl_mode='update', exclude=None):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None):
         """
         Initialize crawler.
         
@@ -106,7 +106,8 @@ class NodeCrawler:
             password: Telnet login password (default: None, prompts when needed)
             verbose: Enable verbose output (default: False)
             notify_url: URL to POST notifications to (default: None)
-            log_file: File to log telnet traffic + verbose output (default: None)
+            log_file: File to log telnet traffic (default: None)
+            debug_log: File to log verbose debug output (default: None)
             resume: Resume from unexplored nodes in existing nodemap.json (default: False)
             crawl_mode: How to handle existing nodes: 'update' (skip known), 'reaudit' (re-crawl all), 'new-only' (only new nodes)
             exclude: Set of callsigns to exclude from crawling (default: None)
@@ -121,6 +122,8 @@ class NodeCrawler:
         self.notify_url = notify_url
         self.log_file = log_file
         self.log_handle = None
+        self.debug_log = debug_log
+        self.debug_handle = None
         self.resume = resume
         self.resume_file = None  # Set externally if specific file needed
         self.crawl_mode = crawl_mode  # 'update', 'reaudit', or 'new-only'
@@ -144,16 +147,26 @@ class NodeCrawler:
         self.cli_forced_ssids = {}  # SSIDs forced via --callsign CLI option: {base_call: full_ssid}
     
     def _vprint(self, message):
-        """Print verbose message to console and log file (if -v and -l both set)."""
+        """Print verbose message to console and debug log (if --debug-log set)."""
         if self.verbose:
             print(message)
-            if self.log_file and self.log_handle:
+            if self.debug_log:
+                # Open debug log on first use
+                if self.debug_handle is None:
+                    try:
+                        self.debug_handle = open(self.debug_log, 'a')
+                    except Exception as e:
+                        colored_print("Warning: Could not open debug log {}: {}".format(self.debug_log, e), Colors.YELLOW)
+                        self.debug_log = None
+                        return
+                
                 try:
                     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-                    self.log_handle.write("[{}] VERBOSE: {}\n".format(timestamp, message))
-                    self.log_handle.flush()
-                except:
-                    pass
+                    self.debug_handle.write("[{}] {}\n".format(timestamp, message))
+                    self.debug_handle.flush()
+                except Exception as e:
+                    if self.verbose:
+                        print("    Debug log write failed: {}".format(e))
         
     def _find_bpq_port(self):
         """Find BPQ telnet port from bpq32.cfg (Telnet Server port only)."""
@@ -3376,7 +3389,8 @@ def main():
         print("                              all (both, default if TARGET omitted)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
-        print("  --log FILE, -l   Log telnet traffic to file (includes -v output when both used)")
+        print("  --log FILE, -l   Log telnet traffic to file")
+        print("  --debug-log FILE Log verbose debug output to file (use with -v)")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
@@ -3738,6 +3752,7 @@ def main():
     password = None
     notify_url = None
     log_file = None
+    debug_log = None
     crawl_mode = 'update'  # Default to 'update' mode
     exclude_nodes = set()  # Nodes to exclude from crawling
     merge_files = []  # List of files to merge
@@ -3775,6 +3790,9 @@ def main():
             i += 2
         elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
             log_file = sys.argv[i + 1]
+            i += 2
+        elif arg == '--debug-log' and i + 1 < len(sys.argv):
+            debug_log = sys.argv[i + 1]
             i += 2
         elif (arg == '--exclude' or arg == '-x') and i + 1 < len(sys.argv):
             # Parse comma-separated list of callsigns to exclude
@@ -3858,7 +3876,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler with specified crawl mode and exclusions
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes)
     
     # Set resume file if specified
     if resume_file:
