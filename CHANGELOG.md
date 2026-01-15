@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.5] - 2026-01-15
+### Added
+- Debug output in verbose mode showing each node's neighbor list during BFS path search
+
 ## [nodemap 1.5.4] - 2026-01-15
 ### Fixed
 - Removed NetRom alias fallback when no path found - now always prompts for neighbor selection

@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.4
+Version: 1.5.5
 """
 
-__version__ = '1.5.4'
+__version__ = '1.5.5'
 
 import sys
 import socket
@@ -2315,6 +2315,8 @@ class NodeCrawler:
                                 # Check if this neighbor node has the target as ITS neighbor
                                 neighbor_info = nodes_data.get(neighbor, {})
                                 neighbor_neighbors = neighbor_info.get('neighbors', [])
+                                if self.verbose:
+                                    print("    Checking {} neighbors: {} (looking for {})".format(neighbor, neighbor_neighbors[:5] if len(neighbor_neighbors) > 5 else neighbor_neighbors, target_base))
                                 if target_base in neighbor_neighbors:
                                     # Target is neighbor of this node - path goes through this node
                                     starting_path = new_path
