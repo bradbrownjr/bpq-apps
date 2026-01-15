@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.4.5] - 2026-01-14
+### Fixed
+- Improved timeout handling for long MHEARD/INFO responses over multi-hop RF
+  - Increased per-read timeout from 3s to max 8s (scales with command timeout)
+  - Require 3 consecutive stable readings instead of 2 before terminating (prevents premature cutoff)
+  - More retry attempts (8 minimum vs 5) for reliability on slow RF links
+  - Fixes incomplete MHEARD lists and missing INFO data on 3+ hop connections
+
 ## [nodemap 1.4.4] - 2026-01-14
 ### Fixed
 - CLI-forced SSIDs now used when resolving start node callsign to SSID

@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.4.4
+Version: 1.4.5
 """
 
-__version__ = '1.4.4'
+__version__ = '1.4.5'
 
 import sys
 import socket
@@ -820,8 +820,10 @@ class NodeCrawler:
             # and calculate attempts based on overall timeout
             response = b''
             read_attempts = 0
-            per_read_timeout = min(3, timeout)  # Short timeout per read (2-3s) to check frequently
-            max_attempts = max(5, int(timeout / 2))  # Scale attempts with overall timeout
+            # Per-read timeout: scale with overall timeout for long commands (MHEARD, INFO)
+            # Use 5s for short commands, up to 8s for long commands over multi-hop RF
+            per_read_timeout = min(8, max(3, timeout / 2))
+            max_attempts = max(8, int(timeout / 2))  # More attempts for reliability
             last_response_len = 0
             stable_count = 0  # Count consecutive attempts with no growth
             
@@ -854,8 +856,9 @@ class NodeCrawler:
                 # Check if response stopped growing
                 if len(response) > 0 and len(response) == last_response_len:
                     stable_count += 1
-                    # Need 2 consecutive stable readings to confirm done (2 seconds with no data)
-                    if stable_count >= 2:
+                    # Need 3 consecutive stable readings for multi-hop RF (3-4 seconds with no data)
+                    # This prevents premature termination of long MHEARD/INFO outputs
+                    if stable_count >= 3:
                         break
                 else:
                     stable_count = 0  # Reset if we got more data
@@ -866,7 +869,7 @@ class NodeCrawler:
                 if expect_content and expect_content.lower() in decoded_check.lower():
                     # Still wait for stable response even if we found expected content
                     # (there might be more data after it)
-                    if stable_count >= 1:
+                    if stable_count >= 2:  # Can exit with 2 stable if we found expected content
                         break
                 
                 # Delay before retry (already did 1.0s above)
