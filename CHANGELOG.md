@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - RF Neighbors: Routes where neighbor is heard on RF port
 - IP Neighbors: Routes where neighbor is NOT heard on RF port (AXIP/telnet only)
 - Deduplicated by base callsign
+- **Node popups and tooltips** now show correct RF/IP neighbor counts instead of raw MHEARD count
+- Removed misleading `neighbors` field (MHEARD data) from popups/tooltips
 
 ## [nodemap-html 1.3.0] - 2026-01-15
 ### Fixed

@@ -249,6 +249,32 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         # Extract base callsign for display (without SSID)
         display_call = callsign.split('-')[0] if '-' in callsign else callsign
         
+        # Calculate RF/IP neighbor counts for this node (from ROUTES only)
+        routes = node_data.get('routes', {})
+        heard_on_ports = node_data.get('heard_on_ports', [])
+        ports = node_data.get('ports', [])
+        
+        # Build set of neighbors heard on RF ports
+        rf_heard = set()
+        for entry in heard_on_ports:
+            if len(entry) == 2:
+                neighbor, port_num = entry
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                for port in ports:
+                    if port.get('number') == port_num and port.get('is_rf'):
+                        rf_heard.add(neighbor_base)
+                        break
+        
+        # Count routes: RF if heard on RF port, otherwise IP
+        rf_neighbor_count = 0
+        ip_neighbor_count = 0
+        for neighbor_base, quality in routes.items():
+            if quality > 0:
+                if neighbor_base in rf_heard:
+                    rf_neighbor_count += 1
+                else:
+                    ip_neighbor_count += 1
+        
         map_nodes.append({
             'callsign': callsign,
             'display_call': display_call,  # Base callsign for map labels
@@ -263,7 +289,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             'applications': applications,
             'frequencies': frequencies,
             'ssids': ssids,
-            'neighbors': node_data.get('neighbors', [])
+            'rf_neighbors': rf_neighbor_count,
+            'ip_neighbors': ip_neighbor_count
         })
     
     # Build map connections from routes tables (quality > 0)
@@ -514,7 +541,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                          '<span class="apps">' + apps.join(', ') + '</span></p>';
             }
             
-            popup += '<p><span class="label">Neighbors:</span> ' + node.neighbors.length + '</p>';
+            popup += '<p><span class="label">RF Neighbors:</span> ' + node.rf_neighbors + '<br>' +
+                     '<span class="label">IP Neighbors:</span> ' + node.ip_neighbors + '</p>';
             popup += '</div>';
             
             marker.bindPopup(popup, { maxWidth: 300 });
@@ -618,6 +646,32 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         # Extract base callsign for display (without SSID)
         display_call = callsign.split('-')[0] if '-' in callsign else callsign
         
+        # Calculate RF/IP neighbor counts for this node (from ROUTES only)
+        routes = node_data.get('routes', {})
+        heard_on_ports = node_data.get('heard_on_ports', [])
+        ports_data = node_data.get('ports', [])
+        
+        # Build set of neighbors heard on RF ports
+        rf_heard = set()
+        for entry in heard_on_ports:
+            if len(entry) == 2:
+                neighbor, port_num = entry
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                for port in ports_data:
+                    if port.get('number') == port_num and port.get('is_rf'):
+                        rf_heard.add(neighbor_base)
+                        break
+        
+        # Count routes: RF if heard on RF port, otherwise IP
+        rf_neighbor_count = 0
+        ip_neighbor_count = 0
+        for neighbor_base, quality in routes.items():
+            if quality > 0:
+                if neighbor_base in rf_heard:
+                    rf_neighbor_count += 1
+                else:
+                    ip_neighbor_count += 1
+        
         map_nodes.append({
             'callsign': callsign,
             'display_call': display_call,  # Base callsign for SVG labels
@@ -627,7 +681,8 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             'frequency': primary_freq,
             'frequencies': freq_list,
             'type': node_data.get('type', 'Unknown'),
-            'neighbors': node_data.get('neighbors', [])
+            'rf_neighbors': rf_neighbor_count,
+            'ip_neighbors': ip_neighbor_count
         })
     
     # Build map connections from routes tables (quality > 0)
@@ -843,7 +898,8 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             tooltip_lines.append("Type: {}".format(node['type']))
         if node['frequencies']:
             tooltip_lines.append("Frequencies: {}".format(", ".join(node['frequencies'])))
-        tooltip_lines.append("Neighbors: {}".format(len(node['neighbors'])))
+        tooltip_lines.append("RF Neighbors: {}".format(node['rf_neighbors']))
+        tooltip_lines.append("IP Neighbors: {}".format(node['ip_neighbors']))
         tooltip = "&#10;".join(tooltip_lines)  # &#10; is XML newline
         
         svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})" onmouseenter="highlightNode(\'{}\');" onmouseleave="unhighlightAll();">'.format(x, y, node['callsign']))
