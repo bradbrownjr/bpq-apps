@@ -9,8 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [nodemap-html 1.3.0] - 2026-01-15
 ### Fixed
 - **CRITICAL BUG**: Connection logic - now builds from routes tables (quality > 0) instead of connections array
-- Original logic was correct: iterate nodes' routes tables, resolve SSIDs via netrom_ssids, create connections
-- Connections display base callsigns but connect via full SSIDs as seen in each node's routing table
+- Original logic was correct: iterate nodes' routes tables, resolve SSIDs via node dict keys
+- Node keys can be base callsign (KC1JMH) OR with SSID (N1QFY-15) - now checks both
+- Removed incorrect netrom_ssids resolution (those are remote node advertisements, not local keys)
+- Connections display base callsigns but connect via actual node dict keys
 - Version now displays on --all runs, not just --help
 
 ### Added

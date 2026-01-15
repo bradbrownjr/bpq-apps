@@ -272,8 +272,6 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
-    # Build reverse lookup: base callsign -> full SSID from each node's perspective
-    # Each node may see neighbors with different SSIDs
     seen_connections = set()
     
     for callsign, node_data in nodes.items():
@@ -283,24 +281,31 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         
         from_lat, from_lon = node_coords[callsign]
         routes = node_data.get('routes', {})
-        netrom_ssids = node_data.get('netrom_ssids', {})
         
         # Iterate through routes table (ROUTES-validated neighbors)
         for neighbor_base, quality in routes.items():
             if quality == 0:
                 continue  # Skip zeroed routes
             
-            # Resolve neighbor's full SSID as seen by this node
-            neighbor_full = netrom_ssids.get(neighbor_base, neighbor_base)
+            # Find neighbor in nodes dict - could be keyed as base or with SSID
+            neighbor_key = None
+            if neighbor_base in nodes:
+                neighbor_key = neighbor_base
+            else:
+                # Try to find with SSID suffix
+                for node_key in nodes.keys():
+                    if node_key.startswith(neighbor_base + '-'):
+                        neighbor_key = node_key
+                        break
             
-            # Skip if neighbor has no coordinates
-            if neighbor_full not in node_coords:
+            # Skip if neighbor not in topology or has no coordinates
+            if not neighbor_key or neighbor_key not in node_coords:
                 continue
             
-            to_lat, to_lon = node_coords[neighbor_full]
+            to_lat, to_lon = node_coords[neighbor_key]
             
             # Deduplicate bidirectional connections (A-B same as B-A)
-            conn_key = tuple(sorted([callsign, neighbor_full]))
+            conn_key = tuple(sorted([callsign, neighbor_key]))
             if conn_key in seen_connections:
                 continue
             seen_connections.add(conn_key)
@@ -314,7 +319,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             
             map_connections.append({
                 'from': callsign,
-                'to': neighbor_full,
+                'to': neighbor_key,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
@@ -634,20 +639,27 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         
         from_lat, from_lon = node_coords[callsign]
         routes = node_data.get('routes', {})
-        netrom_ssids = node_data.get('netrom_ssids', {})
         
         for neighbor_base, quality in routes.items():
             if quality == 0:
                 continue
             
-            neighbor_full = netrom_ssids.get(neighbor_base, neighbor_base)
+            # Find neighbor in nodes dict - could be keyed as base or with SSID
+            neighbor_key = None
+            if neighbor_base in nodes:
+                neighbor_key = neighbor_base
+            else:
+                for node_key in nodes.keys():
+                    if node_key.startswith(neighbor_base + '-'):
+                        neighbor_key = node_key
+                        break
             
-            if neighbor_full not in node_coords:
+            if not neighbor_key or neighbor_key not in node_coords:
                 continue
             
-            to_lat, to_lon = node_coords[neighbor_full]
+            to_lat, to_lon = node_coords[neighbor_key]
             
-            conn_key = tuple(sorted([callsign, neighbor_full]))
+            conn_key = tuple(sorted([callsign, neighbor_key]))
             if conn_key in seen_connections:
                 continue
             seen_connections.add(conn_key)
@@ -660,7 +672,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             
             map_connections.append({
                 'from': callsign,
-                'to': neighbor_full,
+                'to': neighbor_key,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
