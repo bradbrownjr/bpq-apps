@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.7] - 2026-01-15
+### Changed
+- --log and --debug-log now accept optional filenames
+- Default filenames: telnet.log and debug.log if not specified
+- Usage: `./nodemap.py -v --debug-log` creates debug.log automatically
+
 ## [nodemap-html 1.4.4] - 2026-01-15
 ### Changed
 - Primary NetRom alias (matching node alias field) now shown first and bolded in HTML popups

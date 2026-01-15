@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.7.6
+Version: 1.7.7
 """
 
-__version__ = '1.7.6'
+__version__ = '1.7.7'
 
 import sys
 import socket
@@ -3423,8 +3423,8 @@ def main():
         print("                              all (both, default if TARGET omitted)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
-        print("  --log FILE, -l   Log telnet traffic to file")
-        print("  --debug-log FILE Log verbose debug output to file (use with -v)")
+        print("  --log [FILE], -l [FILE]  Log telnet traffic (default: telnet.log)")
+        print("  --debug-log [FILE]       Log verbose debug output (default: debug.log)")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
@@ -3822,12 +3822,20 @@ def main():
         elif (arg == '--notify' or arg == '-n') and i + 1 < len(sys.argv):
             notify_url = sys.argv[i + 1]
             i += 2
-        elif (arg == '--log' or arg == '-l') and i + 1 < len(sys.argv):
-            log_file = sys.argv[i + 1]
-            i += 2
-        elif arg == '--debug-log' and i + 1 < len(sys.argv):
-            debug_log = sys.argv[i + 1]
-            i += 2
+        elif (arg == '--log' or arg == '-l'):
+            if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith('-'):
+                log_file = sys.argv[i + 1]
+                i += 2
+            else:
+                log_file = 'telnet.log'
+                i += 1
+        elif arg == '--debug-log':
+            if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith('-'):
+                debug_log = sys.argv[i + 1]
+                i += 2
+            else:
+                debug_log = 'debug.log'
+                i += 1
         elif (arg == '--exclude' or arg == '-x') and i + 1 < len(sys.argv):
             # Parse comma-separated list of callsigns to exclude
             exclude_str = sys.argv[i + 1]
