@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.0] - 2026-01-15
+### Changed
+- Unified cleanup into single --cleanup command with targets: nodes, connections, or all
+- Replaces separate --cleanup and --repair options
+- Usage: `--cleanup nodes` (duplicates/incomplete), `--cleanup connections` (invalid), `--cleanup all` (both, default)
+- More intuitive and discoverable interface
+
+## [nodemap 1.6.15] - 2026-01-15
+### Changed
+- Unified cleanup into single --cleanup command with targets: nodes, connections, or all
+- Replaces separate --cleanup and --repair options
+- Usage: `--cleanup nodes` (duplicates/incomplete), `--cleanup connections` (invalid),
+  `--cleanup all` (both, default)
+- More intuitive and discoverable interface
+
 ## [nodemap 1.6.15] - 2026-01-15
 ### Added
 - --repair option to remove invalid connections without re-crawling

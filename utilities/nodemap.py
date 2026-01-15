@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.15
+Version: 1.7.0
 """
 
-__version__ = '1.6.15'
+__version__ = '1.7.0'
 
 import sys
 import socket
@@ -3170,11 +3170,23 @@ def main():
         
         sys.exit(0)
     
-    # Check for repair mode (remove invalid connections)
-    if '--repair' in sys.argv:
+    # Check for cleanup mode (nodes, connections, or all)
+    if '--cleanup' in sys.argv:
         if not os.path.exists('nodemap.json'):
             colored_print("Error: nodemap.json not found", Colors.RED)
             sys.exit(1)
+        
+        # Determine what to clean up
+        cleanup_target = 'all'  # default
+        for i, arg in enumerate(sys.argv):
+            if arg == '--cleanup' and i + 1 < len(sys.argv):
+                next_arg = sys.argv[i + 1].lower()
+                if next_arg in ['nodes', 'connections', 'all']:
+                    cleanup_target = next_arg
+                    break
+        
+        print("BPQ Node Map Cleanup v{} - {}".format(__version__, cleanup_target))
+        print("=" * 50)
         
         try:
             with open('nodemap.json', 'r') as f:
@@ -3182,53 +3194,115 @@ def main():
             
             nodes_data = data.get('nodes', {})
             connections = data.get('connections', [])
+            changes_made = False
             
-            if not connections:
-                print("No connections to repair")
-                sys.exit(0)
-            
-            # Filter connections: keep only if 'to' node is in 'from' node's ROUTES with quality > 0
-            valid_connections = []
-            invalid_connections = []
-            
-            for conn in connections:
-                from_call = conn['from']
-                to_call = conn['to']
-                to_base = to_call.split('-')[0] if '-' in to_call else to_call
-                
-                from_node = nodes_data.get(from_call, {})
-                routes = from_node.get('routes', {})
-                
-                # Check if destination is in routes with non-zero quality
-                if to_base in routes and routes[to_base] > 0:
-                    valid_connections.append(conn)
+            # CONNECTIONS CLEANUP
+            if cleanup_target in ['connections', 'all']:
+                print("\nCleaning up connections...")
+                if not connections:
+                    print("  No connections to clean")
                 else:
-                    invalid_connections.append(conn)
+                    valid_connections = []
+                    invalid_connections = []
+                    
+                    for conn in connections:
+                        from_call = conn['from']
+                        to_call = conn['to']
+                        to_base = to_call.split('-')[0] if '-' in to_call else to_call
+                        
+                        from_node = nodes_data.get(from_call, {})
+                        routes = from_node.get('routes', {})
+                        
+                        # Check if destination is in routes with non-zero quality
+                        if to_base in routes and routes[to_base] > 0:
+                            valid_connections.append(conn)
+                        else:
+                            invalid_connections.append(conn)
+                    
+                    if invalid_connections:
+                        print("  Found {} invalid connections:".format(len(invalid_connections)))
+                        for conn in invalid_connections[:5]:
+                            print("    {} -> {} (quality: {})".format(conn['from'], conn['to'], conn.get('quality', 0)))
+                        if len(invalid_connections) > 5:
+                            print("    ... and {} more".format(len(invalid_connections) - 5))
+                        
+                        data['connections'] = valid_connections
+                        changes_made = True
+                        colored_print("  Removed {} invalid connections".format(len(invalid_connections)), Colors.YELLOW)
+                        colored_print("  Kept {} valid connections".format(len(valid_connections)), Colors.GREEN)
+                    else:
+                        print("  All {} connections are valid".format(len(connections)))
             
-            if not invalid_connections:
-                print("All {} connections are valid (in ROUTES tables)".format(len(connections)))
+            # NODES CLEANUP
+            if cleanup_target in ['nodes', 'all']:
+                print("\nCleaning up nodes...")
+                removed = []
+                
+                # Find base callsigns with multiple SSID entries
+                base_calls = {}
+                for call in nodes_data.keys():
+                    base = call.split('-')[0]
+                    if base not in base_calls:
+                        base_calls[base] = []
+                    base_calls[base].append(call)
+                
+                # For each base call with duplicates, keep the best one
+                for base, variants in base_calls.items():
+                    if len(variants) > 1:
+                        print("  Found duplicate entries for {}: {}".format(base, ', '.join(variants)))
+                        
+                        # Score each variant: neighbors count + (has_location ? 100 : 0) + (has_apps ? 50 : 0)
+                        scored = []
+                        for variant in variants:
+                            node = nodes_data[variant]
+                            score = len(node.get('neighbors', []))
+                            if node.get('location', {}).get('grid'):
+                                score += 100
+                            if node.get('applications', []):
+                                score += 50
+                            scored.append((variant, score, node))
+                        
+                        # Sort by score (highest first)
+                        scored.sort(key=lambda x: -x[1])
+                        keep = scored[0][0]
+                        
+                        print("    Keeping: {} (score: {})".format(keep, scored[0][1]))
+                        
+                        for variant, score, node in scored[1:]:
+                            print("    Removing: {} (score: {})".format(variant, score))
+                            removed.append(variant)
+                
+                # Remove empty/incomplete nodes (no neighbors, no location, no apps)
+                for call, node in list(nodes_data.items()):
+                    if call in removed:
+                        continue
+                    neighbors = node.get('neighbors', [])
+                    location = node.get('location', {})
+                    apps = node.get('applications', [])
+                    
+                    if len(neighbors) == 0 and not location.get('grid') and len(apps) == 0:
+                        print("  Removing incomplete: {} (no data)".format(call))
+                        removed.append(call)
+                
+                if removed:
+                    # Remove nodes
+                    for call in removed:
+                        del nodes_data[call]
+                    data['nodes'] = nodes_data
+                    changes_made = True
+                    colored_print("  Removed {} duplicate/incomplete nodes".format(len(removed)), Colors.YELLOW)
+                else:
+                    print("  No duplicate or incomplete nodes found")
+            
+            if not changes_made:
+                print("\nNo cleanup needed!")
                 sys.exit(0)
             
-            # Show what will be removed
-            print("\nFound {} invalid connections (not in ROUTES or quality 0):".format(len(invalid_connections)))
-            for conn in invalid_connections[:10]:
-                print("  {} -> {} (quality: {})".format(conn['from'], conn['to'], conn.get('quality', 0)))
-            if len(invalid_connections) > 10:
-                print("  ... and {} more".format(len(invalid_connections) - 10))
-            
-            response = input("\nRemove {} invalid connections? (y/N): ".format(len(invalid_connections))).strip().lower()
-            if response not in ['y', 'yes']:
-                print("Cancelled")
-                sys.exit(0)
-            
-            # Update data with filtered connections
-            data['connections'] = valid_connections
-            
+            # Save changes
             with open('nodemap.json', 'w') as f:
                 json.dump(data, f, indent=2)
             
-            colored_print("\nRemoved {} invalid connections".format(len(invalid_connections)), Colors.GREEN)
-            colored_print("Kept {} valid connections".format(len(valid_connections)), Colors.GREEN)
+            colored_print("\nSaved cleaned data to nodemap.json", Colors.GREEN)
             
             # Offer to regenerate maps
             response = input("\nRegenerate maps? (Y/n): ").strip().lower()
@@ -3249,7 +3323,7 @@ def main():
             colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)
             sys.exit(1)
         except Exception as e:
-            colored_print("Error repairing nodemap.json: {}".format(e), Colors.RED)
+            colored_print("Error cleaning up nodemap.json: {}".format(e), Colors.RED)
             sys.exit(1)
         
         sys.exit(0)
@@ -3283,8 +3357,9 @@ def main():
         print("  --callsign CALL  Force specific SSID for start node (e.g., --callsign NG1P-4)")
         print("  --set-grid CALL GRID  Set gridsquare for callsign (e.g., --set-grid NG1P FN43vp)")
         print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
-        print("  --cleanup        Clean up nodemap.json (remove duplicates, incomplete nodes)")
-        print("  --repair         Remove invalid connections (not in ROUTES or quality 0)")
+        print("  --cleanup [TARGET]  Clean up nodemap.json (nodes, connections, or all)")
+        print("                      TARGET: nodes (duplicates/incomplete), connections (invalid),")
+        print("                              all (both, default if TARGET omitted)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log FILE, -l   Log all telnet traffic to file")
@@ -3324,114 +3399,6 @@ def main():
         print("  Staleness filter: Skips nodes not heard in >24 hours")
         sys.exit(0)
     
-    # Check for cleanup mode
-    if '--cleanup' in sys.argv:
-        if not os.path.exists('nodemap.json'):
-            colored_print("Error: nodemap.json not found", Colors.RED)
-            sys.exit(1)
-        
-        print("BPQ Node Map Cleanup v{}".format(__version__))
-        print("=" * 50)
-        
-        try:
-            with open('nodemap.json', 'r') as f:
-                data = json.load(f)
-            
-            nodes_data = data.get('nodes', {})
-            removed = []
-            
-            # Find base callsigns with multiple SSID entries
-            base_calls = {}
-            for call in nodes_data.keys():
-                base = call.split('-')[0]
-                if base not in base_calls:
-                    base_calls[base] = []
-                base_calls[base].append(call)
-            
-            # For each base call with duplicates, keep the best one
-            for base, variants in base_calls.items():
-                if len(variants) > 1:
-                    print("\nFound duplicate entries for {}: {}".format(base, ', '.join(variants)))
-                    
-                    # Score each variant: neighbors count + (has_location ? 100 : 0) + (has_apps ? 50 : 0)
-                    scored = []
-                    for variant in variants:
-                        node = nodes_data[variant]
-                        score = len(node.get('neighbors', []))
-                        if node.get('location', {}).get('grid'):
-                            score += 100
-                        if node.get('applications', []):
-                            score += 50
-                        scored.append((variant, score, node))
-                    
-                    # Sort by score (highest first)
-                    scored.sort(key=lambda x: -x[1])
-                    keep = scored[0][0]
-                    
-                    print("  Keeping: {} (score: {}, {} neighbors, {} apps)".format(
-                        keep, scored[0][1], 
-                        len(scored[0][2].get('neighbors', [])),
-                        len(scored[0][2].get('applications', []))
-                    ))
-                    
-                    for variant, score, node in scored[1:]:
-                        print("  Removing: {} (score: {}, {} neighbors, {} apps)".format(
-                            variant, score,
-                            len(node.get('neighbors', [])),
-                            len(node.get('applications', []))
-                        ))
-                        removed.append(variant)
-            
-            # Remove empty/incomplete nodes (no neighbors, no location, no apps)
-            print("\nChecking for incomplete nodes...")
-            for call, node in list(nodes_data.items()):
-                if call in removed:
-                    continue
-                neighbors = node.get('neighbors', [])
-                location = node.get('location', {})
-                apps = node.get('applications', [])
-                
-                if len(neighbors) == 0 and not location.get('grid') and len(apps) == 0:
-                    print("  Removing incomplete: {} (no data)".format(call))
-                    removed.append(call)
-            
-            if removed:
-                # Remove nodes
-                for call in removed:
-                    del nodes_data[call]
-                
-                # Update connections (remove references to deleted nodes)
-                original_conn_count = len(data.get('connections', []))
-                data['connections'] = [c for c in data.get('connections', []) 
-                                      if c['from'] not in removed and c['to'] not in removed]
-                removed_conns = original_conn_count - len(data['connections'])
-                
-                # Backup original
-                import shutil
-                backup_file = 'nodemap.json.backup'
-                shutil.copy('nodemap.json', backup_file)
-                print("\nBacked up original to: {}".format(backup_file))
-                
-                # Save cleaned data
-                with open('nodemap.json', 'w') as f:
-                    json.dump(data, f, indent=2)
-                
-                print("\nCleanup complete!")
-                print("  Removed {} duplicate/incomplete nodes".format(len(removed)))
-                print("  Removed {} orphaned connections".format(removed_conns))
-                print("  Remaining nodes: {}".format(len(nodes_data)))
-                
-                if removed:
-                    print("\nRemoved nodes: {}".format(', '.join(sorted(removed))))
-            else:
-                print("\nNo cleanup needed - nodemap.json is clean!")
-            
-        except Exception as e:
-            colored_print("Error during cleanup: {}".format(e), Colors.RED)
-            import traceback
-            traceback.print_exc()
-            sys.exit(1)
-        
         sys.exit(0)
     
     # Check for display-nodes mode first (fast exit)
