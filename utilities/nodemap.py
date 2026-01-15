@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.7.0
+Version: 1.7.1
 """
 
-__version__ = '1.7.0'
+__version__ = '1.7.1'
 
 import sys
 import socket
@@ -3619,6 +3619,84 @@ def main():
                 for port in rf_ports:
                     freq = port.get('frequency', 'Unknown')
                     print("  Port {}: {} MHz".format(port.get('port_num'), freq))
+            
+            # Known SSIDs - helps decide which SSID to use for recrawl
+            print("\nKnown SSIDs for {}:".format(base_call))
+            ssid_sources = {}
+            
+            # 1. Current node's SSID (what we crawled)
+            if '-' in query_call:
+                ssid = query_call.split('-')[1]
+                ssid_sources[query_call] = ['Current node (crawled)']
+            
+            # 2. SSIDs from this node's own netrom_ssids (MHEARD data)
+            netrom_ssids = node_data.get('netrom_ssids', {})
+            if base_call in netrom_ssids:
+                self_ssid = netrom_ssids[base_call]
+                if self_ssid not in ssid_sources:
+                    ssid_sources[self_ssid] = []
+                ssid_sources[self_ssid].append('Own MHEARD')
+            
+            # 3. SSIDs other nodes use to refer to this node
+            for other_call, other_data in nodes_data.items():
+                if other_call == query_call:
+                    continue
+                
+                # Check other node's netrom_ssids
+                other_netrom = other_data.get('netrom_ssids', {})
+                if base_call in other_netrom:
+                    found_ssid = other_netrom[base_call]
+                    if found_ssid not in ssid_sources:
+                        ssid_sources[found_ssid] = []
+                    ssid_sources[found_ssid].append('MHEARD by {}'.format(other_call))
+                
+                # Check other node's routes (most authoritative)
+                other_routes = other_data.get('routes', {})
+                for route_call, quality in other_routes.items():
+                    if route_call == base_call or (route_call.startswith(base_call) and 
+                                                    (len(route_call) == len(base_call) or 
+                                                     route_call[len(base_call)] == '-')):
+                        # Found this callsign in routes
+                        if route_call not in ssid_sources:
+                            ssid_sources[route_call] = []
+                        ssid_sources[route_call].append('ROUTES in {} (q={})'.format(other_call, quality))
+            
+            if ssid_sources:
+                # Sort by: 1) SSIDs with base only, 2) SSIDs by number
+                sorted_ssids = sorted(ssid_sources.items(), 
+                                     key=lambda x: (0 if '-' not in x[0] else 1, x[0]))
+                for ssid_call, sources in sorted_ssids:
+                    # Deduplicate and limit sources shown
+                    unique_sources = []
+                    source_types = {}
+                    for src in sources:
+                        src_type = src.split()[0]  # "ROUTES", "MHEARD", "Current", "Own"
+                        if src_type not in source_types:
+                            source_types[src_type] = []
+                        source_types[src_type].append(src)
+                    
+                    # Show summary
+                    for src_type, src_list in sorted(source_types.items()):
+                        if src_type == 'ROUTES':
+                            # Show which nodes have this in ROUTES
+                            nodes = [s.split('in ')[1].split()[0] for s in src_list if 'in ' in s]
+                            unique_sources.append('ROUTES in {} nodes'.format(len(set(nodes))))
+                        elif src_type == 'MHEARD':
+                            nodes = [s.split('by ')[1] for s in src_list if 'by ' in s]
+                            if len(nodes) <= 3:
+                                unique_sources.append('MHEARD by {}'.format(', '.join(nodes)))
+                            else:
+                                unique_sources.append('MHEARD by {} nodes'.format(len(set(nodes))))
+                        else:
+                            unique_sources.append(src_list[0])
+                    
+                    print("  {:<15} ({})".format(ssid_call, '; '.join(unique_sources)))
+                
+                print("\nHint: Use --callsign {} to force recrawl with specific SSID".format(
+                    sorted_ssids[0][0] if sorted_ssids else base_call))
+            else:
+                print("  No SSIDs found")
+                print("\nHint: Use --callsign {}-SSID to force recrawl".format(base_call))
             
             print("=" * 60)
             

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.1] - 2026-01-15
+### Added
+- Query mode (-q/--query) now shows known SSIDs for a node from multiple sources:
+  - Current crawled SSID
+  - Own MHEARD data (netrom_ssids)
+  - Other nodes' MHEARD references
+  - Other nodes' ROUTES tables (most authoritative)
+- Helps determine which SSID to use for forced recrawls (--callsign)
+- Summary shows SSID usage across network for better recrawl decisions
+
 ## [nodemap-html 1.4.2] - 2026-01-15
 ### Added
 - Incomplete crawl detection for nodes with empty routes tables
