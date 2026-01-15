@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.13
+Version: 1.6.14
 """
 
-__version__ = '1.6.13'
+__version__ = '1.6.14'
 
 import sys
 import socket
@@ -2862,6 +2862,7 @@ class NodeCrawler:
             merge: If True, merge with existing data instead of overwrite
         """
         nodes_data = {}
+        connections_data = []
         
         # Load existing data if merge mode
         if merge:
@@ -2869,6 +2870,17 @@ class NodeCrawler:
             if existing and 'nodes' in existing:
                 nodes_data = existing['nodes']
                 print("Merging with {} existing nodes...".format(len(nodes_data)))
+            
+            # Load existing connections and filter out connections from re-crawled nodes
+            if 'connections' in existing:
+                crawled_nodes = set(self.nodes.keys())
+                for conn in existing.get('connections', []):
+                    # Keep connection if neither endpoint was re-crawled
+                    if conn['from'] not in crawled_nodes and conn['to'] not in crawled_nodes:
+                        connections_data.append(conn)
+        
+        # Add new connections from current crawl
+        connections_data.extend(self.connections)
         
         # Update with current crawl data (overwrites duplicates)
         for callsign, node_data in self.nodes.items():
@@ -2887,13 +2899,13 @@ class NodeCrawler:
                 'generator': 'nodemap.py'
             },
             'nodes': nodes_data,
-            'connections': self.connections,
+            'connections': connections_data,
             'intermittent_links': intermittent_serialized,  # Failed/unreliable connections
             'crawl_info': {
                 'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'start_node': self.callsign,
                 'total_nodes': len(nodes_data),
-                'total_connections': len(self.connections),
+                'total_connections': len(connections_data),
                 'mode': 'merge' if merge else 'overwrite'
             }
         }

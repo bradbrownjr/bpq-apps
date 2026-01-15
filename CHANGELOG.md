@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.14] - 2026-01-15
+### Fixed
+- Remove old connections involving re-crawled nodes during merge
+- Prevents stale connections from appearing on maps after single-node updates
+- Fixes issue where old KC1JMH→NG1P connection persisted after NG1P re-crawl
+
+## [nodemap 1.6.13] - 2026-01-15
+### Fixed
+- Remove old connections involving re-crawled nodes during merge
+- Prevents stale connections from appearing on maps after single-node updates
+- Fixes issue where old KC1JMH→NG1P connection persisted after NG1P re-crawl
+
 ## [nodemap 1.6.13] - 2026-01-15
 ### Fixed
 - Prioritize node's own SSID from topology keys over netrom_ssids mappings
