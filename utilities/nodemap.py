@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.2
+Version: 1.5.3
 """
 
-__version__ = '1.5.2'
+__version__ = '1.5.3'
 
 import sys
 import socket
@@ -2327,51 +2327,34 @@ class NodeCrawler:
                                 queue.append((neighbor, new_path))
                         
                         if not found_path:
-                            # Target not found in neighbor lists - check which nodes have heard it
-                            nodes_that_heard_target = []
-                            for node_call, node_info in nodes_data.items():
-                                neighbors = node_info.get('neighbors', [])
-                                if target_base in neighbors:
-                                    nodes_that_heard_target.append(node_call)
+                            # Target not found in neighbor lists - check direct neighbors from local node
+                            local_node_info = nodes_data.get(self.callsign, {})
+                            local_neighbors = local_node_info.get('neighbors', [])
+                            local_routes = local_node_info.get('routes', {})
                             
-                            if nodes_that_heard_target:
+                            # Find which direct neighbors have heard the target
+                            direct_nodes_that_heard = []
+                            for neighbor in local_neighbors:
+                                neighbor_info = nodes_data.get(neighbor, {})
+                                neighbor_neighbors = neighbor_info.get('neighbors', [])
+                                if target_base in neighbor_neighbors:
+                                    # Get route quality from local node to this neighbor
+                                    quality = local_routes.get(neighbor, 0)
+                                    direct_nodes_that_heard.append((neighbor, quality))
+                            
+                            if direct_nodes_that_heard:
                                 if self.verbose:
                                     colored_print("Warning: {} not found in any known node's neighbor list".format(target_base), Colors.YELLOW)
                                 
-                                # Calculate hop distance to each node (for sorting by proximity)
-                                node_hop_distances = {}
-                                for node in nodes_that_heard_target:
-                                    # Use BFS to find shortest path length
-                                    queue_dist = [(self.callsign, 0)]
-                                    visited_dist = {self.callsign}
-                                    found_distance = None
-                                    
-                                    while queue_dist and found_distance is None:
-                                        current, dist = queue_dist.pop(0)
-                                        
-                                        if current == node:
-                                            found_distance = dist
-                                            break
-                                        
-                                        current_info = nodes_data.get(current, {})
-                                        for neighbor in current_info.get('neighbors', []):
-                                            if neighbor not in visited_dist:
-                                                visited_dist.add(neighbor)
-                                                queue_dist.append((neighbor, dist + 1))
-                                    
-                                    node_hop_distances[node] = found_distance if found_distance is not None else 999
-                                
-                                # Sort by hop distance (closest first), then alphabetically
-                                sorted_nodes = sorted(nodes_that_heard_target, key=lambda n: (node_hop_distances[n], n))
+                                # Sort by route quality (best first), then alphabetically
+                                sorted_nodes = sorted(direct_nodes_that_heard, key=lambda x: (-x[1], x[0]))
                                 
                                 print("")
-                                print("{} has been heard by these nodes:".format(target_base))
-                                for i, node in enumerate(sorted_nodes, 1):
+                                print("{} has been heard by these direct neighbors:".format(target_base))
+                                for i, (node, quality) in enumerate(sorted_nodes, 1):
                                     node_info = nodes_data.get(node, {})
                                     grid = node_info.get('location', {}).get('grid', 'unknown')
-                                    hops = node_hop_distances[node]
-                                    hop_str = "{} hop{}".format(hops, '' if hops == 1 else 's') if hops < 999 else 'unknown distance'
-                                    print("  {}) {} ({}, {})".format(i, node, grid, hop_str))
+                                    print("  {}) {} ({}, quality {})".format(i, node, grid, quality))
                                 print("")
                                 
                                 # Prompt user to choose intermediate node
@@ -2387,36 +2370,14 @@ class NodeCrawler:
                                         colored_print("Error: Invalid choice", Colors.RED)
                                         return
                                     
-                                    intermediate_node = sorted_nodes[choice_idx]
+                                    intermediate_node = sorted_nodes[choice_idx][0]
                                     print("Selected: {} -> {}".format(intermediate_node, target_base))
                                     
-                                    # Find path to intermediate node
-                                    queue_inner = [(self.callsign, [])]
-                                    visited_inner = {self.callsign}
-                                    path_to_intermediate = None
-                                    
-                                    while queue_inner:
-                                        current, path = queue_inner.pop(0)
-                                        
-                                        if current == intermediate_node:
-                                            path_to_intermediate = path
-                                            break
-                                        
-                                        current_info = nodes_data.get(current, {})
-                                        for neighbor in current_info.get('neighbors', []):
-                                            if neighbor not in visited_inner:
-                                                visited_inner.add(neighbor)
-                                                queue_inner.append((neighbor, path + [neighbor]))
-                                    
-                                    if path_to_intermediate is not None:
-                                        # Path to intermediate node, then target is its neighbor
-                                        starting_path = path_to_intermediate
-                                        print("Path: {} -> {}".format(' -> '.join(starting_path) if starting_path else 'direct', target_base))
-                                        found_path = True
-                                    else:
-                                        colored_print("Error: {} is not reachable from {}".format(intermediate_node, self.callsign), Colors.RED)
-                                        print("Node {} is not in the network topology. Cannot proceed.".format(intermediate_node))
-                                        return
+                                    # Intermediate is a direct neighbor, so path is just [intermediate, target]
+                                    starting_path = [intermediate_node, target_ssid]
+                                    if self.verbose:
+                                        print("Built path: {}".format(' -> '.join(starting_path)))
+                                    found_path = True
                                         
                                 except (ValueError, KeyboardInterrupt, EOFError):
                                     print("")
