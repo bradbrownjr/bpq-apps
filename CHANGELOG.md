@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.1] - 2026-01-15
+### Fixed
+- Node popups (HTML) and tooltips (SVG) now calculate and display correct RF/IP neighbor counts per node
+- Removed misleading neighbors count (was showing raw MHEARD data with 11 neighbors for NG1P)
+- Each node now shows: RF Neighbors (heard on RF port + in routes) and IP Neighbors (in routes but not heard on RF)
+
 ## [nodemap-html 1.4.0] - 2026-01-15
 ### Fixed
 - **Neighbor statistics** now correctly count from ROUTES table only (not MHEARD)
