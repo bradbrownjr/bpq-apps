@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.2
+Version: 1.4.3
 """
 
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 
 import sys
 import json
@@ -256,17 +256,29 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         node_type = node_data.get('type', 'Unknown')
         
         # Split applications into NetRom access and other apps
+        # For incomplete crawls, applications may contain OTHER nodes' aliases (from NODES output)
+        # Filter to show only this node's own aliases
         all_apps = node_data.get('applications', [])
+        own_aliases_dict = node_data.get('own_aliases', {})
+        
+        # Get this node's actual NetRom aliases (own_aliases is authoritative)
         netrom_access = []
+        if own_aliases_dict:
+            # Show own aliases with SSIDs
+            for alias, full_call in sorted(own_aliases_dict.items()):
+                netrom_access.append("{}:{}}}".format(alias, full_call))
+        else:
+            # Fallback: extract from applications (may include other nodes' aliases)
+            for app in all_apps:
+                if ':' in app or '}' in app:
+                    netrom_access.append(app)
+        
+        # Applications: filter out NetRom aliases
         applications = []
         for app in all_apps:
-            # NetRom entries contain ":" (like "CCEMA:WS1EC-15}") or "}" (prompt)
-            # These are aliases, not applications
-            if ':' in app or '}' in app:
-                # This is a NetRom alias
-                netrom_access.append(app)
-            else:
-                # This is an actual application (BBS, CHAT, GOPHER, EANHUB, etc.)
+            # Skip NetRom entries (contain ":" or "}")
+            # Skip call-SSID patterns (like "2PGN-11")
+            if ':' not in app and '}' not in app and '-' not in app:
                 applications.append(app)
         
         # Get frequencies from ports (with band color)

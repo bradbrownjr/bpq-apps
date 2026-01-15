@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.3] - 2026-01-15
+### Fixed
+- NetRom Access now shows only this node's own aliases (from own_aliases)
+- Incomplete crawls (like KY2D) no longer show other nodes' aliases in NetRom Access
+- Applications list filters out NetRom aliases and call-SSID patterns
+- KY2D now correctly shows only "KY2D2M:KY2D-15}" instead of other nodes' aliases
+
 ## [nodemap 1.7.6] - 2026-01-15
 ### Fixed
 - Deduplicate nodes during merge when base callsign and SSID variant both exist
