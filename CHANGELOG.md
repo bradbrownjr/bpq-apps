@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.4.4] - 2026-01-14
+### Fixed
+- CLI-forced SSIDs now used when resolving start node callsign to SSID
+  - Previously: `./nodemap.py 5 NG1P --callsign NG1P-4` would resolve to NG1P-1 from stale data
+  - Now: checks `cli_forced_ssids` before `netrom_ssid_map` during start node resolution
+  - Verbose mode shows "Resolved NG1P to node SSID: NG1P-4 (CLI-forced)"
+
 ## [nodemap 1.4.3] - 2026-01-14
 ### Changed
 - CLI-forced SSIDs (`--callsign`) now update the node's `netrom_ssids` in saved JSON

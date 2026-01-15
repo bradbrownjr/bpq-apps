@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.4.3
+Version: 1.4.4
 """
 
-__version__ = '1.4.3'
+__version__ = '1.4.4'
 
 import sys
 import socket
@@ -2241,12 +2241,14 @@ class NodeCrawler:
                         target_base = starting_callsign.split('-')[0] if '-' in starting_callsign else starting_callsign
                         
                         # If user provided base callsign, look up the node SSID
-                        if '-' not in starting_callsign and target_base in self.netrom_ssid_map:
-                            resolved_ssid = self.netrom_ssid_map.get(target_base)
+                        # CLI-forced SSIDs take precedence over discovered SSIDs
+                        if '-' not in starting_callsign:
+                            resolved_ssid = self.cli_forced_ssids.get(target_base) or self.netrom_ssid_map.get(target_base)
                             if resolved_ssid and '-' in resolved_ssid:
                                 starting_callsign = resolved_ssid
                                 if self.verbose:
-                                    print("Resolved {} to node SSID: {}".format(target_base, resolved_ssid))
+                                    source = "CLI-forced" if target_base in self.cli_forced_ssids else "discovered"
+                                    print("Resolved {} to node SSID: {} ({})".format(target_base, resolved_ssid, source))
                         
                         # User can force specific SSID via netrom_ssid_map (pre-populated by --callsign)
                         # This overrides any discovered SSID
