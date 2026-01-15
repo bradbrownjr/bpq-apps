@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.1] - 2026-01-15
+### Added
+- Interactive path selection when target node not directly reachable with `--callsign`
+  - Script now searches for nodes that have heard the target on RF
+  - Prompts user to choose intermediate node to connect through
+  - Automatically builds path: local → intermediate → target
+  - Validates intermediate node is reachable before proceeding
+  - Example: `./nodemap.py --callsign NG1P-4` shows nodes that heard NG1P, lets you pick one
+
+### Fixed
+- `--callsign` with max_hops=0 no longer tries impossible direct connections
+- Better error messages when target node is not in network topology
+
 ## [nodemap 1.5.0] - 2026-01-15
 ### Changed
 - **Default max_hops reduced from 10 to 4** (realistic for 1200 baud RF with acceptable latency)

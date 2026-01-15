@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.0
+Version: 1.5.1
 """
 
-__version__ = '1.5.0'
+__version__ = '1.5.1'
 
 import sys
 import socket
@@ -2327,16 +2327,86 @@ class NodeCrawler:
                                 queue.append((neighbor, new_path))
                         
                         if not found_path:
-                            if self.verbose:
-                                colored_print("Warning: {} not found in any known node's neighbor list".format(target_base), Colors.YELLOW)
-                            # Fallback: Check if we have a NetRom alias for direct connection
-                            if target_base in self.call_to_alias:
+                            # Target not found in neighbor lists - check which nodes have heard it
+                            nodes_that_heard_target = []
+                            for node_call, node_info in nodes_data.items():
+                                neighbors = node_info.get('neighbors', [])
+                                if target_base in neighbors:
+                                    nodes_that_heard_target.append(node_call)
+                            
+                            if nodes_that_heard_target:
                                 if self.verbose:
-                                    print("Found NetRom alias for {}: {}".format(target_base, self.call_to_alias[target_base]))
-                                # Leave starting_path=[] for direct NetRom connection
+                                    colored_print("Warning: {} not found in any known node's neighbor list".format(target_base), Colors.YELLOW)
+                                print("")
+                                print("{} has been heard by these nodes:".format(target_base))
+                                for i, node in enumerate(sorted(nodes_that_heard_target), 1):
+                                    node_info = nodes_data.get(node, {})
+                                    grid = node_info.get('location', {}).get('grid', 'unknown')
+                                    print("  {}) {} ({})".format(i, node, grid))
+                                print("")
+                                
+                                # Prompt user to choose intermediate node
+                                try:
+                                    choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(nodes_that_heard_target))).strip()
+                                    
+                                    if not choice:
+                                        colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
+                                        return
+                                    
+                                    choice_idx = int(choice) - 1
+                                    if choice_idx < 0 or choice_idx >= len(nodes_that_heard_target):
+                                        colored_print("Error: Invalid choice", Colors.RED)
+                                        return
+                                    
+                                    intermediate_node = sorted(nodes_that_heard_target)[choice_idx]
+                                    print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                    
+                                    # Find path to intermediate node
+                                    queue_inner = [(self.callsign, [])]
+                                    visited_inner = {self.callsign}
+                                    path_to_intermediate = None
+                                    
+                                    while queue_inner:
+                                        current, path = queue_inner.pop(0)
+                                        
+                                        if current == intermediate_node:
+                                            path_to_intermediate = path
+                                            break
+                                        
+                                        current_info = nodes_data.get(current, {})
+                                        for neighbor in current_info.get('neighbors', []):
+                                            if neighbor not in visited_inner:
+                                                visited_inner.add(neighbor)
+                                                queue_inner.append((neighbor, path + [neighbor]))
+                                    
+                                    if path_to_intermediate is not None:
+                                        # Path to intermediate node, then target is its neighbor
+                                        starting_path = path_to_intermediate
+                                        print("Path: {} -> {}".format(' -> '.join(starting_path) if starting_path else 'direct', target_base))
+                                        found_path = True
+                                    else:
+                                        colored_print("Error: {} is not reachable from {}".format(intermediate_node, self.callsign), Colors.RED)
+                                        print("Node {} is not in the network topology. Cannot proceed.".format(intermediate_node))
+                                        return
+                                        
+                                except (ValueError, KeyboardInterrupt, EOFError):
+                                    print("")
+                                    colored_print("Cancelled", Colors.YELLOW)
+                                    return
                             else:
-                                if self.verbose:
-                                    print("No NetRom alias found for {}, will try direct fallback".format(target_base))
+                                # Not heard by anyone - completely unknown
+                                colored_print("Error: {} has not been heard by any known node".format(target_base), Colors.RED)
+                                print("Node {} is not in the network topology.".format(target_base))
+                                
+                                # Check if there's a NetRom alias as last resort
+                                if target_base in self.call_to_alias:
+                                    print("Found NetRom alias: {}".format(self.call_to_alias[target_base]))
+                                    print("Will attempt direct NetRom connection...")
+                                    # Leave starting_path=[] for direct NetRom connection
+                                else:
+                                    print("")
+                                    colored_print("Cannot proceed: no path to {} and no NetRom alias available".format(target_base), Colors.RED)
+                                    return
                 else:
                     if self.verbose:
                         print("No existing nodemap.json found or no nodes in it")
