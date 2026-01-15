@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.7
+Version: 1.6.8
 """
 
-__version__ = '1.6.7'
+__version__ = '1.6.8'
 
 import sys
 import socket
@@ -2621,12 +2621,21 @@ class NodeCrawler:
                     colored_print("Run a full crawl first to build network map", Colors.YELLOW)
                     return
                 
-                # Populate netrom_ssid_map from topology data so BFS can resolve base calls to SSIDs
+                # Populate netrom_ssid_map and route_ports from topology data
                 for node_call, node_info in nodes_data.items():
                     # Store node's netrom SSIDs for connection routing
                     for base_call, full_call in node_info.get('netrom_ssids', {}).items():
                         if base_call not in self.netrom_ssid_map:
                             self.netrom_ssid_map[base_call] = full_call
+                    
+                    # Store route ports (which port neighbors are heard on)
+                    for neighbor_call, port_num in node_info.get('heard_on_ports', []):
+                        if port_num is not None and neighbor_call not in self.route_ports:
+                            self.route_ports[neighbor_call] = port_num
+                
+                if self.verbose:
+                    print("Loaded {} SSID mappings and {} port mappings from topology".format(
+                        len(self.netrom_ssid_map), len(self.route_ports)))
                 
                 # BFS to find shortest path
                 queue = [(self.callsign, [])]

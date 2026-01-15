@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.8] - 2026-01-15
+### Fixed
+- Populate route_ports from topology data alongside netrom_ssid_map
+- Enables connection to first hop when using --callsign forced target
+- Extracts port numbers from heard_on_ports arrays
+- Fixes "No known route to [neighbor]" errors despite topology data available
+
 ## [nodemap 1.6.7] - 2026-01-15
 ### Fixed
 - Populate netrom_ssid_map from topology before BFS runs for forced_target
