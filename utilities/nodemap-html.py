@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.1
+Version: 1.4.2
 """
 
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 
 import sys
 import json
@@ -191,6 +191,49 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
     
     Note: Requires internet connection to load map tiles and Leaflet library.
     """
+    # Build inbound neighbor map for incomplete crawls
+    # Count who has routes TO each node (for nodes with empty routes table)
+    inbound_neighbors = {}
+    for node_call, node_data in nodes.items():
+        routes = node_data.get('routes', {})
+        heard_on_ports = node_data.get('heard_on_ports', [])
+        ports = node_data.get('ports', [])
+        
+        # Build set of neighbors heard on RF ports from this node's perspective
+        rf_heard = set()
+        for entry in heard_on_ports:
+            if len(entry) == 2:
+                neighbor, port_num = entry
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                for port in ports:
+                    if port.get('number') == port_num and port.get('is_rf'):
+                        rf_heard.add(neighbor_base)
+                        break
+        
+        # For each route, track inbound connection TO the neighbor
+        for neighbor_base, quality in routes.items():
+            if quality > 0:
+                # Find neighbor's key in nodes dict
+                neighbor_key = None
+                if neighbor_base in nodes:
+                    neighbor_key = neighbor_base
+                else:
+                    for node_key in nodes.keys():
+                        if node_key.startswith(neighbor_base + '-'):
+                            neighbor_key = node_key
+                            break
+                
+                if neighbor_key:
+                    if neighbor_key not in inbound_neighbors:
+                        inbound_neighbors[neighbor_key] = {'rf': set(), 'ip': set()}
+                    
+                    # Inbound TO neighbor_key FROM node_call
+                    node_call_base = node_call.split('-')[0] if '-' in node_call else node_call
+                    if neighbor_base in rf_heard:
+                        inbound_neighbors[neighbor_key]['rf'].add(node_call_base)
+                    else:
+                        inbound_neighbors[neighbor_key]['ip'].add(node_call_base)
+    
     # Build node data with coordinates
     map_nodes = []
     map_connections = []
@@ -249,31 +292,46 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         # Extract base callsign for display (without SSID)
         display_call = callsign.split('-')[0] if '-' in callsign else callsign
         
-        # Calculate RF/IP neighbor counts for this node (from ROUTES only)
+        # Calculate RF/IP neighbor counts for this node
         routes = node_data.get('routes', {})
-        heard_on_ports = node_data.get('heard_on_ports', [])
-        ports = node_data.get('ports', [])
         
-        # Build set of neighbors heard on RF ports
-        rf_heard = set()
-        for entry in heard_on_ports:
-            if len(entry) == 2:
-                neighbor, port_num = entry
-                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
-                for port in ports:
-                    if port.get('number') == port_num and port.get('is_rf'):
-                        rf_heard.add(neighbor_base)
-                        break
-        
-        # Count routes: RF if heard on RF port, otherwise IP
-        rf_neighbor_count = 0
-        ip_neighbor_count = 0
-        for neighbor_base, quality in routes.items():
-            if quality > 0:
-                if neighbor_base in rf_heard:
-                    rf_neighbor_count += 1
-                else:
-                    ip_neighbor_count += 1
+        # Check if this is an incomplete crawl (empty routes)
+        if not routes:
+            # Use inbound neighbors (who has routes TO this node)
+            if callsign in inbound_neighbors:
+                rf_neighbor_count = len(inbound_neighbors[callsign]['rf'])
+                ip_neighbor_count = len(inbound_neighbors[callsign]['ip'])
+                incomplete_crawl = True
+            else:
+                rf_neighbor_count = 0
+                ip_neighbor_count = 0
+                incomplete_crawl = False
+        else:
+            # Normal: use this node's routes table
+            heard_on_ports = node_data.get('heard_on_ports', [])
+            ports = node_data.get('ports', [])
+            
+            # Build set of neighbors heard on RF ports
+            rf_heard = set()
+            for entry in heard_on_ports:
+                if len(entry) == 2:
+                    neighbor, port_num = entry
+                    neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                    for port in ports:
+                        if port.get('number') == port_num and port.get('is_rf'):
+                            rf_heard.add(neighbor_base)
+                            break
+            
+            # Count routes: RF if heard on RF port, otherwise IP
+            rf_neighbor_count = 0
+            ip_neighbor_count = 0
+            for neighbor_base, quality in routes.items():
+                if quality > 0:
+                    if neighbor_base in rf_heard:
+                        rf_neighbor_count += 1
+                    else:
+                        ip_neighbor_count += 1
+            incomplete_crawl = False
         
         map_nodes.append({
             'callsign': callsign,
@@ -290,7 +348,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             'frequencies': frequencies,
             'ssids': ssids,
             'rf_neighbors': rf_neighbor_count,
-            'ip_neighbors': ip_neighbor_count
+            'ip_neighbors': ip_neighbor_count,
+            'incomplete_crawl': incomplete_crawl
         })
     
     # Build map connections from routes tables (quality > 0)
@@ -541,8 +600,9 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                          '<span class="apps">' + apps.join(', ') + '</span></p>';
             }
             
-            popup += '<p><span class="label">RF Neighbors:</span> ' + node.rf_neighbors + '<br>' +
-                     '<span class="label">IP Neighbors:</span> ' + node.ip_neighbors + '</p>';
+            var neighborLabel = node.incomplete_crawl ? ' (from network)' : '';
+            popup += '<p><span class="label">RF Neighbors:</span> ' + node.rf_neighbors + neighborLabel + '<br>' +
+                     '<span class="label">IP Neighbors:</span> ' + node.ip_neighbors + neighborLabel + '</p>';
             popup += '</div>';
             
             marker.bindPopup(popup, { maxWidth: 300 });
@@ -616,6 +676,47 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     
     Uses simple coordinate projection for regional coverage.
     """
+    # Build inbound neighbor map for incomplete crawls (nodes with empty routes tables)
+    inbound_neighbors = {}
+    for node_call, node_data in nodes.items():
+        routes = node_data.get('routes', {})
+        heard_on_ports = node_data.get('heard_on_ports', [])
+        ports_data = node_data.get('ports', [])
+        
+        # Build set of neighbors heard on RF ports for this node
+        rf_heard = set()
+        for entry in heard_on_ports:
+            if len(entry) == 2:
+                neighbor, port_num = entry
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                for port in ports_data:
+                    if port.get('number') == port_num and port.get('is_rf'):
+                        rf_heard.add(neighbor_base)
+                        break
+        
+        # For each route FROM this node, track it as inbound TO neighbor
+        for neighbor_base, quality in routes.items():
+            if quality > 0:
+                # Find neighbor key - could be base or with SSID
+                neighbor_key = None
+                if neighbor_base in nodes:
+                    neighbor_key = neighbor_base
+                else:
+                    for node_key in nodes.keys():
+                        if node_key.startswith(neighbor_base + '-'):
+                            neighbor_key = node_key
+                            break
+                
+                if neighbor_key:
+                    if neighbor_key not in inbound_neighbors:
+                        inbound_neighbors[neighbor_key] = {'rf': set(), 'ip': set()}
+                    
+                    # Categorize as RF (heard on RF port) or IP
+                    if neighbor_base in rf_heard:
+                        inbound_neighbors[neighbor_key]['rf'].add(node_call)
+                    else:
+                        inbound_neighbors[neighbor_key]['ip'].add(node_call)
+    
     # Build node data with coordinates
     map_nodes = []
     map_connections = []
@@ -651,26 +752,41 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         heard_on_ports = node_data.get('heard_on_ports', [])
         ports_data = node_data.get('ports', [])
         
-        # Build set of neighbors heard on RF ports
-        rf_heard = set()
-        for entry in heard_on_ports:
-            if len(entry) == 2:
-                neighbor, port_num = entry
-                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
-                for port in ports_data:
-                    if port.get('number') == port_num and port.get('is_rf'):
-                        rf_heard.add(neighbor_base)
-                        break
-        
-        # Count routes: RF if heard on RF port, otherwise IP
-        rf_neighbor_count = 0
-        ip_neighbor_count = 0
-        for neighbor_base, quality in routes.items():
-            if quality > 0:
-                if neighbor_base in rf_heard:
-                    rf_neighbor_count += 1
-                else:
-                    ip_neighbor_count += 1
+        # Check for incomplete crawl (empty routes table)
+        incomplete_crawl = False
+        if not routes:
+            # Use inbound neighbor counts (who has routes TO this node)
+            if callsign in inbound_neighbors:
+                rf_neighbor_count = len(inbound_neighbors[callsign]['rf'])
+                ip_neighbor_count = len(inbound_neighbors[callsign]['ip'])
+                incomplete_crawl = True
+            else:
+                # No routes TO or FROM this node
+                rf_neighbor_count = 0
+                ip_neighbor_count = 0
+                incomplete_crawl = True
+        else:
+            # Normal: use this node's routes table
+            # Build set of neighbors heard on RF ports
+            rf_heard = set()
+            for entry in heard_on_ports:
+                if len(entry) == 2:
+                    neighbor, port_num = entry
+                    neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                    for port in ports_data:
+                        if port.get('number') == port_num and port.get('is_rf'):
+                            rf_heard.add(neighbor_base)
+                            break
+            
+            # Count routes: RF if heard on RF port, otherwise IP
+            rf_neighbor_count = 0
+            ip_neighbor_count = 0
+            for neighbor_base, quality in routes.items():
+                if quality > 0:
+                    if neighbor_base in rf_heard:
+                        rf_neighbor_count += 1
+                    else:
+                        ip_neighbor_count += 1
         
         map_nodes.append({
             'callsign': callsign,
@@ -682,7 +798,8 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             'frequencies': freq_list,
             'type': node_data.get('type', 'Unknown'),
             'rf_neighbors': rf_neighbor_count,
-            'ip_neighbors': ip_neighbor_count
+            'ip_neighbors': ip_neighbor_count,
+            'incomplete_crawl': incomplete_crawl
         })
     
     # Build map connections from routes tables (quality > 0)
@@ -898,8 +1015,11 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             tooltip_lines.append("Type: {}".format(node['type']))
         if node['frequencies']:
             tooltip_lines.append("Frequencies: {}".format(", ".join(node['frequencies'])))
-        tooltip_lines.append("RF Neighbors: {}".format(node['rf_neighbors']))
-        tooltip_lines.append("IP Neighbors: {}".format(node['ip_neighbors']))
+        
+        # Add neighbor counts with label if from network (incomplete crawl)
+        neighbor_label = ' (from network)' if node.get('incomplete_crawl', False) else ''
+        tooltip_lines.append("RF Neighbors: {}{}".format(node['rf_neighbors'], neighbor_label))
+        tooltip_lines.append("IP Neighbors: {}{}".format(node['ip_neighbors'], neighbor_label))
         tooltip = "&#10;".join(tooltip_lines)  # &#10; is XML newline
         
         svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})" onmouseenter="highlightNode(\'{}\');" onmouseleave="unhighlightAll();">'.format(x, y, node['callsign']))

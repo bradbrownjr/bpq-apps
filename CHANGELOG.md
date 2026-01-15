@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.2] - 2026-01-15
+### Added
+- Incomplete crawl detection for nodes with empty routes tables
+- Inbound neighbor tracking from network perspective (who has routes TO this node)
+- Shows neighbor counts "(from network)" label for incomplete crawls instead of misleading "0"
+
+### Fixed
+- KY2D and similar incomplete crawls now show inbound neighbors (RF=1 from K1NYY) instead of 0
+- Both HTML popups and SVG tooltips updated with incomplete crawl detection
+
 ## [nodemap-html 1.4.1] - 2026-01-15
 ### Fixed
 - Node popups (HTML) and tooltips (SVG) now calculate and display correct RF/IP neighbor counts per node
