@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.11
+Version: 1.6.12
 """
 
-__version__ = '1.6.11'
+__version__ = '1.6.12'
 
 import sys
 import socket
@@ -2025,8 +2025,18 @@ class NodeCrawler:
                 if self.verbose:
                     print("  Updated netrom_ssids: {} = {} (CLI-forced)".format(base_call, forced_ssid))
             
-            # Record connections
+            # Record connections - only for neighbors in ROUTES with non-zero quality
+            # MHEARD shows all stations heard on RF, but ROUTES shows actual routing neighbors
             for neighbor in all_neighbors:
+                # Check if neighbor is in ROUTES (has a route entry)
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                if neighbor_base not in routes:
+                    continue  # Skip neighbors not in ROUTES (not routing nodes)
+                
+                quality = routes.get(neighbor_base, 0)
+                if quality == 0:
+                    continue  # Skip quality 0 routes (sysop blocked)
+                
                 link_key = (callsign, neighbor)
                 is_intermittent = link_key in self.intermittent_links
                 
@@ -2034,7 +2044,7 @@ class NodeCrawler:
                     'from': callsign,
                     'to': neighbor,
                     'port': None,
-                    'quality': routes.get(neighbor, 0),
+                    'quality': quality,
                     'intermittent': is_intermittent  # Mark unreliable/failed connections
                 })
                 

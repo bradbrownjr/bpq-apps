@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.12] - 2026-01-15
+### Fixed
+- Only create connections for neighbors in ROUTES table with non-zero quality
+- Prevents map from showing RF links to non-routing stations (heard but not routable)
+- Fixes issue where direct RF links were shown instead of actual routing paths
+
+## [nodemap 1.6.11] - 2026-01-15
+### Fixed
+- Only create connections for neighbors in ROUTES table with non-zero quality
+- Prevents map from showing RF links to non-routing stations (heard but not routable)
+- Fixes issue where direct RF links were shown instead of actual routing paths
+
 ## [nodemap 1.6.11] - 2026-01-15
 ### Added
 - Prompt to regenerate maps after using --set-grid option
