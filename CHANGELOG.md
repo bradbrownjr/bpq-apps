@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.2.0] - 2026-01-15
+### Fixed
+- **CRITICAL BUG**: Now reads connections from JSON's validated `connections` array instead of building from `neighbors` field
+- Previously displayed all MHEARD neighbors as connections, even if not in ROUTES table
+- Maps now correctly show only ROUTES-validated connections that passed nodemap.py cleanup
+- Fixes maps displaying invalid/stale connections despite clean JSON data
+
 ## [nodemap 1.7.0] - 2026-01-15
 ### Changed
 - Unified cleanup into single --cleanup command with targets: nodes, connections, or all

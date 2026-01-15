@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.1.6
+Version: 1.2.0
 """
 
-__version__ = '1.1.6'
+__version__ = '1.2.0'
 
 import sys
 import json
@@ -151,7 +151,7 @@ def get_band_name(frequency):
 
 
 def load_nodemap(filename='nodemap.json'):
-    """Load nodemap.json and return nodes dict."""
+    """Load nodemap.json and return full data dict (nodes, connections)."""
     if not os.path.exists(filename):
         colored_print("Error: {} not found".format(filename), Colors.RED)
         print("Run nodemap.py first to generate network data.")
@@ -161,7 +161,7 @@ def load_nodemap(filename='nodemap.json'):
     with open(filename, 'r', encoding='utf-8-sig') as f:
         data = json.load(f)
     
-    return data.get('nodes', {})
+    return data
 
 
 def extract_sponsor(info_text):
@@ -185,7 +185,7 @@ def extract_sponsor(info_text):
     return None
 
 
-def generate_html_map(nodes, output_file='nodemap.html'):
+def generate_html_map(nodes, connections, output_file='nodemap.html'):
     """
     Generate interactive Leaflet HTML map.
     
@@ -193,7 +193,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
     """
     # Build node data with coordinates
     map_nodes = []
-    connections = []
+    map_connections = []
     
     for callsign, node_data in nodes.items():
         location = node_data.get('location', {})
@@ -265,32 +265,40 @@ def generate_html_map(nodes, output_file='nodemap.html'):
             'ssids': ssids,
             'neighbors': node_data.get('neighbors', [])
         })
+    
+    # Build map connections from validated connections array (not neighbors)
+    # This ensures only ROUTES-validated connections are displayed
+    node_coords = {}
+    for node in map_nodes:
+        node_coords[node['callsign']] = (node['lat'], node['lon'])
+    
+    for conn in connections:
+        from_call = conn['from']
+        to_call = conn['to']
         
-        # Build connections (only between nodes we have coordinates for)
-        for neighbor in node_data.get('neighbors', []):
-            if neighbor in nodes:
-                neighbor_loc = nodes[neighbor].get('location', {})
-                neighbor_grid = neighbor_loc.get('grid', '')
-                neighbor_coords = grid_to_latlon(neighbor_grid)
-                
-                if neighbor_coords:
-                    # Get frequency for this connection (from port data)
-                    conn_freq = None
-                    for port in node_data.get('ports', []):
-                        if port.get('is_rf') and port.get('frequency'):
-                            conn_freq = port['frequency']
-                            break
-                    
-                    connections.append({
-                        'from': callsign,
-                        'to': neighbor,
-                        'from_lat': lat,
-                        'from_lon': lon,
-                        'to_lat': neighbor_coords[0],
-                        'to_lon': neighbor_coords[1],
-                        'color': get_band_color(conn_freq),
-                        'frequency': conn_freq
-                    })
+        # Only include if both nodes have coordinates
+        if from_call in node_coords and to_call in node_coords:
+            from_lat, from_lon = node_coords[from_call]
+            to_lat, to_lon = node_coords[to_call]
+            
+            # Get frequency for color coding (from source node's ports)
+            conn_freq = None
+            if from_call in nodes:
+                for port in nodes[from_call].get('ports', []):
+                    if port.get('is_rf') and port.get('frequency'):
+                        conn_freq = port['frequency']
+                        break
+            
+            map_connections.append({
+                'from': from_call,
+                'to': to_call,
+                'from_lat': from_lat,
+                'from_lon': from_lon,
+                'to_lat': to_lat,
+                'to_lon': to_lon,
+                'color': get_band_color(conn_freq),
+                'frequency': conn_freq
+            })
     
     if not map_nodes:
         colored_print("Error: No nodes with valid grid squares found.", Colors.RED)
@@ -359,7 +367,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
     <script>
         // Node data
         var nodes = ''' + json.dumps(map_nodes) + ''';
-        var connections = ''' + json.dumps(connections) + ''';
+        var connections = ''' + json.dumps(map_connections) + ''';
         
         // Initialize map
         var map = L.map('map').setView([''' + str(avg_lat) + ''', ''' + str(avg_lon) + '''], 8);
@@ -496,7 +504,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
     
     # Count unique connections (deduplicated)
     unique_connections = set()
-    for conn in connections:
+    for conn in map_connections:
         key = tuple(sorted([conn['from'], conn['to']]))
         unique_connections.add(key)
     
@@ -504,7 +512,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
     return True
 
 
-def generate_svg_map(nodes, output_file='nodemap.svg'):
+def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     """
     Generate static SVG map (fully offline, no external dependencies).
     
@@ -512,7 +520,7 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
     """
     # Build node data with coordinates
     map_nodes = []
-    connections = []
+    map_connections = []
     
     for callsign, node_data in nodes.items():
         location = node_data.get('location', {})
@@ -551,32 +559,39 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
             'type': node_data.get('type', 'Unknown'),
             'neighbors': node_data.get('neighbors', [])
         })
+    
+    # Build map connections from validated connections array (not neighbors)
+    node_coords = {}
+    for node in map_nodes:
+        node_coords[node['callsign']] = (node['lat'], node['lon'])
+    
+    for conn in connections:
+        from_call = conn['from']
+        to_call = conn['to']
         
-        # Build connections
-        for neighbor in node_data.get('neighbors', []):
-            if neighbor in nodes:
-                neighbor_loc = nodes[neighbor].get('location', {})
-                neighbor_grid = neighbor_loc.get('grid', '')
-                neighbor_coords = grid_to_latlon(neighbor_grid)
-                
-                if neighbor_coords:
-                    # Get frequency for this specific connection (from port data)
-                    conn_freq = None
-                    for port in node_data.get('ports', []):
-                        if port.get('is_rf') and port.get('frequency'):
-                            conn_freq = port['frequency']
-                            break
-                    
-                    connections.append({
-                        'from': callsign,
-                        'to': neighbor,
-                        'from_lat': lat,
-                        'from_lon': lon,
-                        'to_lat': neighbor_coords[0],
-                        'to_lon': neighbor_coords[1],
-                        'color': get_band_color(conn_freq),
-                        'frequency': conn_freq
-                    })
+        # Only include if both nodes have coordinates
+        if from_call in node_coords and to_call in node_coords:
+            from_lat, from_lon = node_coords[from_call]
+            to_lat, to_lon = node_coords[to_call]
+            
+            # Get frequency for color coding (from source node's ports)
+            conn_freq = None
+            if from_call in nodes:
+                for port in nodes[from_call].get('ports', []):
+                    if port.get('is_rf') and port.get('frequency'):
+                        conn_freq = port['frequency']
+                        break
+            
+            map_connections.append({
+                'from': from_call,
+                'to': to_call,
+                'from_lat': from_lat,
+                'from_lon': from_lon,
+                'to_lat': to_lat,
+                'to_lon': to_lon,
+                'color': get_band_color(conn_freq),
+                'frequency': conn_freq
+            })
     
     if not map_nodes:
         colored_print("Error: No nodes with valid grid squares found.", Colors.RED)
@@ -707,7 +722,7 @@ def generate_svg_map(nodes, output_file='nodemap.svg'):
     # Draw connections
     svg_lines.append('  <g class="connections">')
     drawn_connections = set()
-    for conn in connections:
+    for conn in map_connections:
         # Avoid duplicate lines (A-B and B-A)
         key = tuple(sorted([conn['from'], conn['to']]))
         if key in drawn_connections:
@@ -903,11 +918,14 @@ def main():
             svg_file = os.path.join(output_dir, os.path.basename(svg_file))
     
     # Load data
-    nodes = load_nodemap(input_file)
-    if not nodes:
+    data = load_nodemap(input_file)
+    if not data:
         return
     
-    print("Loaded {} nodes from {}".format(len(nodes), input_file))
+    nodes = data.get('nodes', {})
+    connections = data.get('connections', [])
+    
+    print("Loaded {} nodes and {} connections from {}".format(len(nodes), len(connections), input_file))
     
     # Count nodes with grid squares
     nodes_with_grid = sum(1 for n in nodes.values() if n.get('location', {}).get('grid'))
@@ -924,10 +942,10 @@ def main():
     
     # Generate outputs
     if html_file:
-        generate_html_map(nodes, html_file)
+        generate_html_map(nodes, connections, html_file)
     
     if svg_file:
-        generate_svg_map(nodes, svg_file)
+        generate_svg_map(nodes, connections, svg_file)
     
     print("")
     print("Map generation complete!")
