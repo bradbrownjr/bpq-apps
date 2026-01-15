@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.7] - 2026-01-15
+### Fixed
+- Populate netrom_ssid_map from topology before BFS runs for forced_target
+- Now properly resolves N1QFY to N1QFY-15 when finding paths
+
+## [nodemap 1.6.6] - 2026-01-15
+### Fixed
+- Populate netrom_ssid_map from topology before BFS runs for forced_target
+- Now properly resolves N1QFY to N1QFY-15 when finding paths
+
 ## [nodemap 1.6.6] - 2026-01-15
 ### Fixed
 - BFS path-finding now resolves base callsigns to SSIDs when looking up node data

@@ -2621,6 +2621,13 @@ class NodeCrawler:
                     colored_print("Run a full crawl first to build network map", Colors.YELLOW)
                     return
                 
+                # Populate netrom_ssid_map from topology data so BFS can resolve base calls to SSIDs
+                for node_call, node_info in nodes_data.items():
+                    # Store node's netrom SSIDs for connection routing
+                    for base_call, full_call in node_info.get('netrom_ssids', {}).items():
+                        if base_call not in self.netrom_ssid_map:
+                            self.netrom_ssid_map[base_call] = full_call
+                
                 # BFS to find shortest path
                 queue = [(self.callsign, [])]
                 visited = {self.callsign}
