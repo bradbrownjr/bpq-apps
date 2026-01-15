@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [nodemap-html 1.2.0] - 2026-01-15
+## [nodemap-html 1.3.0] - 2026-01-15
 ### Fixed
 - **CRITICAL BUG**: Connection logic - now builds from routes tables (quality > 0) instead of connections array
 - Original logic was correct: iterate nodes' routes tables, resolve SSIDs via netrom_ssids, create connections
