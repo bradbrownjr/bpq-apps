@@ -107,6 +107,13 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
   - Shows neighbors (explored/unexplored), apps, routes, best path
   - Use to check nodes from nodemap-html.py "unmapped nodes" list
   - Fast lookup: `./nodemap.py -q NG1P`
+- `--cleanup` - Clean nodemap.json (remove duplicates and incomplete nodes)
+  - Automatically removes duplicate base callsign entries (keeps most complete)
+  - Removes incomplete nodes (no neighbors, no location, no apps)
+  - Creates backup file before making changes
+  - Scores duplicates by: neighbor count + location + applications
+  - Example: `./nodemap.py --cleanup`
+- `--display-nodes` or `-d` - Display nodes table from nodemap.json and exit
 - `--mode MODE` - Crawl mode: `update` (default), `reaudit`, `new-only`
   - `update`: Skip already-visited nodes in current session (fastest)
   - `reaudit`: Re-crawl all nodes to verify/update data
@@ -200,6 +207,10 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py --callsign NG1P-4                    # Correction mode: crawls only NG1P-4 (0 hops)
 ./nodemap.py 5 --callsign NG1P-4                  # Crawl NG1P-4 + 5 hops (explicit override)
 ./nodemap.py 10 WS1EC --callsign WS1EC-15         # Start at WS1EC, force node port SSID
+
+# Data maintenance
+./nodemap.py --cleanup                            # Remove duplicates and incomplete nodes
+./nodemap.py -d                                   # Display nodes table
 
 # Query node information
 ./nodemap.py -q NG1P                              # Show what we know about NG1P

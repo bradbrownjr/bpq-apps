@@ -307,7 +307,7 @@ def generate_html_map(nodes, output_file='nodemap.html'):
             # Extract base callsign (without SSID) for deduplication
             base_call = callsign.split('-')[0] if '-' in callsign else callsign
             if base_call not in seen_base_calls:
-                unmapped_nodes.append(callsign)
+                unmapped_nodes.append(base_call)  # Show base callsign only
                 seen_base_calls.add(base_call)
     unmapped_nodes.sort()
     
