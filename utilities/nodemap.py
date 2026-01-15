@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.3
+Version: 1.5.4
 """
 
-__version__ = '1.5.3'
+__version__ = '1.5.4'
 
 import sys
 import socket
@@ -2384,18 +2384,82 @@ class NodeCrawler:
                                     colored_print("Cancelled", Colors.YELLOW)
                                     return
                             else:
-                                # Not heard by anyone - completely unknown
-                                colored_print("Error: {} has not been heard by any known node".format(target_base), Colors.RED)
-                                print("Node {} is not in the network topology.".format(target_base))
+                                # No direct neighbors have heard it - search all nodes
+                                all_nodes_that_heard = []
+                                for node_call, node_info in nodes_data.items():
+                                    if node_call == self.callsign:
+                                        continue  # Already checked direct neighbors above
+                                    neighbor_neighbors = node_info.get('neighbors', [])
+                                    if target_base in neighbor_neighbors:
+                                        all_nodes_that_heard.append(node_call)
                                 
-                                # Check if there's a NetRom alias as last resort
-                                if target_base in self.call_to_alias:
-                                    print("Found NetRom alias: {}".format(self.call_to_alias[target_base]))
-                                    print("Will attempt direct NetRom connection...")
-                                    # Leave starting_path=[] for direct NetRom connection
-                                else:
+                                if all_nodes_that_heard:
+                                    # Calculate hop distances for sorting
+                                    node_hop_quality = []
+                                    for node in all_nodes_that_heard:
+                                        queue_dist = [(self.callsign, [], 0)]
+                                        visited_dist = {self.callsign}
+                                        
+                                        while queue_dist:
+                                            current, path, hops = queue_dist.pop(0)
+                                            
+                                            if current == node:
+                                                node_hop_quality.append((node, hops, path))
+                                                break
+                                            
+                                            current_info = nodes_data.get(current, {})
+                                            current_routes = current_info.get('routes', {})
+                                            for neighbor in current_info.get('neighbors', []):
+                                                if neighbor not in visited_dist:
+                                                    visited_dist.add(neighbor)
+                                                    new_path = path + [neighbor]
+                                                    queue_dist.append((neighbor, new_path, hops + 1))
+                                    
+                                    # Sort by hop count (closest first), then alphabetically
+                                    sorted_nodes = sorted(node_hop_quality, key=lambda x: (x[1], x[0]))
+                                    
                                     print("")
-                                    colored_print("Cannot proceed: no path to {} and no NetRom alias available".format(target_base), Colors.RED)
+                                    print("{} has been heard by these nodes:".format(target_base))
+                                    for i, (node, hops, path) in enumerate(sorted_nodes, 1):
+                                        node_info = nodes_data.get(node, {})
+                                        grid = node_info.get('location', {}).get('grid', 'unknown')
+                                        hop_str = "{} hop{}".format(hops, '' if hops == 1 else 's')
+                                        print("  {}) {} ({}, {})".format(i, node, grid, hop_str))
+                                    print("")
+                                    
+                                    # Prompt user to choose intermediate node
+                                    try:
+                                        choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
+                                        
+                                        if not choice:
+                                            colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
+                                            return
+                                        
+                                        choice_idx = int(choice) - 1
+                                        if choice_idx < 0 or choice_idx >= len(sorted_nodes):
+                                            colored_print("Error: Invalid choice", Colors.RED)
+                                            return
+                                        
+                                        intermediate_node, hops, intermediate_path = sorted_nodes[choice_idx]
+                                        print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                        
+                                        # Build complete path: intermediate_path + target
+                                        starting_path = intermediate_path + [target_ssid]
+                                        if self.verbose:
+                                            print("Built path: {}".format(' -> '.join(starting_path)))
+                                        found_path = True
+                                            
+                                    except (ValueError, KeyboardInterrupt, EOFError):
+                                        print("")
+                                        colored_print("Cancelled", Colors.YELLOW)
+                                        return
+                                else:
+                                    # Truly unknown - not heard by anyone
+                                    colored_print("Error: {} has not been heard by any known node".format(target_base), Colors.RED)
+                                    print("Node {} is not in the network topology.".format(target_base))
+                                    print("")
+                                    colored_print("Cannot proceed: no path to {}".format(target_base), Colors.RED)
+                                    colored_print("Try crawling neighboring nodes first to discover more of the network", Colors.YELLOW)
                                     return
                 else:
                     if self.verbose:

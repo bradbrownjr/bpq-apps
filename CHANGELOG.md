@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.4] - 2026-01-15
+### Fixed
+- Removed NetRom alias fallback when no path found - now always prompts for neighbor selection
+- When no direct neighbors have heard target, searches all nodes and prompts user to choose path
+- Prevents wasteful connection attempts when NRR reports no route
+
+### Changed
+- Interactive path selection now shows all nodes (not just direct) when direct neighbors don't have target
+
 ## [nodemap 1.5.3] - 2026-01-15
 ### Changed
 - Interactive path selection now only shows direct neighbors (1 hop) instead of all nodes
