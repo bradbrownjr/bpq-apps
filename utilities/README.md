@@ -67,8 +67,8 @@ for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://
 
 **Correcting Bad SSID Data:**
 If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
-1. Use `--callsign` flag to force correct SSID: `./nodemap.py 5 --callsign NG1P-4`
-2. Script will connect to correct SSID for all attempts (initial + reconnects)
+1. Use `--callsign` flag alone: `./nodemap.py --callsign NG1P-4` (auto: max_hops=0, start_node=NG1P)
+2. Script connects to correct SSID for all attempts (initial + reconnects)
 3. Upon successful crawl, updates node's `netrom_ssids` in JSON
 4. Future crawls use corrected SSID automatically (no flag needed)
 
@@ -89,14 +89,17 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
 ```
 
 **Parameters:**
-- `MAX_HOPS` - Maximum RF hops to traverse (default: 10)
+- `MAX_HOPS` - Maximum RF hops to traverse (default: 4, auto-set to 0 with --callsign)
 - `START_NODE` - Callsign to start from (default: local node from bpq32.cfg)
 
 **Options:**
 - `--overwrite` or `-o` - Replace existing data (default: merge mode)
 - `--resume` or `-r` - Continue from unexplored nodes in existing data
 - `--callsign CALL-SSID` - Force specific node SSID (e.g., `--callsign NG1P-4`)
-  - Use when node has multiple SSIDs (BBS vs node port)
+  - **Correction mode**: Automatically sets max_hops=0 and start_node when used alone
+  - Use to fix bad SSID data without crawling entire network
+  - Example: `./nodemap.py --callsign NG1P-4` (crawls only NG1P-4, 0 neighbors)
+  - Override with explicit max_hops: `./nodemap.py 5 --callsign NG1P-4` (crawls NG1P-4 + 5 hops)
   - Overrides auto-discovered SSID for all connection attempts (including reconnects)
   - Updates node's `netrom_ssids` in JSON to correct bad data permanently
   - Forced SSID persists for future crawls even without the flag
@@ -194,8 +197,9 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py 10 --user KC1JMH --pass mypass       # With authentication
 
 # Force specific SSID (when node has multiple)
-./nodemap.py 5 --callsign NG1P-4                  # Connect to NG1P-4 (node) not NG1P-1 (BBS)
-./nodemap.py 10 WS1EC --callsign WS1EC-15         # Force node port SSID
+./nodemap.py --callsign NG1P-4                    # Correction mode: crawls only NG1P-4 (0 hops)
+./nodemap.py 5 --callsign NG1P-4                  # Crawl NG1P-4 + 5 hops (explicit override)
+./nodemap.py 10 WS1EC --callsign WS1EC-15         # Start at WS1EC, force node port SSID
 
 # Query node information
 ./nodemap.py -q NG1P                              # Show what we know about NG1P
