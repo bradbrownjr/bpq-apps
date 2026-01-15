@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.6] - 2026-01-15
+### Fixed
+- BFS path-finding now resolves base callsigns to SSIDs when looking up node data
+- Fixes issue where neighbor "N1QFY" couldn't find node data stored as "N1QFY-15"
+
 ## [nodemap 1.6.5] - 2026-01-15
 ### Added
 - Debug output for BFS path-finding to diagnose topology search issues

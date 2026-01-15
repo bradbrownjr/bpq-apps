@@ -2655,7 +2655,16 @@ class NodeCrawler:
                                     print("Found {} as direct neighbor".format(target_base))
                             break
                         
+                        # Try to look up neighbor by name, or by resolved SSID if it's a base call
                         neighbor_info = nodes_data.get(neighbor, {})
+                        if not neighbor_info and '-' not in neighbor:
+                            # Neighbor is base call, try to resolve to SSID
+                            neighbor_ssid = self.netrom_ssid_map.get(neighbor)
+                            if neighbor_ssid:
+                                neighbor_info = nodes_data.get(neighbor_ssid, {})
+                                if self.verbose and neighbor_info:
+                                    print("    Resolved {} to {}".format(neighbor, neighbor_ssid))
+                        
                         neighbor_neighbors = neighbor_info.get('neighbors', [])
                         if self.verbose and neighbor_neighbors:
                             print("    {} has neighbors: {} (looking for {})".format(neighbor, neighbor_neighbors[:5] if len(neighbor_neighbors) > 5 else neighbor_neighbors, target_base))
