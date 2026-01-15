@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.4] - 2026-01-15
+### Added
+- Verbose output (-v) now captured to log file when both -v and -l used
+- Helper method _vprint() for verbose messages (logs to file + console)
+
+### Changed
+- --log help text clarifies it includes verbose output when both flags present
+
 ## [nodemap 1.7.3] - 2026-01-15
 ### Fixed
 - Direct port connections (C PORT CALL) now only used for first hop from localhost

@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.7.3
+Version: 1.7.4
 """
 
-__version__ = '1.7.3'
+__version__ = '1.7.4'
 
 import sys
 import socket
@@ -106,7 +106,7 @@ class NodeCrawler:
             password: Telnet login password (default: None, prompts when needed)
             verbose: Enable verbose output (default: False)
             notify_url: URL to POST notifications to (default: None)
-            log_file: File to log all telnet traffic to (default: None)
+            log_file: File to log telnet traffic + verbose output (default: None)
             resume: Resume from unexplored nodes in existing nodemap.json (default: False)
             crawl_mode: How to handle existing nodes: 'update' (skip known), 'reaudit' (re-crawl all), 'new-only' (only new nodes)
             exclude: Set of callsigns to exclude from crawling (default: None)
@@ -142,6 +142,18 @@ class NodeCrawler:
         self.queued_paths = set()  # Track queued paths to avoid duplicates: {(callsign, tuple(path))}
         self.timeout = 10  # Telnet timeout in seconds
         self.cli_forced_ssids = {}  # SSIDs forced via --callsign CLI option: {base_call: full_ssid}
+    
+    def _vprint(self, message):
+        """Print verbose message to console and log file (if -v and -l both set)."""
+        if self.verbose:
+            print(message)
+            if self.log_file and self.log_handle:
+                try:
+                    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                    self.log_handle.write("[{}] VERBOSE: {}\n".format(timestamp, message))
+                    self.log_handle.flush()
+                except:
+                    pass
         
     def _find_bpq_port(self):
         """Find BPQ telnet port from bpq32.cfg (Telnet Server port only)."""
@@ -3364,7 +3376,7 @@ def main():
         print("                              all (both, default if TARGET omitted)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
-        print("  --log FILE, -l   Log all telnet traffic to file")
+        print("  --log FILE, -l   Log telnet traffic to file (includes -v output when both used)")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
