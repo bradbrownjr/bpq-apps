@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.2] - 2026-01-15
+### Fixed
+- Strip port-specific SSIDs (e.g., KC1JMH-7) from intermediate hops in connection paths
+- Port-specific SSIDs may require authentication that cannot be provided for multi-hop connections
+- Only preserves SSID for final destination or CLI --callsign overrides
+- Prevents repeated connection failures to auth-required intermediate nodes
+
 ## [nodemap 1.7.1] - 2026-01-15
 ### Added
 - Query mode (-q/--query) now shows known SSIDs for a node from multiple sources:

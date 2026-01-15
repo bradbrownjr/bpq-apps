@@ -47,6 +47,18 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Examples: `FN43hp`, `DM79`, `IO91wm`
 - Precision: 6-char (~5x2.5 mi), 4-char (~70x50 mi)
 
+## Nodemap Crawler Constraints
+**Authentication**: Only localhost supports auth prompts (username/password)
+- Port-specific SSIDs (KC1JMH-7 on port 1) may require auth
+- Intermediate hops CANNOT authenticate - connection will timeout
+- **Fix**: Use base callsign (KC1JMH) or non-auth routes in paths
+- Don't repeatedly attempt connections to nodes requiring intermediate auth
+
+**Path Building**: Uses successful_path from previous crawls
+- If path includes auth-required node, skip or find alternate route
+- Check route_ports for direct connections (bypass NetRom)
+- Prefer routes through nodes with established successful_path
+
 ## Repository Structure
 ```
 bpq-apps/
