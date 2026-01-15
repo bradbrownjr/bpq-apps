@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.5
+Version: 1.5.6
 """
 
-__version__ = '1.5.5'
+__version__ = '1.5.6'
 
 import sys
 import socket
@@ -2457,12 +2457,69 @@ class NodeCrawler:
                                         return
                                 else:
                                     # Truly unknown - not heard by anyone
-                                    colored_print("Error: {} has not been heard by any known node".format(target_base), Colors.RED)
-                                    print("Node {} is not in the network topology.".format(target_base))
-                                    print("")
-                                    colored_print("Cannot proceed: no path to {}".format(target_base), Colors.RED)
-                                    colored_print("Try crawling neighboring nodes first to discover more of the network", Colors.YELLOW)
-                                    return
+                                    # Fall back to manual selection from all known nodes
+                                    all_known_nodes = [(n, nodes_data.get(n, {}).get('location', {}).get('grid', 'unknown'), 
+                                                       len(nodes_data.get(n, {}).get('neighbors', []))) 
+                                                      for n in nodes_data.keys() if n != self.callsign and n != target_base]
+                                    
+                                    if all_known_nodes:
+                                        colored_print("Warning: {} not found in any neighbor list in topology data".format(target_base), Colors.YELLOW)
+                                        print("")
+                                        print("Available nodes to route through:")
+                                        # Sort by number of neighbors (most connected first)
+                                        sorted_all = sorted(all_known_nodes, key=lambda x: (-x[2], x[0]))
+                                        for i, (node, grid, num_neighbors) in enumerate(sorted_all, 1):
+                                            print("  {}) {} ({}, {} neighbors)".format(i, node, grid, num_neighbors))
+                                        print("")
+                                        
+                                        try:
+                                            choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_all))).strip()
+                                            
+                                            if not choice:
+                                                colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
+                                                return
+                                            
+                                            choice_idx = int(choice) - 1
+                                            if choice_idx < 0 or choice_idx >= len(sorted_all):
+                                                colored_print("Error: Invalid choice", Colors.RED)
+                                                return
+                                            
+                                            intermediate_node = sorted_all[choice_idx][0]
+                                            print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                            
+                                            # Find path to intermediate
+                                            queue_to_int = [(self.callsign, [])]
+                                            visited_to_int = {self.callsign}
+                                            path_to_int = None
+                                            
+                                            while queue_to_int:
+                                                curr, path = queue_to_int.pop(0)
+                                                if curr == intermediate_node:
+                                                    path_to_int = path
+                                                    break
+                                                curr_info = nodes_data.get(curr, {})
+                                                for nbr in curr_info.get('neighbors', []):
+                                                    if nbr not in visited_to_int:
+                                                        visited_to_int.add(nbr)
+                                                        queue_to_int.append((nbr, path + [nbr]))
+                                            
+                                            if path_to_int is not None:
+                                                # Build complete path
+                                                starting_path = path_to_int + [target_ssid]
+                                                if self.verbose:
+                                                    print("Built path: {}".format(' -> '.join(starting_path)))
+                                                found_path = True
+                                            else:
+                                                colored_print("Error: Cannot find path to {}".format(intermediate_node), Colors.RED)
+                                                return
+                                                
+                                        except (ValueError, KeyboardInterrupt, EOFError):
+                                            print("")
+                                            colored_print("Cancelled", Colors.YELLOW)
+                                            return
+                                    else:
+                                        colored_print("Error: No nodes in topology to route through", Colors.RED)
+                                        return
                 else:
                     if self.verbose:
                         print("No existing nodemap.json found or no nodes in it")

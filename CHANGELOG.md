@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.6] - 2026-01-15
+### Fixed
+- Now always prompts for manual node selection when automatic path finding fails
+- Shows all known nodes sorted by connectivity when target not found in any neighbor list
+
 ## [nodemap 1.5.5] - 2026-01-15
 ### Added
 - Debug output in verbose mode showing each node's neighbor list during BFS path search
