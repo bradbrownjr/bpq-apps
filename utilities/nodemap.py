@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.4
+Version: 1.6.5
 """
 
-__version__ = '1.6.4'
+__version__ = '1.6.5'
 
 import sys
 import socket
@@ -2627,10 +2627,17 @@ class NodeCrawler:
                 found_path = False
                 forced_path = []
                 
+                if self.verbose:
+                    print("Starting BFS from {} (looking for {})".format(self.callsign, target_base))
+                    print("Available nodes in topology: {}".format(', '.join(sorted(nodes_data.keys()))))
+                
                 while queue and not found_path:
                     current, path = queue.pop(0)
                     current_info = nodes_data.get(current, {})
                     neighbors = current_info.get('neighbors', [])
+                    
+                    if self.verbose and neighbors:
+                        print("  Checking {} neighbors: {}".format(current, neighbors))
                     
                     for neighbor in neighbors:
                         if neighbor in visited:
@@ -2649,7 +2656,10 @@ class NodeCrawler:
                             break
                         
                         neighbor_info = nodes_data.get(neighbor, {})
-                        if target_base in neighbor_info.get('neighbors', []):
+                        neighbor_neighbors = neighbor_info.get('neighbors', [])
+                        if self.verbose and neighbor_neighbors:
+                            print("    {} has neighbors: {} (looking for {})".format(neighbor, neighbor_neighbors[:5] if len(neighbor_neighbors) > 5 else neighbor_neighbors, target_base))
+                        if target_base in neighbor_neighbors:
                             forced_path = new_path
                             found_path = True
                             if self.verbose:

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.5] - 2026-01-15
+### Added
+- Debug output for BFS path-finding to diagnose topology search issues
+
 ## [nodemap 1.6.4] - 2026-01-15
 ### Fixed
 - Fixed UnboundLocalError when using --callsign (existing variable scope issue)
