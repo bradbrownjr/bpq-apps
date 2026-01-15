@@ -3447,6 +3447,9 @@ def main():
             # --callsign is a correction tool to fix one node's SSID, not a full crawl
             if not max_hops_explicit:
                 max_hops = 0
+            # Set start_node so path-finding logic triggers
+            if not start_node:
+                start_node = forced_ssid
             i += 2
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:
             # Known flags without arguments

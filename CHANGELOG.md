@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.1] - 2026-01-15
+### Fixed
+- `--callsign` now triggers path-finding logic when target is not local node
+- Previously, `--callsign NG1P-4` would attempt direct connection and fail
+- Now properly finds path through intermediate nodes using BFS and prompts user
+
 ## [nodemap 1.6.0] - 2026-01-15
 ### Added
 - `--cleanup` option to automatically clean nodemap.json
