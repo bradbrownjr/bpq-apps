@@ -14,12 +14,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed incorrect netrom_ssids resolution (those are remote node advertisements, not local keys)
 - Connections display base callsigns but connect via actual node dict keys
 - Version now displays on --all runs, not just --help
+- **Neighbor statistics** now correctly count from ROUTES table only (not MHEARD):
+  - RF Neighbors: Routes where neighbor is heard on RF port
+  - IP Neighbors: Routes where neighbor is NOT heard on RF port (AXIP/telnet only)
+  - Deduplicated by base callsign
 
 ### Added
-- Neighbor statistics in map info box:
-  - RF Neighbors: Count of unique neighbors heard on RF ports (deduplicated by base callsign)
-  - Non-RF Neighbors: Count of neighbors via telnet/AXIP ports
-  - Only counts neighbors in routes table with quality > 0
+- Neighbor statistics in map info box showing RF vs IP neighbors based on ROUTES table
 
 ## [nodemap 1.7.0] - 2026-01-15
 ### Changed
