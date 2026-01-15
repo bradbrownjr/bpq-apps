@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.10
+Version: 1.6.11
 """
 
-__version__ = '1.6.10'
+__version__ = '1.6.11'
 
 import sys
 import socket
@@ -3112,6 +3112,21 @@ def main():
                 json.dump(data, f, indent=2)
             
             colored_print("Saved to nodemap.json", Colors.GREEN)
+            
+            # Offer to regenerate maps
+            response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            if response in ['', 'y', 'yes']:
+                print("\nGenerating maps...")
+                html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
+                try:
+                    import subprocess
+                    result = subprocess.call(['python3', html_script, '--all'])
+                    if result == 0:
+                        colored_print("Maps generated successfully!", Colors.GREEN)
+                    else:
+                        colored_print("Warning: Map generation exited with code {}".format(result), Colors.YELLOW)
+                except Exception as e:
+                    colored_print("Error generating maps: {}".format(e), Colors.RED)
             
         except json.JSONDecodeError as e:
             colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)

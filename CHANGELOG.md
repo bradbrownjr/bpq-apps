@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.11] - 2026-01-15
+### Added
+- Prompt to regenerate maps after using --set-grid option
+
+## [nodemap 1.6.10] - 2026-01-15
+### Added
+- Prompt to regenerate maps after using --set-grid option
+
 ## [nodemap 1.6.10] - 2026-01-15
 ### Added
 - Interactive prompt after crawl to set gridsquares for nodes without location data
