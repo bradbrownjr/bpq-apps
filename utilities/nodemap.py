@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.6
+Version: 1.5.7
 """
 
-__version__ = '1.5.6'
+__version__ = '1.5.7'
 
 import sys
 import socket
@@ -2690,6 +2690,11 @@ class NodeCrawler:
             intermittent_serialized[key] = attempts
         
         data = {
+            'metadata': {
+                'nodemap_version': __version__,
+                'generated': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'generator': 'nodemap.py'
+            },
             'nodes': nodes_data,
             'connections': self.connections,
             'intermittent_links': intermittent_serialized,  # Failed/unreliable connections
