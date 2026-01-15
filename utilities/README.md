@@ -107,12 +107,16 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
   - Shows neighbors (explored/unexplored), apps, routes, best path
   - Use to check nodes from nodemap-html.py "unmapped nodes" list
   - Fast lookup: `./nodemap.py -q NG1P`
-- `--cleanup` - Clean nodemap.json (remove duplicates and incomplete nodes)
-  - Automatically removes duplicate base callsign entries (keeps most complete)
-  - Removes incomplete nodes (no neighbors, no location, no apps)
-  - Creates backup file before making changes
-  - Scores duplicates by: neighbor count + location + applications
-  - Example: `./nodemap.py --cleanup`
+- `--cleanup [TARGET]` - Clean up nodemap.json data
+  - `nodes`: Remove duplicate SSID entries and incomplete nodes (no neighbors/location/apps)
+  - `connections`: Remove invalid connections (not in ROUTES or quality 0)
+  - `all`: Both nodes and connections cleanup (default if TARGET omitted)
+  - Automatically creates backup before making changes
+  - Examples: `./nodemap.py --cleanup`, `./nodemap.py --cleanup connections`
+- `--set-grid CALL GRID` - Set gridsquare for node (e.g., `--set-grid NG1P FN43vp`)
+  - Updates location data for nodes without gridsquare in INFO
+  - Validates gridsquare format (warns if non-standard)
+  - Offers to regenerate maps after update
 - `--display-nodes` or `-d` - Display nodes table from nodemap.json and exit
 - `--mode MODE` - Crawl mode: `update` (default), `reaudit`, `new-only`
   - `update`: Skip already-visited nodes in current session (fastest)
@@ -209,7 +213,10 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py 10 WS1EC --callsign WS1EC-15         # Start at WS1EC, force node port SSID
 
 # Data maintenance
-./nodemap.py --cleanup                            # Remove duplicates and incomplete nodes
+./nodemap.py --cleanup                            # Clean all (nodes + connections)
+./nodemap.py --cleanup nodes                      # Remove duplicates and incomplete nodes only
+./nodemap.py --cleanup connections                # Remove invalid connections only
+./nodemap.py --set-grid NG1P FN43vp               # Add gridsquare for node
 ./nodemap.py -d                                   # Display nodes table
 
 # Query node information
