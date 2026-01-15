@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.8
+Version: 1.6.10
 """
 
-__version__ = '1.6.8'
+__version__ = '1.6.10'
 
 import sys
 import socket
@@ -3802,6 +3802,60 @@ def main():
         print("\nNetwork map complete!")
         print("Nodes discovered: {}".format(len(crawler.nodes)))
         print("Connections found: {}".format(len(crawler.connections)))
+        
+        # Prompt for missing gridsquares
+        missing_grids = []
+        for callsign, node_data in crawler.nodes.items():
+            location = node_data.get('location', {})
+            grid = location.get('grid', '')
+            if not grid:
+                missing_grids.append(callsign)
+        
+        if missing_grids and not crawler.resume:
+            print("\n{} node(s) missing gridsquare data: {}".format(
+                len(missing_grids), ', '.join(sorted(missing_grids))))
+            response = input("Set gridsquares now? (y/N): ").strip().lower()
+            
+            if response in ['y', 'yes']:
+                updated_count = 0
+                for callsign in sorted(missing_grids):
+                    node_data = crawler.nodes[callsign]
+                    location_info = node_data.get('location', {})
+                    city = location_info.get('city', '')
+                    state = location_info.get('state', '')
+                    
+                    # Show context
+                    if city or state:
+                        prompt = "Gridsquare for {} ({}{}): ".format(
+                            callsign, city, ', ' + state if state else '')
+                    else:
+                        prompt = "Gridsquare for {}: ".format(callsign)
+                    
+                    grid_input = input(prompt).strip()
+                    
+                    # Skip if blank
+                    if not grid_input:
+                        continue
+                    
+                    # Validate format (warn but allow)
+                    if not re.match(r'^[A-R]{2}[0-9]{2}[a-x]{2}$', grid_input, re.IGNORECASE):
+                        print("  Warning: '{}' doesn't match standard gridsquare format".format(grid_input))
+                        confirm = input("  Use it anyway? (y/N): ").strip().lower()
+                        if confirm not in ['y', 'yes']:
+                            continue
+                    
+                    # Update the node data
+                    if 'location' not in crawler.nodes[callsign]:
+                        crawler.nodes[callsign]['location'] = {}
+                    crawler.nodes[callsign]['location']['grid'] = grid_input
+                    crawler.nodes[callsign]['gridsquare'] = grid_input
+                    updated_count += 1
+                    print("  Set {} = {}".format(callsign, grid_input))
+                
+                if updated_count > 0:
+                    print("\nUpdated {} gridsquare(s), re-exporting...".format(updated_count))
+                    crawler.export_json(merge=merge_mode)
+                    crawler.export_csv()
         
         # Generate HTML/SVG maps if user opted in
         if generate_maps:

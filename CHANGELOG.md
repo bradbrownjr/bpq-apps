@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.10] - 2026-01-15
+### Added
+- Interactive prompt after crawl to set gridsquares for nodes without location data
+- Shows city/state context when available to help identify nodes
+- Validates gridsquare format with option to override
+- Skip nodes by leaving input blank
+- Automatically re-exports data after updates
+
+## [nodemap 1.6.9] - 2026-01-15
+### Added
+- Interactive prompt after crawl to set gridsquares for nodes without location data
+- Shows city/state context when available to help identify nodes
+- Validates gridsquare format with option to override
+- Skip nodes by leaving input blank
+- Automatically re-exports data after updates
+
 ## [nodemap 1.6.9] - 2026-01-15
 ### Added
 - --set-grid option to manually set gridsquare for nodes
