@@ -6,21 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.0] - 2026-01-15
+### Fixed
+- **Neighbor statistics** now correctly count from ROUTES table only (not MHEARD)
+- RF Neighbors: Routes where neighbor is heard on RF port
+- IP Neighbors: Routes where neighbor is NOT heard on RF port (AXIP/telnet only)
+- Deduplicated by base callsign
+
 ## [nodemap-html 1.3.0] - 2026-01-15
 ### Fixed
-- **CRITICAL BUG**: Connection logic - now builds from routes tables (quality > 0) instead of connections array
-- Original logic was correct: iterate nodes' routes tables, resolve SSIDs via node dict keys
+- **CRITICAL BUG**: Connection logic - now builds from routes tables (quality > 0)
 - Node keys can be base callsign (KC1JMH) OR with SSID (N1QFY-15) - now checks both
-- Removed incorrect netrom_ssids resolution (those are remote node advertisements, not local keys)
-- Connections display base callsigns but connect via actual node dict keys
+- Removed incorrect netrom_ssids resolution
 - Version now displays on --all runs, not just --help
-- **Neighbor statistics** now correctly count from ROUTES table only (not MHEARD):
-  - RF Neighbors: Routes where neighbor is heard on RF port
-  - IP Neighbors: Routes where neighbor is NOT heard on RF port (AXIP/telnet only)
-  - Deduplicated by base callsign
 
 ### Added
-- Neighbor statistics in map info box showing RF vs IP neighbors based on ROUTES table
+- Neighbor statistics in map info box
 
 ## [nodemap 1.7.0] - 2026-01-15
 ### Changed
