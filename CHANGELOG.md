@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.2] - 2026-01-15
+### Fixed
+- Reverted 1.6.1 change that broke --callsign by setting start_node in arg parsing
+- Original logic at line 3581 correctly sets start_node from forced SSID base call
+- BFS path-finding should now trigger properly for remote targets
+
 ## [nodemap 1.6.1] - 2026-01-15
 ### Fixed
 - `--callsign` now triggers path-finding logic when target is not local node

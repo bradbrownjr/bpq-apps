@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.1
+Version: 1.6.2
 """
 
-__version__ = '1.6.1'
+__version__ = '1.6.2'
 
 import sys
 import socket
@@ -3447,9 +3447,6 @@ def main():
             # --callsign is a correction tool to fix one node's SSID, not a full crawl
             if not max_hops_explicit:
                 max_hops = 0
-            # Set start_node so path-finding logic triggers
-            if not start_node:
-                start_node = forced_ssid
             i += 2
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:
             # Known flags without arguments
