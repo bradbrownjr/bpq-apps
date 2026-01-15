@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.11] - 2026-01-15
+### Changed
+- Map generation prompt moved to after crawl completes and summary is displayed
+- Allows user to review node/connection counts before generating maps
+- Prevents generating maps with bad data before seeing results
+
 ## [nodemap 1.7.10] - 2026-01-15
 ### Changed
 - -D/--debug-log now automatically enables verbose output (-v)

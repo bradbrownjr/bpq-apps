@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.10
+Version: 1.7.11
 """
 
-__version__ = '1.7.10'
+__version__ = '1.7.11'
 
 import sys
 import socket
@@ -4029,19 +4029,6 @@ def main():
     }
     print("Crawl Mode: {}".format(mode_descriptions.get(crawl_mode, crawl_mode)))
     
-    # Check if nodemap-html.py exists and prompt to generate maps after crawl
-    html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
-    if os.path.isfile(html_script):
-        print("")
-        try:
-            response = input("Generate HTML/SVG maps after crawl? (Y/n): ").strip().lower()
-            if response == '' or response == 'y' or response == 'yes':
-                generate_maps = True
-                print("Maps will be generated after crawl completes")
-        except (KeyboardInterrupt, EOFError):
-            print("")
-            print("Skipping map generation")
-    
     # Crawl network
     try:
         # If user forced a specific SSID, pre-populate the map
@@ -4084,6 +4071,18 @@ def main():
         print("\nNetwork map complete!")
         print("Nodes discovered: {}".format(len(crawler.nodes)))
         print("Connections found: {}".format(len(crawler.connections)))
+        
+        # Prompt to generate maps (after seeing results)
+        html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
+        if os.path.isfile(html_script):
+            print("")
+            try:
+                response = input("Generate HTML/SVG maps? (Y/n): ").strip().lower()
+                if response == '' or response == 'y' or response == 'yes':
+                    generate_maps = True
+            except (KeyboardInterrupt, EOFError):
+                print("")
+                print("Skipping map generation")
         
         # Prompt for missing gridsquares
         missing_grids = []
