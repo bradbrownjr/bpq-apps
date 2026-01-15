@@ -266,43 +266,55 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             'neighbors': node_data.get('neighbors', [])
         })
     
-    # Build map connections from validated connections array (not neighbors)
-    # This ensures only ROUTES-validated connections are displayed
+    # Build map connections from routes tables (quality > 0)
+    # Connections display base callsigns but connect nodes via their SSIDs
     node_coords = {}
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
-    # Build reverse lookup: base callsign -> full callsign
-    # Connections use base callsigns, nodes dict uses full SSIDs
-    base_to_full = {}
-    for full_call in nodes.keys():
-        base_call = full_call.split('-')[0] if '-' in full_call else full_call
-        base_to_full[base_call] = full_call
+    # Build reverse lookup: base callsign -> full SSID from each node's perspective
+    # Each node may see neighbors with different SSIDs
+    seen_connections = set()
     
-    for conn in connections:
-        from_call = conn['from']
-        to_call = conn['to']
+    for callsign, node_data in nodes.items():
+        # Skip nodes without coordinates
+        if callsign not in node_coords:
+            continue
         
-        # Resolve base callsigns to full SSIDs
-        from_full = base_to_full.get(from_call, from_call)
-        to_full = base_to_full.get(to_call, to_call)
+        from_lat, from_lon = node_coords[callsign]
+        routes = node_data.get('routes', {})
+        netrom_ssids = node_data.get('netrom_ssids', {})
         
-        # Only include if both nodes have coordinates
-        if from_full in node_coords and to_full in node_coords:
-            from_lat, from_lon = node_coords[from_full]
-            to_lat, to_lon = node_coords[to_full]
+        # Iterate through routes table (ROUTES-validated neighbors)
+        for neighbor_base, quality in routes.items():
+            if quality == 0:
+                continue  # Skip zeroed routes
+            
+            # Resolve neighbor's full SSID as seen by this node
+            neighbor_full = netrom_ssids.get(neighbor_base, neighbor_base)
+            
+            # Skip if neighbor has no coordinates
+            if neighbor_full not in node_coords:
+                continue
+            
+            to_lat, to_lon = node_coords[neighbor_full]
+            
+            # Deduplicate bidirectional connections (A-B same as B-A)
+            conn_key = tuple(sorted([callsign, neighbor_full]))
+            if conn_key in seen_connections:
+                continue
+            seen_connections.add(conn_key)
             
             # Get frequency for color coding (from source node's ports)
             conn_freq = None
-            if from_full in nodes:
-                for port in nodes[from_full].get('ports', []):
-                    if port.get('is_rf') and port.get('frequency'):
-                        conn_freq = port['frequency']
-                        break
+            for port in node_data.get('ports', []):
+                if port.get('is_rf') and port.get('frequency'):
+                    conn_freq = port['frequency']
+                    break
             
             map_connections.append({
-                'from': from_full,
-                'to': to_full,
+                'from': callsign,
+                'to': neighbor_full,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
@@ -314,6 +326,40 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
     if not map_nodes:
         colored_print("Error: No nodes with valid grid squares found.", Colors.RED)
         return False
+    
+    # Calculate neighbor statistics
+    total_rf_neighbors = 0
+    total_non_rf_neighbors = 0
+    
+    for callsign, node_data in nodes.items():
+        heard_on_ports = node_data.get('heard_on_ports', [])
+        routes = node_data.get('routes', {})
+        
+        # RF neighbors: heard on RF ports (deduplicated by base callsign)
+        rf_neighbors = set()
+        non_rf_neighbors = set()
+        
+        for entry in heard_on_ports:
+            if len(entry) == 2:
+                neighbor, port_num = entry
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                
+                # Check if this port is RF
+                is_rf_port = False
+                for port in node_data.get('ports', []):
+                    if port.get('number') == port_num and port.get('is_rf'):
+                        is_rf_port = True
+                        break
+                
+                # Only count if in routes table with quality > 0
+                if neighbor_base in routes and routes[neighbor_base] > 0:
+                    if is_rf_port:
+                        rf_neighbors.add(neighbor_base)
+                    else:
+                        non_rf_neighbors.add(neighbor_base)
+        
+        total_rf_neighbors += len(rf_neighbors)
+        total_non_rf_neighbors += len(non_rf_neighbors)
     
     # Build list of unmapped nodes (no valid gridsquare)
     # Deduplicate by base callsign to avoid showing NG1P and NG1P-4 separately
@@ -482,6 +528,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         
         // Add info box with unmapped nodes
         var unmappedNodes = ''' + json.dumps(unmapped_nodes) + ''';
+        var rfNeighbors = ''' + str(total_rf_neighbors) + ''';
+        var nonRfNeighbors = ''' + str(total_non_rf_neighbors) + ''';
         var info = L.control({ position: 'topright' });
         info.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'info-box');
@@ -495,6 +543,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             div.innerHTML = '<strong>Packet Radio Network</strong><br>' +
                 'Nodes: ' + nodes.length + '<br>' +
                 'Connections: ' + connections.length + '<br>' +
+                'RF Neighbors: ' + rfNeighbors + '<br>' +
+                'Non-RF Neighbors: ' + nonRfNeighbors + '<br>' +
                 '<small>Generated by nodemap-html.py</small>' +
                 unmappedHtml;
             return div;
@@ -571,41 +621,46 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             'neighbors': node_data.get('neighbors', [])
         })
     
-    # Build map connections from validated connections array (not neighbors)
+    # Build map connections from routes tables (quality > 0)
     node_coords = {}
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
-    # Build reverse lookup: base callsign -> full callsign
-    base_to_full = {}
-    for full_call in nodes.keys():
-        base_call = full_call.split('-')[0] if '-' in full_call else full_call
-        base_to_full[base_call] = full_call
+    seen_connections = set()
     
-    for conn in connections:
-        from_call = conn['from']
-        to_call = conn['to']
+    for callsign, node_data in nodes.items():
+        if callsign not in node_coords:
+            continue
         
-        # Resolve base callsigns to full SSIDs
-        from_full = base_to_full.get(from_call, from_call)
-        to_full = base_to_full.get(to_call, to_call)
+        from_lat, from_lon = node_coords[callsign]
+        routes = node_data.get('routes', {})
+        netrom_ssids = node_data.get('netrom_ssids', {})
         
-        # Only include if both nodes have coordinates
-        if from_full in node_coords and to_full in node_coords:
-            from_lat, from_lon = node_coords[from_full]
-            to_lat, to_lon = node_coords[to_full]
+        for neighbor_base, quality in routes.items():
+            if quality == 0:
+                continue
             
-            # Get frequency for color coding (from source node's ports)
+            neighbor_full = netrom_ssids.get(neighbor_base, neighbor_base)
+            
+            if neighbor_full not in node_coords:
+                continue
+            
+            to_lat, to_lon = node_coords[neighbor_full]
+            
+            conn_key = tuple(sorted([callsign, neighbor_full]))
+            if conn_key in seen_connections:
+                continue
+            seen_connections.add(conn_key)
+            
             conn_freq = None
-            if from_full in nodes:
-                for port in nodes[from_full].get('ports', []):
-                    if port.get('is_rf') and port.get('frequency'):
-                        conn_freq = port['frequency']
-                        break
+            for port in node_data.get('ports', []):
+                if port.get('is_rf') and port.get('frequency'):
+                    conn_freq = port['frequency']
+                    break
             
             map_connections.append({
-                'from': from_full,
-                'to': to_full,
+                'from': callsign,
+                'to': neighbor_full,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
@@ -868,16 +923,17 @@ def show_help():
 
 def main():
     """Main entry point."""
-    print("")
-    print("Node Map HTML Generator v{}".format(__version__))
-    print("")
-    
-    # Parse arguments
+    # Parse arguments first to check for help
     args = sys.argv[1:]
     
     if not args or '--help' in args or '-h' in args or '/?' in args:
         show_help()
         return
+    
+    # Show version for actual runs
+    print("")
+    print("Node Map HTML Generator v{}".format(__version__))
+    print("")
     
     input_file = 'nodemap.json'
     html_file = None

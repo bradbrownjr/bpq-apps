@@ -8,14 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [nodemap-html 1.2.0] - 2026-01-15
 ### Fixed
-- **CRITICAL BUG**: Now reads connections from JSON's validated `connections` array instead of building from `neighbors` field
-- Previously displayed all MHEARD neighbors as connections, even if not in ROUTES table
-- Maps now correctly show only ROUTES-validated connections that passed nodemap.py cleanup
-- Fixes maps displaying invalid/stale connections despite clean JSON data
-- Added SSID resolution: Connections use base callsigns, nodes use full SSIDs (e.g., "N1QFY" -> "N1QFY-15")
+- **CRITICAL BUG**: Connection logic - now builds from routes tables (quality > 0) instead of connections array
+- Original logic was correct: iterate nodes' routes tables, resolve SSIDs via netrom_ssids, create connections
+- Connections display base callsigns but connect via full SSIDs as seen in each node's routing table
+- Version now displays on --all runs, not just --help
 
 ### Added
-- Version display on startup (shows "Node Map HTML Generator v1.2.0")
+- Neighbor statistics in map info box:
+  - RF Neighbors: Count of unique neighbors heard on RF ports (deduplicated by base callsign)
+  - Non-RF Neighbors: Count of neighbors via telnet/AXIP ports
+  - Only counts neighbors in routes table with quality > 0
 
 ## [nodemap 1.7.0] - 2026-01-15
 ### Changed
