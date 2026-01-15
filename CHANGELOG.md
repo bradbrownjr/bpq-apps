@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.15] - 2026-01-15
+### Added
+- --repair option to remove invalid connections without re-crawling
+- Validates connections against ROUTES tables (quality > 0)
+- Shows preview of connections to be removed before confirmation
+- Lightweight alternative to full network re-crawl for fixing stale links
+
+## [nodemap 1.6.14] - 2026-01-15
+### Added
+- --repair option to remove invalid connections without re-crawling
+- Validates connections against ROUTES tables (quality > 0)
+- Shows preview of connections to be removed before confirmation
+- Lightweight alternative to full network re-crawl for fixing stale links
+
 ## [nodemap 1.6.14] - 2026-01-15
 ### Fixed
 - Remove old connections involving re-crawled nodes during merge

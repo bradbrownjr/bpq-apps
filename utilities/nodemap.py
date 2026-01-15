@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.6.14
+Version: 1.6.15
 """
 
-__version__ = '1.6.14'
+__version__ = '1.6.15'
 
 import sys
 import socket
@@ -3170,6 +3170,90 @@ def main():
         
         sys.exit(0)
     
+    # Check for repair mode (remove invalid connections)
+    if '--repair' in sys.argv:
+        if not os.path.exists('nodemap.json'):
+            colored_print("Error: nodemap.json not found", Colors.RED)
+            sys.exit(1)
+        
+        try:
+            with open('nodemap.json', 'r') as f:
+                data = json.load(f)
+            
+            nodes_data = data.get('nodes', {})
+            connections = data.get('connections', [])
+            
+            if not connections:
+                print("No connections to repair")
+                sys.exit(0)
+            
+            # Filter connections: keep only if 'to' node is in 'from' node's ROUTES with quality > 0
+            valid_connections = []
+            invalid_connections = []
+            
+            for conn in connections:
+                from_call = conn['from']
+                to_call = conn['to']
+                to_base = to_call.split('-')[0] if '-' in to_call else to_call
+                
+                from_node = nodes_data.get(from_call, {})
+                routes = from_node.get('routes', {})
+                
+                # Check if destination is in routes with non-zero quality
+                if to_base in routes and routes[to_base] > 0:
+                    valid_connections.append(conn)
+                else:
+                    invalid_connections.append(conn)
+            
+            if not invalid_connections:
+                print("All {} connections are valid (in ROUTES tables)".format(len(connections)))
+                sys.exit(0)
+            
+            # Show what will be removed
+            print("\nFound {} invalid connections (not in ROUTES or quality 0):".format(len(invalid_connections)))
+            for conn in invalid_connections[:10]:
+                print("  {} -> {} (quality: {})".format(conn['from'], conn['to'], conn.get('quality', 0)))
+            if len(invalid_connections) > 10:
+                print("  ... and {} more".format(len(invalid_connections) - 10))
+            
+            response = input("\nRemove {} invalid connections? (y/N): ".format(len(invalid_connections))).strip().lower()
+            if response not in ['y', 'yes']:
+                print("Cancelled")
+                sys.exit(0)
+            
+            # Update data with filtered connections
+            data['connections'] = valid_connections
+            
+            with open('nodemap.json', 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            colored_print("\nRemoved {} invalid connections".format(len(invalid_connections)), Colors.GREEN)
+            colored_print("Kept {} valid connections".format(len(valid_connections)), Colors.GREEN)
+            
+            # Offer to regenerate maps
+            response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            if response in ['', 'y', 'yes']:
+                print("\nGenerating maps...")
+                html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
+                try:
+                    import subprocess
+                    result = subprocess.call(['python3', html_script, '--all'])
+                    if result == 0:
+                        colored_print("Maps generated successfully!", Colors.GREEN)
+                    else:
+                        colored_print("Warning: Map generation exited with code {}".format(result), Colors.YELLOW)
+                except Exception as e:
+                    colored_print("Error generating maps: {}".format(e), Colors.RED)
+            
+        except json.JSONDecodeError as e:
+            colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)
+            sys.exit(1)
+        except Exception as e:
+            colored_print("Error repairing nodemap.json: {}".format(e), Colors.RED)
+            sys.exit(1)
+        
+        sys.exit(0)
+    
     # Check for help flag first
     if '-h' in sys.argv or '--help' in sys.argv or '/?' in sys.argv:
         print("BPQ Node Map Crawler v{}".format(__version__))
@@ -3200,6 +3284,7 @@ def main():
         print("  --set-grid CALL GRID  Set gridsquare for callsign (e.g., --set-grid NG1P FN43vp)")
         print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
         print("  --cleanup        Clean up nodemap.json (remove duplicates, incomplete nodes)")
+        print("  --repair         Remove invalid connections (not in ROUTES or quality 0)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log FILE, -l   Log all telnet traffic to file")
