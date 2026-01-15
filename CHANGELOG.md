@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.14] - 2026-01-15
+### Fixed
+- Prevent routing loops by skipping neighbors already in the path
+- Example: At KS1R via KC1JMH, no longer routes back through KC1JMH to reach KC1JMH
+- Reduces excessive 1200 baud AX.25 traffic from circular routing
+
 ## [nodemap 1.7.13] - 2026-01-15
 ### Added
 - Display logging status at startup when -l or -D flags are used

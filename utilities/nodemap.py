@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.13
+Version: 1.7.14
 """
 
-__version__ = '1.7.13'
+__version__ = '1.7.14'
 
 import sys
 import socket
@@ -2141,6 +2141,13 @@ class NodeCrawler:
                         # We're at a direct neighbor of local node (path=[] but not local node)
                         # Need to route through this node to reach its neighbors
                         new_path = [callsign]
+                    
+                    # Skip if neighbor is already in the path (prevents routing loops)
+                    # Example: At KS1R via KC1JMH, don't route back through KC1JMH to reach KC1JMH
+                    if neighbor in new_path or neighbor == self.callsign:
+                        if self.verbose:
+                            print("    Skipping {} (already in path: {})".format(neighbor, ' > '.join(new_path) if new_path else 'local'))
+                        continue
                     
                     # Track shortest path for reference (but queue all paths)
                     if neighbor not in self.shortest_paths or len(new_path) < len(self.shortest_paths[neighbor]):
