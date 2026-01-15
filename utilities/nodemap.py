@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.9
+Version: 1.7.10
 """
 
-__version__ = '1.7.9'
+__version__ = '1.7.10'
 
 import sys
 import socket
@@ -3452,7 +3452,7 @@ def main():
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log [FILE], -l [FILE]  Log telnet traffic (default: telnet.log)")
-        print("  --debug-log [FILE], -D [FILE]  Log verbose debug output (default: debug.log)")
+        print("  --debug-log [FILE], -D [FILE]  Log verbose debug output (implies -v, default: debug.log)")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
@@ -3864,6 +3864,8 @@ def main():
             else:
                 debug_log = 'debug.log'
                 i += 1
+            # Debug mode automatically enables verbose output
+            verbose = True
         elif (arg == '--exclude' or arg == '-x') and i + 1 < len(sys.argv):
             # Parse comma-separated list of callsigns to exclude
             exclude_str = sys.argv[i + 1]

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.10] - 2026-01-15
+### Changed
+- -D/--debug-log now automatically enables verbose output (-v)
+- Debug mode no longer requires separate -v flag
+- Standard UX: debug implies verbose console output
+
 ## [nodemap 1.7.9] - 2026-01-15
 ### Fixed
 - Connection logic now prefers node aliases (e.g., BURG:KS1R-15) over service aliases (CHABUR:KS1R-13, BBSBUR:KS1R-2)
