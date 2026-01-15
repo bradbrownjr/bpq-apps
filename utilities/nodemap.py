@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.1
+Version: 1.5.2
 """
 
-__version__ = '1.5.1'
+__version__ = '1.5.2'
 
 import sys
 import socket
@@ -2337,28 +2337,57 @@ class NodeCrawler:
                             if nodes_that_heard_target:
                                 if self.verbose:
                                     colored_print("Warning: {} not found in any known node's neighbor list".format(target_base), Colors.YELLOW)
+                                
+                                # Calculate hop distance to each node (for sorting by proximity)
+                                node_hop_distances = {}
+                                for node in nodes_that_heard_target:
+                                    # Use BFS to find shortest path length
+                                    queue_dist = [(self.callsign, 0)]
+                                    visited_dist = {self.callsign}
+                                    found_distance = None
+                                    
+                                    while queue_dist and found_distance is None:
+                                        current, dist = queue_dist.pop(0)
+                                        
+                                        if current == node:
+                                            found_distance = dist
+                                            break
+                                        
+                                        current_info = nodes_data.get(current, {})
+                                        for neighbor in current_info.get('neighbors', []):
+                                            if neighbor not in visited_dist:
+                                                visited_dist.add(neighbor)
+                                                queue_dist.append((neighbor, dist + 1))
+                                    
+                                    node_hop_distances[node] = found_distance if found_distance is not None else 999
+                                
+                                # Sort by hop distance (closest first), then alphabetically
+                                sorted_nodes = sorted(nodes_that_heard_target, key=lambda n: (node_hop_distances[n], n))
+                                
                                 print("")
                                 print("{} has been heard by these nodes:".format(target_base))
-                                for i, node in enumerate(sorted(nodes_that_heard_target), 1):
+                                for i, node in enumerate(sorted_nodes, 1):
                                     node_info = nodes_data.get(node, {})
                                     grid = node_info.get('location', {}).get('grid', 'unknown')
-                                    print("  {}) {} ({})".format(i, node, grid))
+                                    hops = node_hop_distances[node]
+                                    hop_str = "{} hop{}".format(hops, '' if hops == 1 else 's') if hops < 999 else 'unknown distance'
+                                    print("  {}) {} ({}, {})".format(i, node, grid, hop_str))
                                 print("")
                                 
                                 # Prompt user to choose intermediate node
                                 try:
-                                    choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(nodes_that_heard_target))).strip()
+                                    choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
                                     
                                     if not choice:
                                         colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
                                         return
                                     
                                     choice_idx = int(choice) - 1
-                                    if choice_idx < 0 or choice_idx >= len(nodes_that_heard_target):
+                                    if choice_idx < 0 or choice_idx >= len(sorted_nodes):
                                         colored_print("Error: Invalid choice", Colors.RED)
                                         return
                                     
-                                    intermediate_node = sorted(nodes_that_heard_target)[choice_idx]
+                                    intermediate_node = sorted_nodes[choice_idx]
                                     print("Selected: {} -> {}".format(intermediate_node, target_base))
                                     
                                     # Find path to intermediate node

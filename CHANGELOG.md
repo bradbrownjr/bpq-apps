@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.2] - 2026-01-15
+### Changed
+- Interactive path selection now sorts nodes by hop distance (closest first) instead of alphabetically
+- Display shows hop count for each intermediate node option (e.g., "1 hop", "2 hops")
+
 ## [nodemap 1.5.1] - 2026-01-15
 ### Added
 - Interactive path selection when target node not directly reachable with `--callsign`
