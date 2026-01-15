@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.4] - 2026-01-15
+### Changed
+- Primary NetRom alias (matching node alias field) now shown first and bolded in HTML popups
+- Makes it easier for novice users to identify the correct routing alias
+- Example: N1QFY shows **KNNGNR:N1QFY-15}** first, then BBSGNR, CHTGNR, RMSGNR
+
 ## [nodemap-html 1.4.3] - 2026-01-15
 ### Fixed
 - NetRom Access now shows only this node's own aliases (from own_aliases)

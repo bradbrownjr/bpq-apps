@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.3
+Version: 1.4.4
 """
 
-__version__ = '1.4.3'
+__version__ = '1.4.4'
 
 import sys
 import json
@@ -262,11 +262,25 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         own_aliases_dict = node_data.get('own_aliases', {})
         
         # Get this node's actual NetRom aliases (own_aliases is authoritative)
+        # Sort to put primary alias (matching node alias field) first
+        primary_alias = node_data.get('alias', '')
         netrom_access = []
         if own_aliases_dict:
-            # Show own aliases with SSIDs
+            # Show primary alias first (bold), then others sorted
+            primary_entry = None
+            other_entries = []
+            
             for alias, full_call in sorted(own_aliases_dict.items()):
-                netrom_access.append("{}:{}}}".format(alias, full_call))
+                entry = "{}:{}}}".format(alias, full_call)
+                if alias == primary_alias:
+                    primary_entry = entry
+                else:
+                    other_entries.append(entry)
+            
+            # Primary first (will be bolded in display)
+            if primary_entry:
+                netrom_access.append(primary_entry)
+            netrom_access.extend(other_entries)
         else:
             # Fallback: extract from applications (may include other nodes' aliases)
             for app in all_apps:
@@ -602,8 +616,15 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             }
             
             if (node.netrom_access && node.netrom_access.length > 0) {
-                popup += '<p><span class="label">NetRom Access:</span><br>' + 
-                         '<span class="apps">' + node.netrom_access.join(', ') + '</span></p>';
+                popup += '<p><span class="label">NetRom Access:</span><br>';
+                // First entry is primary alias (bold)
+                if (node.netrom_access.length > 0) {
+                    popup += '<span class="apps"><strong>' + node.netrom_access[0] + '</strong>';
+                    if (node.netrom_access.length > 1) {
+                        popup += ', ' + node.netrom_access.slice(1).join(', ');
+                    }
+                    popup += '</span></p>';
+                }
             }
             
             if (node.applications && node.applications.length > 0) {
