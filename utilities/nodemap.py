@@ -3029,6 +3029,99 @@ class NodeCrawler:
 
 def main():
     """Main entry point."""
+    # Check for set-grid mode first (fast exit)
+    if '--set-grid' in sys.argv:
+        set_grid_call = None
+        set_grid_value = None
+        for i, arg in enumerate(sys.argv):
+            if arg == '--set-grid' and i + 2 < len(sys.argv):
+                set_grid_call = sys.argv[i + 1].upper()
+                set_grid_value = sys.argv[i + 2]
+                break
+        
+        if not set_grid_call or not set_grid_value:
+            colored_print("Error: --set-grid requires CALLSIGN and GRIDSQUARE", Colors.RED)
+            print("Example: {} --set-grid NG1P FN43vp".format(sys.argv[0]))
+            sys.exit(1)
+        
+        # Validate gridsquare format (basic check)
+        if not re.match(r'^[A-R]{2}[0-9]{2}[a-x]{2}$', set_grid_value, re.IGNORECASE):
+            colored_print("Warning: Gridsquare '{}' doesn't match standard format (e.g., FN43vp)".format(set_grid_value), Colors.YELLOW)
+            response = input("Continue anyway? (y/N): ").strip().lower()
+            if response not in ['y', 'yes']:
+                sys.exit(0)
+        
+        if not os.path.exists('nodemap.json'):
+            colored_print("Error: nodemap.json not found", Colors.RED)
+            colored_print("Run a crawl first to generate network data", Colors.RED)
+            sys.exit(1)
+        
+        try:
+            with open('nodemap.json', 'r') as f:
+                data = json.load(f)
+            
+            nodes_data = data.get('nodes', {})
+            base_call = set_grid_call.split('-')[0] if '-' in set_grid_call else set_grid_call
+            
+            # Find node by base callsign or exact match
+            node_key = None
+            if set_grid_call in nodes_data:
+                node_key = set_grid_call
+            else:
+                # Try finding by base callsign
+                matches = [k for k in nodes_data.keys() if k.split('-')[0] == base_call]
+                if not matches:
+                    colored_print("Node {} not found in nodemap.json".format(set_grid_call), Colors.RED)
+                    colored_print("Available nodes: {}".format(', '.join(sorted(nodes_data.keys()))), Colors.YELLOW)
+                    sys.exit(1)
+                elif len(matches) > 1:
+                    colored_print("Multiple SSIDs found for {}: {}".format(base_call, ', '.join(matches)), Colors.YELLOW)
+                    response = input("Update all variants? (Y/n): ").strip().lower()
+                    if response in ['', 'y', 'yes']:
+                        # Update all variants
+                        for match in matches:
+                            if 'location' not in nodes_data[match]:
+                                nodes_data[match]['location'] = {}
+                            nodes_data[match]['location']['grid'] = set_grid_value
+                            nodes_data[match]['gridsquare'] = set_grid_value
+                            print("Updated gridsquare for {}: {}".format(match, set_grid_value))
+                        
+                        # Save back to file
+                        with open('nodemap.json', 'w') as f:
+                            json.dump(data, f, indent=2)
+                        colored_print("\nSaved to nodemap.json", Colors.GREEN)
+                        sys.exit(0)
+                    else:
+                        node_key = matches[0]
+                        print("Updating only: {}".format(node_key))
+                else:
+                    node_key = matches[0]
+            
+            # Update the node's gridsquare
+            if 'location' not in nodes_data[node_key]:
+                nodes_data[node_key]['location'] = {}
+            
+            old_grid = nodes_data[node_key]['location'].get('grid', 'N/A')
+            nodes_data[node_key]['location']['grid'] = set_grid_value
+            nodes_data[node_key]['gridsquare'] = set_grid_value
+            
+            print("Updated gridsquare for {}: {} -> {}".format(node_key, old_grid, set_grid_value))
+            
+            # Save back to file
+            with open('nodemap.json', 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            colored_print("Saved to nodemap.json", Colors.GREEN)
+            
+        except json.JSONDecodeError as e:
+            colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)
+            sys.exit(1)
+        except Exception as e:
+            colored_print("Error updating nodemap.json: {}".format(e), Colors.RED)
+            sys.exit(1)
+        
+        sys.exit(0)
+    
     # Check for help flag first
     if '-h' in sys.argv or '--help' in sys.argv or '/?' in sys.argv:
         print("BPQ Node Map Crawler v{}".format(__version__))
@@ -3056,6 +3149,7 @@ def main():
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --callsign CALL  Force specific SSID for start node (e.g., --callsign NG1P-4)")
+        print("  --set-grid CALL GRID  Set gridsquare for callsign (e.g., --set-grid NG1P FN43vp)")
         print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
         print("  --cleanup        Clean up nodemap.json (remove duplicates, incomplete nodes)")
         print("  --notify URL     Send notifications to webhook URL")
@@ -3073,6 +3167,7 @@ def main():
         print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
         print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
         print("  {} --callsign NG1P-4  # Force connection to specific SSID".format(sys.argv[0]))
+        print("  {} --set-grid NG1P FN43vp  # Add gridsquare for node".format(sys.argv[0]))
         print("  {} -q NG1P  # Query what we know about NG1P".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")

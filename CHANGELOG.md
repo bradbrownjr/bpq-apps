@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.6.9] - 2026-01-15
+### Added
+- --set-grid option to manually set gridsquare for nodes
+- Validates gridsquare format (warns if non-standard)
+- Handles multiple SSID variants (offers to update all)
+- Example: `./nodemap.py --set-grid NG1P FN43vp`
+
 ## [nodemap 1.6.8] - 2026-01-15
 ### Fixed
 - Populate route_ports from topology data alongside netrom_ssid_map
