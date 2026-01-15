@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.12
+Version: 1.7.13
 """
 
-__version__ = '1.7.12'
+__version__ = '1.7.13'
 
 import sys
 import socket
@@ -3980,6 +3980,15 @@ def main():
     # Display excluded nodes if any
     if exclude_nodes:
         print("Excluding nodes: {}".format(', '.join(sorted(exclude_nodes))))
+    
+    # Display logging status
+    if log_file or debug_log:
+        log_status = []
+        if log_file:
+            log_status.append("telnet -> {}".format(log_file))
+        if debug_log:
+            log_status.append("debug -> {}".format(debug_log))
+        print("Logging: {}".format(", ".join(log_status)))
     
     # Handle merge-only mode (no crawling, just merge files)
     if merge_files and not resume and not start_node and max_hops == 10:
