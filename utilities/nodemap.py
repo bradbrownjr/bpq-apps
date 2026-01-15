@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.5.7
+Version: 1.5.8
 """
 
-__version__ = '1.5.7'
+__version__ = '1.5.8'
 
 import sys
 import socket
@@ -2257,7 +2257,8 @@ class NodeCrawler:
                         # This overrides any discovered SSID
                         
                         # Check if target is actually a node (has SSID) vs user station
-                        target_ssid = self.netrom_ssid_map.get(target_base)
+                        # CLI-forced SSIDs take precedence
+                        target_ssid = self.cli_forced_ssids.get(target_base) or self.netrom_ssid_map.get(target_base)
                         if not target_ssid or '-' not in target_ssid:
                             # No SSID means it's a user station, not a node
                             colored_print("Error: {} appears to be a user station, not a node (no SSID in network data)".format(target_base), Colors.RED)

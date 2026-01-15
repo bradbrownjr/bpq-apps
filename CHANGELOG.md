@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.5.8] - 2026-01-15
+### Fixed
+- Path building now uses CLI-forced SSID (--callsign) instead of discovered SSID from JSON
+- Prevents connecting to wrong SSID (e.g., NG1P-1 BBS instead of NG1P-4 node)
+
 ## [nodemap 1.5.7] - 2026-01-15
 ### Added
 - Metadata section in JSON with nodemap_version, generated timestamp, and generator name
