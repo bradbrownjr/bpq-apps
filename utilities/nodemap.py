@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown KC1JMH
 Date: January 2026
-Version: 1.7.7
+Version: 1.7.8
 """
 
-__version__ = '1.7.7'
+__version__ = '1.7.8'
 
 import sys
 import socket
@@ -3424,7 +3424,7 @@ def main():
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log [FILE], -l [FILE]  Log telnet traffic (default: telnet.log)")
-        print("  --debug-log [FILE]       Log verbose debug output (default: debug.log)")
+        print("  --debug-log [FILE], -D [FILE]  Log verbose debug output (default: debug.log)")
         print("  --help, -h, /?   Show this help message")
         print("Examples:")
         print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
@@ -3829,7 +3829,7 @@ def main():
             else:
                 log_file = 'telnet.log'
                 i += 1
-        elif arg == '--debug-log':
+        elif arg == '--debug-log' or arg == '-D':
             if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith('-'):
                 debug_log = sys.argv[i + 1]
                 i += 2

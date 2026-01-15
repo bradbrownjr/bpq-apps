@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.8] - 2026-01-15
+### Added
+- Short option -D for --debug-log (lowercase -d already used for --display-nodes)
+
 ## [nodemap 1.7.7] - 2026-01-15
 ### Changed
 - --log and --debug-log now accept optional filenames
