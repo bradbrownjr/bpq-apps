@@ -146,7 +146,7 @@ class NodeCrawler:
         self.timeout = 10  # Telnet timeout in seconds
         self.cli_forced_ssids = {}  # SSIDs forced via --callsign CLI option: {base_call: full_ssid}
     
-    def _log(self, message):
+    def _debug_log(self, message):
         """Log message to debug log (if --debug-log set). Always logs, regardless of verbose."""
         if self.debug_log:
             # Open debug log on first use
@@ -169,7 +169,7 @@ class NodeCrawler:
         """Print verbose message to console and debug log (if --debug-log set)."""
         if self.verbose:
             print(message)
-        self._log(message)
+        self._debug_log(message)
         
     def _find_bpq_port(self):
         """Find BPQ telnet port from bpq32.cfg (Telnet Server port only)."""
@@ -693,7 +693,7 @@ class NodeCrawler:
                         if 'CONNECTED' in response.upper():
                             connected = True
                             print("  Connected to {}".format(callsign))
-                            self._log("Connected to {}".format(callsign))
+                            self._debug_log("Connected to {}".format(callsign))
                             break
                         
                         # Check for failure patterns
@@ -709,7 +709,7 @@ class NodeCrawler:
                                 error_line
                             )
                             colored_print("  " + fail_msg, Colors.RED)
-                            self._log(fail_msg)
+                            self._debug_log(fail_msg)
                             tn.close()
                             return None
                         
@@ -1799,7 +1799,7 @@ class NodeCrawler:
             path_desc = " (via {})".format(' > '.join(path))
         
         colored_print("Crawling {}{}".format(callsign, path_desc), Colors.CYAN)
-        self._log("Crawling {}{}".format(callsign, path_desc))
+        self._debug_log("Crawling {}{}".format(callsign, path_desc))
         
         # Don't add to visited yet - only after successful connection
         # This allows retrying via alternate paths if this path fails
@@ -1903,7 +1903,7 @@ class NodeCrawler:
                 if self.verbose:
                     cmds_summary = ' '.join(help_output.split()[:20])
                     print("  Available commands: {}".format(cmds_summary))
-                    self._log("Available commands: {}".format(cmds_summary))
+                    self._debug_log("Available commands: {}".format(cmds_summary))
                 time.sleep(inter_cmd_delay)
             except Exception as e:
                 if self.verbose:
