@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.35] - 2026-01-16
+### Fixed
+- new-only mode now correctly skips known nodes when callsign lacks SSID
+- Compares base callsign (KC1JMH) against nodes stored with SSID (KC1JMH-15)
+- Prevents re-crawling already-visited nodes in new-only mode
+
 ## [nodemap 1.7.34] - 2026-01-16
 ### Fixed
 - Renamed _log() to _debug_log() to avoid conflict with telnet traffic _log() method

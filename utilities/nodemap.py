@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.34
+Version: 1.7.35
 """
 
-__version__ = '1.7.34'
+__version__ = '1.7.35'
 
 import sys
 import socket
@@ -1784,10 +1784,21 @@ class NodeCrawler:
                 return
         
         # In new-only mode, also skip nodes already in self.nodes (from nodemap.json)
-        if self.crawl_mode == 'new-only' and callsign in self.nodes:
-            if self.verbose:
-                print("  Skipping {} (already in nodemap.json, new-only mode)".format(callsign))
-            return
+        if self.crawl_mode == 'new-only':
+            # Check both exact callsign and base callsign (nodes may be stored with SSID)
+            base_call = callsign.split('-')[0] if '-' in callsign else callsign
+            already_known = callsign in self.nodes
+            # Also check if any node with same base callsign exists
+            if not already_known:
+                for node_key in self.nodes:
+                    node_base = node_key.split('-')[0] if '-' in node_key else node_key
+                    if node_base == base_call:
+                        already_known = True
+                        break
+            if already_known:
+                if self.verbose:
+                    print("  Skipping {} (already in nodemap.json, new-only mode)".format(callsign))
+                return
         
         # Build readable path description
         if not path:
