@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.22] - 2026-01-16
+### Changed
+- Improved BFS pathfinding debug output to show SSID resolution
+- Always shows neighbor check results (even when empty) in verbose mode
+
 ## [nodemap 1.7.21] - 2026-01-16
 ### Fixed
 - BFS pathfinding now resolves base callsigns to full SSIDs when looking up node data

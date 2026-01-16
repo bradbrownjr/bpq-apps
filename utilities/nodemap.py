@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.21
+Version: 1.7.22
 """
 
-__version__ = '1.7.21'
+__version__ = '1.7.22'
 
 import sys
 import socket
@@ -2408,8 +2408,9 @@ class NodeCrawler:
                             current_info = nodes_data.get(current_full, {})
                             neighbors = current_info.get('neighbors', [])
                             
-                            if self.verbose and neighbors:
-                                print("  {} has neighbors: {}".format(current, ', '.join(neighbors)))
+                            if self.verbose:
+                                print("  Checking {} (resolved to {}) neighbors: {}".format(
+                                    current, current_full, neighbors if neighbors else "(none)"))
                             
                             for neighbor in neighbors:
                                 if neighbor in visited:
