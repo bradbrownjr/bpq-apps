@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.5
+Version: 1.4.6
 """
 
-__version__ = '1.4.5'
+__version__ = '1.4.6'
 
 import sys
 import json
@@ -1168,7 +1168,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         svg_lines.append('      <circle r="6" fill="{}" stroke="#333" stroke-width="1.5">'.format(color))
         svg_lines.append('        <title>{}</title>'.format(tooltip.replace('"', '&quot;')))
         svg_lines.append('      </circle>')
-        svg_lines.append('      <text x="8" y="4">{}</text>'.format(node['display_call']))
+        svg_lines.append('      <text x="0" y="18" text-anchor="middle">{}</text>'.format(node['display_call']))
         svg_lines.append('    </g>')
     svg_lines.append('  </g>')
     

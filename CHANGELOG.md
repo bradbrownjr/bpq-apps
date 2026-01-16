@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.6] - 2026-01-16
+### Fixed
+- SVG node labels now positioned below icons instead of beside them
+- Prevents overlapping labels from blocking node hover/tooltip access
+- Labels centered under nodes with text-anchor="middle"
+
 ## [nodemap-html 1.4.5] - 2026-01-16
 ### Added
 - Draw separate colored lines for each band nodes connect on
