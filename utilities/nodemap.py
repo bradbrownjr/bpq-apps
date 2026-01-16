@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.17
+Version: 1.7.18
 """
 
-__version__ = '1.7.17'
+__version__ = '1.7.18'
 
 import sys
 import socket
@@ -2320,7 +2320,8 @@ class NodeCrawler:
                         # Restore netrom_ssids (for connection commands)
                         for base_call, full_call in node_info.get('netrom_ssids', {}).items():
                             # Only set if not already set (node's own SSID takes precedence)
-                            if base_call not in self.netrom_ssid_map:
+                            # And only if it's a likely node SSID (filter port-specific SSIDs)
+                            if base_call not in self.netrom_ssid_map and self._is_likely_node_ssid(full_call):
                                 self.netrom_ssid_map[base_call] = full_call
                         
                         # Restore route_ports (port numbers for neighbors)

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.18] - 2026-01-16
+### Fixed
+- Apply _is_likely_node_ssid() filter when restoring netrom_ssids from JSON
+- Prevents loading port-specific SSIDs (KC1JMH-7) into connection map
+
 ## [nodemap 1.7.17] - 2026-01-16
 ### Fixed
 - own_aliases restoration now uses primary node alias (matches node's advertised alias field)
