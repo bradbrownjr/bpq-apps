@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.14
+Version: 1.7.15
 """
 
-__version__ = '1.7.14'
+__version__ = '1.7.15'
 
 import sys
 import socket
@@ -1205,6 +1205,9 @@ class NodeCrawler:
                 # Only process routes with SSIDs
                 if '-' not in route_call:
                     continue
+                # Skip service SSIDs (shouldn't be in ROUTES, but filter anyway)
+                if self._is_service_ssid(route_call):
+                    continue
                 base_call = route_call.split('-')[0]
                 if base_call not in ssid_candidates:
                     ssid_candidates[base_call] = {}
@@ -1225,7 +1228,9 @@ class NodeCrawler:
             for base_call, full_call in node_ssids.items():
                 # Only use if not already set by routes consensus
                 if base_call not in self.netrom_ssid_map:
-                    self.netrom_ssid_map[base_call] = full_call
+                    # Skip service SSIDs (BBS, RMS, CHAT) and invalid SSIDs
+                    if not self._is_service_ssid(full_call):
+                        self.netrom_ssid_map[base_call] = full_call
             
             # Also restore route_ports from heard_on_ports data (MHEARD port information)
             heard_on_ports = node_data.get('heard_on_ports', [])
@@ -1349,24 +1354,33 @@ class NodeCrawler:
     
     def _is_service_ssid(self, full_callsign):
         """
-        Check if a callsign-SSID is a service SSID (BBS, RMS, CHAT, etc.).
+        Check if a callsign-SSID is a service SSID (BBS, RMS, CHAT, etc.) or non-standard.
         
         Service SSIDs: -2 (BBS), -4/-5/-13 (CHAT), -10 (RMS/Winlink)
-        Node SSIDs: typically -15 but can be any other number
+        Node SSIDs: typically -15, but can be -1 through -9, -11, -12, -14, or -15
+        Suspicious SSIDs: -8 (often port identifiers), -0, or >15
         
         Args:
             full_callsign: Full callsign with SSID (e.g., 'KS1R-13')
             
         Returns:
-            True if service SSID, False if node SSID or no SSID
+            True if service SSID or suspicious, False if likely node SSID
         """
         if '-' not in full_callsign:
             return False
         
         try:
             ssid = int(full_callsign.rsplit('-', 1)[1])
-            # Common service SSIDs
-            return ssid in [2, 4, 5, 10, 13]
+            # Known service SSIDs
+            if ssid in [2, 4, 5, 10, 13]:
+                return True
+            # Suspicious SSIDs (port identifiers, invalid ranges)
+            if ssid == 0 or ssid > 15:
+                return True
+            # -8 is often used as port identifier, not node SSID
+            if ssid == 8:
+                return True
+            return False
         except (ValueError, IndexError):
             return False
     

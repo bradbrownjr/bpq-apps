@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.15] - 2026-01-16
+### Fixed
+- Filter service SSIDs and suspicious SSIDs (like -8) when loading from MHEARD data
+- Prevents connecting to KC1JMH-8 (port identifier) instead of KC1JMH-15 (node)
+- _is_service_ssid() now filters: -2 (BBS), -4/-5/-13 (CHAT), -10 (RMS), -8 (port ID), -0, >15
+- ROUTES data (most authoritative) always preferred over MHEARD data
+
 ## [nodemap 1.7.14] - 2026-01-15
 ### Fixed
 - Prevent routing loops by skipping neighbors already in the path
