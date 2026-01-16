@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.4
+Version: 1.4.5
 """
 
-__version__ = '1.4.4'
+__version__ = '1.4.5'
 
 import sys
 import json
@@ -380,11 +380,34 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
     
     # Build map connections from routes tables (quality > 0)
     # Connections display base callsigns but connect nodes via their SSIDs
+    # Draw separate lines for each band nodes connect on
     node_coords = {}
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
-    seen_connections = set()
+    # Build port->frequency lookup for each node
+    node_port_freqs = {}  # {callsign: {port_num: frequency}}
+    for callsign, node_data in nodes.items():
+        node_port_freqs[callsign] = {}
+        for port in node_data.get('ports', []):
+            if port.get('is_rf') and port.get('frequency'):
+                node_port_freqs[callsign][port.get('number')] = port['frequency']
+    
+    # Build heard_on_ports lookup: {callsign: {neighbor_base: [port_nums]}}
+    node_heard_ports = {}
+    for callsign, node_data in nodes.items():
+        node_heard_ports[callsign] = {}
+        for entry in node_data.get('heard_on_ports', []):
+            if len(entry) == 2:
+                neighbor, port_num = entry
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                if neighbor_base not in node_heard_ports[callsign]:
+                    node_heard_ports[callsign][neighbor_base] = []
+                if port_num not in node_heard_ports[callsign][neighbor_base]:
+                    node_heard_ports[callsign][neighbor_base].append(port_num)
+    
+    # Track connections by node pair AND band to draw multiple lines
+    seen_connections = {}  # {(from, to): set of frequencies}
     
     for callsign, node_data in nodes.items():
         # Skip nodes without coordinates
@@ -393,6 +416,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         
         from_lat, from_lon = node_coords[callsign]
         routes = node_data.get('routes', {})
+        callsign_base = callsign.split('-')[0] if '-' in callsign else callsign
         
         # Iterate through routes table (ROUTES-validated neighbors)
         for neighbor_base, quality in routes.items():
@@ -416,28 +440,60 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             
             to_lat, to_lon = node_coords[neighbor_key]
             
-            # Deduplicate bidirectional connections (A-B same as B-A)
+            # Connection key for deduplication (sorted pair)
             conn_key = tuple(sorted([callsign, neighbor_key]))
-            if conn_key in seen_connections:
-                continue
-            seen_connections.add(conn_key)
+            if conn_key not in seen_connections:
+                seen_connections[conn_key] = set()
             
-            # Get frequency for color coding (from source node's ports)
-            conn_freq = None
-            for port in node_data.get('ports', []):
-                if port.get('is_rf') and port.get('frequency'):
-                    conn_freq = port['frequency']
-                    break
+            # Get frequencies from BOTH directions (A heard B on port X, B heard A on port Y)
+            # This node's view: what port did we hear neighbor on?
+            heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
+            # Neighbor's view: what port did neighbor hear us on?
+            neighbor_base_key = neighbor_key.split('-')[0] if '-' in neighbor_key else neighbor_key
+            heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
             
+            # Collect frequencies from both directions
+            freqs_found = set()
+            for port_num in heard_ports_this:
+                freq = node_port_freqs.get(callsign, {}).get(port_num)
+                if freq:
+                    freqs_found.add(freq)
+            for port_num in heard_ports_neighbor:
+                freq = node_port_freqs.get(neighbor_key, {}).get(port_num)
+                if freq:
+                    freqs_found.add(freq)
+            
+            # If no MHEARD port info, fall back to first RF port (legacy behavior)
+            if not freqs_found:
+                for port in node_data.get('ports', []):
+                    if port.get('is_rf') and port.get('frequency'):
+                        freqs_found.add(port['frequency'])
+                        break
+            
+            # Add new frequencies we haven't drawn yet for this pair
+            for freq in freqs_found:
+                if freq not in seen_connections[conn_key]:
+                    seen_connections[conn_key].add(freq)
+    
+    # Now build map_connections from seen_connections
+    for conn_key, frequencies in seen_connections.items():
+        from_call, to_call = conn_key
+        if from_call not in node_coords or to_call not in node_coords:
+            continue
+        
+        from_lat, from_lon = node_coords[from_call]
+        to_lat, to_lon = node_coords[to_call]
+        
+        for freq in frequencies:
             map_connections.append({
-                'from': callsign,
-                'to': neighbor_key,
+                'from': from_call,
+                'to': to_call,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
                 'to_lon': to_lon,
-                'color': get_band_color(conn_freq),
-                'frequency': conn_freq
+                'color': get_band_color(freq),
+                'frequency': freq
             })
     
     if not map_nodes:
@@ -836,11 +892,34 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         })
     
     # Build map connections from routes tables (quality > 0)
+    # Draw separate lines for each band nodes connect on
     node_coords = {}
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
-    seen_connections = set()
+    # Build port->frequency lookup for each node
+    node_port_freqs = {}  # {callsign: {port_num: frequency}}
+    for callsign, node_data in nodes.items():
+        node_port_freqs[callsign] = {}
+        for port in node_data.get('ports', []):
+            if port.get('is_rf') and port.get('frequency'):
+                node_port_freqs[callsign][port.get('number')] = port['frequency']
+    
+    # Build heard_on_ports lookup: {callsign: {neighbor_base: [port_nums]}}
+    node_heard_ports = {}
+    for callsign, node_data in nodes.items():
+        node_heard_ports[callsign] = {}
+        for entry in node_data.get('heard_on_ports', []):
+            if len(entry) == 2:
+                neighbor, port_num = entry
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                if neighbor_base not in node_heard_ports[callsign]:
+                    node_heard_ports[callsign][neighbor_base] = []
+                if port_num not in node_heard_ports[callsign][neighbor_base]:
+                    node_heard_ports[callsign][neighbor_base].append(port_num)
+    
+    # Track connections by node pair AND band
+    seen_connections = {}  # {(from, to): set of frequencies}
     
     for callsign, node_data in nodes.items():
         if callsign not in node_coords:
@@ -848,6 +927,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         
         from_lat, from_lon = node_coords[callsign]
         routes = node_data.get('routes', {})
+        callsign_base = callsign.split('-')[0] if '-' in callsign else callsign
         
         for neighbor_base, quality in routes.items():
             if quality == 0:
@@ -869,25 +949,54 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             to_lat, to_lon = node_coords[neighbor_key]
             
             conn_key = tuple(sorted([callsign, neighbor_key]))
-            if conn_key in seen_connections:
-                continue
-            seen_connections.add(conn_key)
+            if conn_key not in seen_connections:
+                seen_connections[conn_key] = set()
             
-            conn_freq = None
-            for port in node_data.get('ports', []):
-                if port.get('is_rf') and port.get('frequency'):
-                    conn_freq = port['frequency']
-                    break
+            # Get frequencies from BOTH directions
+            heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
+            neighbor_base_key = neighbor_key.split('-')[0] if '-' in neighbor_key else neighbor_key
+            heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
             
+            freqs_found = set()
+            for port_num in heard_ports_this:
+                freq = node_port_freqs.get(callsign, {}).get(port_num)
+                if freq:
+                    freqs_found.add(freq)
+            for port_num in heard_ports_neighbor:
+                freq = node_port_freqs.get(neighbor_key, {}).get(port_num)
+                if freq:
+                    freqs_found.add(freq)
+            
+            # Fallback to first RF port if no MHEARD port info
+            if not freqs_found:
+                for port in node_data.get('ports', []):
+                    if port.get('is_rf') and port.get('frequency'):
+                        freqs_found.add(port['frequency'])
+                        break
+            
+            for freq in freqs_found:
+                if freq not in seen_connections[conn_key]:
+                    seen_connections[conn_key].add(freq)
+    
+    # Build map_connections from seen_connections
+    for conn_key, frequencies in seen_connections.items():
+        from_call, to_call = conn_key
+        if from_call not in node_coords or to_call not in node_coords:
+            continue
+        
+        from_lat, from_lon = node_coords[from_call]
+        to_lat, to_lon = node_coords[to_call]
+        
+        for freq in frequencies:
             map_connections.append({
-                'from': callsign,
-                'to': neighbor_key,
+                'from': from_call,
+                'to': to_call,
                 'from_lat': from_lat,
                 'from_lon': from_lon,
                 'to_lat': to_lat,
                 'to_lon': to_lon,
-                'color': get_band_color(conn_freq),
-                'frequency': conn_freq
+                'color': get_band_color(freq),
+                'frequency': freq
             })
     
     if not map_nodes:

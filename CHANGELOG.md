@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.5] - 2026-01-16
+### Added
+- Draw separate colored lines for each band nodes connect on
+- Uses heard_on_ports to determine actual frequencies for each connection
+- Supports 2m (blue), 70cm (orange), 1.25m/220 MHz (purple), 6m (green)
+- Falls back to first RF port only when no MHEARD port data available
+
 ## [nodemap 1.7.30] - 2026-01-16
 ### Fixed
 - Rewrote JSON restoration to use two-pass ROUTES consensus approach
