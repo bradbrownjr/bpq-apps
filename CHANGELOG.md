@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.28] - 2026-01-16
+### Fixed
+- call_to_alias now uses node's primary alias field (authoritative) instead of first seen_alias
+- Fixes routing using BBS alias (BBSWHT/N1REX-2) instead of node alias (LNCWHT/N1REX-15)
+- Node's own primary alias from JSON takes precedence over seen_aliases
+- Data-driven: uses alias field from v1.7.25 prompt parsing, no SSID assumptions
+
 ## [nodemap 1.7.27] - 2026-01-16
 ### Fixed
 - netrom_ssid_map now stores base callsign as key (KC1JMH), not full SSID (KC1JMH-15)
