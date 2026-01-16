@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.19] - 2026-01-16
+### Fixed
+- Positional START_NODE argument parsing now works when provided without MAX_HOPS
+- ./nodemap.py AB1KI-15 --callsign W1DTX-4 now correctly starts from AB1KI-15
+- Previously ignored START_NODE when not preceded by MAX_HOPS digit
+
 ## [nodemap 1.7.18] - 2026-01-16
 ### Fixed
 - Apply _is_likely_node_ssid() filter when restoring netrom_ssids from JSON

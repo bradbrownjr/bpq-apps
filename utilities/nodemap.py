@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.18
+Version: 1.7.19
 """
 
-__version__ = '1.7.18'
+__version__ = '1.7.19'
 
 import sys
 import socket
@@ -3870,9 +3870,13 @@ def main():
         arg = sys.argv[i]
         if arg.startswith('-'):
             break
-        if i == 1 and arg.isdigit():
-            max_hops = int(arg)
-            max_hops_explicit = True  # User explicitly set max_hops
+        if i == 1:
+            if arg.isdigit():
+                max_hops = int(arg)
+                max_hops_explicit = True  # User explicitly set max_hops
+            else:
+                # First positional arg is not a digit, treat as START_NODE
+                start_node = arg.upper()
         elif i == 2:
             start_node = arg.upper()
         i += 1
