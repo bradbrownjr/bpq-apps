@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.16] - 2026-01-16
+### Changed
+- Replaced _is_service_ssid() with _is_likely_node_ssid() - uses data source priority instead of SSID number filtering
+- Service/port SSIDs vary by sysop (no standard numbers), so can't filter by specific SSIDs
+- Priority: ROUTES (authoritative) > own_aliases (advertised) > MHEARD (transient)
+- Only filters SSIDs outside valid range (0, >15) when choosing connection targets
+- All SSIDs preserved in maps/data for visualization - filtering only affects routing
+
 ## [nodemap 1.7.15] - 2026-01-16
 ### Fixed
 - Filter service SSIDs and suspicious SSIDs (like -8) when loading from MHEARD data

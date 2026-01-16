@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.15
+Version: 1.7.16
 """
 
-__version__ = '1.7.15'
+__version__ = '1.7.16'
 
 import sys
 import socket
@@ -473,20 +473,18 @@ class NodeCrawler:
                         # Update global mappings, preferring node aliases over service aliases
                         for alias, full_call in all_aliases.items():
                             base_call = full_call.split('-')[0]
-                            is_service = self._is_service_ssid(full_call)
+                            is_service = self._is_likely_node_ssid(full_call)
                             
-                            # Add or update mapping, preferring node aliases
+                            # Add or update mapping, preferring likely node SSIDs
                             if base_call not in self.call_to_alias:
                                 # New entry - add it
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
                             elif is_service:
-                                # Service SSID - skip if we already have a mapping (could be node alias)
-                                pass
-                            else:
-                                # Node alias - replace existing (even if service)
+                                # Likely node SSID - replace existing
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
+                            # else: suspicious SSID and we already have a mapping - skip
                         
                         # Update SSID mappings
                         for base_call, full_call in discovered_ssids.items():
@@ -1205,8 +1203,8 @@ class NodeCrawler:
                 # Only process routes with SSIDs
                 if '-' not in route_call:
                     continue
-                # Skip service SSIDs (shouldn't be in ROUTES, but filter anyway)
-                if self._is_service_ssid(route_call):
+                # Skip suspicious SSIDs (out of range 1-15)
+                if not self._is_likely_node_ssid(route_call):
                     continue
                 base_call = route_call.split('-')[0]
                 if base_call not in ssid_candidates:
@@ -1228,8 +1226,8 @@ class NodeCrawler:
             for base_call, full_call in node_ssids.items():
                 # Only use if not already set by routes consensus
                 if base_call not in self.netrom_ssid_map:
-                    # Skip service SSIDs (BBS, RMS, CHAT) and invalid SSIDs
-                    if not self._is_service_ssid(full_call):
+                    # Skip suspicious SSIDs (out of valid range)
+                    if self._is_likely_node_ssid(full_call):
                         self.netrom_ssid_map[base_call] = full_call
             
             # Also restore route_ports from heard_on_ports data (MHEARD port information)
@@ -1352,35 +1350,29 @@ class NodeCrawler:
         print("Found {} path(s) to {} unique neighbor(s)".format(len(unexplored), len(set(call for call, _ in unexplored))))
         return unexplored
     
-    def _is_service_ssid(self, full_callsign):
+    def _is_likely_node_ssid(self, full_callsign):
         """
-        Check if a callsign-SSID is a service SSID (BBS, RMS, CHAT, etc.) or non-standard.
+        Check if a callsign-SSID looks like a node SSID (used for routing).
         
-        Service SSIDs: -2 (BBS), -4/-5/-13 (CHAT), -10 (RMS/Winlink)
-        Node SSIDs: typically -15, but can be -1 through -9, -11, -12, -14, or -15
-        Suspicious SSIDs: -8 (often port identifiers), -0, or >15
+        Node SSIDs are typically -15, but vary by sysop. We can't rely on specific numbers.
+        Instead, we use heuristics: SSIDs in valid range (1-15) are potentially nodes.
+        
+        This is ONLY used to decide connection preference when multiple SSIDs exist.
+        All SSIDs are preserved in maps for visualization.
         
         Args:
             full_callsign: Full callsign with SSID (e.g., 'KS1R-13')
             
         Returns:
-            True if service SSID or suspicious, False if likely node SSID
+            True if valid SSID range (1-15), False if suspicious (0, >15, or invalid)
         """
         if '-' not in full_callsign:
-            return False
+            return True  # Base callsign without SSID is valid
         
         try:
             ssid = int(full_callsign.rsplit('-', 1)[1])
-            # Known service SSIDs
-            if ssid in [2, 4, 5, 10, 13]:
-                return True
-            # Suspicious SSIDs (port identifiers, invalid ranges)
-            if ssid == 0 or ssid > 15:
-                return True
-            # -8 is often used as port identifier, not node SSID
-            if ssid == 8:
-                return True
-            return False
+            # Valid SSID range is 0-15, but 0 and >15 are suspicious
+            return 1 <= ssid <= 15
         except (ValueError, IndexError):
             return False
     
@@ -1875,16 +1867,16 @@ class NodeCrawler:
             # Prefer node aliases over service aliases (BBS, RMS, CHAT)
             for alias, full_call in other_aliases.items():
                 base_call = full_call.split('-')[0]
-                is_service = self._is_service_ssid(full_call)
+                is_likely_node = self._is_likely_node_ssid(full_call)
                 
                 # Store alias mapping for documentation
                 if base_call not in self.call_to_alias:
                     # New entry - add it
                     self.call_to_alias[base_call] = alias
-                elif not is_service:
-                    # Node alias - replace existing service alias
+                elif is_likely_node:
+                    # Likely node SSID - replace existing suspicious SSID
                     self.call_to_alias[base_call] = alias
-                # else: service alias and we already have a mapping - skip it
+                # else: suspicious SSID and we already have a mapping - skip
                 
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
@@ -2336,17 +2328,17 @@ class NodeCrawler:
                         # Prefer node aliases over service aliases
                         for alias, full_call in node_info.get('seen_aliases', {}).items():
                             base_call = full_call.split('-')[0]
-                            is_service = self._is_service_ssid(full_call)
+                            is_likely_node = self._is_likely_node_ssid(full_call)
                             
                             if base_call not in self.call_to_alias:
                                 # New entry - add it
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
-                            elif not is_service:
-                                # Node alias - replace existing service alias
+                            elif is_likely_node:
+                                # Likely node SSID - replace existing suspicious SSID
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
-                            # else: service alias and we already have a mapping - skip it
+                            # else: suspicious SSID and we already have a mapping - skip
                     
                     if self.route_ports:
                         if self.verbose:
