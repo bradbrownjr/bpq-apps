@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.36
+Version: 1.7.37
 """
 
-__version__ = '1.7.36'
+__version__ = '1.7.37'
 
 import sys
 import socket
@@ -1304,15 +1304,29 @@ class NodeCrawler:
                     # Skip suspicious SSIDs (out of valid range)
                     if self._is_likely_node_ssid(full_call):
                         self.netrom_ssid_map[base_call] = full_call
-            
-            # Also restore route_ports from heard_on_ports data (MHEARD port information)
-            heard_on_ports = node_data.get('heard_on_ports', [])
+        
+        # Fifth pass: Restore route_ports ONLY from LOCAL node's heard_on_ports
+        # route_ports tells us which port on OUR node to use to reach a neighbor
+        # Other nodes' heard_on_ports are their port numbers, not ours
+        local_base = self.callsign.split('-')[0] if '-' in self.callsign else self.callsign
+        local_node_data = None
+        
+        # Find local node's data (may be stored with or without SSID)
+        for node_key, node_data in nodes_data.items():
+            node_base = node_key.split('-')[0] if '-' in node_key else node_key
+            if node_base == local_base:
+                local_node_data = node_data
+                break
+        
+        if local_node_data:
+            # Restore route_ports from LOCAL node's heard_on_ports only
+            heard_on_ports = local_node_data.get('heard_on_ports', [])
             for call, port in heard_on_ports:
-                if port is not None and call not in self.route_ports:
+                if port is not None:
                     self.route_ports[call] = port
             
-            # Also restore route_ports from routes data (for any additional entries)
-            routes = node_data.get('routes', {})
+            # Also use LOCAL node's routes for fallback port assignment
+            routes = local_node_data.get('routes', {})
             for neighbor, quality in routes.items():
                 if neighbor not in self.route_ports and quality > 0:
                     # Use port 1 as fallback if no MHEARD data available
@@ -2487,11 +2501,6 @@ class NodeCrawler:
                             if base_call not in self.netrom_ssid_map and self._is_likely_node_ssid(full_call):
                                 self.netrom_ssid_map[base_call] = full_call
                         
-                        # Restore route_ports (port numbers for neighbors)
-                        for neighbor_call, port_num in node_info.get('heard_on_ports', []):
-                            if port_num is not None and neighbor_call not in self.route_ports:
-                                self.route_ports[neighbor_call] = port_num
-                        
                         # Build call_to_alias: find alias matching consensus SSID
                         node_ssid_from_routes = self.netrom_ssid_map.get(node_base)
                         node_alias_for_routing = None
@@ -2526,6 +2535,30 @@ class NodeCrawler:
                             # Always add to alias_to_call for reverse lookups
                             if alias not in self.alias_to_call:
                                 self.alias_to_call[alias] = full_call
+                    
+                    # Restore route_ports ONLY from LOCAL node's heard_on_ports
+                    # route_ports tells us which port on OUR node to use to reach a neighbor
+                    # Other nodes' heard_on_ports are their port numbers, not ours
+                    local_base = self.callsign.split('-')[0] if '-' in self.callsign else self.callsign
+                    local_node_data = None
+                    
+                    for node_key, node_info in nodes_data.items():
+                        node_base = node_key.split('-')[0] if '-' in node_key else node_key
+                        if node_base == local_base:
+                            local_node_data = node_info
+                            break
+                    
+                    if local_node_data:
+                        heard_on_ports = local_node_data.get('heard_on_ports', [])
+                        for call, port in heard_on_ports:
+                            if port is not None:
+                                self.route_ports[call] = port
+                        
+                        # Fallback: use routes for neighbors without port info
+                        routes = local_node_data.get('routes', {})
+                        for neighbor, quality in routes.items():
+                            if neighbor not in self.route_ports and quality > 0:
+                                self.route_ports[neighbor] = 1
                     
                     if self.route_ports:
                         if self.verbose:

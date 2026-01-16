@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.37] - 2026-01-16
+### Fixed
+- route_ports now restored ONLY from local node's heard_on_ports, not all nodes
+- Fixes using wrong port number (KS1R's port 2 instead of WS1EC's port 1 for KC1JMH)
+- heard_on_ports is node-specific - tells which port on THAT node heard a neighbor
+
 ## [nodemap 1.7.36] - 2026-01-16
 ### Changed
 - unexplored_neighbors now stores full SSIDs (KC1JMH-15) instead of base callsigns (KC1JMH)
