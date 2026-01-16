@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.33] - 2026-01-16
+### Fixed
+- Resume mode now restores call_to_alias mappings from JSON (was only in start-node mode)
+- Fixes using service SSID alias (RMSWDB/K1NYY-10) instead of node alias (LLNWDB/K1NYY-15)
+- call_to_alias restoration uses consensus SSID to find matching alias
+
+### Changed
+- Debug log (-D) now captures key progress messages (Crawling, Connected, etc.) even if not verbose
+- Added _log() method for always-on debug logging separate from verbose _vprint()
+
 ## [nodemap 1.7.32] - 2026-01-16
 ### Fixed
 - SSID consensus now aggregates from own_aliases + seen_aliases instead of routes keys

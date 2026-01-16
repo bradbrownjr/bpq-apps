@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.32
+Version: 1.7.33
 """
 
-__version__ = '1.7.32'
+__version__ = '1.7.33'
 
 import sys
 import socket
@@ -146,27 +146,30 @@ class NodeCrawler:
         self.timeout = 10  # Telnet timeout in seconds
         self.cli_forced_ssids = {}  # SSIDs forced via --callsign CLI option: {base_call: full_ssid}
     
+    def _log(self, message):
+        """Log message to debug log (if --debug-log set). Always logs, regardless of verbose."""
+        if self.debug_log:
+            # Open debug log on first use
+            if self.debug_handle is None:
+                try:
+                    self.debug_handle = open(self.debug_log, 'a')
+                except Exception as e:
+                    colored_print("Warning: Could not open debug log {}: {}".format(self.debug_log, e), Colors.YELLOW)
+                    self.debug_log = None
+                    return
+            
+            try:
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                self.debug_handle.write("[{}] {}\n".format(timestamp, message))
+                self.debug_handle.flush()
+            except Exception:
+                pass  # Silent fail for log writes
+    
     def _vprint(self, message):
         """Print verbose message to console and debug log (if --debug-log set)."""
         if self.verbose:
             print(message)
-            if self.debug_log:
-                # Open debug log on first use
-                if self.debug_handle is None:
-                    try:
-                        self.debug_handle = open(self.debug_log, 'a')
-                    except Exception as e:
-                        colored_print("Warning: Could not open debug log {}: {}".format(self.debug_log, e), Colors.YELLOW)
-                        self.debug_log = None
-                        return
-                
-                try:
-                    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-                    self.debug_handle.write("[{}] {}\n".format(timestamp, message))
-                    self.debug_handle.flush()
-                except Exception as e:
-                    if self.verbose:
-                        print("    Debug log write failed: {}".format(e))
+        self._log(message)
         
     def _find_bpq_port(self):
         """Find BPQ telnet port from bpq32.cfg (Telnet Server port only)."""
@@ -690,6 +693,7 @@ class NodeCrawler:
                         if 'CONNECTED' in response.upper():
                             connected = True
                             print("  Connected to {}".format(callsign))
+                            self._log("Connected to {}".format(callsign))
                             break
                         
                         # Check for failure patterns
@@ -699,11 +703,13 @@ class NodeCrawler:
                                                                  'NOT IN TABLES', 'NO ROUTE TO']):
                             # Extract last meaningful line for error message
                             error_line = response.strip().split('\n')[-1] if response.strip() else 'Unknown error'
-                            colored_print("  Connection to {} (via {}) failed: {}".format(
+                            fail_msg = "Connection to {} (via {}) failed: {}".format(
                                 callsign, 
                                 connect_target,
                                 error_line
-                            ), Colors.RED)
+                            )
+                            colored_print("  " + fail_msg, Colors.RED)
+                            self._log(fail_msg)
                             tn.close()
                             return None
                         
@@ -1263,7 +1269,33 @@ class NodeCrawler:
                 most_common_ssid = max(ssid_counts.items(), key=lambda x: x[1])[0]
                 self.netrom_ssid_map[base_call] = most_common_ssid
         
-        # Second pass: Fill in from each node's own netrom_ssids (MHEARD data)
+        # Third pass: Build call_to_alias mappings (find alias that matches consensus SSID)
+        for callsign, node_data in nodes_data.items():
+            node_base = callsign.split('-')[0] if '-' in callsign else callsign
+            own_aliases = node_data.get('own_aliases', {})
+            
+            # Find alias that matches the consensus SSID for this node
+            consensus_ssid = self.netrom_ssid_map.get(node_base)
+            if consensus_ssid and own_aliases:
+                for alias, full_ssid in own_aliases.items():
+                    if full_ssid == consensus_ssid:
+                        self.call_to_alias[node_base] = alias
+                        self.alias_to_call[alias] = full_ssid
+                        break
+            
+            # Also populate alias_to_call for all seen_aliases (reverse lookups)
+            for alias, full_call in node_data.get('seen_aliases', {}).items():
+                base_call = full_call.split('-')[0]
+                # Only add to call_to_alias if no entry exists (consensus has priority)
+                if base_call not in self.call_to_alias:
+                    # Check if this alias maps to the consensus SSID
+                    if full_call == self.netrom_ssid_map.get(base_call):
+                        self.call_to_alias[base_call] = alias
+                # Always add to alias_to_call for reverse lookups
+                if alias not in self.alias_to_call:
+                    self.alias_to_call[alias] = full_call
+        
+        # Fourth pass: Fill in from each node's own netrom_ssids (MHEARD data)
         for callsign, node_data in nodes_data.items():
             node_ssids = node_data.get('netrom_ssids', {})
             for base_call, full_call in node_ssids.items():
@@ -1295,6 +1327,8 @@ class NodeCrawler:
         
         if self.netrom_ssid_map:
             print("Restored {} SSID mappings from previous crawl".format(len(self.netrom_ssid_map)))
+        if self.call_to_alias:
+            print("Restored {} NetRom aliases from previous crawl".format(len(self.call_to_alias)))
         if self.route_ports:
             print("Restored {} route ports from previous crawl".format(len(self.route_ports)))
         
@@ -1765,6 +1799,7 @@ class NodeCrawler:
             path_desc = " (via {})".format(' > '.join(path))
         
         colored_print("Crawling {}{}".format(callsign, path_desc), Colors.CYAN)
+        self._log("Crawling {}{}".format(callsign, path_desc))
         
         # Don't add to visited yet - only after successful connection
         # This allows retrying via alternate paths if this path fails
@@ -1866,7 +1901,9 @@ class NodeCrawler:
             try:
                 help_output = self._send_command(tn, '?', timeout=cmd_timeout, expect_content=None)
                 if self.verbose:
-                    print("  Available commands: {}".format(' '.join(help_output.split()[:20])))  # Show first 20 words
+                    cmds_summary = ' '.join(help_output.split()[:20])
+                    print("  Available commands: {}".format(cmds_summary))
+                    self._log("Available commands: {}".format(cmds_summary))
                 time.sleep(inter_cmd_delay)
             except Exception as e:
                 if self.verbose:
