@@ -6,8 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [nodemap 1.7.23] - 2026-01-16
+## [nodemap 1.7.24] - 2026-01-16
 ### Fixed
+- Removed hardcoded -15 SSID assumption from v1.7.23
+- own_aliases fallback now uses FIRST entry (primary alias, data-driven)
+- Relies on own_aliases dict order from JSON (primary alias listed first)
+
+## [nodemap 1.7.23] - 2026-01-16
+### Fixed (REVERTED - made bad SSID assumptions)
 - own_aliases fallback now prioritizes -15 SSIDs (typical node SSID) over service SSIDs
 - Fixes WS1EC resolving to WS1EC-5 (CHAT) instead of WS1EC-15 (node) when alias field missing
 - Two-pass fallback: first looks for -15, then any valid SSID (1-15)
