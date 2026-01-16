@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.30] - 2026-01-16
+### Fixed
+- Rewrote JSON restoration to use two-pass ROUTES consensus approach
+- PASS 1: Aggregate SSIDs from ALL nodes' ROUTES tables first (authoritative)
+- PASS 2: Fill gaps from own_aliases, build call_to_alias using consensus SSID
+- Removes reliance on unreliable `alias` field (could be BBS, RMS, CHAT alias)
+- KS1R now correctly maps to BURG (KS1R-15) not BBSBUR (KS1R-2)
+
 ## [nodemap 1.7.29] - 2026-01-16
 ### Fixed
 - call_to_alias restoration now uses ROUTES consensus SSID to find matching alias
