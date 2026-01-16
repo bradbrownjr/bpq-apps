@@ -54,6 +54,16 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Subsequent hops MUST use NetRom routing (C ALIAS) - never "C PORT CALL" after first hop
 - Port-specific SSIDs (KC1JMH-7) are for MHEARD tracking, not connection routing
 
+**SSID Selection Standard** (CRITICAL - do not deviate):
+1. **CLI-forced SSIDs** (`--force-ssid BASE FULL`) - highest priority, user override
+2. **ROUTES consensus** - aggregate SSIDs from all nodes' ROUTES tables (most authoritative)
+3. **own_aliases primary node alias** - prefer SSID from node's primary alias field
+4. **own_aliases fallback** - scan own_aliases for base_call match with valid SSID (1-15)
+5. **MHEARD data** - lowest priority, includes transient/port-specific SSIDs
+- NEVER filter by hardcoded service SSID numbers (-2, -4, -5, -10, etc.) - varies by sysop
+- ONLY filter SSIDs outside valid range (0, >15) using _is_likely_node_ssid()
+- Service/node distinction determined by data source priority, NOT SSID number
+
 **Path Building**: Uses successful_path from previous crawls
 - SSIDs determined from network ROUTES tables (authoritative source)
 - Never assume SSID conventions (BBS=-2, RMS=-10, etc.) - always query network
