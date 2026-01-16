@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.16
+Version: 1.7.17
 """
 
-__version__ = '1.7.16'
+__version__ = '1.7.17'
 
 import sys
 import socket
@@ -2296,16 +2296,20 @@ class NodeCrawler:
                         node_info = nodes_data[node_call]
                         
                         # Get node's own SSID from own_aliases (most authoritative)
-                        # Look for the node alias (not service aliases like BBS, RMS, etc)
+                        # Prefer the primary node alias (matches node's alias field)
                         own_aliases = node_info.get('own_aliases', {})
+                        node_alias_name = node_info.get('alias', '')  # Primary alias name
                         node_ssid = None
-                        for alias, full_call in own_aliases.items():
-                            # Node aliases typically end with the callsign or a variation
-                            # Service aliases end with BBS, RMS, CHAT, etc
-                            if not any(full_call.endswith(svc) for svc in ['-2', '-4', '-5', '-10']):
-                                # This looks like the node SSID (usually -15)
-                                base = full_call.split('-')[0]
-                                if base == node_call and '-' in full_call:
+                        
+                        # First try: use the SSID from the primary node alias
+                        if node_alias_name and node_alias_name in own_aliases:
+                            node_ssid = own_aliases[node_alias_name]
+                        
+                        # Fallback: find any alias where base matches node call and SSID is in valid range
+                        if not node_ssid:
+                            for alias, full_call in own_aliases.items():
+                                base = full_call.split('-')[0] if '-' in full_call else full_call
+                                if base == node_call and self._is_likely_node_ssid(full_call):
                                     node_ssid = full_call
                                     break
                         

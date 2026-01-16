@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.17] - 2026-01-16
+### Fixed
+- own_aliases restoration now uses primary node alias (matches node's advertised alias field)
+- Falls back to _is_likely_node_ssid() check instead of hardcoded service SSID list
+- Fixes direct neighbor connections using port SSIDs (KC1JMH-7) instead of node SSIDs (KC1JMH-15)
+
 ## [nodemap 1.7.16] - 2026-01-16
 ### Changed
 - Replaced _is_service_ssid() with _is_likely_node_ssid() - uses data source priority instead of SSID number filtering

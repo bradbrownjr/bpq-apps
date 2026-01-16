@@ -1,0 +1,3560 @@
+ect@WS1EC:~/utilities $ ls -alh
+total 560K
+drwxr-xr-x  3 ect pi 4.0K Jan 14 21:53 .
+drwxr-xr-x 18 ect pi 4.0K Jan 15 07:17 ..
+-rw-r--r--  1 ect pi  56K Jan 15 08:34 map_boundaries.py
+-rw-r--r--  1 ect pi  377 Jan 15 09:21 nodemap.csv
+-rwxr-xr-x  1 ect pi  49K Jan 15 08:34 nodemap-html.py
+-rw-r--r--  1 ect pi  34K Jan 15 09:21 nodemap.json
+-rw-r--r--  1 ect pi  35K Jan 14 21:29 nodemap.json.backup
+-rwxr-xr-x  1 ect pi 210K Jan 15 08:34 nodemap.py
+drwxr-xr-x  2 ect pi 4.0K Jan 15 08:37 __pycache__
+-rw-r--r--  1 ect pi 145K Jan 14 21:16 traffic.log
+ect@WS1EC:~/utilities $ cat nodemap.json traffic.log
+{
+  "metadata": {
+    "nodemap_version": "1.7.3",
+    "generator": "nodemap.py",
+    "generated": "2026-01-15 09:21:45"
+  },
+  "nodes": {
+    "KS1R": {
+      "seen_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "DTXBBS": "W1DTX-4",
+        "CCECHA": "WS1EC-5",
+        "EEND": "AI6EE-14",
+        "CCEBBS": "WS1EC-2",
+        "RMSWDB": "K1NYY-10",
+        "CHTRKD": "KX1EMA-4",
+        "RMSWBK": "KC1JMH-10",
+        "EECHT": "AI6EE-5",
+        "BBSGNR": "N1QFY-2",
+        "RMSRKD": "KX1EMA-10",
+        "CHTWBK": "KC1JMH-4",
+        "BBSABN": "AB1KI-2",
+        "RMSGNR": "N1QFY-10",
+        "CCERMS": "WS1EC-10",
+        "KNXEOC": "KX1EMA-15",
+        "CMBWBK": "KC1JMH-15",
+        "EEBBS": "AI6EE-4",
+        "CCEMA": "WS1EC-15",
+        "LLNWDB": "K1NYY-15",
+        "BBSRKD": "KX1EMA-2",
+        "EERMS": "AI6EE-10",
+        "BBSWDB": "K1NYY-2",
+        "KNNGNR": "N1QFY-15",
+        "BBSWBK": "KC1JMH-2"
+      },
+      "explored_neighbors": [
+        "N1REX",
+        "KC1JMH",
+        "N1QFY",
+        "K1NYY"
+      ],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "145.01 MHz @ 1200 Baud",
+          "frequency": 145.01,
+          "speed": 1200
+        },
+        {
+          "number": 2,
+          "is_rf": true,
+          "description": "433.300 MHz @ 1200 Baud",
+          "frequency": 433.3,
+          "speed": 1200
+        },
+        {
+          "number": 3,
+          "is_rf": true,
+          "description": "223.600 MHz @ 1200 Baud",
+          "frequency": 223.6,
+          "speed": 1200
+        },
+        {
+          "number": 9,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "frequency": null,
+          "speed": null
+        },
+        {
+          "number": 10,
+          "is_rf": false,
+          "description": "AX/IP/UDP",
+          "frequency": null,
+          "speed": null
+        }
+      ],
+      "location": {
+        "state": "BU",
+        "grid": "FN53CT",
+        "city": "Node"
+      },
+      "neighbors": [
+        "WD1F",
+        "AB1KI",
+        "KX1RMA",
+        "KC1JMF",
+        "KX1EMA",
+        "N1LJK",
+        "N1REX",
+        "WD1O",
+        "W1DTX",
+        "W1ZE",
+        "KC1JMH",
+        "KC1JEH",
+        "N1QFY",
+        "W1LH",
+        "K1NYY",
+        "KX1KMA",
+        "KX1nMA"
+      ],
+      "hop_distance": 1,
+      "info": "BURG:KS1R-15} BPQ32 Node BURG - Phippsburg, ME  FN53CT \r\nPort 1:   145.010 MHz @ 1200 Baud\r\nPort 2:   443.100 MHz @ 1200Baud\r\nPort 3:   223.600 Mhz @ 1200 Baud\r\nKS1R-2: BBS  @  KS1R.#SAGA.ME.USA.NOAM\r\nSysop:    WD1F ddauphin@ddrov.com",
+      "routes": {
+        "AB1KI": 240,
+        "AI6EE": 193,
+        "KC1JMH": 240,
+        "K1NYY": 240,
+        "KX1EMA": 240,
+        "W1EMA": 240
+      },
+      "heard_on_ports": [
+        [
+          "WD1F",
+          1
+        ],
+        [
+          "AB1KI",
+          1
+        ],
+        [
+          "KX1RMA",
+          3
+        ],
+        [
+          "KC1JMF",
+          3
+        ],
+        [
+          "KX1EMA",
+          2
+        ],
+        [
+          "N1LJK",
+          1
+        ],
+        [
+          "N1REX",
+          2
+        ],
+        [
+          "WD1O",
+          2
+        ],
+        [
+          "W1DTX",
+          1
+        ],
+        [
+          "W1ZE",
+          1
+        ],
+        [
+          "KC1JMH",
+          2
+        ],
+        [
+          "KC1JEH",
+          3
+        ],
+        [
+          "N1QFY",
+          2
+        ],
+        [
+          "W1LH",
+          1
+        ],
+        [
+          "K1NYY",
+          2
+        ],
+        [
+          "KX1KMA",
+          3
+        ],
+        [
+          "KX1nMA",
+          3
+        ]
+      ],
+      "own_aliases": {
+        "BBSBUR": "KS1R-2",
+        "CHABUR": "KS1R-13",
+        "BURG": "KS1R-15"
+      },
+      "alias": "BBSBUR",
+      "type_source": "info",
+      "commands": [
+        "BURG:KS1R-15}",
+        "BBS",
+        "CHAT",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "type": "BPQ",
+      "intermittent_neighbors": [],
+      "netrom_ssids": {
+        "W1LH": "W1LH-6",
+        "AB1KI": "AB1KI-15",
+        "KX1KMA": "KX1KMA-15",
+        "KX1nMA": "KX1nMA-15",
+        "KB1TAE": "KB1TAE",
+        "N1QFY": "N1QFY-15",
+        "K1NYY": "K1NYY-15",
+        "WD1O": "WD1O-15",
+        "N1DP": "N1DP",
+        "VE1EKV": "VE1EKV",
+        "W1ZE": "W1ZE",
+        "KC1JMF": "KC1JMF-15",
+        "KC1JEH": "KC1JEH-15",
+        "KC1JMH": "KC1JMH-15",
+        "N1LJK": "N1LJK-5",
+        "KX1EMA": "KX1EMA-15",
+        "WD1F": "WD1F",
+        "W1DTX": "W1DTX-4",
+        "KX1RMA": "KX1RMA-2",
+        "N1REX": "N1REX-15"
+      },
+      "location_source": "info",
+      "gridsquare": "FN53CT",
+      "unexplored_neighbors": [
+        "WD1F",
+        "AB1KI",
+        "KX1RMA",
+        "KC1JMF",
+        "KX1EMA",
+        "N1LJK",
+        "WD1O",
+        "W1DTX",
+        "W1ZE",
+        "KC1JEH",
+        "W1LH",
+        "KX1KMA",
+        "KX1nMA"
+      ],
+      "applications": [
+        "BURG:KS1R-15}",
+        "BBS",
+        "CHAT"
+      ]
+    },
+    "KC1JMH": {
+      "seen_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "RMSWHT": "N1REX-10",
+        "CHABUR": "KS1R-13",
+        "CCECHA": "WS1EC-5",
+        "BBSWHT": "N1REX-2",
+        "CCEBBS": "WS1EC-2",
+        "RMSWDB": "K1NYY-10",
+        "CHTRKD": "KX1EMA-4",
+        "BBSGNR": "N1QFY-2",
+        "RMSRKD": "KX1EMA-10",
+        "BBSABN": "AB1KI-2",
+        "RMSGNR": "N1QFY-10",
+        "CCERMS": "WS1EC-10",
+        "KNXEOC": "KX1EMA-15",
+        "LNCWHT": "N1REX-15",
+        "BBSWDB": "K1NYY-2",
+        "CCEMA": "WS1EC-15",
+        "CHTWHT": "N1REX-4",
+        "LLNWDB": "K1NYY-15",
+        "BBSRKD": "KX1EMA-2",
+        "BBSBUR": "KS1R-2",
+        "KNNGNR": "N1QFY-15",
+        "BURG": "KS1R-15"
+      },
+      "explored_neighbors": [
+        "WS1EC"
+      ],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "433.30 MHz @ 1200 Baud",
+          "frequency": 433.3,
+          "speed": 1200
+        },
+        {
+          "number": 2,
+          "is_rf": true,
+          "description": "144.930 MHz @ 1200 Baud",
+          "frequency": 144.93,
+          "speed": 1200
+        },
+        {
+          "number": 9,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "frequency": null,
+          "speed": null
+        }
+      ],
+      "location": {
+        "state": "ME",
+        "grid": "FN43TQ",
+        "city": "Westbrook"
+      },
+      "neighbors": [
+        "K1NYY",
+        "WS1EC",
+        "N1REX",
+        "N1QFY",
+        "KS1R"
+      ],
+      "hop_distance": 1,
+      "info": "CMBWBK:KC1JMH-15} BPQ32 KC1JMH-15 at Westbrook, ME  FN43TQ \r\nPort 2: 144.930 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net",
+      "routes": {
+        "WS1EC": 200,
+        "KS1R": 200,
+        "K1DQ": 200,
+        "N1QFY": 200,
+        "K1NYY": 200
+      },
+      "heard_on_ports": [
+        [
+          "K1NYY",
+          1
+        ],
+        [
+          "WS1EC",
+          1
+        ],
+        [
+          "N1REX",
+          1
+        ],
+        [
+          "N1QFY",
+          1
+        ],
+        [
+          "KS1R",
+          1
+        ]
+      ],
+      "own_aliases": {
+        "CHTWBK": "KC1JMH-4",
+        "CMBWBK": "KC1JMH-15",
+        "BBSWBK": "KC1JMH-2",
+        "RMSWBK": "KC1JMH-10"
+      },
+      "alias": "CHTWBK",
+      "type_source": "info",
+      "commands": [
+        "CMBWBK:KC1JMH-15}",
+        "BBS",
+        "RMS",
+        "CHAT",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "type": "BPQ",
+      "intermittent_neighbors": [],
+      "netrom_ssids": {
+        "KS1R": "KS1R-15",
+        "KC1JMH": "KC1JMH-7",
+        "K1NYY": "K1NYY-15",
+        "WS1EC": "WS1EC-15",
+        "WD1F": "WD1F",
+        "N1QFY": "N1QFY-15",
+        "N1REX": "N1REX-15"
+      },
+      "location_source": "info",
+      "gridsquare": "FN43TQ",
+      "unexplored_neighbors": [
+        "K1NYY",
+        "N1REX",
+        "N1QFY",
+        "KS1R"
+      ],
+      "applications": [
+        "CMBWBK:KC1JMH-15}",
+        "BBS",
+        "RMS",
+        "CHAT"
+      ]
+    },
+    "K1NYY": {
+      "seen_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "CMBWBK": "KC1JMH-15",
+        "CHABUR": "KS1R-13",
+        "BBSGNR": "N1QFY-2",
+        "CCECHA": "WS1EC-5",
+        "BBSWHT": "N1REX-2",
+        "DTXBBS": "W1DTX-4",
+        "CCEBBS": "WS1EC-2",
+        "CHTRKD": "KX1EMA-4",
+        "BURG": "KS1R-15",
+        "KNNGNR": "N1QFY-15",
+        "CHTABN": "AB1KI-4",
+        "CCERMS": "WS1EC-10",
+        "CCEMA": "WS1EC-15",
+        "CHTWHT": "N1REX-4",
+        "CHTWBK": "KC1JMH-4",
+        "BBSABN": "AB1KI-2",
+        "DTXNOD": "W1DTX-7",
+        "BBSBUR": "KS1R-2",
+        "BBSRKD": "KX1EMA-2",
+        "BBSWBK": "KC1JMH-2"
+      },
+      "explored_neighbors": [
+        "N1REX",
+        "KC1JMH",
+        "N1QFY"
+      ],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "433.300 MHz @ 1200 Baud",
+          "frequency": 433.3,
+          "speed": 1200
+        },
+        {
+          "number": 2,
+          "is_rf": true,
+          "description": "144.99 MHz @ 1200 Baud",
+          "frequency": 144.99,
+          "speed": 1200
+        },
+        {
+          "number": 9,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "frequency": null,
+          "speed": null
+        }
+      ],
+      "location": {
+        "state": "ME",
+        "grid": "FN54HC",
+        "city": "Waldoboro"
+      },
+      "neighbors": [
+        "AB1KI",
+        "KX1RMA",
+        "KX1EMA",
+        "KS1R",
+        "N1REX",
+        "KC1JEH",
+        "W1DTX",
+        "KC1JMH",
+        "AB1KK",
+        "W1ZE",
+        "N1QFY",
+        "KX1NMA",
+        "W1EMA",
+        "AB1KN",
+        "KM1JMH",
+        "KX1KMA",
+        "AB1CI",
+        "N1LJK",
+        "KY2D"
+      ],
+      "hop_distance": 1,
+      "info": "LLNWDB:K1NYY-15} BPQ32 BBS K1NYY-15 at Waldoboro, ME  FN54HC \r\nPort 1: 144.990 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net",
+      "routes": {
+        "KS1R": 200,
+        "KC1JMH": 200,
+        "WD1O": 200,
+        "KX1EMA": 200,
+        "KY2D": 200,
+        "AB1KI": 200,
+        "N1REX": 200
+      },
+      "heard_on_ports": [
+        [
+          "AB1KI",
+          1
+        ],
+        [
+          "KX1RMA",
+          2
+        ],
+        [
+          "KX1EMA",
+          1
+        ],
+        [
+          "KS1R",
+          1
+        ],
+        [
+          "N1REX",
+          1
+        ],
+        [
+          "KC1JEH",
+          2
+        ],
+        [
+          "W1DTX",
+          2
+        ],
+        [
+          "KC1JMH",
+          1
+        ],
+        [
+          "AB1KK",
+          2
+        ],
+        [
+          "W1ZE",
+          2
+        ],
+        [
+          "N1QFY",
+          1
+        ],
+        [
+          "KX1NMA",
+          2
+        ],
+        [
+          "W1EMA",
+          2
+        ],
+        [
+          "AB1KN",
+          2
+        ],
+        [
+          "KM1JMH",
+          2
+        ],
+        [
+          "KX1KMA",
+          2
+        ],
+        [
+          "AB1CI",
+          2
+        ],
+        [
+          "N1LJK",
+          2
+        ],
+        [
+          "KY2D",
+          2
+        ]
+      ],
+      "own_aliases": {
+        "LLNWDB": "K1NYY-15",
+        "BBSWDB": "K1NYY-2"
+      },
+      "alias": "LLNWDB",
+      "type_source": "info",
+      "commands": [
+        "LLNWDB:K1NYY-15}",
+        "RMS",
+        "BBS",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "type": "BPQ",
+      "intermittent_neighbors": [],
+      "netrom_ssids": {
+        "AB1KI": "AB1KI-15",
+        "KX1KMA": "KX1KMA-15",
+        "WD1O": "WD1O-15",
+        "W1ZE": "W1ZE-15",
+        "KX1EMA": "KX1EMA-15",
+        "K1JAK": "K1JAK",
+        "KC1JMH": "KC1JMH-15",
+        "N1LJK": "N1LJK-1",
+        "WD1F": "WD1F",
+        "W1DTX": "W1DTX-15",
+        "W1EMA": "W1EMA-15",
+        "KX1NMA": "KX1NMA-15",
+        "AB1CI": "AB1CI-15",
+        "KY2D": "KY2D-15",
+        "KS1R": "KS1R-15",
+        "KM1JMH": "KM1JMH-15",
+        "K1NYY": "K1NYY-15",
+        "KC1JEH": "KC1JEH-15",
+        "AB1KK": "AB1KK-15",
+        "KX1RMA": "KX1RMA-2",
+        "AB1KN": "AB1KN-15",
+        "N1QFY": "N1QFY-15",
+        "N1REX": "N1REX-15"
+      },
+      "location_source": "info",
+      "gridsquare": "FN54HC",
+      "unexplored_neighbors": [
+        "AB1KI",
+        "KX1RMA",
+        "KX1EMA",
+        "KS1R",
+        "KC1JEH",
+        "W1DTX",
+        "AB1KK",
+        "W1ZE",
+        "KX1NMA",
+        "W1EMA",
+        "AB1KN",
+        "KM1JMH",
+        "KX1KMA",
+        "AB1CI",
+        "N1LJK",
+        "KY2D"
+      ],
+      "applications": [
+        "LLNWDB:K1NYY-15}",
+        "RMS",
+        "BBS"
+      ]
+    },
+    "WS1EC": {
+      "seen_aliases": {
+        "CMBWBK": "KC1JMH-15"
+      },
+      "explored_neighbors": [],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "433.300 MHz 1200 BAUD",
+          "frequency": 433.3,
+          "speed": 1200
+        },
+        {
+          "number": 2,
+          "is_rf": true,
+          "description": "145.050 MHz @ 1200 b/s",
+          "frequency": 145.05,
+          "speed": 1200
+        },
+        {
+          "number": 8,
+          "is_rf": false,
+          "description": "AX/IP/UDP",
+          "frequency": null,
+          "speed": null
+        },
+        {
+          "number": 9,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "frequency": null,
+          "speed": null
+        }
+      ],
+      "location": {
+        "state": "EM",
+        "grid": "FN43SR",
+        "city": "Cumberland County"
+      },
+      "neighbors": [
+        "KC1JMH"
+      ],
+      "hop_distance": 0,
+      "info": "CCEMA:WS1EC-15} LINBPQ32 NODE WS1EC-15 AT WINDHAM, ME FN43SR \r\n\r\nThis node is located atthe Cumberland County EMA, and is maintained by the\r\nWireless Society of Southern Maine - Emergency Communications Team.\r\nFor info about the club visit mainehamradio.com\r\n\r\nThis node is connected to the Maine Emergency Packet Network (MEPN), which\r\nallows traffic to flow freely between nodes on the state-wide UHF backbone.\r\nVisit mainepacketradio.org for more info.\r\n\r\nPorts\r\n-----\r\nPORT 1: UHF Backbone, inter-node only\r\nPORT 2: 145.050 MHz at 1200 Baud\r\n\r\nApplications\r\n------------\r\nBBS\tInter-node Mail\t     WS1EC-2\r\nRMS\tWinlink Email\t     WS1EC-10\r\nCHAT\tChat Rooms           WS1EC-5\r\nTEST\tPractice exams\r\nFORMS   Fillable msg forms\r\nFORTUNE\tCheer up with a joke\r\n\r\nInternet\r\n--------\r\nBANDS\tHamQSL.com report\r\nGOPHER  Browse the Internet\r\nNEWS    Read news articles\r\nQRZ\tQRZ.com Call Lookup\r\nSPACE\tNOAA Space Weather\r\nWX\tNWS Weather Reports\r\n\r\nNavigation\r\n----------\r\nB\tDisconnect\r\n?    List commands\r\n\r\nRadio users shouldconnect to 'CCEMA' instead of WS1EC-15 to be greeted with the main menu.\r\n\r\nSysops:\r\nBrad Brown, KC1JMH, kc1jmh@mainehamradio.com\r\nTim Watson, KB1HNZ, kb1hnz@mainehamradio.com\r\n\r\nUse \"I\" for this info page\r\nUse \"?\" for all commands \r\n\r\nde WS1EC>",
+      "routes": {
+        "KC1JMH": 168
+      },
+      "heard_on_ports": [
+        [
+          "KC1JMH",
+          1
+        ]
+      ],
+      "own_aliases": {
+        "CCEMA": "WS1EC-15",
+        "CCEBBS": "WS1EC-2",
+        "CCERMS": "WS1EC-10",
+        "CCECHA": "WS1EC-5"
+      },
+      "alias": "CCEBBS",
+      "type_source": "info",
+      "commands": [
+        "CCEMA:WS1EC-15}",
+        "BBS",
+        "CHAT",
+        "FORTUNE",
+        "RMS",
+        "WX",
+        "SYSINFO",
+        "CALLOUT",
+        "SPACE",
+        "BANDS",
+        "QRZ",
+        "GOPHER",
+        "NEWS",
+        "TEST",
+        "FORMS",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "type": "BPQ",
+      "intermittent_neighbors": [],
+      "netrom_ssids": {
+        "KC1JMH": "KC1JMH-15"
+      },
+      "location_source": "info",
+      "gridsquare": "FN43SR",
+      "unexplored_neighbors": [
+        "KC1JMH"
+      ],
+      "applications": [
+        "CCEMA:WS1EC-15}",
+        "BBS",
+        "CHAT",
+        "FORTUNE",
+        "RMS",
+        "WX",
+        "SYSINFO",
+        "CALLOUT",
+        "SPACE",
+        "BANDS",
+        "QRZ",
+        "GOPHER",
+        "NEWS",
+        "TEST",
+        "FORMS"
+      ]
+    },
+    "N1QFY-15": {
+      "seen_aliases": {
+        "RMSWHT": "N1REX-10",
+        "CHTABN": "AB1KI-4",
+        "CHABUR": "KS1R-13",
+        "DATRMS": "K5DAT-13",
+        "SHAWNO": "K5DAT-7",
+        "BBSWHT": "N1REX-2",
+        "DATBBS": "K5DAT-1",
+        "CCEBBS": "WS1EC-2",
+        "RMSWDB": "K1NYY-10",
+        "TOPS": "NG1P-4",
+        "DATKEY": "K5DAT",
+        "RMSWBK": "KC1JMH-10",
+        "TOPRMS": "NG1P-10",
+        "RMSABN": "AB1KI-10",
+        "DATCHT": "K5DAT-11",
+        "CHTWBK": "KC1JMH-4",
+        "BBSABN": "AB1KI-2",
+        "TOPBBS": "NG1P-1",
+        "CCERMS": "WS1EC-10",
+        "CMBWBK": "KC1JMH-15",
+        "CCECHA": "WS1EC-5",
+        "LNCWHT": "N1REX-15",
+        "BBSBUR": "KS1R-2",
+        "TOPCHT": "NG1P-2",
+        "BURG": "KS1R-15",
+        "KNXABN": "AB1KI-15",
+        "CCEMA": "WS1EC-15",
+        "CHTWHT": "N1REX-4",
+        "LLNWDB": "K1NYY-15",
+        "BBSWDB": "K1NYY-2",
+        "BBSWBK": "KC1JMH-2"
+      },
+      "explored_neighbors": [],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "433.300 MHz @ 1200 Baud",
+          "frequency": 433.3,
+          "speed": 1200
+        },
+        {
+          "number": 2,
+          "is_rf": true,
+          "description": "145.070 MHz @ 1200 Baud",
+          "frequency": 145.07,
+          "speed": 1200
+        },
+        {
+          "number": 9,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "frequency": null,
+          "speed": null
+        }
+      ],
+      "unexplored_neighbors": [
+        "KC1JMH",
+        "N1REX",
+        "KB1TAE",
+        "W1EMA",
+        "K1NYY",
+        "KS1R",
+        "WD1O",
+        "NG1P",
+        "KX1EMA",
+        "AB1KI"
+      ],
+      "location": {
+        "state": "ME",
+        "grid": "FN54CF",
+        "city": "Gardiner"
+      },
+      "neighbors": [
+        "KC1JMH",
+        "N1REX",
+        "KB1TAE",
+        "W1EMA",
+        "K1NYY",
+        "KS1R",
+        "WD1O",
+        "NG1P",
+        "KX1EMA",
+        "AB1KI"
+      ],
+      "hop_distance": 1,
+      "successful_path": [
+        "KC1JMH"
+      ],
+      "routes": {
+        "NG1P": 200,
+        "N1REX": 200,
+        "KC1JMH": 200,
+        "K1NYY": 200
+      },
+      "heard_on_ports": [
+        [
+          "KC1JMH",
+          1
+        ],
+        [
+          "N1REX",
+          1
+        ],
+        [
+          "KB1TAE",
+          2
+        ],
+        [
+          "W1EMA",
+          1
+        ],
+        [
+          "K1NYY",
+          1
+        ],
+        [
+          "KS1R",
+          1
+        ],
+        [
+          "WD1O",
+          1
+        ],
+        [
+          "NG1P",
+          2
+        ],
+        [
+          "KX1EMA",
+          1
+        ],
+        [
+          "AB1KI",
+          1
+        ]
+      ],
+      "own_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "RMSGNR": "N1QFY-10",
+        "KNNGNR": "N1QFY-15",
+        "BBSGNR": "N1QFY-2"
+      },
+      "alias": "KNNGNR",
+      "type_source": "info",
+      "commands": [
+        "KNNGNR:N1QFY-15}",
+        "RMS",
+        "BBS",
+        "CHAT",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "type": "BPQ",
+      "netrom_ssids": {
+        "KS1R": "KS1R-15",
+        "AB1KI": "AB1KI-15",
+        "KC1JMH": "KC1JMH-15",
+        "WD1O": "WD1O-15",
+        "KX1EMA": "KX1EMA-15",
+        "KB1TAE": "KB1TAE",
+        "WD1F": "WD1F",
+        "K1NYY": "K1NYY-15",
+        "NG1P": "NG1P-4",
+        "W1EMA": "W1EMA-15",
+        "N1REX": "N1REX-15"
+      },
+      "location_source": "info",
+      "applications": [
+        "RMS",
+        "BBS",
+        "CHAT"
+      ],
+      "gridsquare": "FN54CF",
+      "intermittent_neighbors": [],
+      "info": "KNNGNR:N1QFY-15} BPQ32 N1QFY-15 at Gardiner, ME  FN54CF \r\nPort 1: 145.07 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net"
+    },
+    "KY2D": {
+      "seen_aliases": {
+        "TMP": "DB0ERF-15",
+        "USWCH": "WA3WLH-14"
+      },
+      "explored_neighbors": [],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": false,
+          "description": "AX/IP/UDP",
+          "frequency": null,
+          "speed": null
+        },
+        {
+          "number": 2,
+          "is_rf": false,
+          "description": "Telnet Access",
+          "frequency": null,
+          "speed": null
+        },
+        {
+          "number": 3,
+          "is_rf": true,
+          "description": "2 MeterPort 144.990",
+          "frequency": 144.99,
+          "speed": null
+        }
+      ],
+      "unexplored_neighbors": [],
+      "location": {
+        "grid": "FN54fa"
+      },
+      "neighbors": [],
+      "hop_distance": 2,
+      "successful_path": [
+        "KC1JMH",
+        "K1NYY"
+      ],
+      "routes": {},
+      "heard_on_ports": [],
+      "own_aliases": {
+        "KY2D2M": "KY2D-15"
+      },
+      "alias": "KY2D2M",
+      "type_source": "info",
+      "commands": [
+        "2PGN-11",
+        "CHTPKT:VE2PKT-6",
+        "CLMBBS:K3CLM-3",
+        "CLMCHT:K3CLM-4",
+        "CLMNOD:K3CLM-7",
+        "CMNCHT:W8CMN-15",
+        "COSBBS:KE0GB-1",
+        "COSCHT:KE0GB-11",
+        "COSRMS:KE0GB-10",
+        "CRUNOD:GM7LJE-7",
+        "DATBBS:K5DAT-1",
+        "DATCHT:K5DAT-11",
+        "DATKEY:K5DAT",
+        "DA"
+      ],
+      "type": "BPQ",
+      "netrom_ssids": {},
+      "location_source": "info",
+      "applications": [
+        "2PGN-11",
+        "CHTPKT:VE2PKT-6",
+        "CLMBBS:K3CLM-3",
+        "CLMCHT:K3CLM-4",
+        "CLMNOD:K3CLM-7",
+        "CMNCHT:W8CMN-15",
+        "COSBBS:KE0GB-1",
+        "COSCHT:KE0GB-11",
+        "COSRMS:KE0GB-10",
+        "CRUNOD:GM7LJE-7",
+        "DATBBS:K5DAT-1",
+        "DATCHT:K5DAT-11",
+        "DATKEY:K5DAT",
+        "DA"
+      ],
+      "gridsquare": "FN54fa",
+      "intermittent_neighbors": [],
+      "info": "BEDCHT:GB7BED-1     BEDFRD:GB7BED-5     BILBBS:PY2BIL-1     \r\nBILNOD:PY2BIL-4     BILRMS:PY2BIL-10    BLNODE:IQ5BL-2      BLUBBS:N1RCW-1      \r\nBLUCHT:N1RCW-2      BLUDXC:N1RCW-4      BLURMS:N1RCW-10     BLUWWC:N1RCW-5      \r\nBPNNOD:KF0BPN-7     BPQBAL:VA3BAL-12    BPQCGR:VE3CGR-7     BPQPKT:VE2PKT-2   \r\nBPQYZC:KA1YZC-2     BVJBBS:KA3BVJ-3     BVJCHT:KA3BVJ-11    BVJNOD:KA3BVJ-2     \r\nBVKBBS:IV3BVK-1   BVKCHT:IV3BVK-11    BVKRMS:IV3BVK-10    BZTCHT:KF4BZT-12    \r\nCANHUB:VE7GN-1      CASLGR:VA7RBP-7     CBEACH:WG3K-7       CCQSO:NM5PB-4       \r\nCHING:G3FCA-2       CHJBBS:KX4AC-4      CHLQSO:W8BAP-6      CHLSW1:W8BAP-7      \r\nCHTPGN:VA"
+    },
+    "NG1P-4": {
+      "seen_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "DATKEY": "K5DAT",
+        "DATRMS": "K5DAT-13",
+        "SHAWNO": "K5DAT-7",
+        "BBSGNR": "N1QFY-2",
+        "DATCHT": "K5DAT-11",
+        "RMSGNR": "N1QFY-10",
+        "DATBBS": "K5DAT-1",
+        "KNNGNR": "N1QFY-15"
+      },
+      "explored_neighbors": [],
+      "type": "BPQ",
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "145.070 MHz 1200 bps",
+          "frequency": 145.07,
+          "speed": null
+        },
+        {
+          "number": 2,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "frequency": null,
+          "speed": null
+        },
+        {
+          "number": 3,
+          "is_rf": false,
+          "description": "AX/IP/UDP",
+          "frequency": null,
+          "speed": null
+        }
+      ],
+      "info": "TOPS:NG1P-4} This is the BPQ32 Node for the Topsham, ME General Use System. \r\nSysop NG1P.\r\nType BBS to connect to the BBS.\r\nType RMS to connect to WinLink.",
+      "neighbors": [
+        "KC1JMH",
+        "N1QFY",
+        "E1QFY",
+        "Y1QFN",
+        "KB1TAE",
+        "N5QFY",
+        "Q1QFY",
+        "N8QFQ",
+        "N1QYY",
+        "N1Q",
+        "Y1QFY"
+      ],
+      "hop_distance": 2,
+      "successful_path": [
+        "KC1JMH",
+        "N1QFY"
+      ],
+      "routes": {
+        "K5DAT": 129,
+        "N1QFY": 120
+      },
+      "heard_on_ports": [
+        [
+          "KC1JMH",
+          1
+        ],
+        [
+          "N1QFY",
+          1
+        ],
+        [
+          "E1QFY",
+          1
+        ],
+        [
+          "Y1QFN",
+          1
+        ],
+        [
+          "KB1TAE",
+          1
+        ],
+        [
+          "N5QFY",
+          1
+        ],
+        [
+          "Q1QFY",
+          1
+        ],
+        [
+          "N8QFQ",
+          1
+        ],
+        [
+          "N1QYY",
+          1
+        ],
+        [
+          "N1Q",
+          1
+        ],
+        [
+          "Y1QFY",
+          1
+        ]
+      ],
+      "own_aliases": {
+        "TOPBBS": "NG1P-1",
+        "TOPS": "NG1P-4",
+        "TOPRMS": "NG1P-10",
+        "TOPCHT": "NG1P-2"
+      },
+      "gridsquare": "FN53aw",
+      "type_source": "info",
+      "commands": [
+        "TOPS:NG1P-4}",
+        "BBS",
+        "CHAT",
+        "RMS",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "alias": "TOPCHT",
+      "netrom_ssids": {
+        "N5QFY": "N5QFY-15",
+        "Y1QFY": "Y1QFY-15",
+        "Q1QFY": "Q1QFY-15",
+        "NG1P": "NG1P-4",
+        "KB1TAE": "KB1TAE-2",
+        "N1QFY": "N1QFY-15",
+        "N1QYY": "N1QYY-15",
+        "Y1QFN": "Y1QFN-15",
+        "N8QFQ": "N8QFQ-15",
+        "E1QFY": "E1QFY-15",
+        "KC1JMH": "KC1JMH-7",
+        "N1Q": "N1Q-11"
+      },
+      "location_source": "info",
+      "unexplored_neighbors": [
+        "KC1JMH",
+        "N1QFY",
+        "E1QFY",
+        "Y1QFN",
+        "KB1TAE",
+        "N5QFY",
+        "Q1QFY",
+        "N8QFQ",
+        "N1QYY",
+        "N1Q",
+        "Y1QFY"
+      ],
+      "location": {
+        "state": "ME",
+        "grid": "FN53aw",
+        "city": "Topsham"
+      },
+      "intermittent_neighbors": [],
+      "applications": [
+        "BBS",
+        "CHAT",
+        "RMS"
+      ]
+    },
+    "N1QFY": {
+      "explored_neighbors": [
+        "KS1R",
+        "KC1JMH",
+        "K1NYY",
+        "N1REX"
+      ],
+      "seen_aliases": {
+        "RMSWHT": "N1REX-10",
+        "CHABUR": "KS1R-13",
+        "DATRMS": "K5DAT-13",
+        "CCECHA": "WS1EC-5",
+        "BBSWHT": "N1REX-2",
+        "DATBBS": "K5DAT-1",
+        "CCEBBS": "WS1EC-2",
+        "RMSWDB": "K1NYY-10",
+        "TOPCHT": "NG1P-2",
+        "DATKEY": "K5DAT",
+        "RMSWBK": "KC1JMH-10",
+        "TOPRMS": "NG1P-10",
+        "DATCHT": "K5DAT-11",
+        "CHTWBK": "KC1JMH-4",
+        "CCERMS": "WS1EC-10",
+        "CMBWBK": "KC1JMH-15",
+        "SHAWNO": "K5DAT-7",
+        "LNCWHT": "N1REX-15",
+        "CHTWHT": "N1REX-4",
+        "BBSWDB": "K1NYY-2",
+        "TOPS": "NG1P-4",
+        "BURG": "KS1R-15",
+        "CCEMA": "WS1EC-15",
+        "TOPBBS": "NG1P-1",
+        "LLNWDB": "K1NYY-15",
+        "BBSBUR": "KS1R-2",
+        "BBSWBK": "KC1JMH-2"
+      },
+      "successful_path": [
+        "KC1JMH",
+        "K1NYY",
+        "N1REX"
+      ],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "433.300 MHz @ 1200 Baud",
+          "speed": 1200,
+          "frequency": 433.3
+        },
+        {
+          "number": 2,
+          "is_rf": true,
+          "description": "145.070 MHz @ 1200 Baud",
+          "speed": 1200,
+          "frequency": 145.07
+        },
+        {
+          "number": 9,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "speed": null,
+          "frequency": null
+        }
+      ],
+      "commands": [
+        "KNNGNR:N1QFY-15}",
+        "RMS",
+        "BBS",
+        "CHAT",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "neighbors": [
+        "AB1KI",
+        "NG1P",
+        "KB1TAE",
+        "KS1R",
+        "KC1JMH",
+        "K1NYY",
+        "KX1EMA",
+        "N1REX"
+      ],
+      "hop_distance": 3,
+      "info": "KNNGNR:N1QFY-15} BPQ32 N1QFY-15 at Gardiner, ME  FN54CF \r\nPort 1: 145.07 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net",
+      "gridsquare": "FN54CF",
+      "heard_on_ports": [
+        [
+          "AB1KI",
+          1
+        ],
+        [
+          "NG1P",
+          2
+        ],
+        [
+          "KB1TAE",
+          2
+        ],
+        [
+          "KS1R",
+          1
+        ],
+        [
+          "KC1JMH",
+          1
+        ],
+        [
+          "K1NYY",
+          1
+        ],
+        [
+          "KX1EMA",
+          1
+        ],
+        [
+          "N1REX",
+          1
+        ]
+      ],
+      "own_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "RMSGNR": "N1QFY-10",
+        "KNNGNR": "N1QFY-15",
+        "BBSGNR": "N1QFY-2"
+      },
+      "alias": "CHTGNR",
+      "type_source": "info",
+      "routes": {
+        "NG1P": 200,
+        "N1REX": 200,
+        "KC1JMH": 200,
+        "K1NYY": 200
+      },
+      "intermittent_neighbors": [],
+      "netrom_ssids": {
+        "NG1P": "NG1P-4",
+        "AB1KI": "AB1KI-2",
+        "KC1JMH": "KC1JMH-15",
+        "K1NYY": "K1NYY-15",
+        "KX1EMA": "KX1EMA-15",
+        "KB1TAE": "KB1TAE-4",
+        "KS1R": "KS1R-15",
+        "N1REX": "N1REX-15"
+      },
+      "location_source": "info",
+      "applications": [
+        "RMS",
+        "BBS",
+        "CHAT"
+      ],
+      "location": {
+        "state": "ME",
+        "grid": "FN54CF",
+        "city": "Gardiner"
+      },
+      "unexplored_neighbors": [
+        "AB1KI",
+        "NG1P",
+        "KB1TAE",
+        "KX1EMA"
+      ],
+      "type": "BPQ"
+    },
+    "N1REX": {
+      "seen_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "CMBWBK": "KC1JMH-15",
+        "CHABUR": "KS1R-13",
+        "BBSGNR": "N1QFY-2",
+        "TOPS": "NG1P-4",
+        "TOPCHT": "NG1P-2",
+        "RMSWDB": "K1NYY-10",
+        "RMSWBK": "KC1JMH-10",
+        "BBSBUR": "KS1R-2",
+        "BURG": "KS1R-15",
+        "TOPRMS": "NG1P-10",
+        "CHTWBK": "KC1JMH-4",
+        "TOPBBS": "NG1P-1",
+        "LLNWDB": "K1NYY-15",
+        "RMSGNR": "N1QFY-10",
+        "BBSWDB": "K1NYY-2",
+        "KNNGNR": "N1QFY-15",
+        "BBSWBK": "KC1JMH-2",
+        "DATRMS": "K5DAT-13"
+      },
+      "explored_neighbors": [
+        "KC1JMH",
+        "K1NYY",
+        "N1QFY"
+      ],
+      "ports": [
+        {
+          "number": 1,
+          "is_rf": true,
+          "description": "433.10 MHz @ 1200 Baud",
+          "frequency": 433.1,
+          "speed": 1200
+        },
+        {
+          "number": 2,
+          "is_rf": true,
+          "description": "145.09 MHz @ 1200 Baud",
+          "frequency": 145.09,
+          "speed": 1200
+        },
+        {
+          "number": 9,
+          "is_rf": false,
+          "description": "Telnet Server",
+          "frequency": null,
+          "speed": null
+        }
+      ],
+      "unexplored_neighbors": [
+        "AB1KI"
+      ],
+      "location": {
+        "city": "Node",
+        "state": "LN",
+        "grid": "FN54EF",
+        "lat": "32 N",
+        "lon": "54E"
+      },
+      "neighbors": [
+        "KC1JMH",
+        "AB1KI",
+        "K1NYY",
+        "N1QFY"
+      ],
+      "hop_distance": 2,
+      "successful_path": [
+        "KC1JMH",
+        "K1NYY"
+      ],
+      "routes": {
+        "N1QFY": 200,
+        "AB1KI": 200,
+        "K1NYY": 200
+      },
+      "heard_on_ports": [
+        [
+          "KC1JMH",
+          1
+        ],
+        [
+          "AB1KI",
+          1
+        ],
+        [
+          "K1NYY",
+          1
+        ],
+        [
+          "N1QFY",
+          1
+        ]
+      ],
+      "own_aliases": {
+        "RMSWHT": "N1REX-10",
+        "CHTWHT": "N1REX-4",
+        "LNCWHT": "N1REX-15",
+        "BBSWHT": "N1REX-2"
+      },
+      "alias": "CHTWHT",
+      "type_source": "info",
+      "commands": [
+        "LNCWHT:N1REX-15}",
+        "RMS",
+        "BBS",
+        "CHAT",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "type": "BPQ",
+      "netrom_ssids": {
+        "N1LCN": "N1LCN",
+        "N1QFY": "N1QFY-15",
+        "AB1KI": "AB1KI-15",
+        "KC1JMH": "KC1JMH-7",
+        "K1NYY": "K1NYY-15"
+      },
+      "location_source": "info",
+      "applications": [
+        "LNCWHT:N1REX-15}",
+        "RMS",
+        "BBS",
+        "CHAT"
+      ],
+      "gridsquare": "FN54EF",
+      "intermittent_neighbors": [],
+      "info": "LNCWHT:N1REX-15} BPQ32 Node LNCWHT - Whitefield, ME  FN54EF \r\nPort 1: 433.100 MHz @ 1200 Baud\r\nPort 2: 145.090 MHz @ 1200 Baud\r\nN1REX-2: BBS @  N1REX.ME.USA.NA\r\nN1REX-4: CHAT \r\nN1REX-10: RMS\r\nSysop:  wd1o@arrl.net"
+    }
+  },
+  "intermittent_links": {
+    "NG1P-4>N1QFY": [
+      "2026-01-15 09:06:45"
+    ],
+    "N1REX>AB1KI": [
+      "2026-01-15 09:03:06"
+    ],
+    "N1QFY-15>NG1P": [
+      "2026-01-15 08:58:51"
+    ],
+    "K1NYY>AB1KI": [
+      "2026-01-15 08:50:16"
+    ],
+    "KC1JMH>N1QFY": [
+      "2026-01-15 08:44:07"
+    ],
+    "KS1R>AB1KI": [
+      "2026-01-15 08:47:13"
+    ],
+    "K1NYY>KX1EMA": [
+      "2026-01-15 08:55:57"
+    ],
+    "KS1R>KX1EMA": [
+      "2026-01-15 08:53:02"
+    ]
+  },
+  "crawl_info": {
+    "start_node": "WS1EC",
+    "total_connections": 4,
+    "mode": "merge",
+    "timestamp": "2026-01-15 09:21:45",
+    "total_nodes": 9
+  },
+  "connections": [
+    {
+      "intermittent": false,
+      "quality": 200,
+      "port": null,
+      "to": "NG1P",
+      "from": "N1QFY"
+    },
+    {
+      "intermittent": false,
+      "quality": 200,
+      "port": null,
+      "to": "KC1JMH",
+      "from": "N1QFY"
+    },
+    {
+      "intermittent": false,
+      "quality": 200,
+      "port": null,
+      "to": "K1NYY",
+      "from": "N1QFY"
+    },
+    {
+      "intermittent": false,
+      "quality": 200,
+      "port": null,
+      "to": "N1REX",
+      "from": "N1QFY"
+    }
+  ]
+}[2026-01-12 19:51:18] SEND: 'NODES\r'
+[2026-01-12 19:51:18] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-12 19:51:28] RECV: 'Nodes\r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCERMS:WS1EC-10     CMBWBK:KC1JMH-15    \r\n'
+[2026-01-12 20:01:54] SEND: 'PORTS\r'
+[2026-01-12 20:01:54] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-12 20:01:59] RECV: 'Ports\r\n  1 433.300 MHz 1200 BAUD         \r\n  2 145.050 MHz @ 1200 b/s        \r\n  8 AX/IP/UDP        \r\n  9 Telnet Server                 \r\n'
+[2026-01-12 20:02:00] SEND: 'NODES\r'
+[2026-01-12 20:02:00] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 20:02:05] RECV: 'Nodes\r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCERMS:WS1EC-10     CMBWBK:KC1JMH-15    \r\n'
+[2026-01-12 20:02:06] SEND: 'ROUTES\r'
+[2026-01-12 20:02:07] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 20:02:12] RECV: 'Routes\r\n> 1 KC1JMH-15 168 1!\r\n'
+[2026-01-12 20:02:18] RECV: ''
+[2026-01-12 20:02:23] RECV: ''
+[2026-01-12 20:02:24] SEND: 'MHEARD 1\r'
+[2026-01-12 20:02:24] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 20:02:29] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:02    \r\n'
+[2026-01-12 20:02:30] SEND: 'MHEARD 2\r'
+[2026-01-12 20:02:30] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 20:02:35] RECV: 'Heard List for Port 2\r\n'
+[2026-01-12 20:02:36] SEND: 'INFO\r'
+[2026-01-12 20:02:37] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 20:02:42] RECV: 'LINBPQ32 NODE WS1EC-15 AT WINDHAM, ME FN43SR \r\n\r\nThis node is located at the Cumberland County EMA, and ismaintained by the\r\nWireless Society of Southern Maine - Emergency Communications Team.\r\nFor info about the club visit mainehamradio.com\r\n\r\nThis node is connected to the Maine Emergency Packet Network (MEPN), which\r\nallows traffic to flow freely between nodes on the state-wide UHF backbone.\r\nVisit mainepacketradio.org for more info.\r\n\r\nPorts\r\n-----\r\nPORT 1: UHF Backbone, inter-node only\r\nPORT 2:145.050 MHz at 1200 Baud\r\n\r\nApplications\r\n------------\r\nBBS\tInter-node Mail\t     WS1EC-2\r\nRMS\tWinlink Email\t     WS1EC-10\r\nCHAT\tChat Rooms           WS1EC-5\r\nTEST\tPractice exams\r\nFORMS   Fillable msg forms\r\nFORTUNE\tCheer up with a joke\r\n\r\nInternet\r\n--------\r\nBANDS\tHamQSL.com report\r\nGOPHER  Browse the Internet\r\nNEWS    Read news articles\r\nQRZ\tQRZ.com Call Lookup\r\nSPACE\tNOAA Space Weather\r\nWX\tNWS Weather Reports\r\n\r\nNavigation\r\n----------\r\nB\tDisconnect\r\n?       List commands\r\n\r\nRadio users should connect to \'CCEMA\' instead of WS1EC-15 to be greeted with the main menu.\r\n\r\nSysops:\r\nBrad Brown, KC1JMH, kc1jmh@mainehamradio.com\r\nTim Watson, KB1HNZ, kb1hnz@mainehamradio.com\r\n\r\nUse "I" for this info page\r\nUse "?" for all commands \r\n\r\nde WS1EC>\r\n'
+[2026-01-12 20:02:48] RECV: ''
+[2026-01-12 20:02:53] RECV: ''
+[2026-01-12 20:02:54] SEND: '?\r'
+[2026-01-12 20:02:54] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 20:02:59] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 20:03:05] RECV: ''
+[2026-01-12 20:03:10] RECV: ''
+[2026-01-12 20:03:31] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:03:32] SEND: 'PORTS\r'
+[2026-01-12 20:03:36] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 20:03:51] RECV: 'Ports\r\n  1 433.30 MHz @ 1200 Baud        \r\n  2 144.930 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-12 20:03:52] SEND: 'NODES\r'
+[2026-01-12 20:03:57] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 20:04:12] RECV: 'Nodes\r\nKC1JMH-15           BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      \r\nBBSRKD:KX1EMA-2  BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      \r\nBURG:KS1R-15        CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      \r\nCCERMS:WS1EC-10     CHABUR:KS1R-13      CHTABN:AB1KI-4      CHTGNR:N1QFY-4      \r\nCHTRKD:KX1EMA-4     CHTWBK:KC1JMH-4     CHTWHT:N1REX-4      KNNGNR:N1QFY-15     \r\nKNXABN:AB1KI-15     KNXEOC:KX1EMA-15    LLNWDB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10  RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    RMSWBK:KC1JMH-10    \r\nRMSWDB:K1NYY-10     RMSWHT:N1REX-10     \r\n'
+[2026-01-12 20:04:14] SEND: 'ROUTES\r'
+[2026-01-12 20:04:17] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 20:04:32] RECV: 'Routes\r\n> 1 WS1EC-15  200 4!\r\n> 1 K1NYY-15  200 14!\r\n> 1 KS1R-15   200 20!\r\n> 1 N1QFY-15  200 8!\r\n  1 K1DQ-15   200 0!\r\n  1 KX1EMA-15 0 0!\r\n  1 AB1KI-15  0 0!\r\n  1 N1REX-15  0 0!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-12 20:04:48] RECV: ''
+[2026-01-12 20:05:03] RECV: ''
+[2026-01-12 20:05:05] SEND: 'MHEARD 1\r'
+[2026-01-12 20:05:10] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 20:05:25] RECV: 'Heard List for Port 1\r\nWS1EC-15   00:00:00:00    \r\nKS1R-15    00:00:00:16    \r\nK1NYY-15   00:00:00:35\r\nN1QFY-15   00:00:01:40    \r\nWD1F       00:00:04:42    \r\nKC1JMH-8   00:01:13:46    \r\nKC1JMH-7   00:06:56:17    \r\nN1REX-15   00:08:03:35    \r\nK1NYY-2    00:13:19:09    \r\n'
+[2026-01-12 20:05:26] SEND: 'MHEARD 2\r'
+[2026-01-12 20:05:29] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 20:05:44] RECV: 'Heard List for Port 2\r\n'
+[2026-01-12 20:05:46] SEND: 'INFO\r'
+[2026-01-12 20:05:50] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 20:06:05] RECV: 'BPQ32 KC1JMH-15 at Westbrook, ME  FN43TQ \r\nPort 2: 144.930 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-12 20:06:21] RECV: ''
+[2026-01-12 20:06:36] RECV: ''
+[2026-01-12 20:06:37] SEND: '?\r'
+[2026-01-12 20:06:40] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 20:06:55] RECV: 'BBS RMS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 20:07:11] RECV: ''
+[2026-01-12 20:07:26] RECV: ''
+[2026-01-12 20:07:46] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:08:02] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:08:03] SEND: 'PORTS\r'
+[2026-01-12 20:08:10] RECV: 'BURG:KS1R-15} '
+[2026-01-12 20:08:25] RECV: 'Ports\r\n  1 145.01 MHz @ 1200 Baud        \r\n  2 433.300 MHz @ 1200 Baud       \r\n  3 223.600 MHz @ 1200 Baud       \r\n  9 Telnet Server                 \r\n 10 AX/IP/UDP                     \r\n'
+[2026-01-12 20:08:27] SEND: 'NODES\r'
+[2026-01-12 20:08:36] RECV: 'BURG:KS1R-15} '
+[2026-01-12 20:08:51] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSWBK:KC1JMH-2  BBSWDB:K1NYY-2      BBSWHT:N1REX-2      CCEBBS:WS1EC-2      \r\nCCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10     CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTRKD:KX1EMA-4     CHTWBK:KC1JMH-4     \r\nCHTWHT:N1REX-4      CMBWBK:KC1JMH-15    DATRMS:K5DAT-13     DTXBBS:W1DTX-4      \r\nDTXNOD:W1DTX-7      EEBBS:AI6EE-4       EECHT:AI6EE-5       EEND:AI6EE-14       \r\nEERMS:AI6EE-10  KNNGNR:N1QFY-15     KNXABN:AB1KI-15     KNXEOC:KX1EMA-15    \r\nLLNWDB:K1NYY-15     LNCWHT:N1REX-15     RMSABN:AB1KI-10     RMSGNR:N1QFY-10     \r\nRMSRKD:KX1EMA-10    RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     RMSWHT:N1REX-10     \r\n'
+[2026-01-12 20:08:53] SEND: 'ROUTES\r'
+[2026-01-12 20:09:08] RECV: ''
+[2026-01-12 20:09:14] RECV: 'BURG:KS1R-15} '
+[2026-01-12 20:09:15] RECV: 'Routes\r\n> 10 AI6EE-14  193 4!\r\n  1 W1EMA     0 0!\r\n> 2 KC1JMH-15 240 18 \r\n  2 AB1KI-15  240 1 \r\n  2 KX1EMA-15 240 7 \r\n> 2 K1NYY-15  240 25 \r\n  2 N1QFY-15  240 17 \r\n  2 W1EMA-15  240 1 \r\n  2 N1REX-15  240 14 \r\n'
+[2026-01-12 20:09:30] RECV: ''
+[2026-01-12 20:09:45] RECV: ''
+[2026-01-12 20:09:47] SEND: 'MHEARD 1\r'
+[2026-01-12 20:09:57] RECV: 'BURG:KS1R-15} '
+[2026-01-12 20:10:12] RECV: 'Heard List for Port 1\r\nAB1KI-15   00:00:02:46    \r\nW1ZE       00:00:37:36    \r\nAB1KI-10   00:07:55:19\r\nW1ZE-1     01:19:06:17    \r\nKB1TAE     01:22:28:57    \r\nW1DTX-4    02:00:37:38    via N1DP-7*\r\nN1LJK-5    02:12:18:36    \r\nW1DTX-7    03:01:07:47    \r\nN1DP       03:01:10:08    \r\nW1LH-6     03:03:02:42    \r\nVE1EKV     03:03:09:48    \r\nAB1KI-4    04:06:54:14 \r\nWD1F       06:04:40:37    \r\nWD1F-1     06:05:19:57    \r\n'
+[2026-01-12 20:10:14] SEND: 'MHEARD 2\r'
+[2026-01-12 20:10:29] RECV: ''
+[2026-01-12 20:10:30] RECV: 'BURG:KS1R-15} '
+[2026-01-12 20:10:30] RECV: 'Heard List for Port 2\r\nKC1JMH-15  00:00:00:00    \r\nK1NYY-15   00:00:00:22    \r\nN1QFY-15   00:00:00:58\r\nKX1EMA-15  00:00:01:28    \r\nN1REX-15   00:00:03:05    \r\nKX1EMA-2   00:00:23:00    \r\nWD1O-15    00:07:26:42    \r\nKM1JMH-15  '
+[2026-01-12 20:10:31] SEND: 'MHEARD 3\r'
+[2026-01-12 20:10:47] RECV: '00:11:14:07    \r\nKC1JMH-7   00:11:39:51    \r\nK1NYY-2    00:13:24:23    \r\nAB1KI-15   00:19:28:15    \r\nN1LJK-15   01:07:19:08    \r\nWD1O       01:11:00:53    \r\nW1DTX      01:19:10:23    \r\nKX1nMA-15  02:11:43:33    \r\nKX1KMA-15  03:06:52:39    \r\nKC1J'
+[2026-01-12 20:11:02] RECV: ''
+[2026-01-12 20:11:06] RECV: 'EH-15  04:03:30:03    \r\nKX1RMA-2   04:21:07:36    \r\nKC1JMF-15  07:09:30:07    \r\nKXDEMA-15  07:15:58:44 \r\nBURG:KS1R-15} '
+[2026-01-12 20:11:21] RECV: 'Heard List for Port 3\r\nN1LJK      00:00:49:11    \r\nN1LJK-15   00:18:05:33    \r\n'
+[2026-01-12 20:11:22] SEND: 'INFO\r'
+[2026-01-12 20:11:31] RECV: 'BURG:KS1R-15} '
+[2026-01-12 20:11:46] RECV: 'BPQ32 Node BURG - Phippsburg, ME  FN53CT \r\nPort 1:   145.010 MHz @ 1200 Baud\r\nPort 2:   443.100 MHz @ 1200Baud\r\nPort 3:   223.600 Mhz @ 1200 Baud\r\nKS1R-2: BBS  @  KS1R.#SAGA.ME.USA.NOAM\r\nSysop:    WD1F ddauphin@ddrov.com\r\n'
+[2026-01-12 20:12:02] RECV: ''
+[2026-01-12 20:12:17] RECV: ''
+[2026-01-12 20:12:18] SEND: '?\r'
+[2026-01-12 20:12:25] RECV: 'BURG:KS1R-15} '
+[2026-01-12 20:12:40] RECV: 'BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 20:12:56] RECV: ''
+[2026-01-12 20:13:11] RECV: ''
+[2026-01-12 20:13:33] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:13:49] RECV: ''
+[2026-01-12 20:13:50] SEND: 'PORTS\r'
+[2026-01-12 20:13:58] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\nLLNWDB:K1NYY-15} '
+[2026-01-12 20:14:13] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 144.99 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-12 20:14:14] SEND: 'NODES\r'
+[2026-01-12 20:14:26] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 20:14:41] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSWBK:KC1JMH-2  BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15        \r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10     \r\nCHABUR:KS1R-13      CHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTRKD:KX1EMA-4     \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1JMH-15    KNNGNR:N1QFY-15     \r\nKNXABN:AB1KI-15     KNXEOC:KX1EMA-15    LNCWHT:N1REX-15     RMSABN:AB1KI-10     \r\nRMSGNR:N1QFY-10  RMSRKD:KX1EMA-10    RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\nRMSWHT:N1REX-10     \r\n'
+[2026-01-12 20:14:43] SEND: 'ROUTES\r'
+[2026-01-12 20:14:58] RECV: ''
+[2026-01-12 20:15:10] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 20:15:11] RECV: 'Routes\r\n  1 AB1KI-15  200 0!\r\n  1 K1DQ-15   0 0!\r\n> 1 KC1JMH-15 200 12!\r\n> 1 KS1R-15   200 17!\r\n  1 KX1EMA-15 200 0!\r\n> 2 KY2D-15   200 0!\r\n  1 N1QFY-15  0 0!\r\n> 1 N1REX-15  200 12!\r\n  1 W1EMA-15  0 0!\r\n  1 WD1O-15   200 0!\r\n'
+[2026-01-12 20:15:26] RECV: ''
+[2026-01-12 20:15:41] RECV: ''
+[2026-01-12 20:15:43] SEND: 'MHEARD 1\r'
+[2026-01-12 20:15:53] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 20:16:08] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:00    \r\nK1NYY-15   00:00:00:12    \r\nN1REX-15   00:00:00:13\r\nN1QFY-15   00:00:00:44    \r\nKS1R-15    00:00:00:53    \r\nWD1O-15    00:00:02:01    \r\nAB1KI-15   00:00:02:03    \r\nKX1EMA-15  00:00:02:56    \r\nWD1F       00:00:15:20    \r\nAB1KI-2    00:00:22:58    \r\nKX1EMA-2   00:00:28:24    \r\nW1EMA-15   00:02:10:14    \r\nKC1JMH-7   00:07:06:55    \r\nKX1NMA-15  00:07:14:17    \r\nW1EMA-2    00:09:23:22    \r\nKM1JMH-15  00:11:19:32    \r\nAB11I-2    00:12:14:23\r\nK1NYY-2    00:13:29:54    \r\nWD1O       01:11:06:17    \r\nW1DTX-15   01:19:14:42    \r\nW1DTX      01:19:20:36    \r\nKQNYY-15   02:20:23:18    \r\nAB1KK-15   03:01:13:48    \r\nKX1KMA-15  03:06:58:03    \r\nAB1CI-15   03:09:23:27    \r\nKC1JEH-15  04:03:35:27    \r\nAB1KN-15   04:04:14:06    \r\nABSKI-15   04:04:14:13    \r\nKX1RMA-2   04:21:13:00    \r\nW1ZE-15    05:09:24:01    \r\n'
+[2026-01-12 20:16:09] SEND: 'MHEARD 2\r'
+[2026-01-12 20:16:24] RECV: ''
+[2026-01-12 20:16:37] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 20:16:37] RECV: 'Heard List for Port 2\r\nKY2D-15    00:00:00:01    \r\nN1LJK-1    00:00:10:07    \r\nKY2D-4     00:00:52:04\r\nK1JAK      00:04:12:03    \r\nN1LJK      01:07:25:18    \r\nN1LJK-5    02:12:32:34    \r\n'
+[2026-01-12 20:16:38] SEND: 'INFO\r'
+[2026-01-12 20:16:47] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 20:17:02] RECV: 'BPQ32 BBS K1NYY-15 at Waldoboro, ME  FN54HC \r\nPort 1: 144.990 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-12 20:17:18] RECV: ''
+[2026-01-12 20:17:33] RECV: ''
+[2026-01-12 20:17:35] SEND: '?\r'
+[2026-01-12 20:17:41] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 20:17:56] RECV: 'RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 20:18:12] RECV: ''
+[2026-01-12 20:18:27] RECV: ''
+[2026-01-12 20:18:48] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:19:04] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:19:05] SEND: 'PORTS\r'
+[2026-01-12 20:19:14] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 20:19:29] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 145.070 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-12 20:19:31] SEND: 'NODES\r'
+[2026-01-12 20:19:46] RECV: ''
+[2026-01-12 20:19:51] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 20:19:51] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     \r\nBBSWDB:K1NYY-2  BBSWHT:N1REX-2      BURG:KS1R-15        CCEBBS:WS1EC-2      \r\nCCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1E'
+[2026-01-12 20:19:52] SEND: 'ROUTES\r'
+[2026-01-12 20:20:08] RECV: 'C-10     CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTWBK:KC1JMH-4     CHTWHT:N1REX-4  \r\nCMBWBK:KC1JMH-15    DATBBS:K5DAT-1      DATCHT:K5DAT-11     DATKEY:K5DAT        \r\nDATRMS:K5DAT-13     KNXABN:AB1KI-15     LLNWDB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\nRMSWHT:N1REX-10     SHAWNO:K5DAT-7      TOPBBS:NG1P-1       TOPCHT:NG1P-2       \r\nTOPRMS:NG1P-10      TOPS:NG1P-4      '
+[2026-01-12 20:20:23] RECV: '   \r\n'
+[2026-01-12 20:20:39] RECV: ''
+[2026-01-12 20:20:43] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 20:20:43] RECV: 'Routes\r\n  1 AB1KI-15  0 0!\r\n  1 K1NYY-15  200 0!\r\n> 1 KC1JMH-15 200 14!\r\n  1 KS1R-15   0 0!\r\n> 1 N1REX-15  200 11!\r\n> 2 NG1P-4    200 9!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-12 20:20:59] RECV: ''
+[2026-01-12 20:21:14] RECV: ''
+[2026-01-12 20:21:15] SEND: 'MHEARD 1\r'
+[2026-01-12 20:21:30] RECV: ''
+[2026-01-12 20:21:45] RECV: ''
+[2026-01-12 20:21:53] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 20:22:08] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:00    \r\nN1REX-15   00:00:00:08    \r\nK1NYY-15   00:00:00:08\r\nAB1KI-15   00:00:00:25    \r\nKS1R-15    00:00:00:58    \r\nWD1O-15    00:00:07:35    \r\nKX1EMA-15  00:00:13:34    \r\nWD1F       00:00:20:54    \r\nAB1KI-2    00:00:28:32    \r\nKX1EMA-2   00:00:33:58    \r\nW1EMA-15   00:01:52:45    \r\nKC1JMH-7   00:07:12:29    \r\nW1EMA-2    00:10:03:22    \r\nKM1JMH-15  00:11:25:06    \r\nAB11I-2    00:12:19:57    \r\nK1NYY-2    00:13:35:21    \r\n'
+[2026-01-12 20:22:10] SEND: 'MHEARD 2\r'
+[2026-01-12 20:22:25] RECV: ''
+[2026-01-12 20:22:34] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 20:22:34] RECV: 'Heard List for Port 2\r\nNG1P-4     00:00:01:35    \r\nKB1TAE     00:00:27:00    \r\nN1REX-9    00:06:32:49\r\nKB1TAE-2   00:10:36:19    \r\nKB1TAE-4   00:10:43:31    \r\n'
+[2026-01-12 20:22:35] SEND: 'INFO\r'
+[2026-01-12 20:22:42] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 20:22:57] RECV: 'BPQ32 N1QFY-15 at Gardiner, ME  FN54CF \r\nPort 1: 145.07 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-12 20:23:13] RECV: ''
+[2026-01-12 20:23:28] RECV: ''
+[2026-01-12 20:23:29] SEND: '?\r'
+[2026-01-12 20:23:36] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 20:23:51] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 20:24:07] RECV: ''
+[2026-01-12 20:24:22] RECV: ''
+[2026-01-12 20:24:44] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:27:01] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:27:02] SEND: 'PORTS\r'
+[2026-01-12 20:27:17] RECV: ''
+[2026-01-12 20:27:32] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 20:27:48] RECV: ''
+[2026-01-12 20:27:59] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-12 20:27:59] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-12 20:28:00] SEND: 'NODES\r'
+[2026-01-12 20:28:16] RECV: ''
+[2026-01-12 20:28:19] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-12 20:28:20] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSSWV:W1EMA-2  BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      \r\nBURG:KS1R-15        CHABUR:KS1R-13      CHTABN:AB1K'
+[2026-01-12 20:28:21] SEND: 'ROUTES\r'
+[2026-01-12 20:28:36] RECV: ''
+[2026-01-12 20:28:51] RECV: 'I-4      CHTGNR:N1QFY-4      \r\nCHTRKD:KX1EMA-4     CHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1JMH-15  \r\nKNNGNR:N1QFY-15     KNXABN:AB1KI-15     KNXEOC:KX1EMA-15    LLNWDB:K1NYY-15     \r\nRMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    RMSSWV:W1EMA-10     \r\nRMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     RMSWHT:N1REX-10     TOPBBS:NG1P-1       \r\nTOPCHT:NG1P-2       TOPRMS:NG1P-10      TOPS:NG1P-4         W1EMA:W1EMA-15      \r\n'
+[2026-01-12 20:28:56] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-12 20:29:11] RECV: 'Routes\r\n> 1 K1NYY-15  200 18!\r\n> 1 N1QFY-15  200 15!\r\n  1 AB1KI-15  200 7!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-12 20:29:27] RECV: ''
+[2026-01-12 20:29:42] RECV: ''
+[2026-01-12 20:29:43] SEND: 'MHEARD 1\r'
+[2026-01-12 20:29:59] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-12 20:30:14] RECV: 'Heard List for Port 1\r\nK1NYY-15   00:00:00:00    \r\nN1QFY-15   00:00:01:58    \r\nAB1KI-15   00:00:03:27\r\nAB1KI-2    00:00:37:02    \r\nAB11I-2    00:12:28:28    \r\nKC1JMH-15  00:13:16:47    \r\nK1NYY-2    00:13:43:52    \r\n'
+[2026-01-12 20:30:15] SEND: 'MHEARD 2\r'
+[2026-01-12 20:30:26] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-12 20:30:41] RECV: 'Heard List for Port 2\r\nN1LCN      00:00:20:47    \r\n'
+[2026-01-12 20:30:42] SEND: 'INFO\r'
+[2026-01-12 20:30:58] RECV: ''
+[2026-01-12 20:31:03] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-12 20:31:04] RECV: 'BPQ32 Node LNCWHT - Whitefield, ME  FN54EF \r\nPort 1: 433.100 MHz @ 1200 Baud\r\nPort 2: 145.090 MHz @ 1200 Baud\r\nN1REX-2: BBS @  N1REX.ME.USA.NA\r\nN1REX-4: CHAT \r\nN1REX-10: RMS\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-12 20:31:19] RECV: ''
+[2026-01-12 20:31:34] RECV: ''
+[2026-01-12 20:31:36] SEND: '?\r'
+[2026-01-12 20:31:45] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-12 20:32:00] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 20:32:16] RECV: ''
+[2026-01-12 20:32:31] RECV: ''
+[2026-01-12 21:22:02] SEND: 'PORTS\r'
+[2026-01-12 21:22:02] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-12 21:22:07] RECV: 'Ports\r\n  1 433.300 MHz 1200 BAUD         \r\n  2 145.050 MHz @ 1200 b/s        \r\n  8 AX/IP/UDP        \r\n  9 Telnet Server                 \r\n'
+[2026-01-12 21:22:08] SEND: 'NODES\r'
+[2026-01-12 21:22:09] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 21:22:14] RECV: 'Nodes\r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCERMS:WS1EC-10     CMBWBK:KC1JMH-15    \r\n'
+[2026-01-12 21:22:15] SEND: 'ROUTES\r'
+[2026-01-12 21:22:15] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 21:22:20] RECV: 'Routes\r\n> 1 KC1JMH-15 168 1!\r\n'
+[2026-01-12 21:22:26] RECV: ''
+[2026-01-12 21:22:31] RECV: ''
+[2026-01-12 21:22:32] SEND: 'MHEARD 1\r'
+[2026-01-12 21:22:32] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 21:22:37] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:13    \r\n'
+[2026-01-12 21:22:38] SEND: 'MHEARD 2\r'
+[2026-01-12 21:22:39] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 21:22:44] RECV: 'Heard List for Port 2\r\n'
+[2026-01-12 21:22:45] SEND: 'INFO\r'
+[2026-01-12 21:22:45] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 21:22:50] RECV: 'LINBPQ32 NODE WS1EC-15 AT WINDHAM, ME FN43SR \r\n\r\nThis node is located at the Cumberland County EMA, and ismaintained by the\r\nWireless Society of Southern Maine - Emergency Communications Team.\r\nFor info about the club visit mainehamradio.com\r\n\r\nThis node is connected to the Maine Emergency Packet Network (MEPN), which\r\nallows traffic to flow freely between nodes on the state-wide UHF backbone.\r\nVisit mainepacketradio.org for more info.\r\n\r\nPorts\r\n-----\r\nPORT 1: UHF Backbone, inter-node only\r\nPORT 2:145.050 MHz at 1200 Baud\r\n\r\nApplications\r\n------------\r\nBBS\tInter-node Mail\t     WS1EC-2\r\nRMS\tWinlink Email\t     WS1EC-10\r\nCHAT\tChat Rooms           WS1EC-5\r\nTEST\tPractice exams\r\nFORMS   Fillable msg forms\r\nFORTUNE\tCheer up with a joke\r\n\r\nInternet\r\n--------\r\nBANDS\tHamQSL.com report\r\nGOPHER  Browse the Internet\r\nNEWS    Read news articles\r\nQRZ\tQRZ.com Call Lookup\r\nSPACE\tNOAA Space Weather\r\nWX\tNWS Weather Reports\r\n\r\nNavigation\r\n----------\r\nB\tDisconnect\r\n?       List commands\r\n\r\nRadio users should connect to \'CCEMA\' instead of WS1EC-15 to be greeted with the main menu.\r\n\r\nSysops:\r\nBrad Brown, KC1JMH, kc1jmh@mainehamradio.com\r\nTim Watson, KB1HNZ, kb1hnz@mainehamradio.com\r\n\r\nUse "I" for this info page\r\nUse "?" for all commands \r\n\r\nde WS1EC>\r\n'
+[2026-01-12 21:22:56] RECV: ''
+[2026-01-12 21:23:01] RECV: ''
+[2026-01-12 21:23:02] SEND: '?\r'
+[2026-01-12 21:23:02] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-12 21:23:07] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 21:23:13] RECV: ''
+[2026-01-12 21:23:18] RECV: ''
+[2026-01-12 21:23:39] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 21:23:40] SEND: 'PORTS\r'
+[2026-01-12 21:23:43] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 21:23:58] RECV: 'Ports\r\n  1 433.30 MHz @ 1200 Baud        \r\n  2 144.930 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-12 21:24:00] SEND: 'NODES\r'
+[2026-01-12 21:24:05] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 21:24:20] RECV: 'Nodes\r\nKC1JMH-15           BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      \r\nBBSRKD:KX1EMA-2  BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      \r\nBURG:KS1R-15        CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      \r\nCCERMS:WS1EC-10     CHABUR:KS1R-13      CHTABN:AB1KI-4      CHTGNR:N1QFY-4      \r\nCHTRKD:KX1EMA-4     CHTWBK:KC1JMH-4     CHTWHT:N1REX-4      KNNGNR:N1QFY-15     \r\nKNXABN:AB1KI-15     KNXEOC:KX1EMA-15    LLNWDB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10  RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    RMSWBK:KC1JMH-10    \r\nRMSWDB:K1NYY-10     RMSWHT:N1REX-10     \r\n'
+[2026-01-12 21:24:22] SEND: 'ROUTES\r'
+[2026-01-12 21:24:27] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 21:24:42] RECV: 'Routes\r\n> 1 WS1EC-15  200 4!\r\n> 1 K1NYY-15  200 14!\r\n> 1 KS1R-15   200 20!\r\n> 1 N1QFY-15  200 8!\r\n  1 K1DQ-15   200 0!\r\n  1 KX1EMA-15 0 0!\r\n  1 AB1KI-15  0 0!\r\n  1 N1REX-15  0 0!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-12 21:24:58] RECV: ''
+[2026-01-12 21:25:13] RECV: ''
+[2026-01-12 21:25:15] SEND: 'MHEARD 1\r'
+[2026-01-12 21:25:19] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 21:25:34] RECV: 'Heard List for Port 1\r\nWS1EC-15   00:00:00:00    \r\nK1NYY-15   00:00:00:01    \r\nKS1R-15    00:00:00:23\r\nN1QFY-15   00:00:02:05    \r\nKC1JMH-8   00:00:21:32    \r\nWD1F       00:00:24:37    \r\nKC1JMH-7   00:08:16:26    \r\nN1REX-15   00:09:23:44    \r\nK1NYY-2    00:14:39:18    \r\n'
+[2026-01-12 21:25:35] SEND: 'MHEARD 2\r'
+[2026-01-12 21:25:38] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 21:25:53] RECV: 'Heard List for Port 2\r\n'
+[2026-01-12 21:25:55] SEND: 'INFO\r'
+[2026-01-12 21:25:59] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 21:26:14] RECV: 'BPQ32 KC1JMH-15 at Westbrook, ME  FN43TQ \r\nPort 2: 144.930 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-12 21:26:30] RECV: ''
+[2026-01-12 21:26:45] RECV: ''
+[2026-01-12 21:26:46] SEND: '?\r'
+[2026-01-12 21:26:50] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-12 21:27:05] RECV: 'BBS RMS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 21:27:21] RECV: ''
+[2026-01-12 21:27:36] RECV: ''
+[2026-01-12 21:27:56] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 21:34:13] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 21:34:29] RECV: ''
+[2026-01-12 21:34:30] SEND: 'PORTS\r'
+[2026-01-12 21:34:39] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\nKNNGNR:N1QFY-15} '
+[2026-01-12 21:34:54] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 145.070 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-12 21:34:56] SEND: 'NODES\r'
+[2026-01-12 21:35:09] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 21:35:24] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     \r\nBBSWDB:K1NYY-2  BBSWHT:N1REX-2      BURG:KS1R-15        CCEBBS:WS1EC-2      \r\nCCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10     CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTWBK:KC1JMH-4     CHTWHT:N1REX-4      \r\nCMBWBK:KC1JMH-15    DATBBS:K5DAT-1      DATCHT:K5DAT-11     DATKEY:K5DAT        \r\nDATRMS:K5DAT-13     KNXABN:AB1KI-15     LLNWDB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10  RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\nRMSWHT:N1REX-10     SHAWNO:K5DAT-7      TOPBBS:NG1P-1       TOPCHT:NG1P-2      \r\nTOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-12 21:35:26] SEND: 'ROUTES\r'
+[2026-01-12 21:35:39] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 21:35:54] RECV: 'Routes\r\n  1 AB1KI-15  0 0!\r\n  1 K1NYY-15  200 0!\r\n> 1 KC1JMH-15 200 14!\r\n  1 KS1R-15   0 0!\r\n> 1 N1REX-15  200 11!\r\n> 2 NG1P-4    200 9!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-12 21:36:10] RECV: ''
+[2026-01-12 21:36:25] RECV: ''
+[2026-01-12 21:36:27] SEND: 'MHEARD 1\r'
+[2026-01-12 21:36:42] RECV: ''
+[2026-01-12 21:36:57] RECV: ''
+[2026-01-12 21:37:03] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 21:37:18] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:00    \r\nAB1KI-15   00:00:00:01    \r\nK1NYY-15   00:00:00:42\r\nKS1R-15    00:00:00:43    \r\nN1REX-15   00:00:02:36    \r\nKX1EMA-15  00:00:03:37    \r\nWD1F       00:00:05:44    \r\nW1EMA-15   00:00:07:13    \r\nAB1KI-2    00:00:42:32    \r\nKX1EMA-2   00:00:42:54    \r\nWD1O-15    00:01:22:45    \r\nKC1JMH-7   00:08:27:39    \r\nW1EMA-2    00:11:18:32    \r\nKM1JMH-15  00:12:40:16    \r\nAB11I-2    00:13:35:07    \r\nK1NYY-2    00:14:50:31    \r\n'
+[2026-01-12 21:37:20] SEND: 'MHEARD 2\r'
+[2026-01-12 21:37:35] RECV: ''
+[2026-01-12 21:37:47] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 21:37:47] RECV: 'Heard List for Port 2\r\nNG1P-4     00:00:00:24    \r\nKB1TAE     00:00:12:13    \r\nKB1TAE-4   00:00:27:30\r\nN1REX-9    00:07:48:02    \r\nKB1TAE-2   00:11:51:32    \r\n'
+[2026-01-12 21:37:48] SEND: 'INFO\r'
+[2026-01-12 21:37:56] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 21:38:11] RECV: 'BPQ32 N1QFY-15 at Gardiner, ME  FN54CF \r\nPort 1: 145.07 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-12 21:38:27] RECV: ''
+[2026-01-12 21:38:42] RECV: ''
+[2026-01-12 21:38:43] SEND: '?\r'
+[2026-01-12 21:38:50] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-12 21:39:05] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 21:39:21] RECV: ''
+[2026-01-12 21:39:36] RECV: ''
+[2026-01-12 21:39:56] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 21:40:11] RECV: '\n'
+[2026-01-12 21:40:12] SEND: 'PORTS\r'
+[2026-01-12 21:40:27] RECV: ''
+[2026-01-12 21:40:42] RECV: ''
+[2026-01-12 21:40:50] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\nLLNWDB:K1NYY-15} '
+[2026-01-12 21:41:05] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 144.99 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-12 21:41:06] SEND: 'NODES\r'
+[2026-01-12 21:41:16] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 21:41:31] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSWBK:KC1JMH-2  BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15        \r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10     \r\nCHABUR:KS1R-13      CHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTRKD:KX1EMA-4     \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1JMH-15    DTXBBS:W1DTX-4      \r\nDTXNOD:W1DTX-7      KNNGNR:N1QFY-15     KNXA'
+[2026-01-12 21:41:33] SEND: 'ROUTES\r'
+[2026-01-12 21:41:48] RECV: 'BN:AB1KI-15     KNXEOC:KX1EMA-15    \r\nLNCWHT:N1REX-15     RMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    \r\nRMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     RMSWHT:N1REX-10     \r\n'
+[2026-01-12 21:41:49] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 21:41:50] RECV: 'Routes\r\n  1 AB1KI-15  200 6!\r\n  1 K1DQ-15   0 0!\r\n> 1 KC1JMH-15 200 12!\r\n> 1 KS1R-15   200 17!\r\n  1 KX1EMA-15 200 0!\r\n  2 KY2D-15   200 0!\r\n  1 N1QFY-15  0 0!\r\n> 1 N1REX-15  200 12!\r\n  1 W1EMA-15  0 0!\r\n  1 WD1O-15   200 0!\r\n'
+[2026-01-12 21:42:05] RECV: ''
+[2026-01-12 21:42:20] RECV: ''
+[2026-01-12 21:42:22] SEND: 'MHEARD 1\r'
+[2026-01-12 21:42:37] RECV: ''
+[2026-01-12 21:42:46] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 21:42:47] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:00    \r\nN1QFY-15   00:00:00:03    \r\nKX1EMA-15  00:00:00:05\r\nAB1KI-15   00:00:00:06    \r\nK1NYY-15   00:00:00:07    \r\nN1REX-15   00:00:00:09    \r\nKS1R-15    00:00:01:09    \r\nWD1O-15 '
+[2026-01-12 21:42:48] SEND: 'MHEARD 2\r'
+[2026-01-12 21:43:03] RECV: '   00:00:08:54    \r\nWD1F       00:00:11:48    \r\nAB1KI-2    00:00:48:38    \r\nKX1EMA-2   00:00:48:47    \r\nW1EMA-15   00:03:37:03    \r\nKC1JMH-7   00:08:33:44    \r\nKX1NMA-15  00:08:41:06    \r\nW1EMA-2    00:10:50:11    \r\nKM1JMH-15  00:12:46:21    \r\nA'
+[2026-01-12 21:43:18] RECV: 'B11I-2    00:13:41:12    \r\nK1NYY-2    00:14:56:43    \r\nWD1O       01:12:33:06    \r\nW1DTX-15   01:20:41:31    \r\nW1DTX      01:20:47:25    \r\nKQNYY-15   02:21:50:07    \r\nAB1KK-15   03:02:40:37    \r\nKX1KMA-15  03:08:24:52    \r\nAB1CI-15   03:10:50:16    \r\nKC1JEH-15  04:05:02:16    \r\nAB1KN-15   04:05:40:55    \r\nABSKI-15   04:05:41:02    \r\nKX1RMA-2   04:22:39:49    \r\nW1ZE-15    05:10:50:50    \r\n'
+[2026-01-12 21:43:20] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 21:43:35] RECV: 'Heard List for Port 2\r\nKY2D-15    00:00:00:16    \r\nKY2D-4     00:00:16:10    \r\nN1LJK-1    00:00:36:57\r\nK1JAK      00:05:38:47    \r\nN1LJK      01:08:52:02    \r\nN1LJK-5    02:13:59:18    \r\n'
+[2026-01-12 21:43:37] SEND: 'INFO\r'
+[2026-01-12 21:43:45] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 21:44:00] RECV: 'BPQ32 BBS K1NYY-15 at Waldoboro, ME  FN54HC \r\nPort 1: 144.990 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-12 21:44:16] RECV: ''
+[2026-01-12 21:44:31] RECV: ''
+[2026-01-12 21:44:32] SEND: '?\r'
+[2026-01-12 21:44:47] RECV: ''
+[2026-01-12 21:44:54] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-12 21:44:55] RECV: 'RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 21:45:10] RECV: ''
+[2026-01-12 21:45:25] RECV: ''
+[2026-01-12 21:45:51] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 21:46:08] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-12 21:46:09] SEND: 'PORTS\r'
+[2026-01-12 21:46:17] RECV: 'BURG:KS1R-15} '
+[2026-01-12 21:46:32] RECV: 'Ports\r\n  1 145.01 MHz @ 1200 Baud        \r\n  2 433.300 MHz @ 1200 Baud       \r\n  3 223.600 MHz @ 1200 Baud       \r\n  9 Telnet Server                 \r\n 10 AX/IP/UDP                     \r\n'
+[2026-01-12 21:46:33] SEND: 'NODES\r'
+[2026-01-12 21:46:44] RECV: 'BURG:KS1R-15} '
+[2026-01-12 21:46:59] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSWBK:KC1JMH-2  BBSWDB:K1NYY-2      CCEBBS:WS1EC-2      CCECHA:WS1EC-5      \r\nCCEMA:WS1EC-15      CCERMS:WS1EC-10     CHABUR:KS1R-13      CHTGNR:N1QFY-4      \r\nCHTRKD:KX1EMA-4     CHTWBK:KC1JMH-4     CMBWBK:KC1JMH-15    DTXBBS:W1DTX-4      \r\nEEBBS:AI6EE-4       EECHT:AI6EE-5       EEND:AI6EE-14       EERMS:AI6EE-10      \r\nKNNGNR:N1QFY-15     KNXEOC:KX1EMA-15    LLNWDB:K1NYY-15     RMSGNR:N1QFY-10     \r\nRMSRKD:KX1EMA-10  RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\n'
+[2026-01-12 21:47:00] SEND: 'ROUTES\r'
+[2026-01-12 21:47:16] RECV: ''
+[2026-01-12 21:47:24] RECV: 'BURG:KS1R-15} '
+[2026-01-12 21:47:25] RECV: 'Routes\r\n  10 AI6EE-14  193 4!\r\n  1 W1EMA     0 0!\r\n> 2 KC1JMH-15 240 18 \r\n  2 AB1KI-15  240 1 \r\n  2 KX1EMA-15 240 4 \r\n> 2 K1NYY-15  240 1 \r\n  2 W1EMA-15  240 1 \r\n'
+[2026-01-12 21:47:40] RECV: ''
+[2026-01-12 21:47:55] RECV: ''
+[2026-01-12 21:47:57] SEND: 'MHEARD 1\r'
+[2026-01-12 21:48:07] RECV: 'BURG:KS1R-15} '
+[2026-01-12 21:48:22] RECV: 'Heard List for Port 1\r\nAB1KI-15   00:00:00:02    \r\nW1ZE       00:00:10:16    \r\nAB1KI-10   00:09:33:29\r\nW1ZE-1     01:20:44:27    \r\nKB1TAE     02:00:07:07    \r\nW1DTX-4    02:02:15:48    via N1DP-7*\r\nN1LJK-5    02:13:56:46    \r\nW1DTX-7    03:02:45:57    \r\nN1DP       03:02:48:18    \r\nW1LH-6     03:04:40:52    \r\nVE1EKV     03:04:47:58    \r\nAB1KI-4    04:08:32:24 \r\nWD1F       06:06:18:47    \r\nWD1F-1     06:06:58:07    \r\n'
+[2026-01-12 21:48:23] SEND: 'MHEARD 2\r'
+[2026-01-12 21:48:38] RECV: ''
+[2026-01-12 21:48:43] RECV: 'BURG:KS1R-15} '
+[2026-01-12 21:48:43] RECV: 'Heard List for Port 2\r\nKC1JMH-15  00:00:00:00    \r\nK1NYY-15   00:00:00:01    \r\nN1QFY-15   00:00:00:03\r\nN1REX-15   00:00:00:50    \r\nKX1EMA-15  00:00:06:04    \r\nKX1EMA-2   00:00:54:46    \r\nWD1O-15    00:09:04:54    \r\nKM1JMH-15  '
+[2026-01-12 21:48:44] SEND: 'MHEARD 3\r'
+[2026-01-12 21:48:56] RECV: '00:12:52:19    \r\nKC1JMH-7   00:13:18:03    \r\nK1NYY-2    00:15:02:35    \r\nAB1KI-15   00:21:06:27    \r\nN1LJK-15   01:08:57:20    \r\nWD1O       01:12:39:05    \r\nW1DTX      01:20:48:35    \r\nKX1nMA-15  02:13:21:45    \r\nKX1KMA-15  03:08:30:51    \r\nKC1JEH-15  04:05:08:15    \r\nKX1RMA-2   04:22:45:48    \r\nKC1JMF-15  07:11:08:19    \r\nKXDEMA-15  07:17:36:56    \r\nBURG:KS1R-15} '
+[2026-01-12 21:49:11] RECV: 'Heard List for Port 3\r\nN1LJK      00:02:27:10    \r\nN1LJK-15   00:19:43:32    \r\n'
+[2026-01-12 21:49:13] SEND: 'INFO\r'
+[2026-01-12 21:49:21] RECV: 'BURG:KS1R-15} '
+[2026-01-12 21:49:36] RECV: 'BPQ32 Node BURG - Phippsburg, ME  FN53CT \r\nPort 1:   145.010 MHz @ 1200 Baud\r\nPort 2:   443.100 MHz @ 1200Baud\r\nPort 3:   223.600 Mhz @ 1200 Baud\r\nKS1R-2: BBS  @  KS1R.#SAGA.ME.USA.NOAM\r\nSysop:    WD1F ddauphin@ddrov.com\r\n'
+[2026-01-12 21:49:52] RECV: ''
+[2026-01-12 21:50:07] RECV: ''
+[2026-01-12 21:50:09] SEND: '?\r'
+[2026-01-12 21:50:14] RECV: 'BURG:KS1R-15} '
+[2026-01-12 21:50:29] RECV: 'BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-12 21:50:45] RECV: ''
+[2026-01-12 21:51:00] RECV: ''
+[2026-01-13 08:49:42] SEND: 'NRR BURG\r'
+[2026-01-13 08:49:43] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-13 08:49:53] RECV: 'Not found\r\n'
+[2026-01-13 08:50:04] RECV: ''
+[2026-01-13 08:50:14] RECV: ''
+[2026-01-13 09:25:53] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 09:26:08] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 09:26:26] RECV: ''
+[2026-01-13 09:26:27] SEND: 'PORTS\r'
+[2026-01-13 09:26:52] RECV: ''
+[2026-01-13 09:27:17] RECV: ''
+[2026-01-13 09:27:43] RECV: ''
+[2026-01-13 09:28:08] RECV: ''
+[2026-01-13 09:28:34] RECV: ''
+[2026-01-13 09:28:59] RECV: ''
+[2026-01-13 09:29:01] SEND: 'NODES\r'
+[2026-01-13 09:29:27] RECV: ''
+[2026-01-13 09:29:52] RECV: ''
+[2026-01-13 09:30:18] RECV: ''
+[2026-01-13 09:30:43] RECV: ''
+[2026-01-13 09:31:09] RECV: ''
+[2026-01-13 09:31:34] RECV: ''
+[2026-01-13 09:31:36] SEND: 'ROUTES\r'
+[2026-01-13 09:32:01] RECV: ''
+[2026-01-13 10:04:52] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 10:05:26] RECV: '\n'
+[2026-01-13 10:42:45] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 10:43:22] RECV: '\nNode N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 10:47:14] RECV: ''
+[2026-01-13 10:47:16] SEND: 'PORTS\r'
+[2026-01-13 10:47:41] RECV: ''
+[2026-01-13 10:48:06] RECV: 'AB1KI-15 on Aborn Hill, ME  FN54JM \r\nUse "?" for commands and "I" for info.\r\nAB1KI-15 on Aborn Hill, ME  FN54JM \r\nUse "?" for commands and "I" for info.\r\nAB1KI-15 on Aborn Hill, ME  FN54JM \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 10:48:32] RECV: ''
+[2026-01-13 10:48:57] RECV: ''
+[2026-01-13 10:48:59] SEND: 'NODES\r'
+[2026-01-13 10:49:24] RECV: ''
+[2026-01-13 10:49:49] RECV: ''
+[2026-01-13 10:50:15] RECV: ''
+[2026-01-13 10:50:40] RECV: ''
+[2026-01-13 10:51:06] RECV: ''
+[2026-01-13 10:51:31] RECV: ''
+[2026-01-13 10:51:33] SEND: 'ROUTES\r'
+[2026-01-13 10:51:59] RECV: ''
+[2026-01-13 10:52:24] RECV: ''
+[2026-01-13 10:52:50] RECV: ''
+[2026-01-13 10:53:15] RECV: ''
+[2026-01-13 10:53:41] RECV: ''
+[2026-01-13 10:54:06] RECV: ''
+[2026-01-13 10:54:08] SEND: 'INFO\r'
+[2026-01-13 10:54:33] RECV: ''
+[2026-01-13 10:54:58] RECV: ''
+[2026-01-13 10:55:13] RECV: '*** Disconnected from Stream 1\r\n'
+[2026-01-13 11:45:15] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 11:46:05] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 12:22:33] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 12:50:10] SEND: '?\r'
+[2026-01-13 12:50:10] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-13 12:50:15] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 12:50:21] RECV: ''
+[2026-01-13 12:50:26] RECV: ''
+[2026-01-13 12:50:27] SEND: 'PORTS\r'
+[2026-01-13 12:50:28] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:50:33] RECV: 'Ports\r\n  1 433.300 MHz 1200 BAUD         \r\n  2 145.050 MHz @ 1200 b/s        \r\n  8 AX/IP/UDP        \r\n  9 Telnet Server                 \r\n'
+[2026-01-13 12:50:34] SEND: 'NODES\r'
+[2026-01-13 12:50:34] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:50:39] RECV: 'Nodes\r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCERMS:WS1EC-10     CMBWBK:KC1JMH-15    \r\n'
+[2026-01-13 12:50:40] SEND: 'ROUTES\r'
+[2026-01-13 12:50:40] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:50:45] RECV: 'Routes\r\n> 1 KC1JMH-15 168 1!\r\n'
+[2026-01-13 12:50:51] RECV: ''
+[2026-01-13 12:50:56] RECV: ''
+[2026-01-13 12:50:57] SEND: 'MHEARD 1\r'
+[2026-01-13 12:50:57] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:51:02] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:01:13    \r\n'
+[2026-01-13 12:51:04] SEND: 'MHEARD 2\r'
+[2026-01-13 12:51:04] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:51:09] RECV: 'Heard List for Port 2\r\n'
+[2026-01-13 12:51:10] SEND: 'INFO\r'
+[2026-01-13 12:51:10] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:51:15] RECV: 'LINBPQ32 NODE WS1EC-15 AT WINDHAM, ME FN43SR \r\n\r\nThis node is located at the Cumberland County EMA, and ismaintained by the\r\nWireless Society of Southern Maine - Emergency Communications Team.\r\nFor info about the club visit mainehamradio.com\r\n\r\nThis node is connected to the Maine Emergency Packet Network (MEPN), which\r\nallows traffic to flow freely between nodes on the state-wide UHF backbone.\r\nVisit mainepacketradio.org for more info.\r\n\r\nPorts\r\n-----\r\nPORT 1: UHF Backbone, inter-node only\r\nPORT 2:145.050 MHz at 1200 Baud\r\n\r\nApplications\r\n------------\r\nBBS\tInter-node Mail\t     WS1EC-2\r\nRMS\tWinlink Email\t     WS1EC-10\r\nCHAT\tChat Rooms           WS1EC-5\r\nTEST\tPractice exams\r\nFORMS   Fillable msg forms\r\nFORTUNE\tCheer up with a joke\r\n\r\nInternet\r\n--------\r\nBANDS\tHamQSL.com report\r\nGOPHER  Browse the Internet\r\nNEWS    Read news articles\r\nQRZ\tQRZ.com Call Lookup\r\nSPACE\tNOAA Space Weather\r\nWX\tNWS Weather Reports\r\n\r\nNavigation\r\n----------\r\nB\tDisconnect\r\n?       List commands\r\n\r\nRadio users should connect to \'CCEMA\' instead of WS1EC-15 to be greeted with the main menu.\r\n\r\nSysops:\r\nBrad Brown, KC1JMH, kc1jmh@mainehamradio.com\r\nTim Watson, KB1HNZ, kb1hnz@mainehamradio.com\r\n\r\nUse "I" for this info page\r\nUse "?" for all commands \r\n\r\nde WS1EC>\r\n'
+[2026-01-13 12:51:21] RECV: ''
+[2026-01-13 12:51:26] RECV: ''
+[2026-01-13 12:51:27] SEND: '?\r'
+[2026-01-13 12:51:27] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:51:32] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 12:51:38] RECV: ''
+[2026-01-13 12:51:43] RECV: ''
+[2026-01-13 12:52:23] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 12:52:24] SEND: '?\r'
+[2026-01-13 12:52:28] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:52:43] RECV: 'BBS RMS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 12:52:59] RECV: ''
+[2026-01-13 12:53:14] RECV: ''
+[2026-01-13 12:53:16] SEND: 'PORTS\r'
+[2026-01-13 12:53:19] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:53:34] RECV: 'Ports\r\n  1 433.30 MHz @ 1200 Baud        \r\n  2 144.930 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-13 12:53:36] SEND: 'NODES\r'
+[2026-01-13 12:53:41] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:53:56] RECV: 'Nodes\r\nN1LJK-15            BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      \r\nBBSRKD:KX1EMA-2  BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      \r\nBURG:KS1R-15        CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      \r\nCCERMS:WS1EC-10     CHABUR:KS1R-13      CHTGNR:N1QFY-4      CHTRKD:KX1EMA-4     \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      KNNGNR:N1QFY-15     KNXEOC:KX1EMA-15    \r\nLLNWDB:K1NYY-15     LNCWHT:N1REX-15     RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    \r\nRMSWBK:KC1JMH-10  RMSWDB:K1NYY-10     RMSWHT:N1REX-10     \r\n'
+[2026-01-13 12:53:57] SEND: 'ROUTES\r'
+[2026-01-13 12:54:02] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:54:17] RECV: 'Routes\r\n> 1 WS1EC-15  200 4!\r\n  1 K1NYY-15  200 0!\r\n> 1 KS1R-15   200 20!\r\n> 1 N1QFY-15  200 3!\r\n  1K1DQ-15   200 0!\r\n  1 KX1EMA-15 0 0!\r\n  1 AB1KI-15  0 0!\r\n  1 N1REX-15  0 0!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-13 12:54:33] RECV: ''
+[2026-01-13 12:54:48] RECV: ''
+[2026-01-13 12:54:49] SEND: 'MHEARD 1\r'
+[2026-01-13 12:54:55] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:55:10] RECV: 'Heard List for Port 1\r\nWS1EC-15   00:00:00:00    \r\nN1QFY-15   00:00:00:03    \r\nK1NYY-15   00:00:01:37\r\nKS1R-15    00:00:02:09    \r\nWD1F       00:00:20:37    \r\nK1NYY-2    00:01:55:47    \r\nKC1JMH-8   00:03:35:48    \r\nN1REX-15   00:03:44:10    \r\n'
+[2026-01-13 12:55:11] SEND: 'MHEARD 2\r'
+[2026-01-13 12:55:14] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:55:29] RECV: 'Heard List for Port 2\r\n'
+[2026-01-13 12:55:31] SEND: 'INFO\r'
+[2026-01-13 12:55:36] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:55:51] RECV: 'BPQ32 KC1JMH-15 at Westbrook, ME  FN43TQ \r\nPort 2: 144.930 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-13 12:56:07] RECV: ''
+[2026-01-13 12:56:22] RECV: ''
+[2026-01-13 12:56:23] SEND: '?\r'
+[2026-01-13 12:56:27] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:56:42] RECV: 'BBS RMS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 12:57:11] SEND: '?\r'
+[2026-01-13 12:57:11] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-13 12:57:16] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 12:57:22] RECV: ''
+[2026-01-13 12:57:27] RECV: ''
+[2026-01-13 12:57:28] SEND: 'PORTS\r'
+[2026-01-13 12:57:28] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:57:33] RECV: 'Ports\r\n  1 433.300 MHz 1200 BAUD         \r\n  2 145.050 MHz @ 1200 b/s        \r\n  8 AX/IP/UDP        \r\n  9 Telnet Server                 \r\n'
+[2026-01-13 12:57:34] SEND: 'NODES\r'
+[2026-01-13 12:57:35] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:57:40] RECV: 'Nodes\r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCERMS:WS1EC-10     CMBWBK:KC1JMH-15    \r\n'
+[2026-01-13 12:57:41] SEND: 'ROUTES\r'
+[2026-01-13 12:57:41] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:57:46] RECV: 'Routes\r\n> 1 KC1JMH-15 168 1!\r\n'
+[2026-01-13 12:57:52] RECV: ''
+[2026-01-13 12:57:57] RECV: ''
+[2026-01-13 12:57:58] SEND: 'MHEARD 1\r'
+[2026-01-13 12:57:58] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:58:03] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:24    \r\n'
+[2026-01-13 12:58:04] SEND: 'MHEARD 2\r'
+[2026-01-13 12:58:05] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:58:10] RECV: 'Heard List for Port 2\r\n'
+[2026-01-13 12:58:11] SEND: 'INFO\r'
+[2026-01-13 12:58:11] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:58:16] RECV: 'LINBPQ32 NODE WS1EC-15 AT WINDHAM, ME FN43SR \r\n\r\nThis node is located at the Cumberland County EMA, and ismaintained by the\r\nWireless Society of Southern Maine - Emergency Communications Team.\r\nFor info about the club visit mainehamradio.com\r\n\r\nThis node is connected to the Maine Emergency Packet Network (MEPN), which\r\nallows traffic to flow freely between nodes on the state-wide UHF backbone.\r\nVisit mainepacketradio.org for more info.\r\n\r\nPorts\r\n-----\r\nPORT 1: UHF Backbone, inter-node only\r\nPORT 2:145.050 MHz at 1200 Baud\r\n\r\nApplications\r\n------------\r\nBBS\tInter-node Mail\t     WS1EC-2\r\nRMS\tWinlink Email\t     WS1EC-10\r\nCHAT\tChat Rooms           WS1EC-5\r\nTEST\tPractice exams\r\nFORMS   Fillable msg forms\r\nFORTUNE\tCheer up with a joke\r\n\r\nInternet\r\n--------\r\nBANDS\tHamQSL.com report\r\nGOPHER  Browse the Internet\r\nNEWS    Read news articles\r\nQRZ\tQRZ.com Call Lookup\r\nSPACE\tNOAA Space Weather\r\nWX\tNWS Weather Reports\r\n\r\nNavigation\r\n----------\r\nB\tDisconnect\r\n?       List commands\r\n\r\nRadio users should connect to \'CCEMA\' instead of WS1EC-15 to be greeted with the main menu.\r\n\r\nSysops:\r\nBrad Brown, KC1JMH, kc1jmh@mainehamradio.com\r\nTim Watson, KB1HNZ, kb1hnz@mainehamradio.com\r\n\r\nUse "I" for this info page\r\nUse "?" for all commands \r\n\r\nde WS1EC>\r\n'
+[2026-01-13 12:58:22] RECV: ''
+[2026-01-13 12:58:27] RECV: ''
+[2026-01-13 12:58:28] SEND: '?\r'
+[2026-01-13 12:58:28] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 12:58:33] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 12:58:39] RECV: ''
+[2026-01-13 12:58:44] RECV: ''
+[2026-01-13 12:59:24] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 12:59:25] SEND: '?\r'
+[2026-01-13 12:59:28] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 12:59:36] RECV: 'BBS RMS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 13:16:06] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 13:17:19] RECV: '\n'
+[2026-01-13 13:23:45] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 13:24:54] RECV: ''
+[2026-01-13 13:32:25] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 13:38:33] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 13:44:33] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 13:45:11] RECV: ''
+[2026-01-13 13:51:02] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 13:56:53] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 13:57:29] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 15:54:45] SEND: '?\r'
+[2026-01-13 15:54:45] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-13 15:54:50] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 15:54:53] SEND: 'PORTS\r'
+[2026-01-13 15:54:53] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:55:16] SEND: '?\r'
+[2026-01-13 15:55:16] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-13 15:55:21] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 15:55:27] RECV: ''
+[2026-01-13 15:55:32] RECV: ''
+[2026-01-13 15:55:33] SEND: 'PORTS\r'
+[2026-01-13 15:55:33] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:55:38] RECV: 'Ports\r\n  1 433.300 MHz 1200 BAUD         \r\n  2 145.050 MHz @ 1200 b/s        \r\n  8 AX/IP/UDP        \r\n  9 Telnet Server                 \r\n'
+[2026-01-13 15:55:39] SEND: 'NODES\r'
+[2026-01-13 15:55:39] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:55:44] RECV: 'Nodes\r\nCCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCERMS:WS1EC-10     CMBWBK:KC1JMH-15    \r\n'
+[2026-01-13 15:55:45] SEND: 'ROUTES\r'
+[2026-01-13 15:55:46] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:55:51] RECV: 'Routes\r\n> 1 KC1JMH-15 168 1!\r\n'
+[2026-01-13 15:55:57] RECV: ''
+[2026-01-13 15:56:02] RECV: ''
+[2026-01-13 15:56:03] SEND: 'MHEARD 1\r'
+[2026-01-13 15:56:03] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:56:08] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:55    \r\n'
+[2026-01-13 15:56:09] SEND: 'MHEARD 2\r'
+[2026-01-13 15:56:09] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:56:14] RECV: 'Heard List for Port 2\r\n'
+[2026-01-13 15:56:15] SEND: 'INFO\r'
+[2026-01-13 15:56:16] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:56:21] RECV: 'LINBPQ32 NODE WS1EC-15 AT WINDHAM, ME FN43SR \r\n\r\nThis node is located at the Cumberland County EMA, and ismaintained by the\r\nWireless Society of Southern Maine - Emergency Communications Team.\r\nFor info about the club visit mainehamradio.com\r\n\r\nThis node is connected to the Maine Emergency Packet Network (MEPN), which\r\nallows traffic to flow freely between nodes on the state-wide UHF backbone.\r\nVisit mainepacketradio.org for more info.\r\n\r\nPorts\r\n-----\r\nPORT 1: UHF Backbone, inter-node only\r\nPORT 2:145.050 MHz at 1200 Baud\r\n\r\nApplications\r\n------------\r\nBBS\tInter-node Mail\t     WS1EC-2\r\nRMS\tWinlink Email\t     WS1EC-10\r\nCHAT\tChat Rooms           WS1EC-5\r\nTEST\tPractice exams\r\nFORMS   Fillable msg forms\r\nFORTUNE\tCheer up with a joke\r\n\r\nInternet\r\n--------\r\nBANDS\tHamQSL.com report\r\nGOPHER  Browse the Internet\r\nNEWS    Read news articles\r\nQRZ\tQRZ.com Call Lookup\r\nSPACE\tNOAA Space Weather\r\nWX\tNWS Weather Reports\r\n\r\nNavigation\r\n----------\r\nB\tDisconnect\r\n?       List commands\r\n\r\nRadio users should connect to \'CCEMA\' instead of WS1EC-15 to be greeted with the main menu.\r\n\r\nSysops:\r\nBrad Brown, KC1JMH, kc1jmh@mainehamradio.com\r\nTim Watson, KB1HNZ, kb1hnz@mainehamradio.com\r\n\r\nUse "I" for this info page\r\nUse "?" for all commands \r\n\r\nde WS1EC>\r\n'
+[2026-01-13 15:56:27] RECV: ''
+[2026-01-13 15:56:32] RECV: ''
+[2026-01-13 15:56:33] SEND: '?\r'
+[2026-01-13 15:56:33] RECV: 'CCEMA:WS1EC-15} '
+[2026-01-13 15:56:38] RECV: 'BBS CHAT FORTUNE RMS WX SYSINFO CALLOUT SPACE BANDS QRZ GOPHER NEWS TEST FORMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 15:56:44] RECV: ''
+[2026-01-13 15:56:49] RECV: ''
+[2026-01-13 15:57:28] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 15:57:30] SEND: '?\r'
+[2026-01-13 15:57:33] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 15:57:48] RECV: 'BBS RMS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 15:58:04] RECV: ''
+[2026-01-13 15:58:19] RECV: ''
+[2026-01-13 15:58:21] SEND: 'PORTS\r'
+[2026-01-13 15:58:24] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 15:58:39] RECV: 'Ports\r\n  1 433.30 MHz @ 1200 Baud        \r\n  2 144.930 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-13 15:58:41] SEND: 'NODES\r'
+[2026-01-13 15:58:45] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 15:59:00] RECV: 'Nodes\r\nN1LJK-15            BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      \r\nBBSRKD:KX1EMA-2  BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      \r\nBURG:KS1R-15        CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      \r\nCCERMS:WS1EC-10     CHABUR:KS1R-13      CHTGNR:N1QFY-4      CHTRKD:KX1EMA-4     \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      KNNGNR:N1QFY-15     KNXEOC:KX1EMA-15    \r\nLLNWDB:K1NYY-15     LNCWHT:N1REX-15     RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    \r\nRMSWBK:KC1JMH-10  RMSWDB:K1NYY-10     RMSWHT:N1REX-10     \r\n'
+[2026-01-13 15:59:01] SEND: 'ROUTES\r'
+[2026-01-13 15:59:08] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 15:59:23] RECV: 'Routes\r\n> 1 WS1EC-15  200 4!\r\n  1 K1NYY-15  200 0!\r\n> 1 KS1R-15   200 20!\r\n> 1 N1QFY-15  200 8!\r\n  1K1DQ-15   200 0!\r\n  1 KX1EMA-15 0 0!\r\n  1 AB1KI-15  0 0!\r\n  1 N1REX-15  0 0!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-13 15:59:39] RECV: ''
+[2026-01-13 15:59:54] RECV: ''
+[2026-01-13 15:59:55] SEND: 'MHEARD 1\r'
+[2026-01-13 15:59:59] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 16:00:14] RECV: 'Heard List for Port 1\r\nWS1EC-15   00:00:00:00    \r\nK1NYY-15   00:00:00:03    \r\nKS1R-15    00:00:00:17\r\nN1QFY-15   00:00:02:47    \r\nK1NYY-2    00:00:12:28    \r\nWD1F       00:00:25:01    \r\nKC1JMH-7   00:02:33:06    \r\nKC1JMH-8   00:02:55:08    \r\nN1REX-15   00:06:49:15    \r\n'
+[2026-01-13 16:00:16] SEND: 'MHEARD 2\r'
+[2026-01-13 16:00:19] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 16:00:34] RECV: 'Heard List for Port 2\r\n'
+[2026-01-13 16:00:35] SEND: 'INFO\r'
+[2026-01-13 16:00:38] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 16:00:53] RECV: 'BPQ32 KC1JMH-15 at Westbrook, ME  FN43TQ \r\nPort 2: 144.930 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-13 16:01:09] RECV: ''
+[2026-01-13 16:01:24] RECV: ''
+[2026-01-13 16:01:26] SEND: '?\r'
+[2026-01-13 16:01:29] RECV: 'CMBWBK:KC1JMH-15} '
+[2026-01-13 16:01:44] RECV: 'BBS RMS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 16:02:00] RECV: ''
+[2026-01-13 16:02:15] RECV: ''
+[2026-01-13 16:02:55] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:04:21] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:04:22] SEND: '?\r'
+[2026-01-13 16:04:38] RECV: ''
+[2026-01-13 16:04:48] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-13 16:04:49] RECV: 'RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 16:05:04] RECV: ''
+[2026-01-13 16:05:19] RECV: ''
+[2026-01-13 16:05:21] SEND: 'PORTS\r'
+[2026-01-13 16:05:36] RECV: ''
+[2026-01-13 16:05:51] RECV: ''
+[2026-01-13 16:06:07] RECV: ''
+[2026-01-13 16:06:22] RECV: ''
+[2026-01-13 16:06:38] RECV: ''
+[2026-01-13 16:06:42] RECV: 'LLNWDB:K1NYY-15} '
+[2026-01-13 16:06:43] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 144.99 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-13 16:06:44] SEND: 'NODES\r'
+[2026-01-13 16:06:59] RECV: ''
+[2026-01-13 16:07:14] RECV: ''
+[2026-01-13 16:07:30] RECV: ''
+[2026-01-13 16:07:45] RECV: ''
+[2026-01-13 16:08:01] RECV: ''
+[2026-01-13 16:08:16] RECV: ''
+[2026-01-13 16:08:18] SEND: 'ROUTES\r'
+[2026-01-13 16:08:33] RECV: ''
+[2026-01-13 16:08:48] RECV: ''
+[2026-01-13 16:09:04] RECV: ''
+[2026-01-13 16:09:19] RECV: ''
+[2026-01-13 16:09:35] RECV: ''
+[2026-01-13 16:09:50] RECV: ''
+[2026-01-13 16:10:29] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:11:24] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:11:26] SEND: '?\r'
+[2026-01-13 16:11:41] RECV: ''
+[2026-01-13 16:11:54] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 16:11:54] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 16:12:10] RECV: ''
+[2026-01-13 16:12:25] RECV: ''
+[2026-01-13 16:12:26] SEND: 'PORTS\r'
+[2026-01-13 16:12:42] RECV: ''
+[2026-01-13 16:12:57] RECV: ''
+[2026-01-13 16:13:00] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 16:13:15] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-13 16:13:17] SEND: 'NODES\r'
+[2026-01-13 16:13:32] RECV: ''
+[2026-01-13 16:13:47] RECV: ''
+[2026-01-13 16:14:03] RECV: ''
+[2026-01-13 16:14:10] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 16:14:10] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     \r\nBBSWDB:K1NYY-2  BBSWHT:N1REX-2      BURG:KS1R-15        CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTWBK:KC1J'
+[2026-01-13 16:14:11] SEND: 'ROUTES\r'
+[2026-01-13 16:14:26] RECV: ''
+[2026-01-13 16:14:41] RECV: 'MH-4     CHTWHT:N1REX-4      \r\nCMBWBK:KC1JMH-15    DTXBBS:W1DTX-4      DTXNOD:W1DTX-7      KNNGNR:N1QFY-15  \r\nKNXABN:AB1KI-15     LLNWDB:K1NYY-15     RMSABN:AB1KI-10     RMSGNR:N1QFY-10     \r\nRMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     RMSW'
+[2026-01-13 16:14:57] RECV: 'HT:N1REX-10     TOPBBS:NG1P-1       \r\nTOPCHT:NG1P-2       TOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-13 16:15:03] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 16:15:03] RECV: 'Routes\r\n> 1 K1NYY-15  200 9!\r\n> 1 N1QFY-15  200 15!\r\n> 1 AB1KI-15  200 6!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-13 16:15:19] RECV: ''
+[2026-01-13 16:15:34] RECV: ''
+[2026-01-13 16:15:35] SEND: 'MHEARD 1\r'
+[2026-01-13 16:15:50] RECV: ''
+[2026-01-13 16:15:54] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 16:15:54] RECV: 'Heard List for Port 1\r\nK1NYY-15   00:00:00:00    \r\nN1QFY-15   00:00:00:40    \r\nAB1KI-15   00:00:00:58\r\nK1NYY-2    00:00:28:12    \r\nAB1KI-2    00:00:28:13    \r\nKC1JMH-7   00:02:48:50    \r\nKC1JMH-15  00:08:20:25    \r\nKS1R-15    00:09:34:45    \r\n'
+[2026-01-13 16:15:55] SEND: 'MHEARD 2\r'
+[2026-01-13 16:16:06] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 16:16:21] RECV: 'Heard List for Port 2\r\nN1LCN      00:00:22:36    \r\n'
+[2026-01-13 16:16:22] SEND: 'INFO\r'
+[2026-01-13 16:16:38] RECV: ''
+[2026-01-13 16:16:47] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 16:16:48] RECV: 'BPQ32 Node LNCWHT - Whitefield, ME  FN54EF \r\nPort 1: 433.100 MHz @ 1200 Baud\r\nPort 2: 145.090 MHz @ 1200 Baud\r\nN1REX-2: BBS @  N1REX.ME.USA.NA\r\nN1REX-4: CHAT \r\nN1REX-10: RMS\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-13 16:17:03] RECV: ''
+[2026-01-13 16:17:18] RECV: ''
+[2026-01-13 16:18:05] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:18:42] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:18:44] SEND: '?\r'
+[2026-01-13 16:18:51] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-13 16:19:06] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 16:19:22] RECV: ''
+[2026-01-13 16:19:37] RECV: ''
+[2026-01-13 16:19:38] SEND: 'PORTS\r'
+[2026-01-13 16:19:54] RECV: ''
+[2026-01-13 16:20:09] RECV: ''
+[2026-01-13 16:20:25] RECV: ''
+[2026-01-13 16:20:29] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-13 16:20:30] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 145.070 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-13 16:20:31] SEND: 'NODES\r'
+[2026-01-13 16:20:46] RECV: ''
+[2026-01-13 16:21:01] RECV: ''
+[2026-01-13 16:21:17] RECV: ''
+[2026-01-13 16:21:23] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-13 16:21:24] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSGNR:N1QFY-2      BBSWDB:K1NYY-2      BBSWHT:N1REX-2      \r\nCHTABN:AB1KI-4  CHTGNR:N1QFY-4      CHTWHT:N1REX-4      CMBWBK:KC1JMH-15    \r\nDATBBS:K5DAT-1      DATCHT:K5DAT-11     DATKEY:K5DA'
+[2026-01-13 16:21:25] SEND: 'ROUTES\r'
+[2026-01-13 16:21:40] RECV: 'T        DATRMS:K5DAT-13     \r\nKNXABN:AB1KI-15     LLNWDB:K1NYY-15     LNCWHT:N1REX-15     RMSABN:AB1KI-10  \r\nRMSGNR:N1QFY-10     RMSWDB:K1NYY-10     RMSWHT:N1REX-10     SHAWNO:K5DAT-7      \r\nTOPBBS:NG1P-1       TOPCHT:NG1P-2       TOPR'
+[2026-01-13 16:21:55] RECV: ''
+[2026-01-13 16:21:55] RECV: 'MS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-13 16:22:11] RECV: ''
+[2026-01-13 16:22:26] RECV: ''
+[2026-01-13 16:22:27] SEND: 'MHEARD 1\r'
+[2026-01-13 16:22:43] RECV: ''
+[2026-01-13 16:22:58] RECV: ''
+[2026-01-13 16:23:14] RECV: ''
+[2026-01-13 16:23:28] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-13 16:23:29] RECV: 'Routes\r\n  1 AB1KI-15  0 0!\r\n  1 K1NYY-15  200 0!\r\n> 1 KC1JMH-15 200 1!\r\n  1 KS1R-15   0 0!\r\n> 1 N1REX-15  200 12!\r\n> 2 NG1P-4    200 9!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-13 16:23:30] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-13 16:23:45] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:00    \r\nN1REX-15   00:00:00:07    \r\nK1NYY-15   00:00:00:14\r\nAB1KI-15   00:00:00:38    \r\nKX1EMA-15  00:00:00:40    \r\nAB1KI-2    00:00:01:56    \r\nKS1R-15    00:00:02:26    \r\nWD1F       00:00:17:34    \r\nK1NYY-2    00:00:35:08    \r\nAB1KI-5    00:04:02:18    \r\nAB1KI-12   00:04:03:18    \r\nKX1EMA-2   00:05:13:02    \r\nW1EMA-15   00:06:52:48    \r\nWD1O-15    00:07:35:18    \r\nW1EMA-2    00:08:04:27    \r\nnB1uI-15   00:14:59:52    \r\nAB1KIb-15  00:15:00:52\r\n'
+[2026-01-13 16:24:33] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:25:11] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 16:25:12] SEND: '?\r'
+[2026-01-13 16:25:18] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:25:33] RECV: 'BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 16:25:49] RECV: ''
+[2026-01-13 16:26:04] RECV: ''
+[2026-01-13 16:26:05] SEND: 'PORTS\r'
+[2026-01-13 16:26:14] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:26:29] RECV: 'Ports\r\n  1 145.01 MHz @ 1200 Baud        \r\n  2 433.300 MHz @ 1200 Baud       \r\n  3 223.600 MHz @ 1200 Baud       \r\n  9 Telnet Server                 \r\n 10 AX/IP/UDP                     \r\n'
+[2026-01-13 16:26:30] SEND: 'NODES\r'
+[2026-01-13 16:26:45] RECV: ''
+[2026-01-13 16:26:47] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:26:47] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSWBK:KC1JMH-2  BBSWDB:K1NYY-2      BBSWHT:N1REX-2      CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTRKD:KX1EMA-'
+[2026-01-13 16:26:48] SEND: 'ROUTES\r'
+[2026-01-13 16:27:04] RECV: '4     CHTWBK:KC1JMH-4     \r\nCHTWHT:N1REX-4      CMBWBK:KC1JMH-15    DATBBS:K5DAT-1      DATCHT:K5DAT-11     \r\nDATKEY:K5DAT        DATRMS:K5DAT-13     DTXBBS:W1DTX-4      EEBBS:AI6EE-4       \r\nEECHT:AI6EE-5       EEND:AI6EE-14       EERMS:AI6EE-10      KNNGNR:N1QFY-15     \r\nKNXABN:AB1KI-15     KNXEOC:KX1EMA-15    LLNWDB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    RMSWBK:KC1JMH-10    \r\nRMSWDB:K1NYY-10     RMSWHT:N1REX-10     '
+[2026-01-13 16:27:19] RECV: ''
+[2026-01-13 16:27:35] RECV: 'SHAWNO:K5DAT-7      TOPBBS:NG1P-1       \r\nTOPCHT:NG1P-2       TOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-13 16:27:40] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:27:40] RECV: 'Routes\r\n> 10 AI6EE-14  193 4!\r\n  1 W1EMA     0 0!\r\n> 2 KC1JMH-15 240 1 \r\n  2 AB1KI-15  240 1 \r\n  2 KX1EMA-15 240 7 \r\n> 2 K1NYY-15  240 19 \r\n  2 N1QFY-15  240 25 \r\n  2 W1EMA-15  240 1 \r\n'
+[2026-01-13 16:27:56] RECV: ''
+[2026-01-13 16:28:11] RECV: ''
+[2026-01-13 16:28:12] SEND: 'MHEARD 1\r'
+[2026-01-13 16:28:22] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:28:37] RECV: 'Heard List for Port 1\r\nW1ZE       00:00:00:58    \r\nAB1KI-15   00:00:05:06    \r\nWD1F       00:06:55:16\r\nAB1KI-10   00:08:48:58    \r\nW1ZE-1     02:15:24:43    \r\nKB1TAE     02:18:47:23    \r\nW1DTX-4    02:20:56:04    via N1DP-7*\r\nN1LJK-5    03:08:37:02    \r\nW1DTX-7    03:21:26:13    \r\nN1DP       03:21:28:34    \r\nW1LH-6     03:23:21:08    \r\nVE1EKV     03:23:28:14 \r\nAB1KI-4    05:03:12:40    \r\nWD1F-1     07:01:38:23    \r\n'
+[2026-01-13 16:28:39] SEND: 'MHEARD 2\r'
+[2026-01-13 16:28:54] RECV: ''
+[2026-01-13 16:29:03] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:29:03] RECV: 'Heard List for Port 2\r\nKC1JMH-15  00:00:00:00    \r\nN1REX-15   00:00:00:04    \r\nK1NYY-15   00:00:00:05\r\nN1QFY-15   00:00:01:17    \r\nKX1EMA-15  00:00:01:40    \r\nK1NYY-2    00:00:41:20    \r\nKX1EMA-2   00:00:57:01    \r\nKC1JMH-7   '
+[2026-01-13 16:29:04] SEND: 'MHEARD 3\r'
+[2026-01-13 16:29:19] RECV: '00:03:01:58    \r\nWD1O-15    01:03:45:10    \r\nKM1JMH-15  01:07:32:35    \r\nAB1KI-15   01:15:46:43    \r\nN1LJK-15   02:03:37:36    \r\nWD1O       02:07:19:21    \r\nW1DTX      02:15:28:51    \r\nKX1nMA-15  03:08:02:01    \r\nKX1KMA-15  04:03:11:07    \r\nKC1JEH-15  04:23:48:31    \r\nKX1RMA-2   05:17:26:04    \r\nKC1JMF-15  08:05:48:35    \r\nKXDEMA-15  08:12:17:12    \r\n'
+[2026-01-13 16:29:20] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:29:20] RECV: 'Heard List for Port 3\r\nN1LJK-15   00:14:23:54    \r\nN1LJK      00:21:07:32    \r\n'
+[2026-01-13 16:29:21] SEND: 'INFO\r'
+[2026-01-13 16:29:36] RECV: ''
+[2026-01-13 16:29:45] RECV: 'BURG:KS1R-15} '
+[2026-01-13 16:29:46] RECV: 'BPQ32 Node BURG - Phippsburg, ME  FN53CT \r\nPort 1:   145.010 MHz @ 1200 Baud\r\nPort 2:   443.100 MHz @ 1200Baud\r\nPort 3:   223.600 Mhz @ 1200 Baud\r\nKS1R-2: BBS  @  KS1R.#SAGA.ME.USA.NOAM\r\nSysop:    WD1F ddauphin@ddrov.com\r\n'
+[2026-01-13 16:30:01] RECV: ''
+[2026-01-13 16:30:16] RECV: ''
+[2026-01-13 17:27:44] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 17:28:28] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 17:28:30] SEND: '?\r'
+[2026-01-13 17:28:41] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:28:56] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 17:29:12] RECV: ''
+[2026-01-13 17:29:27] RECV: ''
+[2026-01-13 17:29:29] SEND: 'PORTS\r'
+[2026-01-13 17:29:41] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:29:56] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-13 17:29:58] SEND: 'NODES\r'
+[2026-01-13 17:31:05] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 17:31:53] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 17:31:54] SEND: '?\r'
+[2026-01-13 17:32:10] RECV: ''
+[2026-01-13 17:32:25] RECV: ''
+[2026-01-13 17:32:41] RECV: ''
+[2026-01-13 17:32:46] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:32:47] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 17:33:02] RECV: ''
+[2026-01-13 17:33:17] RECV: ''
+[2026-01-13 17:33:19] SEND: 'PORTS\r'
+[2026-01-13 17:33:34] RECV: ''
+[2026-01-13 17:33:41] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:33:42] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-13 17:33:43] SEND: 'NODES\r'
+[2026-01-13 17:33:58] RECV: ''
+[2026-01-13 17:34:08] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:34:09] RECV: 'Nodes\r\nW1DTX-7             BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      \r\nBBSSWV:W1EMA-2  BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      \r\nBURG:KS1R-15        CHABUR:KS1R-13      CHTABN:AB1K'
+[2026-01-13 17:34:10] SEND: 'ROUTES\r'
+[2026-01-13 17:34:25] RECV: ''
+[2026-01-13 17:34:40] RECV: 'I-4      CHTGNR:N1QFY-4      \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1JMH-15    DTXBBS:W1DTX-4  \r\nKNNGNR:N1QFY-15     KNXABN:AB1KI-15     LLNWDB:K1NYY-15     RMSABN:AB1KI-10     \r\nRMSGNR:N1QFY-10     RMSSWV:W1EMA-10     RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\nRMSWHT:N1REX-10     TOPBBS:NG1P-1       TOPCHT:NG1P-2       TOPRMS:NG1P-10      \r\nTOPS:NG1P-4         W1EMA:W1EMA-15      \r\n'
+[2026-01-13 17:34:56] RECV: ''
+[2026-01-13 17:34:58] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:34:59] RECV: 'Routes\r\n> 1 K1NYY-15  200 6!\r\n> 1 N1QFY-15  200 15!\r\n> 1 AB1KI-15  200 9!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-13 17:35:14] RECV: ''
+[2026-01-13 17:35:29] RECV: ''
+[2026-01-13 17:35:31] SEND: 'MHEARD 1\r'
+[2026-01-13 17:35:46] RECV: ''
+[2026-01-13 17:35:48] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:35:49] RECV: 'Heard List for Port 1\r\nK1NYY-15   00:00:00:00    \r\nAB1KI-15   00:00:00:24    \r\nN1QFY-15   00:00:00:56\r\nAB1KI-2    00:01:04:09    \r\nK1NYY-2    00:01:48:08    \r\nKC1JMH-7   00:04:08:46    \r\nKC1JMH-15  00:09:40:21    \r\nKS1R-15    00:10:54:41    \r\n'
+[2026-01-13 17:35:50] SEND: 'MHEARD 2\r'
+[2026-01-13 17:36:05] RECV: ''
+[2026-01-13 17:36:07] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:36:08] RECV: 'Heard List for Port 2\r\nN1LCN      00:00:11:26    \r\n'
+[2026-01-13 17:36:09] SEND: 'INFO\r'
+[2026-01-13 17:36:24] RECV: ''
+[2026-01-13 17:36:39] RECV: ''
+[2026-01-13 17:36:55] RECV: ''
+[2026-01-13 17:37:01] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 17:37:01] RECV: 'BPQ32 Node LNCWHT - Whitefield, ME  FN54EF \r\nPort 1: 433.100 MHz @ 1200 Baud\r\nPort 2: 145.090 MHz @ 1200 Baud\r\nN1REX-2: BBS @  N1REX.ME.USA.NA\r\nN1REX-4: CHAT \r\nN1REX-10: RMS\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-13 17:37:17] RECV: ''
+[2026-01-13 17:37:32] RECV: ''
+[2026-01-13 17:38:12] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 17:38:49] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 17:40:37] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 17:41:15] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 18:54:34] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 19:00:20] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 19:01:22] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 19:02:53] RECV: 'Welcome to KB1TAE Public Packet Node on 145.070Mhz Contact info on QRZ.com\r\n[KPC3P-9.1-HM$]\r\n476040 BYTES AVAILABLE IN 15 BLOCK(S)\r\nTHERE ARE NO MESSAGES\r\nPublic Packet BBS. Please [K]ill your personal messa'
+[2026-01-13 19:02:54] SEND: '?\r'
+[2026-01-13 19:03:20] RECV: 'ges after reading to save space. Bulletins/to "All" are welcome.\r\nENTER COMMAND:  B,J,K,L,R,S, or Help >\r\n'
+[2026-01-13 19:03:45] RECV: 'B(ye)         PBBS WILL DISCONNECT\r\nJ(heard)      CALLSIGNS WITH DAYSTAMP\r\nJ S(hort)     HEARD CALLSIGNS ONLY\r\nJ L(ong)      CALLSIGNS WITH DAYSTAMP AND VIAS\r\nL [x [y]] [;] LIST MESSAGES x THRU y YOU CAN READ\r\nL <|> call    LIST MESSAGES FROM OR TO CALL\r\nLB            LIST BULLETINS\r\nLC [cat]      LIST CATEGORIES\r\nLL n [;]      LIST LAST n MESSAGES\r\nLM(ine)       LIST UNREAD MESSAGES ADDRES'
+[2026-01-13 19:04:11] RECV: 'SED TO YOU\r\nLO [+|-]      LISTING ORDER\r\nLT            LIST TRAFFIC\r\nLTn           DISPLAY LOCATION TEXTn=1-4\r\nNL n          SET PAGE SIZE WHEN READING MESSAGES\r\nK(ill) n      DELETE MESSAGE NUMBER n\r\nKM(ine)       DELETE ALL READ MESSAGES ADDR'
+[2026-01-13 19:04:36] RECV: 'ESSED TO YOU\r\nR(ead) n      DISPLAY MESSAGE NUMBER n\r\nRH n          DISPLAY MESSAGE n WITH HEADERS\r\nRM(ine)       READ ALL MESSAGES ADDRESSED TO YOU\r\nS(end) call   SEND MESSAGE TO callsign\r\nS[B|P|T] call SEND BULLETIN, PRIVATE, or TRAFFIC\r\nU(sers)       DISPLAYS EVERYONE CONNECTED TO BBS\r\nENTER COMMAND:  B,J,K,L,R,S, or Help >\r\n'
+[2026-01-13 19:05:02] RECV: ''
+[2026-01-13 19:05:27] RECV: ''
+[2026-01-13 19:05:29] SEND: 'PORTS\r'
+[2026-01-13 19:05:54] RECV: 'ENTER COMMAND:  B,J,K,L,R,S, or Help >\r\n'
+[2026-01-13 19:06:19] RECV: ''
+[2026-01-13 19:06:45] RECV: ''
+[2026-01-13 19:07:10] RECV: ''
+[2026-01-13 19:07:12] SEND: 'NODES\r'
+[2026-01-13 19:07:37] RECV: 'ENTER COMMAND:  B,J,K,L,R,S, or Help >\r\n'
+[2026-01-13 19:08:02] RECV: ''
+[2026-01-13 19:08:04] SEND: 'ROUTES\r'
+[2026-01-13 19:08:30] RECV: 'ENTER COMMAND:  B,J,K,L,R,S, or Help >\r\n'
+[2026-01-13 19:08:55] RECV: ''
+[2026-01-13 19:09:21] RECV: ''
+[2026-01-13 21:24:07] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 21:24:46] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 21:24:48] SEND: '?\r'
+[2026-01-13 21:24:57] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 21:25:12] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 21:25:28] RECV: ''
+[2026-01-13 21:25:43] RECV: ''
+[2026-01-13 21:25:45] SEND: 'PORTS\r'
+[2026-01-13 21:25:57] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 21:26:12] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-13 21:26:13] SEND: 'NODES\r'
+[2026-01-13 21:26:29] RECV: ''
+[2026-01-13 21:26:44] RECV: ''
+[2026-01-13 21:27:00] RECV: ''
+[2026-01-13 21:27:15] RECV: ''
+[2026-01-13 21:27:21] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 21:27:36] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSWBK:KC1JMH-2  BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15        \r\nCHABUR:KS1R-13      CHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTRKD:KX1EMA-4     \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1JMH-15    DTXBBS:W1DTX-4      \r\nDTXNOD:W1DTX-7      KNNGNR:N1QFY-15     KNXABN:AB1KI-15     KNXEOC:KX1EMA-15    \r\nLLNWDB:K1NYY-15     RMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSRKD:KX1EMA-10    \r\nRMSWBK:KC1JMH-10  RMSWDB:K1NYY-10     RMSWHT:N1REX-10     TOPBBS:NG1P-1       \r\nTOPCHT:NG1P-2       TOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-13 21:27:37] SEND: 'ROUTES\r'
+[2026-01-13 21:27:49] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 21:28:04] RECV: 'Routes\r\n> 1 K1NYY-15  200 15!\r\n> 1 N1QFY-15  200 15!\r\n> 1 AB1KI-15  200 9!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-13 21:28:20] RECV: ''
+[2026-01-13 21:28:35] RECV: ''
+[2026-01-13 21:28:36] SEND: 'MHEARD 1\r'
+[2026-01-13 21:28:52] RECV: ''
+[2026-01-13 21:29:00] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 21:29:00] RECV: 'Heard List for Port 1\r\nN1QFY-15   00:00:00:00    \r\nAB1KI-15   00:00:00:30    \r\nK1NYY-15   00:00:00:33\r\nK1NYY-2    00:00:31:15    \r\nAB1KI-2    00:00:31:16    \r\nKB1TAE-15  00:01:14:10    \r\nKC1JMH-7   00:08:01:51    \r\nKC1JMH-1'
+[2026-01-13 21:29:01] SEND: 'MHEARD 2\r'
+[2026-01-13 21:29:17] RECV: ''
+[2026-01-13 21:29:29] RECV: '5  00:13:33:26    \r\nKS1R-15    00:14:47:46    \r\nLNCWHT:N1REX-15} '
+[2026-01-13 21:29:30] RECV: 'Heard List for Port 2\r\nN1LCN      00:00:02:09    \r\n'
+[2026-01-13 21:29:31] SEND: 'INFO\r'
+[2026-01-13 21:29:46] RECV: ''
+[2026-01-13 21:29:59] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 21:30:00] RECV: 'BPQ32 Node LNCWHT - Whitefield, ME  FN54EF \r\nPort 1: 433.100 MHz @ 1200 Baud\r\nPort 2: 145.090 MHz @ 1200 Baud\r\nN1REX-2: BBS @  N1REX.ME.USA.NA\r\nN1REX-4: CHAT \r\nN1REX-10: RMS\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-13 21:30:15] RECV: ''
+[2026-01-13 21:30:30] RECV: ''
+[2026-01-13 21:31:09] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 21:31:47] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 22:40:19] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 22:41:17] RECV: '\nNode N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 22:41:19] SEND: '?\r'
+[2026-01-13 22:41:30] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 22:41:45] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 22:42:01] RECV: ''
+[2026-01-13 22:42:16] RECV: ''
+[2026-01-13 22:42:18] SEND: 'PORTS\r'
+[2026-01-13 22:42:33] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 22:42:48] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-13 22:42:49] SEND: 'NODES\r'
+[2026-01-13 22:43:04] RECV: ''
+[2026-01-13 22:43:17] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 22:43:18] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     \r\nBBSWBK:KC1JMH-2  BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15        \r\nCHABUR:KS1R-13      CHTABN:AB1KI-4      CHTGNR:N1QF'
+[2026-01-13 22:43:19] SEND: 'ROUTES\r'
+[2026-01-13 22:43:34] RECV: 'Y-4      CHTRKD:KX1EMA-4     \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1JMH-15    DTXBBS:W1DTX-4  \r\nDTXNOD:W1DTX-7      KNNGNR:N1QFY-15     KNXABN:AB1KI-15     KNXEOC:KX1EMA-15    \r\nLLNWDB:K1NYY-15     RMSABN:AB1KI-10     RMSG'
+[2026-01-13 22:43:49] RECV: 'NR:N1QFY-10     RMSRKD:KX1EMA-10    \r\nRMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     RMSWHT:N1REX-10     TOPBBS:NG1P-1       \r\nTOPCHT:NG1P-2       TOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-13 22:44:05] RECV: ''
+[2026-01-13 22:44:05] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 22:44:06] RECV: 'Routes\r\n> 1 K1NYY-15  200 15!\r\n> 1 N1QFY-15  200 15!\r\n> 1 AB1KI-15  200 9!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-13 22:44:21] RECV: ''
+[2026-01-13 22:44:36] RECV: ''
+[2026-01-13 22:44:38] SEND: 'MHEARD 1\r'
+[2026-01-13 22:44:52] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 22:45:07] RECV: 'Heard List for Port 1\r\nN1QFY-15   00:00:00:00    \r\nK1NYY-15   00:00:00:21    \r\nAB1KI-15   00:00:01:49\r\nK1NYY-2    00:00:25:14    \r\nAB1KI-2    00:00:25:15    \r\nAB1K1-15   00:00:43:10    \r\nKB1TAE-15  00:02:30:11    \r\nKC1JMH-7   00:09:17:52    \r\nKC1JMH-15  00:14:49:27    \r\nKS1R-15    00:16:03:47    \r\n'
+[2026-01-13 22:45:08] SEND: 'MHEARD 2\r'
+[2026-01-13 22:45:24] RECV: ''
+[2026-01-13 22:45:32] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 22:45:32] RECV: 'Heard List for Port 2\r\nN1LCN      00:00:17:35    \r\n'
+[2026-01-13 22:45:33] SEND: 'INFO\r'
+[2026-01-13 22:45:45] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-13 22:46:00] RECV: 'BPQ32 Node LNCWHT - Whitefield, ME  FN54EF \r\nPort 1: 433.100 MHz @ 1200 Baud\r\nPort 2: 145.090 MHz @ 1200 Baud\r\nN1REX-2: BBS @  N1REX.ME.USA.NA\r\nN1REX-4: CHAT \r\nN1REX-10: RMS\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-13 22:46:16] RECV: ''
+[2026-01-13 22:46:31] RECV: ''
+[2026-01-13 22:47:18] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 22:47:54] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 22:58:42] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 22:59:25] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 23:04:54] RECV: 'Node EOC - Rockland, ME  FN54KC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 23:04:56] SEND: '?\r'
+[2026-01-13 23:05:09] RECV: 'KNXEOC:KX1EMA-15} '
+[2026-01-13 23:05:34] RECV: 'RMS EOC CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-13 23:06:00] RECV: ''
+[2026-01-13 23:06:25] RECV: ''
+[2026-01-13 23:06:27] SEND: 'PORTS\r'
+[2026-01-13 23:06:45] RECV: 'KNXEOC:KX1EMA-15} '
+[2026-01-13 23:07:10] RECV: 'Ports\r\n  1 433.30 MHz @ 1200 Baud        \r\n  2 145.03 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-13 23:07:12] SEND: 'NODES\r'
+[2026-01-13 23:07:37] RECV: ''
+[2026-01-13 23:07:41] RECV: 'KNXEOC:KX1EMA-15} '
+[2026-01-13 23:07:41] RECV: 'Nodes\r\nKS1R-15             BBSBEL:W1CPR-2      BBSESS:W1CPR-3      BBSRKD:KX1EMA-2     \r\nBBSSTG:WD1O-2  BBSSWV:W1EMA-2      CHTBEL:W1CPR-4      CHTESS:W1CPR-5      \r\nCHTRKD:KX1EMA-4     CHTSTG:WD1O-4       HFRMS:WD1O'
+[2026-01-13 23:07:43] SEND: 'ROUTES\r'
+[2026-01-13 23:08:08] RECV: '          KNXSTG:WD1O-15      \r\nMAESS:W1CPR-14      NHBEL:W1CPR-15      RMSBEL:W1CPR-10     RMSESS:W1CPR-11   \r\nRMSRKD:KX1EMA-10    RMSSTG:WD1O-10      RMSSWV:W1EMA-10     W1EMA:W1EMA-15      \r\n'
+[2026-01-13 23:08:21] RECV: 'KNXEOC:KX1EMA-15} '
+[2026-01-13 23:08:22] RECV: 'Routes\r\n  1 AB1KI-15  200 0!\r\n> 1 K1NYY-15  200 1!\r\n> 1 W1EMA-15  200 3!\r\n> 1 WD1O-15   200 13!\r\n'
+[2026-01-13 23:08:47] RECV: ''
+[2026-01-13 23:09:12] RECV: ''
+[2026-01-13 23:09:14] SEND: 'MHEARD 1\r'
+[2026-01-13 23:09:40] RECV: ''
+[2026-01-13 23:09:46] RECV: 'KNXEOC:KX1EMA-15} '
+[2026-01-13 23:09:46] RECV: 'Heard List for Port 1\r\nK1NYY-15   00:00:00:00    \r\nW1EMA-15   00:00:00:34    \r\nWD1O-15    00:00:01:37\r\nW1EMA-2    00:00:01:51    \r\nAB1KI-15   00:00:04:05    \r\nAB1KI-2    00:00:04:35    \r\nN1QFY-15   00:00:22:24    \r\nK1NYY-2'
+[2026-01-13 23:09:48] SEND: 'MHEARD 2\r'
+[2026-01-13 23:10:13] RECV: '    00:00:49:50    \r\nAB1K1-15   00:01:07:46    \r\nKNXEOC:KX1EMA-15} '
+[2026-01-13 23:10:38] RECV: 'Heard List for Port 2\r\n'
+[2026-01-13 23:10:40] SEND: 'INFO\r'
+[2026-01-13 23:10:57] RECV: 'KNXEOC:KX1EMA-15} '
+[2026-01-13 23:11:22] RECV: 'BPQ32 Node KNXEOC - Rockland, ME  FN54KC \r\n145.030 MHz @ 1200 Baud\r\nKX1EMA-2: BBS  @  EOC.#KX.ME.USA.NA\r\nSysop:    wd1o@arrl.net\r\n'
+[2026-01-13 23:11:48] RECV: ''
+[2026-01-13 23:12:13] RECV: ''
+[2026-01-13 23:12:53] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 23:13:30] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-13 23:15:17] RECV: ''
+[2026-01-13 23:15:18] SEND: '?\r'
+[2026-01-13 23:15:44] RECV: ''
+[2026-01-13 23:16:09] RECV: ''
+[2026-01-13 23:16:35] RECV: ''
+[2026-01-13 23:16:39] RECV: '*** Disconnected from Stream 1\r\n'
+[2026-01-14 07:39:49] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 08:58:34] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:39:56] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:42:08] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:42:46] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:43:24] RECV: ''
+[2026-01-14 09:43:26] SEND: '?\r'
+[2026-01-14 09:43:51] RECV: ''
+[2026-01-14 09:44:16] RECV: ''
+[2026-01-14 09:44:16] RECV: '*** Disconnected from Stream 1\r\n'
+[2026-01-14 09:45:10] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:45:47] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:47:58] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:48:36] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:50:47] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:51:43] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:53:53] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 09:54:31] RECV: ''
+[2026-01-14 09:55:38] RECV: 'KY2D VHF RRI DTN Packet Node in Damariscotta, ME \r\nKY2D2M KY2D-4: BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 09:55:40] SEND: '?\r'
+[2026-01-14 09:55:48] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 09:56:13] RECV: 'BBS EANHUB CHAT SYSOP CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 09:56:39] RECV: ''
+[2026-01-14 09:57:04] RECV: ''
+[2026-01-14 09:57:06] SEND: 'PORTS\r'
+[2026-01-14 09:57:15] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 09:57:40] RECV: 'Ports\r\n  1 AX/IP/UDP                     \r\n  2 Telnet Access                 \r\n  3 2 MeterPort 144.990        \r\n'
+[2026-01-14 09:57:42] SEND: 'NODES\r'
+[2026-01-14 09:57:52] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 09:58:17] RECV: 'Nodes\r\nN3HYM-5             VE2RWQ-2            VA2PGN-4            #TMP:VE3LNZ-8       \r\n#TMP:DB0ERF-15  #USWCH:WA3WLH-14    #USWST:WA3WLH-15    181232:IR3EA-5      \r\n1RNBBS:KW1U         1RNHUB:KW1U-1       2RZBPQ:VK2RZ-7      3KTNOD:F3KT-'
+[2026-01-14 09:58:17] RECV: '12      \r\n5EBBS:AE5E-3        5EDXA:AE5E-4        5RNALT:KE5YTA-1     AA5RMS:AA5AF        \r\nAGNODE:K1AJD-4     AMJDXC:VA3AMJ-4   '
+[2026-01-14 09:58:19] SEND: 'ROUTES\r'
+[2026-01-14 09:58:45] RECV: ''
+[2026-01-14 09:59:10] RECV: '  AQYNOD:ZL2AQY-2     ARECS:N2NOV-7       \r\nARMNTH:N9SEO-3      ASHCO:KD8FTR-7      ATLCHT:WB4QOJ-2     AUGBBS:K1AJD-7      \r\nAUGRMS:K1AJD-10     AUSMEL:VK3AT-1      BALCHT:VA3BAL-13    BAUNOD:ZL2BAU-3     \r\nBAUPMS:ZL2BAU-2     BAXURO:N9SEO-7   BBSCGR:VE3CGR-1     BBSCMF:WB2CMF-4     \r\nBBSGRZ:OE6XPE-8     BBSRVR:VE2RVR       BBSTOR:VA3BBS       BBSUIX:KC1UIX-3     \r\nBBSWDB:K1NYY-2   '
+[2026-01-14 09:59:36] RECV: '   BEDBBS:GB7BED       BEDCHT:GB7BED-1     BEDFRD:GB7BED-5     \r\nBILBBS:PY2BIL-1     BILNOD:PY2BIL-4     BILRMS:PY2BIL-10    BLNODE:IQ5BL-2      \r\nBLUBBS:N1RCW-1      BLUCHT:N1RCW-2      BLURMS:N1RCW-10     BPNNOD:KF0BPN-7     \r\nBPQBAL:VA3BAL-12    BPQCGR:VE3'
+[2026-01-14 10:00:01] RECV: 'CGR-7     BPQPKT:VE2PKT-2     BPQYZC:KA1YZC-2     \r\nBVJBBS:KA3BVJ-3     BVJCHT:KA3BVJ-11    BVJNOD:KA3BVJ-2   BVKBBS:IV3BVK-1     \r\nBVKCHT:IV3BVK-11    BVKRMS:IV3BVK-10    BZTCHT:KF4BZT-12    CANHUB:VE7GN-1      \r\nCASLGR:VA7RBP-7     CBEACH:WG3K-7       CCQ'
+[2026-01-14 10:00:27] RECV: 'SO:NM5PB-4       CHING:G3FCA-2       \r\nCHJBBS:KX4AC-4      CHLQSO:W8BAP-6      CHLSW1:W8BAP-7      CHTPGN:VA2PGN-11    \r\nCHTPKT:VE2PKT-6     CLMBBS:K3CLM-3      CLMCHT:K3CLM-4      CLMNOD:K3CLM-7      \r\nCMNCHT:W8CMN-15     COLCCT:W1SP-3       COSBBS:KE0GB-1  '
+[2026-01-14 10:00:52] RECV: '    COSCHT:KE0GB-11     \r\nCOSRMS:KE0GB-10     CRUNOD:GM7LJE-7     DATBBS:K5DAT-1      DATCHT:K5DAT-11     \r\nDATKEY:K5DAT        DATRMS:K5DAT-13     DATXR:K5DAT-5       DCECHT:LU9DCE-5     \r\nDCENOD:LU9DCE-4     DM4BBS:DM4RW-3      DM4RMS:DM4RW-10     DQCCHT:LW2DQC-8     \r\nDQCDX:LW2DQC-6      DTXBBS:W1DTX-4      DTXNOD:W1DTX-7      DUNNOD:M1DUN-2      \r\nDXCPKT:VE2PKT-9     DXLNZ:VE3LNZ-1 '
+[2026-01-14 10:00:54] SEND: 'MHEARD 3\r'
+[2026-01-14 10:01:19] RECV: '     DXVE:IZ3LSV-6       DZINOD:SV1DZI-11    \r\nEANHUB:KY2D-1       EANRMS:KY2D         ECRMS:KK4ZIZ-10     EHQRMS:VK2EHQ-3     \r\nE'
+[2026-01-14 10:01:44] RECV: ''
+[2026-01-14 10:02:10] RECV: 'KGBBS:OE1EKG-1     EKGCHT:OE1EKG-4     ELMNOD:K9ELM-7      EMEDOW:W2KPQ-5      \r\nFKACHT:IK5FKA-11    FOG0:WB4WPF-7       FQWCHT:KO4FQW-7     FUDBBS:N3FUD-11     \r\nFUDRMS:N3FUD-10     FWAN:W9LCF-7        GEBBS:AE7GE-2       GECHT:AE7GE-3       \r\nGENDE:AE7GE-1 '
+[2026-01-14 10:02:35] RECV: '      GPQBBS:VE2GPQ       GPQCHA:VE2GPQ-8     GTJNOS:KQ6UP-9      \r\nGWCONV:I0OJJ-5      GYBCHT:EI2GYB-4     GYBRMS:EI2GYB-5     GYBWWW:EI2GYB-10    \r\nHAMRMS:KB8PMY-10    HAMSW1:KB8PMY-5     HCANOD:WW2BSA-7     HFBBS:KY2D-5        \r\nHLSBHF:W7EES-1      HNTSVL:'
+[2026-01-14 10:03:01] RECV: 'KF5JRV-2     HYMBBS:N3HYM        HYMCHT:N3HYM-1      \r\nIACCTY:NM5PB-5      INBBS:N9LYA         JAPCHT:KD5TCY-3     JOSBBS:VE2JOS       \r\nJTNET:KB8UVN-4      KDRCHT:G8PZT-8      KIDDER:G8PZT        KYDCHT:KY2D-2       \r\nKYDXC:W7JD-1        KYNOS:K7EK-6        LABBS:K5GEO-1       LFALLS:K1YMI-7      \r\nLGNBBS:KC8RYM-1     LHNOD:KK4DIV-7      LINPGT:IW8PGT-3     LNZ:VE3LNZ          \r\nLSECHT'
+[2026-01-14 10:03:26] RECV: ':W9GM-11      MCEOC:WA5EOC-5      MDTBBS:N5MDT-4      MELBBS:N3MEL-2      \r\nMELCHT:N3MEL-3      MELRMS:N3MEL-11     MERID:KA1YZC-3      MH2BBS:N2MH-8       \r\nMH4NOD:N2MH-7       MH4RMS:N2MH-10      MHCHT:KN4MKB-12     MI7LAN:LANSNG-8     \r\nMNMSP:WG0A-7        MNWALL:WG0A-14      MONTNW:WA5EOC-2     MONTTX:N5MDT-13     \r\nMOZCHT:WB4MOZ-11    MTUBBS:KD6MTU-1     MVCHAT:AB6MV-4      ND3BBS'
+[2026-01-14 10:03:29] SEND: 'INFO\r'
+[2026-01-14 10:03:54] RECV: ''
+[2026-01-14 10:04:19] RECV: ''
+[2026-01-14 10:04:45] RECV: ''
+[2026-01-14 10:14:17] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:24:41] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:25:41] RECV: ''
+[2026-01-14 10:25:43] SEND: '?\r'
+[2026-01-14 10:25:54] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 10:26:09] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 10:26:26] RECV: ''
+[2026-01-14 10:26:41] RECV: ''
+[2026-01-14 10:26:57] RECV: ''
+[2026-01-14 10:27:12] RECV: ''
+[2026-01-14 10:27:14] SEND: 'PORTS\r'
+[2026-01-14 10:27:21] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 10:27:30] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\nLNCWHT:N1REX-15} '
+[2026-01-14 10:27:31] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-14 10:27:47] RECV: ''
+[2026-01-14 10:28:02] RECV: ''
+[2026-01-14 10:28:04] SEND: 'NODES\r'
+[2026-01-14 10:28:19] RECV: ''
+[2026-01-14 10:28:34] RECV: ''
+[2026-01-14 10:28:39] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 10:28:54] RECV: 'Nodes\r\nBBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      \r\nBBSWHT:N1REX-2  BURG:KS1R-15        CHABUR:KS1R-13      CHTGNR:N1QFY-4      \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1JMH-15    DATRMS:K5DAT-13     \r\nKNNGNR:N1QFY-15     LLNWDB:K1NYY-15     RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10    \r\nRMSWDB:K1NYY-10     RMSWHT:N1REX-10     TOPBBS:NG1P-1       TOPCHT:NG1P-2       \r\nTOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-14 10:29:10] RECV: ''
+[2026-01-14 10:29:25] RECV: ''
+[2026-01-14 10:29:28] SEND: 'ROUTES\r'
+[2026-01-14 10:29:38] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 10:29:53] RECV: 'Routes\r\n> 1 K1NYY-15  200 10!\r\n> 1 N1QFY-15  200 12!\r\n  1 AB1KI-15  200 0!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-14 10:30:09] RECV: ''
+[2026-01-14 10:30:24] RECV: ''
+[2026-01-14 10:30:40] RECV: ''
+[2026-01-14 10:30:55] RECV: ''
+[2026-01-14 10:30:58] SEND: 'MHEARD 1\r'
+[2026-01-14 10:31:13] RECV: ''
+[2026-01-14 10:31:14] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 10:31:15] RECV: 'Heard List for Port 1\r\nN1QFY-15   00:00:00:00    \r\nK1NYY-15   00:00:00:02    \r\nK1NYY-2    00:00:49:49\r\nAB1KI-15   00:02:04:01    \r\nAB1KI-2    00:02:44:38    \r\n'
+[2026-01-14 10:31:30] RECV: ''
+[2026-01-14 10:31:45] RECV: ''
+[2026-01-14 10:31:48] SEND: 'MHEARD 2\r'
+[2026-01-14 10:31:58] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 10:32:13] RECV: 'Heard List for Port 2\r\nN1LCN      00:00:24:42    \r\n'
+[2026-01-14 10:32:29] RECV: ''
+[2026-01-14 10:32:44] RECV: ''
+[2026-01-14 10:33:41] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:34:18] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:36:28] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:37:20] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:39:31] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:40:09] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:41:11] RECV: ''
+[2026-01-14 10:41:12] SEND: '?\r'
+[2026-01-14 10:41:38] RECV: 'AB1KI-15 on Aborn Hill, ME  FN54JM \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:41:55] RECV: 'KNXABN:AB1KI-15} '
+[2026-01-14 10:41:56] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 10:42:21] RECV: ''
+[2026-01-14 10:42:46] RECV: ''
+[2026-01-14 10:43:12] RECV: ''
+[2026-01-14 10:43:37] RECV: ''
+[2026-01-14 10:43:40] SEND: 'PORTS\r'
+[2026-01-14 10:44:06] RECV: ''
+[2026-01-14 10:44:31] RECV: ''
+[2026-01-14 10:44:57] RECV: ''
+[2026-01-14 10:45:22] RECV: ''
+[2026-01-14 10:45:49] RECV: ''
+[2026-01-14 10:46:14] RECV: ''
+[2026-01-14 10:46:40] RECV: ''
+[2026-01-14 10:47:05] RECV: ''
+[2026-01-14 10:47:32] RECV: ''
+[2026-01-14 10:47:57] RECV: ''
+[2026-01-14 10:48:00] SEND: 'NODES\r'
+[2026-01-14 10:48:25] RECV: ''
+[2026-01-14 10:48:50] RECV: ''
+[2026-01-14 10:49:08] RECV: '*** Disconnected from Stream 1\r\n'
+[2026-01-14 10:49:56] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:50:33] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:52:44] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:53:22] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:55:33] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:56:10] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:58:21] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:59:03] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 10:59:58] RECV: 'KY2D VHF RRI DTN Packet Node in Damariscotta, ME \r\nKY2D2M KY2D-4: BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 10:59:59] SEND: '?\r'
+[2026-01-14 11:00:24] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 11:00:49] RECV: 'BBS EANHUB CHAT SYSOP CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 11:46:18] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:47:15] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:49:27] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:50:05] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:52:17] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:52:55] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:55:06] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:55:42] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:57:54] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:58:31] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 11:59:34] RECV: 'KY2D VHF RRI DTN Packet Node in Damariscotta, ME \r\nKY2D2M KY2D-4: BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 11:59:35] SEND: '?\r'
+[2026-01-14 11:59:46] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 12:00:11] RECV: 'BBS EANHUB CHAT SYSOP CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:00:37] RECV: ''
+[2026-01-14 12:01:02] RECV: ''
+[2026-01-14 12:01:28] RECV: ''
+[2026-01-14 12:01:53] RECV: ''
+[2026-01-14 12:01:56] SEND: 'PORTS\r'
+[2026-01-14 12:02:19] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 12:02:44] RECV: 'Ports\r\n  1 AX/IP/UDP                     \r\n  2 Telnet Access                 \r\n  3 2 MeterPort 144.990        \r\n'
+[2026-01-14 12:03:11] RECV: ''
+[2026-01-14 12:03:36] RECV: ''
+[2026-01-14 12:03:39] SEND: 'NODES\r'
+[2026-01-14 12:03:50] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 12:04:15] RECV: 'Nodes\r\nN3HYM-5             VE2RWQ-2            VA2PGN-4            #TMP:VE3LNZ-8       \r\n#TMP:DB0ERF-15  #USWCH:WA3WLH-14    #USWST:WA3WLH-15    181232:IR3EA-5      \r\n1RNBBS:KW1U         1RNHUB:KW1U-1       2RZBPQ:VK2RZ-7      3KTNOD:F3KT-12      \r\n5EBBS:AE5E-3        5EDXA:AE5E-4        5RNALT:KE5YTA-1     AA5RMS:AA5AF        \r\nAGNODE:K1AJD-4      AMJDXC:VA3AMJ-4   '
+[2026-01-14 12:04:41] RECV: '  AQYNOD:ZL2AQY-2     ARECS:N2NOV-7       \r\nARMNTH:N9SEO-3      ASHCO:KD8FTR-7      ATLCHT:WB4QOJ-2     AUGBBS:K1AJD-7      \r\nAUGRMS:K1AJD-10     AUSMEL:VK3AT-1      BALCHT:VA3BAL-13    BAUNOD:ZL2BAU-3     \r\nBAUPMS:ZL2BAU-2     BAXURO:N9SEO-7   BBSCGR:VE3CGR-1     BBSCMF:WB2CMF-4     \r\nBBSGRZ:OE6XPE-8     BBSRVR:VE2RVR       BBSTOR:VA3BBS       BBSUIX:KC1UIX-3     \r\nBBSWDB:K1NYY-2   '
+[2026-01-14 12:05:06] RECV: '   BEDBBS:GB7BED       BEDCHT:GB7BED-1     BEDFRD:GB7BED-5     \r\nBILBBS:PY2BIL-1     BILNOD:PY2BIL-4     BILRMS:PY2BIL-10    BLNODE:IQ5BL-2      \r\nBLUBBS:N1RCW-1      BLUCHT:N1RCW-2      BLUDXC:N1RCW-4      BLURMS:N1RCW-10     \r\nBPNNOD:KF0BPN-7    BPQBAL:VA3'
+[2026-01-14 12:05:33] RECV: 'BAL-12    BPQCGR:VE3CGR-7     BPQPKT:VE2PKT-2     \r\nBPQYZC:KA1YZC-2     BVJBBS:KA3BVJ-3     BVJCHT:KA3BVJ-11   BVJNOD:KA3BVJ-2     \r\nBVKBBS:IV3BVK-1     BVKCHT:IV3BVK-11    BVKRMS:IV3BVK-10    BZTCHT:KF4BZT-12    \r\nCANHUB:VE7GN-1      CASLGR:VA7RBP-7     CBEACH:WG3K-7       CCQSO:NM5PB-4       \r\nCHING:G3FCA-2       CHJBBS:KX4AC-4      CHLQSO:W8BAP-6      CHLSW1:W8BAP-7      \r\nCHTPGN:VA2PGN-11    CHTPKT:VE2PKT-6     CLMBBS:K3CLM-3      CLMCHT:K3CLM-4      \r\nCLMNOD:K3CLM-7      CMNCHT:W8CMN-15     COSBBS:KE0GB-1  '
+[2026-01-14 12:05:58] RECV: '    COSCHT:KE0GB-11     \r\nCOSRMS:KE0GB-10     CRUNOD:GM7LJE-7     DATBBS:K5DAT-1      DATCHT:K5DAT-11     \r\nDATKEY:K5DAT        DA'
+[2026-01-14 12:06:24] RECV: 'TRMS:K5DAT-13     DATXR:K5DAT-5       DCECHT:LU9DCE-5     \r\nDCENOD:LU9DCE-4     DM4BBS:DM4RW-3      DM4RMS:DM4RW-10     DQCCHT:LW2DQC-8     \r\nDQCDX:LW2DQC-6      DTXBBS:W1DTX-4      DTXNOD:W1DTX-7      DUNNOD:M1DUN-2      \r\nDXCPKT:VE2PKT-9     DXLNZ:VE3LNZ-1      DXVE:IZ3LSV-6       DZINOD:SV1DZI-11    \r\nEANHUB:KY2D-1       EANRMS:KY2D         ECRMS:KK4ZIZ-10     EHQRMS:VK2EHQ-3   \r\nE'
+[2026-01-14 12:06:27] RECV: 'KGBBS:OE1EKG-1     EKGCHT:OE1EKG-4     ELMNOD:K9ELM-7      EMEDOW:W2KPQ-5      \r\nFKACHT:IK5FKA-11    FOG0:WB4WPF-7       FQWCHT:KLLNWDB:K1NYY-15} '
+[2026-01-14 12:06:28] RECV: 'Connected to KY2D-15\r\n'
+[2026-01-14 12:06:53] RECV: 'KY2D VHF RRI DTN Packet Node in Damariscotta, ME \r\nKY2D2M KY2D-4: BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:07:18] RECV: ''
+[2026-01-14 12:07:21] SEND: 'ROUTES\r'
+[2026-01-14 12:07:47] RECV: ''
+[2026-01-14 12:08:12] RECV: ''
+[2026-01-14 12:08:38] RECV: ''
+[2026-01-14 12:09:03] RECV: ''
+[2026-01-14 12:09:30] RECV: ''
+[2026-01-14 12:09:55] RECV: ''
+[2026-01-14 12:10:21] RECV: ''
+[2026-01-14 12:10:46] RECV: ''
+[2026-01-14 12:11:13] RECV: ''
+[2026-01-14 12:11:38] RECV: ''
+[2026-01-14 12:12:19] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:12:56] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:13:37] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:13:39] SEND: '?\r'
+[2026-01-14 12:13:48] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:14:13] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:14:39] RECV: ''
+[2026-01-14 12:15:04] RECV: ''
+[2026-01-14 12:15:30] RECV: ''
+[2026-01-14 12:15:55] RECV: ''
+[2026-01-14 12:15:58] SEND: 'PORTS\r'
+[2026-01-14 12:16:23] RECV: ''
+[2026-01-14 12:16:24] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:16:25] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-14 12:16:51] RECV: ''
+[2026-01-14 12:17:16] RECV: ''
+[2026-01-14 12:17:19] SEND: 'NODES\r'
+[2026-01-14 12:17:38] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:18:03] RECV: 'Nodes\r\nBBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      \r\nBBSWHT:N1REX-2  BURG:KS1R-15        CHABUR:KS1R-13      CHTGNR:N1QFY-4      \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1J'
+[2026-01-14 12:18:30] RECV: 'MH-15    DATRMS:K5DAT-13     \r\nKNNGNR:N1QFY-15     LLNWDB:K1NYY-15     RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10  \r\nRMSWDB:K1NYY-10     RMSWHT:N1REX-10     TOPBBS:NG1P-1       TOPCHT:NG1P-2       \r\nTOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-14 12:18:55] RECV: ''
+[2026-01-14 12:19:21] RECV: ''
+[2026-01-14 12:19:46] RECV: ''
+[2026-01-14 12:19:49] SEND: 'ROUTES\r'
+[2026-01-14 12:20:01] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:20:26] RECV: 'Routes\r\n> 1 K1NYY-15  200 10!\r\n> 1 N1QFY-15  200 12!\r\n  1 AB1KI-15  200 0!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-14 12:20:53] RECV: ''
+[2026-01-14 12:21:18] RECV: ''
+[2026-01-14 12:21:44] RECV: ''
+[2026-01-14 12:22:09] RECV: ''
+[2026-01-14 12:22:12] SEND: 'MHEARD 1\r'
+[2026-01-14 12:22:29] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:22:54] RECV: 'Heard List for Port 1\r\nN1QFY-15   00:00:00:00    \r\nK1NYY-15   00:00:00:15    \r\nKC1JMH-7   00:01:30:34\r\nK1NYY-2    00:02:41:02    \r\nAB1KI-15   00:03:55:14    \r\nAB1KI-2    00:04:35:51    \r\n'
+[2026-01-14 12:23:20] RECV: ''
+[2026-01-14 12:23:45] RECV: ''
+[2026-01-14 12:24:28] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:25:05] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:26:49] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:27:28] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:29:39] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:30:21] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:32:32] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:33:10] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:35:32] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:36:20] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:38:30] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:39:06] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:39:46] RECV: 'KY2D VHF RRI DTN Packet Node in Damariscotta, ME \r\nKY2D2M KY2D-4: BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:39:48] SEND: '?\r'
+[2026-01-14 12:39:51] RECV: ''
+[2026-01-14 12:39:54] RECV: ''
+[2026-01-14 12:39:59] RECV: ''
+[2026-01-14 12:40:02] RECV: ''
+[2026-01-14 12:40:06] RECV: ''
+[2026-01-14 12:40:09] RECV: ''
+[2026-01-14 12:40:14] RECV: ''
+[2026-01-14 12:40:17] RECV: ''
+[2026-01-14 12:40:19] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 12:40:22] RECV: 'BBS EANHUB CHAT SYSOP CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:40:27] RECV: ''
+[2026-01-14 12:40:30] RECV: ''
+[2026-01-14 12:40:34] RECV: ''
+[2026-01-14 12:40:37] RECV: ''
+[2026-01-14 12:40:40] SEND: 'PORTS\r'
+[2026-01-14 12:40:43] RECV: ''
+[2026-01-14 12:40:46] RECV: ''
+[2026-01-14 12:40:51] RECV: ''
+[2026-01-14 12:40:51] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 12:40:52] RECV: 'Ports\r\n  1 AX/IP/UDP                     \r\n  2 Telnet Access                 \r\n  3 2 MeterPort 144.990        \r\n'
+[2026-01-14 12:40:55] RECV: ''
+[2026-01-14 12:40:58] RECV: ''
+[2026-01-14 12:41:02] SEND: 'NODES\r'
+[2026-01-14 12:41:05] RECV: ''
+[2026-01-14 12:41:08] RECV: ''
+[2026-01-14 12:41:12] RECV: ''
+[2026-01-14 12:41:15] RECV: ''
+[2026-01-14 12:41:20] RECV: ''
+[2026-01-14 12:41:23] RECV: 'KY2D2M:KY2D-15} '
+[2026-01-14 12:41:24] RECV: 'Nodes\r\nVE2RWQ-2            VA2PGN-4            #TMP:VE3LNZ-8       #TMP:DB0ERF-15      \r\n#USWCH:WA3WLH-14  #USWS'
+[2026-01-14 12:41:27] RECV: ''
+[2026-01-14 12:41:30] RECV: ''
+[2026-01-14 12:41:33] SEND: 'ROUTES\r'
+[2026-01-14 12:41:36] RECV: 'T:WA3WLH-15    181232:IR3EA-5      1RNBBS:KW1U         \r\n1RNHUB:KW1U-1       2RZBPQ:VK2RZ-7      3KTNOD:F3KT-12      5EBBS:AE5E-3'
+[2026-01-14 12:41:39] RECV: '        \r\n5EDXA:AE5E-4        5RNALT:KE5YTA-1     AA5RMS:AA5AF        AGNODE:K1AJD-4      \r\nAMJDXC:VA3AMJ-4     AQYNOD:ZL2AQY-2   '
+[2026-01-14 12:41:44] RECV: '  ARECS:N2NOV-7       ARMNTH:N9SEO-3      \r\nASHCO:KD8FTR-7      ATLCHT:WB4QOJ-2     AUGBBS:K1AJD-7      AUGRMS:K1AJD-10     \r\nAUSMEL:VK3AT-1      BALCHT:VA3BAL-13    BAUNOD:ZL2BAU-3     BAUPMS:ZL2BAU-2     \r\nBAXURO:N9SEO-7      BBSCGR:VE3CGR-1   BBSCMF:WB2C'
+[2026-01-14 12:41:47] RECV: ''
+[2026-01-14 12:41:51] RECV: ''
+[2026-01-14 12:41:54] RECV: ''
+[2026-01-14 12:41:58] RECV: ''
+[2026-01-14 12:42:01] RECV: ''
+[2026-01-14 12:42:04] SEND: 'MHEARD 3\r'
+[2026-01-14 12:42:08] RECV: 'MF-4     BBSGRZ:OE6XPE-8     \r\nBBSRVR:VE2RVR       BBSTOR:VA3BBS       BBSUIX:KC1UIX-3     BBSWDB:K1NYY-2  \r\nBEDBBS:GB7BED    '
+[2026-01-14 12:42:11] RECV: ''
+[2026-01-14 12:42:15] RECV: ''
+[2026-01-14 12:42:18] RECV: ''
+[2026-01-14 12:42:22] RECV: ''
+[2026-01-14 12:42:25] RECV: ''
+[2026-01-14 12:42:28] SEND: 'INFO\r'
+[2026-01-14 12:42:31] RECV: ''
+[2026-01-14 12:42:34] RECV: ''
+[2026-01-14 12:42:39] RECV: ''
+[2026-01-14 12:42:42] RECV: ''
+[2026-01-14 12:42:47] RECV: ''
+[2026-01-14 12:42:50] RECV: ''
+[2026-01-14 12:42:54] RECV: ''
+[2026-01-14 12:42:57] RECV: '   BEDCHT:GB7BED-1     BEDFRD:GB7BED-5     BILBBS:PY2BIL-1     \r\nBILNOD:PY2BIL-4     BILRMS:PY2BIL-10    BLNODE:IQ5BL-2      BLUBBS:N1RCW-1      \r\nBLUCHT:N1RCW-2      BLUDXC:N1RCW-4      BLURMS:N1RCW-10     BLUWWC:N1RCW-5      \r\nBPNNOD:KF0BPN-7    BPQBAL:VA3'
+[2026-01-14 12:43:02] RECV: 'BAL-12    BPQCGR:VE3CGR-7     BPQPKT:VE2PKT-2     \r\nBPQYZC:KA1YZC-2     BVJBBS:KA3BVJ-3     BVJCHT:KA3BVJ-11   BVJNOD:KA3BVJ-2     \r\nBVKBBS:IV3BVK-1     BVKCHT:IV3BVK-11    BVKRMS:IV3BVK-10    BZTCHT:KF4BZT-12    \r\nCANHUB:VE7GN-1      CASLGR:VA7RBP-7     CBE'
+[2026-01-14 12:43:05] RECV: ''
+[2026-01-14 12:43:09] RECV: ''
+[2026-01-14 12:43:12] RECV: 'ACH:WG3K-7       CCQSO:NM5PB-4       \r\nCHING:G3FCA-2       CHJBBS:KX4AC-4      CHLQSO:W8BAP-6      CHLSW1:W8BAP-7      \r\nCHTPGN:VA'
+[2026-01-14 12:43:17] RECV: ''
+[2026-01-14 12:43:20] RECV: ''
+[2026-01-14 12:43:24] RECV: ''
+[2026-01-14 12:43:27] RECV: ''
+[2026-01-14 12:43:30] SEND: '?\r'
+[2026-01-14 12:43:33] RECV: ''
+[2026-01-14 12:43:36] RECV: ''
+[2026-01-14 12:43:40] RECV: ''
+[2026-01-14 12:43:43] RECV: ''
+[2026-01-14 12:43:48] RECV: ''
+[2026-01-14 12:43:51] RECV: ''
+[2026-01-14 12:43:55] RECV: ''
+[2026-01-14 12:43:58] RECV: ''
+[2026-01-14 12:44:03] RECV: ''
+[2026-01-14 12:44:06] RECV: ''
+[2026-01-14 12:44:10] RECV: ''
+[2026-01-14 12:44:13] RECV: ''
+[2026-01-14 12:44:14] RECV: '2PGN-11    CHTPKT:VE2PKT-6     CLMBBS:K3CLM-3      CLMCHT:K3CLM-4      \r\nCLMNOD:K3CLM-7      CMNCHT:W8CMN-15    COSBBS:KE0GB-1  '
+[2026-01-14 12:44:18] RECV: ''
+[2026-01-14 12:44:21] RECV: '    COSCHT:KE0GB-11     \r\nCOSRMS:KE0GB-10     CRUNOD:GM7LJE-7     DATBBS:K5DAT-1      DATCHT:K5DAT-11     \r\nDATKEY:K5DAT        DA'
+[2026-01-14 12:44:25] RECV: ''
+[2026-01-14 12:44:28] RECV: ''
+[2026-01-14 12:44:32] RECV: ''
+[2026-01-14 12:44:35] RECV: ''
+[2026-01-14 12:45:32] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:46:52] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:47:32] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:47:33] SEND: '?\r'
+[2026-01-14 12:47:37] RECV: ''
+[2026-01-14 12:47:40] RECV: ''
+[2026-01-14 12:47:44] RECV: ''
+[2026-01-14 12:47:47] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:47:48] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:47:51] RECV: ''
+[2026-01-14 12:47:54] RECV: ''
+[2026-01-14 12:47:58] RECV: ''
+[2026-01-14 12:48:01] RECV: ''
+[2026-01-14 12:48:04] SEND: 'PORTS\r'
+[2026-01-14 12:48:07] RECV: ''
+[2026-01-14 12:48:10] RECV: ''
+[2026-01-14 12:48:15] RECV: ''
+[2026-01-14 12:48:18] RECV: ''
+[2026-01-14 12:48:21] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:48:24] RECV: 'Ports\r\n  1 433.10 MHz @ 1200 Baud        \r\n  2 145.09 MHz @ 1200 Baud        \r\n  9 Telnet Server        \r\n'
+[2026-01-14 12:48:29] RECV: ''
+[2026-01-14 12:48:32] RECV: ''
+[2026-01-14 12:48:35] SEND: 'NODES\r'
+[2026-01-14 12:48:38] RECV: ''
+[2026-01-14 12:48:41] RECV: ''
+[2026-01-14 12:48:46] RECV: ''
+[2026-01-14 12:48:49] RECV: ''
+[2026-01-14 12:48:53] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:48:56] RECV: 'Nodes\r\nBBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      \r\nBBSWHT:N1REX-2  BURG:KS1R-15        CHABUR:KS1R-13      CHTGNR:N1QFY-4      \r\nCHTWBK:KC1JMH-4     CHTWHT:N1REX-4      CMBWBK:KC1J'
+[2026-01-14 12:49:00] RECV: ''
+[2026-01-14 12:49:03] RECV: 'MH-15    DATRMS:K5DAT-13     \r\nKNNGNR:N1QFY-15     LLNWDB:K1NYY-15     RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10  \r\nRMSWDB:K1NYY-10     RMSWHT:N1REX-10     TOPBBS:NG1P-1       TOPCHT:NG1P-2       \r\nTOPRMS:NG1P-10      TOPS:NG1P-4         \r\n'
+[2026-01-14 12:49:08] RECV: ''
+[2026-01-14 12:49:11] RECV: ''
+[2026-01-14 12:49:14] SEND: 'ROUTES\r'
+[2026-01-14 12:49:17] RECV: ''
+[2026-01-14 12:49:20] RECV: ''
+[2026-01-14 12:49:25] RECV: ''
+[2026-01-14 12:49:28] RECV: ''
+[2026-01-14 12:49:32] RECV: ''
+[2026-01-14 12:49:35] RECV: ''
+[2026-01-14 12:49:40] RECV: ''
+[2026-01-14 12:49:43] RECV: ''
+[2026-01-14 12:49:47] RECV: ''
+[2026-01-14 12:49:49] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:49:50] RECV: 'Routes\r\n> 1 K1NYY-15  200 10!\r\n> 1 N1QFY-15  200 12!\r\n  1 AB1KI-15  200 0!\r\n  1 KC1JMH-15 0 0!\r\n'
+[2026-01-14 12:49:53] RECV: ''
+[2026-01-14 12:49:56] RECV: ''
+[2026-01-14 12:50:00] RECV: ''
+[2026-01-14 12:50:03] RECV: ''
+[2026-01-14 12:50:06] SEND: 'MHEARD 1\r'
+[2026-01-14 12:50:09] RECV: ''
+[2026-01-14 12:50:12] RECV: ''
+[2026-01-14 12:50:17] RECV: ''
+[2026-01-14 12:50:20] RECV: ''
+[2026-01-14 12:50:24] RECV: ''
+[2026-01-14 12:50:27] RECV: ''
+[2026-01-14 12:50:31] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:50:34] RECV: 'Heard List for Port 1\r\nK1NYY-15   00:00:00:00    \r\nN1QFY-15   00:00:00:48    \r\nKC1JMH-7   00:01:58:36\r\nK1NYY-2    00:03:09:04    \r\nAB1KI-15   00:04:23:16    \r\nAB1KI-2    00:05:03:53    \r\n'
+[2026-01-14 12:50:38] RECV: ''
+[2026-01-14 12:50:41] RECV: ''
+[2026-01-14 12:50:44] SEND: 'MHEARD 2\r'
+[2026-01-14 12:50:47] RECV: ''
+[2026-01-14 12:50:50] RECV: ''
+[2026-01-14 12:50:53] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:50:56] RECV: 'Heard List for Port 2\r\nN1LCN      00:00:11:47    \r\n'
+[2026-01-14 12:51:01] RECV: ''
+[2026-01-14 12:51:04] RECV: ''
+[2026-01-14 12:51:07] SEND: 'INFO\r'
+[2026-01-14 12:51:10] RECV: ''
+[2026-01-14 12:51:13] RECV: ''
+[2026-01-14 12:51:18] RECV: ''
+[2026-01-14 12:51:21] RECV: ''
+[2026-01-14 12:51:25] RECV: ''
+[2026-01-14 12:51:28] RECV: ''
+[2026-01-14 12:51:33] RECV: ''
+[2026-01-14 12:51:36] RECV: ''
+[2026-01-14 12:51:40] RECV: ''
+[2026-01-14 12:51:43] RECV: ''
+[2026-01-14 12:51:44] RECV: 'LNCWHT:N1REX-15} BPQ32 Node LNCWHT - Whitefield, ME  FN54EF \r\nPort 1: 433.100 MHz @ 1200 Baud\r\nPort 2: 145.090 MHz @ 1200 Baud\r\nN1REX-2: BBS @  N1REX.ME.USA.NA\r\nN1REX-4: CHAT \r\nN1REX-10: RMS\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-14 12:51:48] RECV: ''
+[2026-01-14 12:51:51] RECV: ''
+[2026-01-14 12:51:55] RECV: ''
+[2026-01-14 12:51:58] RECV: ''
+[2026-01-14 12:52:01] SEND: '?\r'
+[2026-01-14 12:52:04] RECV: ''
+[2026-01-14 12:52:07] RECV: ''
+[2026-01-14 12:52:10] RECV: 'LNCWHT:N1REX-15} '
+[2026-01-14 12:52:13] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:52:17] RECV: ''
+[2026-01-14 12:52:20] RECV: ''
+[2026-01-14 12:52:24] RECV: ''
+[2026-01-14 12:52:27] RECV: ''
+[2026-01-14 12:53:09] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:53:48] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 12:54:45] RECV: 'Welcome to the Topsham, ME General Use System BPQ32 Node. \r\nNG1P> BBS RMS CONNECT BYE INFO NODES ROUTES PORTS USERS MHEARD\r\n'
+[2026-01-14 12:54:46] SEND: '?\r'
+[2026-01-14 12:54:49] RECV: ''
+[2026-01-14 12:54:52] RECV: ''
+[2026-01-14 12:54:56] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 12:54:59] RECV: 'BBS CHAT RMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 12:55:04] RECV: ''
+[2026-01-14 12:55:07] RECV: ''
+[2026-01-14 12:55:11] RECV: ''
+[2026-01-14 12:55:14] RECV: ''
+[2026-01-14 12:55:17] SEND: 'PORTS\r'
+[2026-01-14 12:55:20] RECV: ''
+[2026-01-14 12:55:23] RECV: ''
+[2026-01-14 12:55:28] RECV: ''
+[2026-01-14 12:55:31] RECV: ''
+[2026-01-14 12:55:35] RECV: ''
+[2026-01-14 12:55:38] RECV: ''
+[2026-01-14 12:55:43] RECV: ''
+[2026-01-14 12:55:46] RECV: ''
+[2026-01-14 12:55:50] RECV: ''
+[2026-01-14 12:55:53] RECV: ''
+[2026-01-14 12:55:56] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 12:55:59] RECV: 'Ports\r\n  1 145.070 MHz 1200 bps          \r\n  2 Telnet Server                 \r\n  3 AX/IP/UDP        \r\n'
+[2026-01-14 12:56:04] RECV: ''
+[2026-01-14 12:56:07] RECV: ''
+[2026-01-14 12:56:10] SEND: 'NODES\r'
+[2026-01-14 12:56:13] RECV: ''
+[2026-01-14 12:56:16] RECV: ''
+[2026-01-14 12:56:21] RECV: ''
+[2026-01-14 12:56:23] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 12:56:24] RECV: 'Nodes\r\nBBSGNR:N1QFY-2      CHTGNR:N1QFY-4      DATBBS:K5DAT-1      DATCHT:K5DAT-11     \r\nDATKEY:K5DAT  DATRMS:K5DAT-13     KNNGNR:N1QFY-15     RMSGNR:N1QFY-10     \r\nSHAWNO:K5DAT-7      TOPBBS:NG1P-1       TOPCHT:NG1P-2  '
+[2026-01-14 12:56:27] RECV: ''
+[2026-01-14 12:56:30] RECV: ''
+[2026-01-14 12:56:33] SEND: 'ROUTES\r'
+[2026-01-14 12:56:37] RECV: ''
+[2026-01-14 12:56:40] RECV: ''
+[2026-01-14 12:56:44] RECV: '     TOPRMS:NG1P-10      \r\n'
+[2026-01-14 12:56:47] RECV: ''
+[2026-01-14 12:56:52] RECV: ''
+[2026-01-14 12:56:55] RECV: ''
+[2026-01-14 12:56:59] RECV: ''
+[2026-01-14 12:57:02] RECV: ''
+[2026-01-14 12:57:05] SEND: 'MHEARD 1\r'
+[2026-01-14 12:57:05] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 12:57:08] RECV: 'Routes\r\n> 3 K5DAT-7   129 5!\r\n> 1 N1QFY-15  120 4!\r\n'
+[2026-01-14 12:57:12] RECV: ''
+[2026-01-14 12:57:15] RECV: ''
+[2026-01-14 12:57:19] RECV: ''
+[2026-01-14 12:57:22] RECV: ''
+[2026-01-14 12:57:25] SEND: 'INFO\r'
+[2026-01-14 12:57:27] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 12:57:30] RECV: 'Heard List for Port 1\r\nN1QFY-15   00:00:00:00    \r\nKB1TAE     00:00:02:02    \r\nKC1JMH-7   00:03:04:54\r\nN1QFY-4    00:18:50:59    \r\nN1QFY-2    00:18:53:01    via KB1TAE*\r\nN1QFY-10   01:16:19:39    \r\nN1Q-11     03:14:43:07    \r\nK'
+[2026-01-14 12:57:34] RECV: ''
+[2026-01-14 12:57:37] RECV: ''
+[2026-01-14 12:57:41] RECV: ''
+[2026-01-14 12:57:44] RECV: ''
+[2026-01-14 12:57:47] SEND: '?\r'
+[2026-01-14 12:57:51] RECV: ''
+[2026-01-14 12:57:54] RECV: ''
+[2026-01-14 12:57:58] RECV: ''
+[2026-01-14 12:58:01] RECV: ''
+[2026-01-14 12:58:06] RECV: ''
+[2026-01-14 12:58:09] RECV: ''
+[2026-01-14 12:58:13] RECV: ''
+[2026-01-14 12:58:16] RECV: ''
+[2026-01-14 12:58:21] RECV: ''
+[2026-01-14 12:58:24] RECV: ''
+[2026-01-14 12:58:28] RECV: ''
+[2026-01-14 12:58:31] RECV: ''
+[2026-01-14 12:58:36] RECV: ''
+[2026-01-14 12:58:39] RECV: ''
+[2026-01-14 12:58:43] RECV: ''
+[2026-01-14 12:58:46] RECV: ''
+[2026-01-14 12:58:51] RECV: ''
+[2026-01-14 12:58:54] RECV: ''
+[2026-01-14 12:58:58] RECV: ''
+[2026-01-14 12:59:01] RECV: ''
+[2026-01-14 12:59:06] RECV: ''
+[2026-01-14 12:59:09] RECV: ''
+[2026-01-14 12:59:13] RECV: ''
+[2026-01-14 12:59:16] RECV: ''
+[2026-01-14 13:24:21] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:24:57] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:27:09] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:27:47] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:29:58] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:30:35] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:32:46] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:33:24] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:52:45] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:53:22] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:55:33] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:56:17] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:58:28] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 13:59:06] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 14:01:17] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 14:02:06] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 14:04:18] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 14:05:38] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 14:06:20] RECV: 'Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 14:07:03] RECV: ''
+[2026-01-14 14:07:04] SEND: '?\r'
+[2026-01-14 14:07:08] RECV: ''
+[2026-01-14 14:07:11] RECV: ''
+[2026-01-14 14:07:15] RECV: ''
+[2026-01-14 14:07:18] RECV: ''
+[2026-01-14 14:07:23] RECV: ''
+[2026-01-14 14:07:26] RECV: ''
+[2026-01-14 14:07:30] RECV: ''
+[2026-01-14 14:07:33] RECV: ''
+[2026-01-14 14:07:38] RECV: ''
+[2026-01-14 14:07:41] RECV: ''
+[2026-01-14 14:07:45] RECV: ''
+[2026-01-14 14:07:48] RECV: ''
+[2026-01-14 14:07:53] RECV: ''
+[2026-01-14 14:07:56] RECV: ''
+[2026-01-14 14:08:01] RECV: '*** Disconnected from Stream 1\r\n'
+[2026-01-14 14:41:08] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 14:41:46] RECV: 'Node - Phippsburg, ME  FN53CT \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 17:08:40] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 17:09:19] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 17:09:59] RECV: '[BPQ-6.0.21.1-B2FWIHJM$]\r\nHello Bradley. Latest Message is 30286, Last listed is 0\r\nde NG1P>\r\n'
+[2026-01-14 17:10:00] SEND: '?\r'
+[2026-01-14 17:10:03] RECV: ''
+[2026-01-14 17:10:06] RECV: ''
+[2026-01-14 17:10:11] RECV: ''
+[2026-01-14 17:10:14] RECV: ''
+[2026-01-14 17:10:18] RECV: 'A - Abort Output\r\nB - Logoff\r\nCMSPASS Password - Set CMS Password\r\nD - Flag NTS Message(s) as Delivered - D num\r\nHOMEBBS - Display or get HomeBBS\r\nINFO - Display information about this BBS\r\nI CALL - Lookup CALL in WP Allows *CALL CALL* *CALL*'
+[2026-01-14 17:10:21] RECV: ''
+[2026-01-14 17:10:26] RECV: ''
+[2026-01-14 17:10:29] RECV: ''
+[2026-01-14 17:10:33] RECV: ''
+[2026-01-14 17:10:36] RECV: ''
+[2026-01-14 17:10:39] SEND: 'PORTS\r'
+[2026-01-14 17:10:42] RECV: ''
+[2026-01-14 17:10:45] RECV: ' wildcards\r\nI@ PARAM - Lookup @BBS in WP\r\nIZ PARAM - Lookup Zip Codes in WP\r\nIH PARAM - Lookup HA elements in WP - eg USA EU etc\r\nK - Kill Message(s) - K num, KM (Kill my read messages)\r\nL - List Message(s) - \r\n   L = List New, LR = List New '
+[2026-01-14 17:10:50] RECV: ''
+[2026-01-14 17:10:53] RECV: '(Oldest first)\r\n   LM = List Mine, L> Call, L< Call, L@ = List to, from or at\r\n   LL num = List msg num, Lnum-num = List Range\r\n   LN LY LH LK LF L$ LD = List Message with corresponding Status\r\n   LB LP LT = List Mesaage with corresponding'
+[2026-01-14 17:10:57] RECV: ''
+[2026-01-14 17:11:00] RECV: ''
+[2026-01-14 17:11:04] RECV: ''
+[2026-01-14 17:11:07] RECV: ''
+[2026-01-14 17:11:10] SEND: 'NODES\r'
+[2026-01-14 17:11:14] RECV: ''
+[2026-01-14 17:11:17] RECV: ''
+[2026-01-14 17:11:21] RECV: ''
+[2026-01-14 17:11:24] RECV: ''
+[2026-01-14 17:11:29] RECV: ''
+[2026-01-14 17:11:32] RECV: ''
+[2026-01-14 17:11:36] RECV: ''
+[2026-01-14 17:11:39] RECV: ''
+[2026-01-14 17:11:44] RECV: ''
+[2026-01-14 17:11:47] RECV: ''
+[2026-01-14 17:11:51] RECV: ''
+[2026-01-14 17:11:54] RECV: ''
+[2026-01-14 17:11:59] RECV: ''
+[2026-01-14 17:12:02] RECV: ''
+[2026-01-14 17:12:06] RECV: ''
+[2026-01-14 17:12:09] RECV: ''
+[2026-01-14 17:12:14] RECV: ''
+[2026-01-14 17:12:17] RECV: ''
+[2026-01-14 17:12:21] RECV: ''
+[2026-01-14 17:12:24] RECV: ''
+[2026-01-14 17:12:29] RECV: ''
+[2026-01-14 17:12:32] RECV: ''
+[2026-01-14 17:12:36] RECV: ''
+[2026-01-14 17:12:39] RECV: ''
+[2026-01-14 17:12:42] SEND: 'ROUTES\r'
+[2026-01-14 17:12:45] RECV: ''
+[2026-01-14 17:12:48] RECV: ''
+[2026-01-14 17:12:53] RECV: ''
+[2026-01-14 17:12:56] RECV: ''
+[2026-01-14 17:13:00] RECV: ''
+[2026-01-14 17:13:03] RECV: ''
+[2026-01-14 17:13:08] RECV: ''
+[2026-01-14 17:13:11] RECV: ''
+[2026-01-14 17:13:15] RECV: ''
+[2026-01-14 17:13:18] RECV: ''
+[2026-01-14 17:13:23] RECV: ''
+[2026-01-14 17:13:26] RECV: ''
+[2026-01-14 17:13:30] RECV: ''
+[2026-01-14 17:13:33] RECV: ''
+[2026-01-14 17:13:38] RECV: ''
+[2026-01-14 17:13:41] RECV: ''
+[2026-01-14 17:13:45] RECV: ''
+[2026-01-14 17:13:48] RECV: ''
+[2026-01-14 17:13:53] RECV: ''
+[2026-01-14 17:13:56] RECV: ''
+[2026-01-14 18:01:57] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 18:02:34] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 18:03:14] RECV: ''
+[2026-01-14 18:03:16] SEND: '?\r'
+[2026-01-14 18:03:19] RECV: ''
+[2026-01-14 18:03:22] RECV: ''
+[2026-01-14 18:03:26] RECV: ''
+[2026-01-14 18:03:29] RECV: ''
+[2026-01-14 18:03:34] RECV: ''
+[2026-01-14 18:03:37] RECV: ''
+[2026-01-14 18:03:41] RECV: ''
+[2026-01-14 18:03:44] RECV: '[BPQ-6.0.21.1-B2FWIHJM$]\r\nHello Bradley. Latest Message is 30286, Last listed is 0\r\nde NG1P>\r\n'
+[2026-01-14 18:03:49] RECV: ''
+[2026-01-14 18:03:52] RECV: ''
+[2026-01-14 18:03:56] RECV: ''
+[2026-01-14 18:03:59] RECV: ''
+[2026-01-14 18:04:02] SEND: 'PORTS\r'
+[2026-01-14 18:04:05] RECV: ''
+[2026-01-14 18:04:08] RECV: ''
+[2026-01-14 18:04:13] RECV: ''
+[2026-01-14 18:04:16] RECV: ''
+[2026-01-14 18:04:20] RECV: ''
+[2026-01-14 18:04:23] RECV: ''
+[2026-01-14 18:04:28] RECV: 'A - Abort Output\r\nB - Logoff\r\nCMSPASS Password - Set CMS Password\r\nD - Flag NTS Message(s) as Delivered - D num\r\nHOMEBBS - Display or get HomeBBS\r\nINFO - Display information about this BBS\r\nI CALL - Lookup CALL in WP Allows *CALL CALL* *CALL*'
+[2026-01-14 18:04:31] RECV: ''
+[2026-01-14 18:04:35] RECV: ''
+[2026-01-14 18:04:38] RECV: ''
+[2026-01-14 18:04:42] RECV: ''
+[2026-01-14 18:04:45] RECV: ''
+[2026-01-14 18:04:48] SEND: 'NODES\r'
+[2026-01-14 18:04:52] RECV: ''
+[2026-01-14 18:04:55] RECV: ''
+[2026-01-14 18:04:59] RECV: ''
+[2026-01-14 18:05:02] RECV: ''
+[2026-01-14 18:05:07] RECV: ''
+[2026-01-14 18:05:10] RECV: ''
+[2026-01-14 18:05:14] RECV: ''
+[2026-01-14 18:05:17] RECV: ''
+[2026-01-14 18:05:18] RECV: ' wildcards\r\nI@ PARAM - Lookup @BBS in WP\r\nIZ PARAM - Lookup Zip Codes in WP\r\nIH PARAM - Lookup HA elements in WP - eg USA EU etc\r\nK - Kill Message(s) - K num, KM (Kill my read messages)\r\nL - List Message(s) - \r\n   L = List New, LR = List New '
+[2026-01-14 18:05:22] RECV: ''
+[2026-01-14 18:05:25] RECV: ''
+[2026-01-14 18:05:26] RECV: '(Oldest first)\r\n   LM = List Mine, L> Call, L< Call, L@ = List to, from or at\r\n   LL num = List msg num, Lnum-num = List Range\r\n   LN LY LH LK LF L$ LD = List Message with corresponding Status\r\n   LB LP LT = List Mesaage with corresponding'
+[2026-01-14 18:05:29] RECV: ''
+[2026-01-14 18:05:32] RECV: ''
+[2026-01-14 18:05:36] RECV: ''
+[2026-01-14 18:05:39] RECV: ''
+[2026-01-14 18:05:42] SEND: 'ROUTES\r'
+[2026-01-14 18:54:51] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 19:08:52] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 19:09:46] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 19:10:35] RECV: ''
+[2026-01-14 19:10:36] SEND: '?\r'
+[2026-01-14 19:10:39] RECV: ''
+[2026-01-14 19:10:42] RECV: ''
+[2026-01-14 19:10:47] RECV: ''
+[2026-01-14 19:10:50] RECV: ''
+[2026-01-14 19:10:54] RECV: ''
+[2026-01-14 19:10:57] RECV: ''
+[2026-01-14 19:11:02] RECV: ''
+[2026-01-14 19:11:05] RECV: ''
+[2026-01-14 19:11:09] RECV: ''
+[2026-01-14 19:11:12] RECV: ''
+[2026-01-14 19:11:17] RECV: ''
+[2026-01-14 19:11:20] RECV: ''
+[2026-01-14 19:11:24] RECV: ''
+[2026-01-14 19:11:27] RECV: ''
+[2026-01-14 19:11:32] RECV: ''
+[2026-01-14 19:11:35] RECV: ''
+[2026-01-14 19:11:36] RECV: 'Welcome to the Topsham, ME General Use System BPQ32 Node. \r\nNG1P> BBS RMS CONNECT BYE INFO NODES ROUTES PORTS USERS MHEARD\r\n'
+[2026-01-14 19:11:37] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 19:11:40] RECV: 'BBS CHAT RMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 19:11:44] RECV: ''
+[2026-01-14 19:11:47] RECV: ''
+[2026-01-14 19:11:51] RECV: ''
+[2026-01-14 19:11:54] RECV: ''
+[2026-01-14 19:11:57] SEND: 'PORTS\r'
+[2026-01-14 19:12:00] RECV: ''
+[2026-01-14 19:12:03] RECV: ''
+[2026-01-14 19:12:08] RECV: ''
+[2026-01-14 19:12:09] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 19:12:10] RECV: 'Ports\r\n  1 145.070 MHz 1200 bps          \r\n  2 Telnet Server                 \r\n  3 AX/IP/UDP        \r\n'
+[2026-01-14 19:12:14] RECV: ''
+[2026-01-14 19:12:17] RECV: ''
+[2026-01-14 19:12:20] SEND: 'NODES\r'
+[2026-01-14 19:12:23] RECV: ''
+[2026-01-14 19:12:26] RECV: ''
+[2026-01-14 19:12:30] RECV: ''
+[2026-01-14 19:12:33] RECV: ''
+[2026-01-14 19:12:38] RECV: ''
+[2026-01-14 19:12:41] RECV: ''
+[2026-01-14 19:12:45] RECV: ''
+[2026-01-14 19:12:48] RECV: ''
+[2026-01-14 19:12:53] RECV: ''
+[2026-01-14 19:12:54] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 19:12:55] RECV: 'Nodes\r\nBBSGNR:N1QFY-2      CHTGNR:N1QFY-4      DATBBS:K5DAT-1      DATCHT:K5DAT-11     \r\nDATKEY:K5DAT  DATRMS:K5DAT-13     KNNGNR:N1QFY-15     RMSGNR:N1QFY-10     \r\nSHAWNO:K5DAT-7      TOPBBS:NG1P-1       TOPCHT:NG1P-2  '
+[2026-01-14 19:12:58] RECV: ''
+[2026-01-14 19:13:01] RECV: ''
+[2026-01-14 19:13:04] SEND: 'ROUTES\r'
+[2026-01-14 19:13:07] RECV: ''
+[2026-01-14 19:13:10] RECV: ''
+[2026-01-14 19:13:15] RECV: ''
+[2026-01-14 19:13:18] RECV: ''
+[2026-01-14 19:13:22] RECV: ''
+[2026-01-14 19:13:25] RECV: ''
+[2026-01-14 19:13:29] RECV: '     TOPRMS:NG1P-10      \r\nTOPS:NG1P-4} '
+[2026-01-14 19:13:32] RECV: 'Routes\r\n> 3 K5DAT-7   129 5!\r\n> 1 N1QFY-15  120 4!\r\n'
+[2026-01-14 19:13:36] RECV: ''
+[2026-01-14 19:13:39] RECV: ''
+[2026-01-14 19:13:43] RECV: ''
+[2026-01-14 19:13:46] RECV: ''
+[2026-01-14 19:13:49] SEND: 'MHEARD 1\r'
+[2026-01-14 19:13:52] RECV: ''
+[2026-01-14 19:13:55] RECV: ''
+[2026-01-14 19:14:00] RECV: ''
+[2026-01-14 19:14:03] RECV: ''
+[2026-01-14 19:14:07] RECV: ''
+[2026-01-14 19:14:10] RECV: ''
+[2026-01-14 19:14:14] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 19:14:17] RECV: 'Heard List for Port 1\r\nN1QFY-15   00:00:00:00    \r\nKB1TAE     00:00:18:37    \r\nKC1JMH-7   00:09:21:30\r\nN1QFY-4    01:01:07:35    \r\nN1QFY-2    01:01:09:37    via KB1TAE*\r\nN1QFY-10   01:22:36:15    \r\nN1Q-11     03:20:59:43    \r\nK'
+[2026-01-14 19:14:21] RECV: ''
+[2026-01-14 19:14:24] RECV: ''
+[2026-01-14 19:14:27] SEND: 'INFO\r'
+[2026-01-14 19:14:31] RECV: ''
+[2026-01-14 19:14:34] RECV: ''
+[2026-01-14 19:14:38] RECV: 'NNGNR     03:21:09:20    \r\nKB1TAE-2   04:02:56:17    \r\nKB1TAE-8   04:02:58:43    \r\nNDQFY-15   35:16:07:19    \r\nN-15       53:15:20:49    \r\nKB1TAE-1   65:06:57:36    \r\nKNNGNR-15  314:04:40:20    \r\nN1QFY-11   314:09:28:38    \r\nNTQFY-15 315:18:3'
+[2026-01-14 19:14:41] RECV: ''
+[2026-01-14 19:14:42] RECV: '4:21    \r\nN1-15      316:01:54:59    \r\nN1QYY-15   318:05:25:17    \r\nNNQFH-15   318:14:01:49    \r\nN5QFY-15   318:18:37:09    \r\nY1QFY-15   320:18:26:13    \r\nE1QFY-15   322:03:31:14    \r\nY1QFN-15   322:05:21:15    \r\nQ1QFY-15   324:02:25:41    \r\nN1-'
+[2026-01-14 19:14:46] RECV: ''
+[2026-01-14 19:14:49] RECV: ''
+[2026-01-14 19:14:53] RECV: '15      324:05:10:49    \r\nN1-15      324:10:41:04    \r\nN-15       325:13:21:07    \r\n-15        326:00:22:38    \r\nN8QFQ-15   326:00:22:59    \r\nN1QF1-15   329:22:10:31    \r\n'
+[2026-01-14 19:14:55] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 19:14:56] RECV: 'This is the BPQ32 Node for the Topsham, ME General Use System. \r\nSysop NG1P.\r\nType BBS to connect to the BBS.\r\nType RMS to connect to WinLink.\r\n'
+[2026-01-14 19:15:00] RECV: ''
+[2026-01-14 19:15:03] RECV: ''
+[2026-01-14 19:15:07] RECV: ''
+[2026-01-14 19:15:10] RECV: ''
+[2026-01-14 19:15:13] SEND: '?\r'
+[2026-01-14 19:15:16] RECV: ''
+[2026-01-14 19:15:19] RECV: ''
+[2026-01-14 19:15:21] RECV: 'TOPS:NG1P-4} '
+[2026-01-14 19:15:24] RECV: 'BBS CHAT RMS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 19:15:29] RECV: ''
+[2026-01-14 19:15:32] RECV: ''
+[2026-01-14 19:15:36] RECV: ''
+[2026-01-14 19:15:39] RECV: ''
+[2026-01-14 19:16:21] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 19:17:09] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 19:18:14] RECV: 'Welcome to the Topsham, ME General Use System BPQ32 Node. \r\nNG1P> BBS RMS CONNECT BYE INFO NODES ROUTES PORTS USERS MHEARD\r\n'
+[2026-01-14 19:19:11] RECV: ''
+[2026-01-14 19:19:13] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 19:19:13] SEND: '?\r'
+[2026-01-14 19:19:16] RECV: ''
+[2026-01-14 19:19:19] RECV: ''
+[2026-01-14 19:19:24] RECV: ''
+[2026-01-14 19:19:27] RECV: ''
+[2026-01-14 19:19:31] RECV: ''
+[2026-01-14 19:19:34] RECV: ''
+[2026-01-14 19:19:39] RECV: ''
+[2026-01-14 19:19:42] RECV: ''
+[2026-01-14 19:19:43] RECV: 'KNNGNR:N1QFY-15} RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 19:19:46] RECV: ''
+[2026-01-14 19:19:49] RECV: ''
+[2026-01-14 19:19:53] RECV: ''
+[2026-01-14 19:19:56] RECV: ''
+[2026-01-14 19:20:00] SEND: 'PORTS\r'
+[2026-01-14 19:20:03] RECV: ''
+[2026-01-14 19:20:06] RECV: ''
+[2026-01-14 19:20:11] RECV: ''
+[2026-01-14 19:20:14] RECV: ''
+[2026-01-14 19:20:18] RECV: ''
+[2026-01-14 19:20:21] RECV: ''
+[2026-01-14 19:20:26] RECV: ''
+[2026-01-14 19:20:29] RECV: ''
+[2026-01-14 19:20:32] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 19:20:35] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 145.070 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-14 19:20:39] RECV: ''
+[2026-01-14 19:20:42] RECV: ''
+[2026-01-14 19:20:46] SEND: 'NODES\r'
+[2026-01-14 19:20:49] RECV: ''
+[2026-01-14 19:20:52] RECV: ''
+[2026-01-14 19:20:56] RECV: ''
+[2026-01-14 19:20:59] RECV: ''
+[2026-01-14 19:21:04] RECV: ''
+[2026-01-14 19:21:07] RECV: ''
+[2026-01-14 19:21:11] RECV: ''
+[2026-01-14 19:21:14] RECV: ''
+[2026-01-14 19:21:19] RECV: ''
+[2026-01-14 19:21:22] RECV: ''
+[2026-01-14 19:21:26] RECV: ''
+[2026-01-14 19:21:29] RECV: ''
+[2026-01-14 19:21:34] RECV: ''
+[2026-01-14 19:21:37] RECV: ''
+[2026-01-14 19:21:41] RECV: ''
+[2026-01-14 19:21:44] RECV: ''
+[2026-01-14 19:21:49] RECV: ''
+[2026-01-14 19:21:52] RECV: ''
+[2026-01-14 19:21:56] RECV: ''
+[2026-01-14 19:21:59] RECV: ''
+[2026-01-14 19:22:04] RECV: ''
+[2026-01-14 19:22:07] RECV: ''
+[2026-01-14 19:22:11] RECV: ''
+[2026-01-14 19:22:14] RECV: ''
+[2026-01-14 19:22:19] RECV: ''
+[2026-01-14 19:22:22] RECV: ''
+[2026-01-14 19:22:26] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 19:22:29] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     \r\nBBSWDB:K1NYY-2  BBSWHT:N1REX-2      BURG:KS1R-15        CCEBBS:WS1EC-2      \r\nCCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1E'
+[2026-01-14 19:22:33] RECV: 'C-10     CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTWBK:KC1JMH-4     CHTWHT:N1REX-4  \r\nCMBWBK:KC1JMH-15    DATBBS:K5DAT-1      DATCHT:K5DAT-11     DATKEY:K5DAT        \r\nDATRMS:K5DAT-13     KNXABN:AB1KI-15     LLNW'
+[2026-01-14 19:22:36] RECV: ''
+[2026-01-14 19:22:41] RECV: ''
+[2026-01-14 19:22:44] RECV: ''
+[2026-01-14 19:22:47] SEND: 'ROUTES\r'
+[2026-01-14 19:22:51] RECV: ''
+[2026-01-14 19:22:54] RECV: 'DB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\nRMSWHT:N1REX-10     SHAWNO:K5DAT-7      TOPBBS:NG1P-1       TOPCHT:NG1P-2       \r\nTOPRMS:NG1P-10      TOPS:NG1P-4      '
+[2026-01-14 19:22:58] RECV: ''
+[2026-01-14 19:23:01] RECV: ''
+[2026-01-14 19:23:05] RECV: ''
+[2026-01-14 19:23:08] RECV: ''
+[2026-01-14 19:23:12] SEND: 'MHEARD 1\r'
+[2026-01-14 19:23:15] RECV: ''
+[2026-01-14 19:23:18] RECV: ''
+[2026-01-14 19:23:22] RECV: ''
+[2026-01-14 19:23:25] RECV: ''
+[2026-01-14 19:23:30] RECV: ''
+[2026-01-14 19:23:33] RECV: ''
+[2026-01-14 19:23:37] RECV: ''
+[2026-01-14 19:23:40] RECV: ''
+[2026-01-14 19:23:45] RECV: ''
+[2026-01-14 19:23:48] RECV: ''
+[2026-01-14 19:23:52] RECV: ''
+[2026-01-14 19:23:55] RECV: ''
+[2026-01-14 19:24:00] RECV: ''
+[2026-01-14 19:24:03] RECV: ''
+[2026-01-14 19:24:07] RECV: ''
+[2026-01-14 19:24:10] RECV: ''
+[2026-01-14 19:24:15] RECV: ''
+[2026-01-14 19:24:18] RECV: ''
+[2026-01-14 19:24:22] RECV: ''
+[2026-01-14 19:24:25] RECV: ''
+[2026-01-14 19:24:30] RECV: ''
+[2026-01-14 19:24:33] RECV: ''
+[2026-01-14 19:24:37] RECV: ''
+[2026-01-14 19:24:40] RECV: ''
+[2026-01-14 19:24:45] RECV: ''
+[2026-01-14 19:24:48] RECV: ''
+[2026-01-14 19:24:52] RECV: ''
+[2026-01-14 19:24:55] RECV: ''
+[2026-01-14 19:25:00] RECV: ''
+[2026-01-14 19:25:03] RECV: ''
+[2026-01-14 19:25:07] RECV: ''
+[2026-01-14 19:25:10] RECV: ''
+[2026-01-14 19:25:15] RECV: ''
+[2026-01-14 19:25:18] RECV: ''
+[2026-01-14 19:25:21] SEND: 'MHEARD 2\r'
+[2026-01-14 19:25:25] RECV: ''
+[2026-01-14 19:25:28] RECV: ''
+[2026-01-14 19:25:32] RECV: ''
+[2026-01-14 19:25:35] RECV: ''
+[2026-01-14 19:25:40] RECV: ''
+[2026-01-14 19:25:43] RECV: ''
+[2026-01-14 19:25:47] RECV: ''
+[2026-01-14 19:25:50] RECV: ''
+[2026-01-14 19:25:55] RECV: ''
+[2026-01-14 19:25:58] RECV: ''
+[2026-01-14 19:26:02] RECV: ''
+[2026-01-14 19:26:05] RECV: ''
+[2026-01-14 19:26:10] RECV: ''
+[2026-01-14 19:26:13] RECV: ''
+[2026-01-14 19:26:17] RECV: ''
+[2026-01-14 19:26:20] RECV: ''
+[2026-01-14 19:26:25] RECV: ''
+[2026-01-14 19:26:28] RECV: ''
+[2026-01-14 19:26:29] RECV: '   \r\n'
+[2026-01-14 19:26:32] RECV: ''
+[2026-01-14 19:26:35] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 19:26:36] RECV: 'Routes\r\n  1 AB1KI-15  0 0!\r\n  1 K1NYY-15  200 0!\r\n> 1 KC1JMH-15 200 14!\r\n  1 KS1R-15   0 0!\r\n> 1 N1REX-15  200 11!\r\n> 2 NG1P-4    200 9!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-14 19:26:39] RECV: ''
+[2026-01-14 19:26:42] RECV: ''
+[2026-01-14 19:26:46] RECV: ''
+[2026-01-14 19:26:49] RECV: ''
+[2026-01-14 19:26:53] SEND: 'INFO\r'
+[2026-01-14 19:26:56] RECV: ''
+[2026-01-14 19:26:59] RECV: ''
+[2026-01-14 19:27:03] RECV: ''
+[2026-01-14 19:27:04] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 19:27:05] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:02    \r\nKX1EMA-15  00:00:00:33    \r\nAB1KI-15   00:00:00:43\r\nW1EMA-15   00:00:00:43    \r\nN1REX-15   00:00:00:44    \r\nK1NYY-15   00:00:00:58    \r\nKS1R-15    00:00:01:25    \r\nWD1F    '
+[2026-01-14 19:27:09] RECV: '   00:00:12:07    \r\nAB1KI-2    00:00:39:49    \r\nW1EMA-2    00:02:51:44    \r\nKC1JMH-7   00:05:15:31    \r\nK1NYY-2    00:09:42:10    \r\nKX1EMA-2   00:11:46:55    \r\nWD1O-15    00:15:39:51    \r\n'
+[2026-01-14 19:27:11] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 19:27:12] RECV: 'Heard List for Port 2\r\nNG1P-4     00:00:00:00    \r\nKB1TAE     00:00:30:09    \r\nKB1TAE-4   00:11:03:06\r\n'
+[2026-01-14 19:27:15] RECV: ''
+[2026-01-14 19:27:18] RECV: ''
+[2026-01-14 19:27:22] RECV: ''
+[2026-01-14 19:27:25] RECV: ''
+[2026-01-14 19:27:29] SEND: '?\r'
+[2026-01-14 19:27:30] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 19:27:33] RECV: 'BPQ32 N1QFY-15 at Gardiner, ME  FN54CF \r\nPort 1: 145.07 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-14 19:27:37] RECV: ''
+[2026-01-14 19:27:40] RECV: ''
+[2026-01-14 19:27:44] RECV: ''
+[2026-01-14 19:27:47] RECV: ''
+[2026-01-14 19:39:38] SEND: 'NRR TOPRMS\r'
+[2026-01-14 19:39:38] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-14 19:39:43] RECV: 'Not found\r\n'
+[2026-01-14 19:39:49] RECV: ''
+[2026-01-14 19:39:54] RECV: ''
+[2026-01-14 19:40:00] RECV: ''
+[2026-01-14 19:40:05] RECV: ''
+[2026-01-14 19:40:11] RECV: ''
+[2026-01-14 19:40:16] RECV: ''
+[2026-01-14 20:01:00] SEND: 'NRR TOPS\r'
+[2026-01-14 20:01:00] RECV: '\r\n\rCCEMA:WS1EC-15} '
+[2026-01-14 20:01:05] RECV: 'Not found\r\n'
+[2026-01-14 20:01:12] RECV: ''
+[2026-01-14 20:01:17] RECV: ''
+[2026-01-14 20:01:23] RECV: ''
+[2026-01-14 20:01:28] RECV: ''
+[2026-01-14 20:01:34] RECV: ''
+[2026-01-14 20:01:39] RECV: ''
+[2026-01-14 20:38:43] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 20:39:21] RECV: 'Node K1NYY-15 at Waldoboro, ME  FN54HC \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 20:51:40] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 20:52:18] RECV: ''
+[2026-01-14 20:52:19] SEND: '?\r'
+[2026-01-14 20:52:27] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 20:52:34] RECV: ''
+[2026-01-14 20:52:43] RECV: ''
+[2026-01-14 20:52:51] RECV: ''
+[2026-01-14 20:52:59] RECV: ''
+[2026-01-14 20:53:03] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 20:53:04] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 20:53:12] RECV: ''
+[2026-01-14 20:53:19] RECV: ''
+[2026-01-14 20:53:28] RECV: ''
+[2026-01-14 20:53:35] RECV: ''
+[2026-01-14 20:53:44] RECV: ''
+[2026-01-14 20:53:51] RECV: ''
+[2026-01-14 20:53:54] SEND: 'PORTS\r'
+[2026-01-14 20:54:02] RECV: ''
+[2026-01-14 20:54:09] RECV: ''
+[2026-01-14 20:54:11] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 20:54:18] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 145.070 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-14 20:54:27] RECV: ''
+[2026-01-14 20:54:35] RECV: ''
+[2026-01-14 20:54:43] RECV: ''
+[2026-01-14 20:54:51] RECV: ''
+[2026-01-14 20:54:53] SEND: 'NODES\r'
+[2026-01-14 20:55:01] RECV: ''
+[2026-01-14 20:55:04] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 20:55:05] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     \r\nBBSWDB:K1NYY-2  BBSWHT:N1REX-2      BURG:KS1R-15        CCEBBS:WS1EC-2      \r\nCCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1E'
+[2026-01-14 20:55:13] RECV: ''
+[2026-01-14 20:55:20] RECV: 'C-10     CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTWBK:KC1JMH-4     CHTWHT:N1REX-4  \r\nCMBWBK:KC1JMH-15    DATBBS:K5DAT-1      DATCHT:K5DAT-11     DATKEY:K5DAT        \r\nDATRMS:K5DAT-13     KNXABN:AB1KI-15     LLNW'
+[2026-01-14 20:55:29] RECV: ''
+[2026-01-14 20:55:37] RECV: ''
+[2026-01-14 20:55:45] RECV: 'DB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\nRMSWHT:N1REX-10     SHAWNO:K5DAT-7      TOPBBS:NG1P-1       TOPCHT:NG1P-2       \r\nTOPRMS:NG1P-10      TOPS:NG1P-4      '
+[2026-01-14 20:55:53] RECV: '   \r\n'
+[2026-01-14 20:56:02] RECV: ''
+[2026-01-14 20:56:09] RECV: ''
+[2026-01-14 20:56:18] RECV: ''
+[2026-01-14 20:56:25] RECV: ''
+[2026-01-14 20:56:28] SEND: 'ROUTES\r'
+[2026-01-14 20:56:35] RECV: ''
+[2026-01-14 20:56:36] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 20:56:37] RECV: 'Routes\r\n  1 AB1KI-15  0 0!\r\n  1 K1NYY-15  200 0!\r\n> 1 KC1JMH-15 200 14!\r\n  1 KS1R-15   0 0!\r\n> 1 N1REX-15  200 11!\r\n> 2 NG1P-4    200 9!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-14 20:56:45] RECV: ''
+[2026-01-14 20:56:53] RECV: ''
+[2026-01-14 20:57:01] RECV: ''
+[2026-01-14 20:57:09] RECV: ''
+[2026-01-14 20:57:17] RECV: ''
+[2026-01-14 20:57:25] RECV: ''
+[2026-01-14 20:57:27] SEND: 'MHEARD 1\r'
+[2026-01-14 20:57:35] RECV: ''
+[2026-01-14 20:57:42] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 20:57:43] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:00    \r\nK1NYY-15   00:00:00:12    \r\nKS1R-15    00:00:00:14\r\nN1REX-15   00:00:00:38    \r\nAB1KI-15   00:00:00:42    \r\nW1EMA-15   00:00:01:24    \r\nKX1EMA-15  00:00:04:08    \r\nAB1KI-2 '
+[2026-01-14 20:57:51] RECV: '   00:00:06:30    \r\nWD1F       00:00:15:50    \r\nW1EMA-2    00:01:07:45    \r\nKX1EMA-2   00:01:13:21    \r\nKC1JMH-7   00:06:49:35    \r\nK1NYY-2    00:11:16:14    \r\nWD1O-15    00:17:13:55    \r\n'
+[2026-01-14 20:57:58] RECV: ''
+[2026-01-14 20:58:07] RECV: ''
+[2026-01-14 20:58:15] RECV: ''
+[2026-01-14 20:58:23] RECV: ''
+[2026-01-14 20:58:31] RECV: ''
+[2026-01-14 20:58:33] SEND: 'MHEARD 2\r'
+[2026-01-14 20:58:40] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 20:58:48] RECV: 'Heard List for Port 2\r\nNG1P-4     00:00:01:08    \r\nKB1TAE     00:00:28:46    \r\nKB1TAE-4   00:12:36:16\r\n'
+[2026-01-14 20:58:57] RECV: ''
+[2026-01-14 20:59:04] RECV: ''
+[2026-01-14 20:59:13] RECV: ''
+[2026-01-14 20:59:20] RECV: ''
+[2026-01-14 21:05:51] RECV: 'Node KC1JMH-15 at Westbrook, ME  FN43TQ \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 21:06:31] RECV: 'Node N1QFY-15 at Gardiner, ME  FN54CF \r\nUse "?" for commands and "I" for info.\r\n'
+[2026-01-14 21:06:33] SEND: '?\r'
+[2026-01-14 21:06:39] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:06:46] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 21:06:55] RECV: ''
+[2026-01-14 21:07:03] RECV: ''
+[2026-01-14 21:07:11] RECV: ''
+[2026-01-14 21:07:19] RECV: ''
+[2026-01-14 21:07:27] RECV: ''
+[2026-01-14 21:07:35] RECV: ''
+[2026-01-14 21:07:37] SEND: 'PORTS\r'
+[2026-01-14 21:07:44] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:07:51] RECV: 'Ports\r\n  1 433.300 MHz @ 1200 Baud       \r\n  2 145.070 MHz @ 1200 Baud       \r\n  9 Telnet Server        \r\n'
+[2026-01-14 21:08:00] RECV: ''
+[2026-01-14 21:08:08] RECV: ''
+[2026-01-14 21:08:16] RECV: ''
+[2026-01-14 21:08:24] RECV: ''
+[2026-01-14 21:08:26] SEND: 'NODES\r'
+[2026-01-14 21:08:34] RECV: ''
+[2026-01-14 21:08:37] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:08:38] RECV: 'Nodes\r\nBBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     \r\nBBSWDB:K1NYY-2  BBSWHT:N1REX-2      BURG:KS1R-15        CCEBBS:WS1EC-2      \r\nCCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1E'
+[2026-01-14 21:08:46] RECV: ''
+[2026-01-14 21:08:53] RECV: ''
+[2026-01-14 21:09:02] RECV: ''
+[2026-01-14 21:09:09] RECV: 'C-10     CHABUR:KS1R-13      \r\nCHTABN:AB1KI-4      CHTGNR:N1QFY-4      CHTWBK:KC1JMH-4     CHTWHT:N1REX-4  \r\nCMBWBK:KC1JMH-15    DATBBS:K5DAT-1      DATCHT:K5DAT-11     DATKEY:K5DAT        \r\nDATRMS:K5DAT-13     KNXABN:AB1KI-15     LLNWDB:K1NYY-15     LNCWHT:N1REX-15     \r\nRMSABN:AB1KI-10     RMSGNR:N1QFY-10     RMSWBK:KC1JMH-10    RMSWDB:K1NYY-10     \r\nRMSWHT:N1REX-10     SHAWNO:K5DAT-7      TOPBBS:NG1P-1       TOPCHT:NG1P-2       \r\nTOPRMS:NG1P-10      TOPS:NG1P-4      '
+[2026-01-14 21:09:18] RECV: '   \r\n'
+[2026-01-14 21:09:26] RECV: ''
+[2026-01-14 21:09:35] RECV: ''
+[2026-01-14 21:09:42] RECV: ''
+[2026-01-14 21:09:51] RECV: ''
+[2026-01-14 21:09:58] RECV: ''
+[2026-01-14 21:10:01] SEND: 'ROUTES\r'
+[2026-01-14 21:10:09] RECV: ''
+[2026-01-14 21:10:16] RECV: ''
+[2026-01-14 21:10:21] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:10:28] RECV: 'Routes\r\n  1 AB1KI-15  0 0!\r\n  1 K1NYY-15  200 0!\r\n> 1 KC1JMH-15 200 14!\r\n  1 KS1R-15   0 0!\r\n> 1 N1REX-15  200 11!\r\n> 2 NG1P-4    200 9!\r\n  1 WD1O-15   0 0!\r\n'
+[2026-01-14 21:10:37] RECV: ''
+[2026-01-14 21:10:45] RECV: ''
+[2026-01-14 21:10:53] RECV: ''
+[2026-01-14 21:11:01] RECV: ''
+[2026-01-14 21:11:09] RECV: ''
+[2026-01-14 21:11:17] RECV: ''
+[2026-01-14 21:11:19] SEND: 'MHEARD 1\r'
+[2026-01-14 21:11:27] RECV: ''
+[2026-01-14 21:11:35] RECV: ''
+[2026-01-14 21:11:44] RECV: ''
+[2026-01-14 21:11:51] RECV: ''
+[2026-01-14 21:11:57] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:12:05] RECV: 'Heard List for Port 1\r\nKC1JMH-15  00:00:00:00    \r\nAB1KI-15   00:00:00:04    \r\nW1EMA-15   00:00:00:05\r\nKX1EMA-15  00:00:00:12    \r\nN1REX-15   00:00:00:18    \r\nKS1R-15    00:00:00:20    \r\nK1NYY-15   00:00:00:25    \r\nAB1KI-2 '
+[2026-01-14 21:12:14] RECV: ''
+[2026-01-14 21:12:21] RECV: '   00:00:20:22    \r\nWD1F       00:00:29:42    \r\nW1EMA-2    00:01:21:37    \r\nKX1EMA-2   00:01:27:13    \r\nKC1JMH-7   00:07:03:27    \r\nK1NYY-2    00:11:30:06    \r\nWD1O-15    00:17:27:47    \r\n'
+[2026-01-14 21:12:30] RECV: ''
+[2026-01-14 21:12:38] RECV: ''
+[2026-01-14 21:12:46] RECV: ''
+[2026-01-14 21:12:54] RECV: ''
+[2026-01-14 21:12:56] SEND: 'MHEARD 2\r'
+[2026-01-14 21:13:04] RECV: ''
+[2026-01-14 21:13:12] RECV: ''
+[2026-01-14 21:13:21] RECV: ''
+[2026-01-14 21:13:23] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:13:24] RECV: 'Heard List for Port 2\r\nNG1P-4     00:00:00:46    \r\nKB1TAE     00:00:13:10    \r\nKB1TAE-4   00:12:50:40\r\n'
+[2026-01-14 21:13:32] RECV: ''
+[2026-01-14 21:13:40] RECV: ''
+[2026-01-14 21:13:48] RECV: ''
+[2026-01-14 21:13:56] RECV: ''
+[2026-01-14 21:13:58] SEND: 'INFO\r'
+[2026-01-14 21:14:05] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:14:13] RECV: 'BPQ32 N1QFY-15 at Gardiner, ME  FN54CF \r\nPort 1: 145.07 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net\r\n'
+[2026-01-14 21:14:22] RECV: ''
+[2026-01-14 21:14:29] RECV: ''
+[2026-01-14 21:14:38] RECV: ''
+[2026-01-14 21:14:45] RECV: ''
+[2026-01-14 21:14:54] RECV: ''
+[2026-01-14 21:15:01] RECV: ''
+[2026-01-14 21:15:04] SEND: '?\r'
+[2026-01-14 21:15:12] RECV: ''
+[2026-01-14 21:15:19] RECV: ''
+[2026-01-14 21:15:28] RECV: ''
+[2026-01-14 21:15:34] RECV: 'KNNGNR:N1QFY-15} '
+[2026-01-14 21:15:35] RECV: 'RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD\r\n'
+[2026-01-14 21:15:43] RECV: ''
+[2026-01-14 21:15:50] RECV: ''
+[2026-01-14 21:15:59] RECV: ''
+[2026-01-14 21:16:06] RECV: ''
+[2026-01-14 21:16:15] RECV: ''
+[2026-01-14 21:16:22] RECV: ''
+ect@WS1EC:~/utilities $
