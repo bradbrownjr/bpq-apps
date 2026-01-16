@@ -52,16 +52,19 @@ for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://
 - Only crawls stations with SSIDs (assumes they run node software)
 - Validates callsign format before attempting connections
 
-**SSID Selection Priority:**
-1. **ROUTES command** (authoritative) - Shows actual node SSIDs for connections
-2. **Newer MHEARD data** (can update old MHEARD) - What was heard on RF within 1 hour
-3. **Older MHEARD data** (fallback) - Stale RF observations
-4. **NODES aliases** (ignored for connections) - Often contain app SSIDs like BBS (-2), RMS (-10)
+**SSID Selection Standard** (Critical - determines which SSID to connect to):
+1. **CLI-forced SSIDs** (`--callsign CALL-SSID`) - highest priority, user override
+2. **ROUTES consensus** - aggregate SSIDs from ALL nodes' ROUTES tables (most authoritative)
+3. **own_aliases primary** - node's own alias matching ROUTES-consensus SSID
+4. **own_aliases fallback** - scan own_aliases for base_call match with valid SSID (1-15)
+5. **MHEARD data** - lowest priority, includes transient/port-specific SSIDs
+
+**Important**: Never assume SSID by number convention (BBS=-2, RMS=-10, CHAT=-4, etc.) - these vary by sysop. The ROUTES tables from neighboring nodes are the authoritative source.
 
 **SSID Tracking:**
 - Tracks source of each SSID: ROUTES (authoritative), MHEARD (RF observed), or CLI (user-forced)
-- ROUTES always wins, newer MHEARD (>1hr) can update older MHEARD
-- Prevents stale SSID discovery from causing incorrect connections
+- ROUTES always wins, aggregated across all nodes for consensus
+- Prevents incorrect connections to BBS/RMS/CHAT SSIDs instead of node SSIDs
 - Use `--callsign CALL-SSID` to force correct SSID when known
 - CLI-forced SSIDs persist through disconnects/reconnections and update JSON permanently
 
@@ -122,13 +125,17 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
   - `update`: Skip already-visited nodes in current session (fastest)
   - `reaudit`: Re-crawl all nodes to verify/update data
   - `new-only`: Auto-load nodemap.json, queue only unexplored neighbors
-- `--exclude CALLS` or `-x CALLS` - Exclude callsigns from crawling (comma-separated)
-  - Example: `--exclude AB1KI,N1REX,K1NYY`
-  - Useful for skipping offline or problematic nodes
+- `--exclude CALLS` or `-x CALLS` - Exclude callsigns from crawling
+  - Accepts comma-separated list: `--exclude AB1KI,N1REX,K1NYY`
+  - Accepts filename: `--exclude blocklist.txt`
+  - Use `-x` alone to load default `exclusions.txt`
+  - File format: one callsign per line or comma-separated, # for comments
+  - Useful for filtering corrupted callsigns from AX.25 routing table pollution
 - `--merge FILE` - Combine data from another operator's nodemap.json
 - `--verbose` or `-v` - Show detailed command/response output
 - `--notify URL` - Send progress notifications to webhook
-- `--log FILE` - Log all telnet traffic for debugging
+- `--log FILE` or `-l FILE` - Log all telnet traffic for debugging (default: telnet.log)
+- `--debug-log FILE` or `-D FILE` - Log verbose debug output (implies -v, default: debug.log)
 - `--user USERNAME` - Telnet login username (default: prompt if needed)
 - `--pass PASSWORD` - Telnet login password (default: prompt if needed)
 
@@ -191,7 +198,9 @@ For comprehensive network coverage, coordinate with other operators:
 # Excluding problematic nodes
 ./nodemap.py 5 --exclude AB1KI           # Skip one node
 ./nodemap.py 5 -x AB1KI,N1REX,K1NYY      # Skip multiple nodes (comma-separated)
-./nodemap.py 10 --mode new-only -x AB1KI # Combine with other options
+./nodemap.py 5 -x blocklist.txt          # Load exclusions from file
+./nodemap.py 5 -x                        # Use default exclusions.txt
+./nodemap.py 10 --mode new-only -x       # Combine with other options
 
 # Resume interrupted crawls
 ./nodemap.py --resume             # Continue from unexplored nodes
@@ -228,7 +237,8 @@ For comprehensive network coverage, coordinate with other operators:
 
 **nodemap.json** - Complete network data including:
 - Node information (location, type, ports, applications)
-- Connections between nodes
+- Connections between nodes with frequency/port data
+- SSID mappings and routing quality scores
 - Metadata (timestamp, mode, total counts)
 
 **nodemap.csv** - Connection list with:
@@ -239,6 +249,20 @@ For comprehensive network coverage, coordinate with other operators:
 - Node types
 
 **nodemap_partial_[CALLSIGN].json/csv** - Created on Ctrl+C interrupt
+
+**exclusions.txt** - Optional blocklist file for `-x` option:
+```
+# Corrupted callsigns from AX.25 routing pollution
+KX1nMA
+KM1JMH
+KX1KMA
+
+# Can also use commas
+W1ZE, VE1YAR
+
+# Offline or problematic nodes
+AB1KI  # inline comments work too
+```
 
 ### Captured Data
 
@@ -290,16 +314,23 @@ Adaptive timeouts for 1200 baud simplex RF:
 
 ## nodemap-html.py - Interactive Map Generator
 
-Converts nodemap.json data into an interactive HTML map with Leaflet.js visualization. Shows node locations, RF connections, and network topology on an OpenStreetMap base layer.
+Converts nodemap.json data into visual maps: interactive HTML with Leaflet.js and static SVG. Shows node locations, RF connections by frequency band, and network topology.
 
 ### Features
 
-- **Interactive Map**: Pan, zoom, click nodes for details
-- **RF Connection Lines**: Visual representation of network links
-- **Node Markers**: Color-coded by type (BPQ, FBB, JNOS)
-- **Info Popups**: Callsign, location, ports, frequencies, applications
-- **Boundary Support**: Optional state/region boundaries overlay
-- **Standalone HTML**: Single-file output, no server required
+- **Dual Output Formats**: Interactive HTML map AND static SVG
+- **Multi-Band Connection Lines**: Separate colored lines for each frequency band
+  - 🔵 Blue: 2m (144-148 MHz)
+  - 🟠 Orange: 70cm (420-450 MHz)
+  - 🟣 Purple: 1.25m/220 MHz (222-225 MHz)
+  - 🟢 Green: 6m (50-54 MHz)
+  - ⚫ Gray: Unknown/Other
+- **RF Connection Detection**: Uses MHEARD port data to determine actual frequencies
+- **Node Markers**: Color-coded by primary operating frequency
+- **Info Popups**: Callsign, location, ports, frequencies, applications, neighbors
+- **SVG Labels**: Positioned below nodes to prevent overlap blocking
+- **Boundary Support**: Optional state/county boundaries overlay (requires map_boundaries.py)
+- **Standalone HTML**: Single-file output, works offline after initial load
 - **Mobile Friendly**: Responsive design works on phones/tablets
 
 ### Usage
@@ -309,54 +340,73 @@ Converts nodemap.json data into an interactive HTML map with Leaflet.js visualiz
 ```
 
 **Options:**
-- `--input FILE` or `-i FILE` - Input nodemap.json file (default: nodemap.json)
-- `--output FILE` or `-o FILE` - Output HTML file (default: nodemap.html)
-- `--boundaries FILE` or `-b FILE` - GeoJSON boundaries file (optional)
-- `--title TEXT` - Map title (default: "Packet Radio Network Map")
+- `--html FILE` - Generate interactive HTML map (default: nodemap.html)
+- `--svg FILE` - Generate static SVG map (default: nodemap.svg)
+- `--input FILE` - Input JSON file (default: nodemap.json)
+- `--output-dir DIR` - Save files to directory (prompts for BPQ HTML dir)
+- `--all` - Generate both HTML and SVG formats
+- `--help, -h, /?` - Show help message
 
 **Examples:**
 ```bash
-# Basic map generation
-./nodemap-html.py
+# Generate both formats (recommended)
+./nodemap-html.py --all
 
-# Custom input/output files
-./nodemap-html.py -i network_data.json -o map.html
+# Generate only HTML
+./nodemap-html.py --html
 
-# With state boundaries
-./nodemap-html.py -b map_boundaries.py
+# Generate only SVG
+./nodemap-html.py --svg
 
-# Custom title
-./nodemap-html.py --title "Maine Packet Radio Network"
+# Custom filenames
+./nodemap-html.py --html network.html --svg network.svg
+
+# From different input file
+./nodemap-html.py --all --input other_network.json
+
+# Save directly to BPQ web directory
+./nodemap-html.py --all --output-dir ~/linbpq/HTML/
 ```
 
 ### Output
 
-**nodemap.html** - Interactive map containing:
-- OpenStreetMap base layer
-- Node markers with callsigns
-- RF connection lines between nodes
-- Info popups with node details (click markers)
-- Legend showing node types
-- Optional state/region boundaries
+**nodemap.html** - Interactive Leaflet map:
+- OpenStreetMap base layer (requires internet for tiles)
+- Clickable node markers with detailed popups
+- Multi-band connection lines (separate line per frequency)
+- Hover tooltips on connections showing frequency
+- Pan/zoom controls
+- Legend showing band colors
 
-**Viewing:**
-- Open nodemap.html in any web browser
-- No web server required (uses CDN for Leaflet.js)
-- Works offline after initial load
-- Share file via email, BBS, or web hosting
+**nodemap.svg** - Static vector map:
+- Fully offline - no external dependencies
+- State/county boundaries (if map_boundaries.py available)
+- Hover tooltips on nodes
+- Labels positioned below nodes (prevents overlap blocking)
+- Can be embedded in HTML pages or documents
+- Suitable for printing
 
-**Node Colors:**
-- 🔵 Blue: BPQ nodes
-- 🟢 Green: FBB nodes  
-- 🟡 Yellow: JNOS nodes
-- ⚫ Gray: Unknown type
+### BPQ Web Server Integration
 
-**Connection Lines:**
-- Solid lines: Active RF connections
-- Thickness indicates connection quality (if available)
+1. **Copy files to BPQ HTML directory:**
+   ```bash
+   cp nodemap.html nodemap.svg ~/linbpq/HTML/
+   ```
+
+2. **Add link in your BPQ web interface index.html:**
+   ```html
+   <a href="nodemap.html">Network Map (Interactive)</a>
+   <a href="nodemap.svg">Network Map (Static)</a>
+   ```
+
+3. **Or add custom page in bpq32.cfg (HTML section):**
+   ```
+   FILE=/HTML/nodemap.html,nodemap.html
+   ```
 
 ### Requirements
 
 - Python 3.5.3+
 - nodemap.json from nodemap.py
-- Modern web browser for viewing output
+- Modern web browser for viewing HTML output
+- Optional: map_boundaries.py for state/county boundaries in SVG
