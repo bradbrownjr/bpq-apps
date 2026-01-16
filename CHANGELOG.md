@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.32] - 2026-01-16
+### Fixed
+- SSID consensus now aggregates from own_aliases + seen_aliases instead of routes keys
+- Routes in JSON use base callsigns (KC1JMH) without SSIDs, so ROUTES consensus was empty
+- own_aliases/seen_aliases contain full SSIDs from NODES output (KC1JMH-15) - authoritative
+- Fixes incorrect SSID selection (KC1JMH-8 from MHEARD instead of KC1JMH-15 from aliases)
+
 ## [nodemap 1.7.31] - 2026-01-16
 ### Added
 - Exclusion file support: -x/--exclude now accepts filename or defaults to exclusions.txt
