@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.26
+Version: 1.7.27
 """
 
-__version__ = '1.7.26'
+__version__ = '1.7.27'
 
 import sys
 import socket
@@ -2372,8 +2372,10 @@ class NodeCrawler:
                                     break  # Take first match (primary alias)
                         
                         # Store node's own SSID first (authoritative)
+                        # Map base callsign → full SSID (e.g., KC1JMH → KC1JMH-15)
                         if node_ssid:
-                            self.netrom_ssid_map[node_call] = node_ssid
+                            node_base = node_call.split('-')[0] if '-' in node_call else node_call
+                            self.netrom_ssid_map[node_base] = node_ssid
                         
                         # Restore netrom_ssids (for connection commands)
                         for base_call, full_call in node_info.get('netrom_ssids', {}).items():

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.27] - 2026-01-16
+### Fixed
+- netrom_ssid_map now stores base callsign as key (KC1JMH), not full SSID (KC1JMH-15)
+- Fixes BFS neighbor lookup when neighbors list uses base callsigns
+- Ensures netrom_ssid_map.get("KC1JMH") returns "KC1JMH-15" for SSID resolution
+
 ## [nodemap 1.7.26] - 2026-01-16
 ### Fixed
 - BFS pathfinding now tries base callsign lookup when SSID lookup fails
