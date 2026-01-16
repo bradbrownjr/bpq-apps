@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.26] - 2026-01-16
+### Fixed
+- BFS pathfinding now tries base callsign lookup when SSID lookup fails
+- Handles nodes stored without SSID (WS1EC) when self.callsign has SSID (WS1EC-15)
+- Fixes "neighbors: (none)" bug when node exists in JSON but under different key format
+
 ## [nodemap 1.7.25] - 2026-01-16
 ### Added
 - Added _find_node_alias() method to parse NODEALIAS from bpq32.cfg

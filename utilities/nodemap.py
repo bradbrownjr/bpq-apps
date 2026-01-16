@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.25
+Version: 1.7.26
 """
 
-__version__ = '1.7.25'
+__version__ = '1.7.26'
 
 import sys
 import socket
@@ -2463,7 +2463,14 @@ class NodeCrawler:
                             current, path = queue.pop(0)
                             # Resolve base callsign to full SSID for node lookup
                             current_full = self.netrom_ssid_map.get(current, current)
+                            
+                            # Try lookup with resolved SSID first, then base callsign
                             current_info = nodes_data.get(current_full, {})
+                            if not current_info:
+                                # Not found with SSID - try base callsign
+                                current_base = current_full.split('-')[0] if '-' in current_full else current_full
+                                current_info = nodes_data.get(current_base, {})
+                            
                             neighbors = current_info.get('neighbors', [])
                             
                             if self.verbose:
@@ -2494,6 +2501,11 @@ class NodeCrawler:
                                 # Resolve neighbor base to full SSID for node lookup
                                 neighbor_full = self.netrom_ssid_map.get(neighbor, neighbor)
                                 neighbor_info = nodes_data.get(neighbor_full, {})
+                                if not neighbor_info:
+                                    # Not found with SSID - try base callsign
+                                    neighbor_base = neighbor_full.split('-')[0] if '-' in neighbor_full else neighbor_full
+                                    neighbor_info = nodes_data.get(neighbor_base, {})
+                                
                                 neighbor_neighbors = neighbor_info.get('neighbors', [])
                                 if self.verbose:
                                     print("    Checking {} neighbors: {} (looking for {})".format(neighbor, neighbor_neighbors[:5] if len(neighbor_neighbors) > 5 else neighbor_neighbors, target_base))
