@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.34] - 2026-01-16
+### Fixed
+- Renamed _log() to _debug_log() to avoid conflict with telnet traffic _log() method
+- Fixes TypeError when crawling due to method signature mismatch
+
 ## [nodemap 1.7.33] - 2026-01-16
 ### Fixed
 - Resume mode now restores call_to_alias mappings from JSON (was only in start-node mode)
