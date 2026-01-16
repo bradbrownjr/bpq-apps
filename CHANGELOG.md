@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.20] - 2026-01-16
+### Fixed
+- Fixed variable naming bug in alias mapping (is_service should be is_likely_node)
+- Prevents service SSIDs (KC1JMH-10, N1REX-2) from overwriting node aliases
+- call_to_alias now correctly prefers node SSIDs over service SSIDs
+
 ## [nodemap 1.7.19] - 2026-01-16
 ### Fixed
 - Positional START_NODE argument parsing now works when provided without MAX_HOPS

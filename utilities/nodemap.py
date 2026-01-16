@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.19
+Version: 1.7.20
 """
 
-__version__ = '1.7.19'
+__version__ = '1.7.20'
 
 import sys
 import socket
@@ -473,14 +473,14 @@ class NodeCrawler:
                         # Update global mappings, preferring node aliases over service aliases
                         for alias, full_call in all_aliases.items():
                             base_call = full_call.split('-')[0]
-                            is_service = self._is_likely_node_ssid(full_call)
+                            is_likely_node = self._is_likely_node_ssid(full_call)
                             
                             # Add or update mapping, preferring likely node SSIDs
                             if base_call not in self.call_to_alias:
                                 # New entry - add it
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
-                            elif is_service:
+                            elif is_likely_node:
                                 # Likely node SSID - replace existing
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
