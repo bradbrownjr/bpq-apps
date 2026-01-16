@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.30
+Version: 1.7.31
 """
 
-__version__ = '1.7.30'
+__version__ = '1.7.31'
 
 import sys
 import socket
@@ -3596,8 +3596,14 @@ def main():
         print("                   update: skip already-visited nodes (fastest)")
         print("                   reaudit: re-crawl all nodes to verify/update data")
         print("                   new-only: auto-load nodemap.json, queue unexplored neighbors")
-        print("  --exclude CALLS, -x CALLS  Exclude comma-separated callsigns from crawling")
+        print("  --exclude CALLS, -x CALLS  Exclude callsigns from crawling")
+        print("                   CALLS: comma-separated list OR filename")
+        print("                   File format: one callsign per line or comma-separated")
+        print("                   Lines starting with # are comments")
+        print("  --exclude, -x    Use default exclusions.txt file")
         print("                   Example: --exclude AB1KI,N1REX,K1NYY")
+        print("                   Example: --exclude blocklist.txt")
+        print("                   Example: -x  (uses exclusions.txt)")
         print("  --display-nodes, -d  Display nodes table from nodemap.json and exit")
         print("  --user USERNAME  Telnet login username (default: prompt if needed)")
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
@@ -4028,14 +4034,57 @@ def main():
                 i += 1
             # Debug mode automatically enables verbose output
             verbose = True
-        elif (arg == '--exclude' or arg == '-x') and i + 1 < len(sys.argv):
-            # Parse comma-separated list of callsigns to exclude
-            exclude_str = sys.argv[i + 1]
-            for call in exclude_str.split(','):
-                call = call.strip().upper()
-                if call:
-                    exclude_nodes.add(call)
-            i += 2
+        elif arg == '--exclude' or arg == '-x':
+            # Exclusion list: can be comma-separated callsigns, a file, or default to exclusions.txt
+            # Check if next arg exists and isn't another option
+            if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith('-'):
+                exclude_arg = sys.argv[i + 1]
+                # Check if it's a file
+                if os.path.isfile(exclude_arg):
+                    # Load from file (comma or newline delimited)
+                    try:
+                        with open(exclude_arg, 'r') as f:
+                            content = f.read()
+                        # Split by commas and newlines
+                        for line in content.replace(',', '\n').split('\n'):
+                            call = line.strip().upper()
+                            # Skip empty lines and comments
+                            if call and not call.startswith('#'):
+                                # Handle inline comments
+                                call = call.split('#')[0].strip()
+                                if call:
+                                    exclude_nodes.add(call)
+                        print("Loaded {} exclusions from {}".format(len(exclude_nodes), exclude_arg))
+                    except Exception as e:
+                        colored_print("Error reading exclusion file {}: {}".format(exclude_arg, e), Colors.RED)
+                        sys.exit(1)
+                else:
+                    # Treat as comma-separated list of callsigns
+                    for call in exclude_arg.split(','):
+                        call = call.strip().upper()
+                        if call:
+                            exclude_nodes.add(call)
+                i += 2
+            else:
+                # No argument provided - use default exclusions.txt
+                default_exclude_file = 'exclusions.txt'
+                if os.path.isfile(default_exclude_file):
+                    try:
+                        with open(default_exclude_file, 'r') as f:
+                            content = f.read()
+                        for line in content.replace(',', '\n').split('\n'):
+                            call = line.strip().upper()
+                            if call and not call.startswith('#'):
+                                call = call.split('#')[0].strip()
+                                if call:
+                                    exclude_nodes.add(call)
+                        print("Loaded {} exclusions from {}".format(len(exclude_nodes), default_exclude_file))
+                    except Exception as e:
+                        colored_print("Error reading {}: {}".format(default_exclude_file, e), Colors.RED)
+                        sys.exit(1)
+                else:
+                    colored_print("Warning: No exclusions.txt found and no callsigns specified", Colors.YELLOW)
+                i += 1
         elif arg == '--mode' and i + 1 < len(sys.argv):
             mode_arg = sys.argv[i + 1].lower()
             if mode_arg in ['update', 'reaudit', 'new-only']:

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.31] - 2026-01-16
+### Added
+- Exclusion file support: -x/--exclude now accepts filename or defaults to exclusions.txt
+- File format: newline or comma-delimited callsigns, # comments supported
+- Use -x alone to load exclusions.txt, or -x filename.txt for custom file
+- Helps filter corrupted callsigns from AX.25 routing table pollution
+
 ## [nodemap-html 1.4.6] - 2026-01-16
 ### Fixed
 - SVG node labels now positioned below icons instead of beside them
