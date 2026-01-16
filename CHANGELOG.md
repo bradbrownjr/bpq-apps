@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.25] - 2026-01-16
+### Added
+- Added _find_node_alias() method to parse NODEALIAS from bpq32.cfg
+- Localhost now uses NODEALIAS from bpq32.cfg as authoritative primary alias source
+
+### Fixed
+- Primary alias extraction now parses prompt format (ALIAS:CALL-SSID}) from commands list
+- Fixes alias field containing wrong service alias (CCERMS instead of CCEMA for WS1EC)
+- Localhost uses bpq32.cfg NODEALIAS (authoritative), remote nodes use prompt parsing
+- Fallback to first own_aliases entry only when prompt parsing and config unavailable
+
 ## [nodemap 1.7.24] - 2026-01-16
 ### Fixed
 - Removed hardcoded -15 SSID assumption from v1.7.23

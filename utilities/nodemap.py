@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.24
+Version: 1.7.25
 """
 
-__version__ = '1.7.24'
+__version__ = '1.7.25'
 
 import sys
 import socket
@@ -233,6 +233,36 @@ class NodeCrawler:
                                 call = match.group(1)
                                 print("Found node callsign: {}".format(call))
                                 return call
+                except Exception as e:
+                    print("Error reading {}: {}".format(path, e))
+        
+        return None
+    
+    def _find_node_alias(self):
+        """Extract node alias from bpq32.cfg.
+        
+        Returns:
+            str: Node alias (e.g., 'CCEMA'), or None if not found
+        """
+        config_paths = [
+            '../linbpq/bpq32.cfg',
+            '/home/pi/linbpq/bpq32.cfg',
+            '/home/ect/linbpq/bpq32.cfg',
+            'bpq32.cfg',
+            'linbpq/bpq32.cfg'
+        ]
+        
+        for path in config_paths:
+            if os.path.exists(path):
+                try:
+                    with open(path, 'r') as f:
+                        for line in f:
+                            # Look for NODEALIAS=CCEMA or similar
+                            match = re.search(r'NODEALIAS\s*=\s*(\w+)', line, re.IGNORECASE)
+                            if match:
+                                alias = match.group(1)
+                                print("Found node alias: {}".format(alias))
+                                return alias
                 except Exception as e:
                     print("Error reading {}: {}".format(path, e))
         
@@ -2061,7 +2091,34 @@ class NodeCrawler:
                     intermittent_neighbors.append(neighbor)
             
             # Extract top-level fields for convenience
-            primary_alias = list(own_aliases.keys())[0] if own_aliases else None
+            # Primary alias determination:
+            # 1. For localhost: Parse NODEALIAS from bpq32.cfg (authoritative)
+            # 2. For all nodes: Parse prompt from commands list (format: ALIAS:CALL-SSID})
+            # 3. Fallback: First entry in own_aliases dict (may be service alias)
+            primary_alias = None
+            
+            # For localhost, check bpq32.cfg first (authoritative source)
+            if callsign == self.callsign:
+                primary_alias = self._find_node_alias()
+                if primary_alias and self.verbose:
+                    print("  Using node alias from bpq32.cfg: {}".format(primary_alias))
+            
+            # Try to extract primary alias from prompt in commands list
+            # Prompt format: "ALIAS:CALL-SSID}" (e.g., "CCEMA:WS1EC-15}")
+            if not primary_alias and commands:
+                first_cmd = commands[0] if commands else ''
+                match = re.match(r'^(\w+):\w+(?:-\d+)?\}', first_cmd)
+                if match:
+                    primary_alias = match.group(1)
+                    if self.verbose:
+                        print("  Extracted primary alias from prompt: {}".format(primary_alias))
+            
+            # Fallback: Use first own_aliases entry (unreliable - dict order may be wrong)
+            if not primary_alias and own_aliases:
+                primary_alias = list(own_aliases.keys())[0]
+                if self.verbose:
+                    print("  Using first own_alias (may be service alias): {}".format(primary_alias))
+            
             gridsquare = location.get('grid', None)
             
             # Get successful connection path from shortest_paths (if available)
