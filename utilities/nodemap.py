@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.22
+Version: 1.7.23
 """
 
-__version__ = '1.7.22'
+__version__ = '1.7.23'
 
 import sys
 import socket
@@ -2306,12 +2306,22 @@ class NodeCrawler:
                             node_ssid = own_aliases[node_alias_name]
                         
                         # Fallback: find any alias where base matches node call and SSID is in valid range
+                        # Prefer node SSID (typically -15) over service SSIDs
                         if not node_ssid:
+                            # First pass: look for -15 (typical node SSID)
                             for alias, full_call in own_aliases.items():
                                 base = full_call.split('-')[0] if '-' in full_call else full_call
-                                if base == node_call and self._is_likely_node_ssid(full_call):
+                                if base == node_call and full_call.endswith('-15'):
                                     node_ssid = full_call
                                     break
+                            
+                            # Second pass: any valid SSID if -15 not found
+                            if not node_ssid:
+                                for alias, full_call in own_aliases.items():
+                                    base = full_call.split('-')[0') if '-' in full_call else full_call
+                                    if base == node_call and self._is_likely_node_ssid(full_call):
+                                        node_ssid = full_call
+                                        break
                         
                         # Store node's own SSID first (authoritative)
                         if node_ssid:
