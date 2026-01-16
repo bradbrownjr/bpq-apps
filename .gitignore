@@ -17,3 +17,4 @@ utilities/nodemap_partial*.json
 utilities/nodemap_partial*.csv
 utilities/test_nodemap.json
 .github/nodemap.json
+.github/ws1ec-bpq32.cfg
