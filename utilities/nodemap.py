@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.28
+Version: 1.7.29
 """
 
-__version__ = '1.7.28'
+__version__ = '1.7.29'
 
 import sys
 import socket
@@ -2390,24 +2390,47 @@ class NodeCrawler:
                                 self.route_ports[neighbor_call] = port_num
                         
                         # Restore call_to_alias mappings (for NetRom routing)
-                        # Use node's primary alias (from alias field) as authoritative
-                        # This is the node alias, not service aliases (BBS, RMS, CHAT)
+                        # SSID Selection Standard (from copilot-instructions.md):
+                        # 1. CLI-forced SSIDs (handled elsewhere)
+                        # 2. ROUTES consensus (netrom_ssid_map, populated above)
+                        # 3. own_aliases - find alias matching the node's ROUTES-consensus SSID
+                        # 4. own_aliases fallback - scan for base_call match
+                        # 5. MHEARD (lowest priority)
+                        # NEVER assume SSID by number - use data source priority
                         node_base = node_call.split('-')[0] if '-' in node_call else node_call
-                        node_primary_alias = node_info.get('alias', '')
                         node_own_aliases = node_info.get('own_aliases', {})
                         
-                        # If node has a primary alias, use it for call_to_alias mapping
-                        if node_primary_alias and node_primary_alias in node_own_aliases:
-                            node_full_ssid = node_own_aliases[node_primary_alias]
-                            self.call_to_alias[node_base] = node_primary_alias
-                            self.alias_to_call[node_primary_alias] = node_full_ssid
+                        # Get the authoritative node SSID from ROUTES consensus (already in netrom_ssid_map)
+                        node_ssid_from_routes = self.netrom_ssid_map.get(node_base)
+                        
+                        # Find the alias in own_aliases that matches the ROUTES-consensus SSID
+                        node_alias_for_routing = None
+                        if node_ssid_from_routes and node_own_aliases:
+                            for alias, full_ssid in node_own_aliases.items():
+                                if full_ssid == node_ssid_from_routes:
+                                    node_alias_for_routing = alias
+                                    break
+                        
+                        # Fallback: if no ROUTES consensus, use own_aliases to find matching base_call
+                        if not node_alias_for_routing and node_own_aliases:
+                            for alias, full_ssid in node_own_aliases.items():
+                                base = full_ssid.split('-')[0] if '-' in full_ssid else full_ssid
+                                if base == node_base and self._is_likely_node_ssid(full_ssid):
+                                    node_alias_for_routing = alias
+                                    node_ssid_from_routes = full_ssid  # Use this as fallback SSID
+                                    break
+                        
+                        # Set call_to_alias mapping if we found a valid alias
+                        if node_alias_for_routing and node_ssid_from_routes:
+                            self.call_to_alias[node_base] = node_alias_for_routing
+                            self.alias_to_call[node_alias_for_routing] = node_ssid_from_routes
                         
                         # Also populate alias_to_call for all seen_aliases (for reverse lookups)
                         for alias, full_call in node_info.get('seen_aliases', {}).items():
                             base_call = full_call.split('-')[0]
                             
                             # Only add to call_to_alias if no entry exists yet
-                            # (node's own primary alias takes precedence, set above)
+                            # (ROUTES-consensus alias takes precedence, set above)
                             if base_call not in self.call_to_alias:
                                 self.call_to_alias[base_call] = alias
                             

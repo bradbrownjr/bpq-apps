@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.29] - 2026-01-16
+### Fixed
+- call_to_alias restoration now uses ROUTES consensus SSID to find matching alias
+- Follows SSID Selection Standard: ROUTES consensus > own_aliases match > fallback
+- Fixes using BBSBUR (KS1R-2 BBS) instead of BURG (KS1R-15 node) for NetRom routing
+- Never assumes SSID by number - uses data source priority per copilot-instructions.md
+
 ## [nodemap 1.7.28] - 2026-01-16
 ### Fixed
 - call_to_alias now uses node's primary alias field (authoritative) instead of first seen_alias
