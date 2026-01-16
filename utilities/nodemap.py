@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.35
+Version: 1.7.36
 """
 
-__version__ = '1.7.35'
+__version__ = '1.7.36'
 
 import sys
 import socket
@@ -2111,18 +2111,26 @@ class NodeCrawler:
             # Mark which neighbors will be explored vs skipped
             # A neighbor is explored if: visited or failed (actual exploration attempt made)
             # A neighbor is unexplored if: not visited, not failed, but either exceeds hop limit or will be queued
+            # Store full SSIDs (not base calls) so we can distinguish nodes from user stations later
             explored_neighbors = []
             unexplored_neighbors = []
             for neighbor in all_neighbors:
-                if neighbor in self.visited or neighbor in self.failed:
+                # Get full SSID for this neighbor (prefer netrom_ssid_map which has ROUTES + MHEARD data)
+                full_neighbor = self.netrom_ssid_map.get(neighbor, neighbor)
+                
+                # Check visited/failed using both base and full callsign
+                is_visited = neighbor in self.visited or full_neighbor in self.visited
+                is_failed = neighbor in self.failed or full_neighbor in self.failed
+                
+                if is_visited or is_failed:
                     # Actually visited or connection attempt failed
-                    explored_neighbors.append(neighbor)
+                    explored_neighbors.append(full_neighbor)
                 elif hop_count + 1 > self.max_hops:
                     # Beyond hop limit, won't be visited
-                    unexplored_neighbors.append(neighbor)
+                    unexplored_neighbors.append(full_neighbor)
                 else:
                     # Within hop limit, will be queued for future exploration
-                    unexplored_neighbors.append(neighbor)
+                    unexplored_neighbors.append(full_neighbor)
             
             # Get INFO
             if check_deadline():
@@ -3502,7 +3510,7 @@ def main():
         for i, arg in enumerate(sys.argv):
             if arg == '--cleanup' and i + 1 < len(sys.argv):
                 next_arg = sys.argv[i + 1].lower()
-                if next_arg in ['nodes', 'connections', 'all']:
+                if next_arg in ['nodes', 'connections', 'unexplored', 'all']:
                     cleanup_target = next_arg
                     break
         
@@ -3615,6 +3623,84 @@ def main():
                 else:
                     print("  No duplicate or incomplete nodes found")
             
+            # UNEXPLORED NEIGHBORS CLEANUP - upgrade base callsigns to full SSIDs
+            if cleanup_target in ['unexplored', 'all']:
+                print("\nCleaning up unexplored_neighbors (upgrading to full SSIDs)...")
+                
+                # Build SSID map from all nodes' own_aliases and seen_aliases (consensus approach)
+                ssid_map = {}  # base_call -> full_ssid
+                for node_call, node_info in nodes_data.items():
+                    # own_aliases are authoritative for that node
+                    for alias, full_ssid in node_info.get('own_aliases', {}).items():
+                        if '-' in full_ssid:
+                            base = full_ssid.split('-')[0]
+                            if base not in ssid_map:
+                                ssid_map[base] = {}
+                            if full_ssid not in ssid_map[base]:
+                                ssid_map[base][full_ssid] = 0
+                            ssid_map[base][full_ssid] += 1
+                    
+                    # seen_aliases from this node's NODES table
+                    for alias, full_ssid in node_info.get('seen_aliases', {}).items():
+                        if '-' in full_ssid:
+                            base = full_ssid.split('-')[0]
+                            if base not in ssid_map:
+                                ssid_map[base] = {}
+                            if full_ssid not in ssid_map[base]:
+                                ssid_map[base][full_ssid] = 0
+                            ssid_map[base][full_ssid] += 1
+                    
+                    # netrom_ssids from MHEARD
+                    for base, full_ssid in node_info.get('netrom_ssids', {}).items():
+                        if '-' in full_ssid:
+                            if base not in ssid_map:
+                                ssid_map[base] = {}
+                            if full_ssid not in ssid_map[base]:
+                                ssid_map[base][full_ssid] = 0
+                            ssid_map[base][full_ssid] += 1
+                
+                # Pick most common SSID for each base call (consensus)
+                best_ssid = {}
+                for base, ssid_counts in ssid_map.items():
+                    if ssid_counts:
+                        best = max(ssid_counts.items(), key=lambda x: x[1])[0]
+                        best_ssid[base] = best
+                
+                # Now upgrade unexplored_neighbors in each node
+                upgraded_count = 0
+                for node_call, node_info in nodes_data.items():
+                    unexplored = node_info.get('unexplored_neighbors', [])
+                    if not unexplored:
+                        continue
+                    
+                    new_unexplored = []
+                    node_upgraded = 0
+                    for neighbor in unexplored:
+                        if '-' in neighbor:
+                            # Already has SSID
+                            new_unexplored.append(neighbor)
+                        else:
+                            # Base callsign - try to upgrade
+                            if neighbor in best_ssid:
+                                new_unexplored.append(best_ssid[neighbor])
+                                node_upgraded += 1
+                            else:
+                                # No SSID found - keep as-is
+                                new_unexplored.append(neighbor)
+                    
+                    if node_upgraded > 0:
+                        node_info['unexplored_neighbors'] = new_unexplored
+                        upgraded_count += node_upgraded
+                        if upgraded_count <= 10:  # Show first 10
+                            print("  {}: upgraded {} entries".format(node_call, node_upgraded))
+                
+                if upgraded_count > 0:
+                    data['nodes'] = nodes_data
+                    changes_made = True
+                    colored_print("  Upgraded {} unexplored_neighbors to full SSIDs".format(upgraded_count), Colors.YELLOW)
+                else:
+                    print("  All unexplored_neighbors already have SSIDs")
+            
             if not changes_made:
                 print("\nNo cleanup needed!")
                 sys.exit(0)
@@ -3684,9 +3770,10 @@ def main():
         print("  --callsign CALL  Force specific SSID for start node (e.g., --callsign NG1P-4)")
         print("  --set-grid CALL GRID  Set gridsquare for callsign (e.g., --set-grid NG1P FN43vp)")
         print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
-        print("  --cleanup [TARGET]  Clean up nodemap.json (nodes, connections, or all)")
+        print("  --cleanup [TARGET]  Clean up nodemap.json (nodes, connections, unexplored, or all)")
         print("                      TARGET: nodes (duplicates/incomplete), connections (invalid),")
-        print("                              all (both, default if TARGET omitted)")
+        print("                              unexplored (upgrade base calls to full SSIDs),")
+        print("                              all (all of the above, default if TARGET omitted)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log [FILE], -l [FILE]  Log telnet traffic (default: telnet.log)")

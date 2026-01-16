@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.36] - 2026-01-16
+### Changed
+- unexplored_neighbors now stores full SSIDs (KC1JMH-15) instead of base callsigns (KC1JMH)
+- Allows distinguishing node SSIDs from future user station SSIDs
+
+### Added
+- `--cleanup unexplored` option to upgrade existing base callsigns to full SSIDs
+- Uses consensus from own_aliases, seen_aliases, and netrom_ssids to determine best SSID
+
 ## [nodemap 1.7.35] - 2026-01-16
 ### Fixed
 - new-only mode now correctly skips known nodes when callsign lacks SSID
