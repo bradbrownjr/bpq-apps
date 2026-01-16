@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.21] - 2026-01-16
+### Fixed
+- BFS pathfinding now resolves base callsigns to full SSIDs when looking up node data
+- Fixes "KC1JMH neighbors: []" bug where nodes stored with SSIDs weren't found
+- START_NODE pathfinding now works correctly with SSID-keyed node data
+
 ## [nodemap 1.7.20] - 2026-01-16
 ### Fixed
 - Fixed variable naming bug in alias mapping (is_service should be is_likely_node)

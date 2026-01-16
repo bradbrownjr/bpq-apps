@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.20
+Version: 1.7.21
 """
 
-__version__ = '1.7.20'
+__version__ = '1.7.21'
 
 import sys
 import socket
@@ -2403,7 +2403,9 @@ class NodeCrawler:
                         
                         while queue and not found_path:
                             current, path = queue.pop(0)
-                            current_info = nodes_data.get(current, {})
+                            # Resolve base callsign to full SSID for node lookup
+                            current_full = self.netrom_ssid_map.get(current, current)
+                            current_info = nodes_data.get(current_full, {})
                             neighbors = current_info.get('neighbors', [])
                             
                             if self.verbose and neighbors:
@@ -2430,7 +2432,9 @@ class NodeCrawler:
                                     break
                                 
                                 # Check if this neighbor node has the target as ITS neighbor
-                                neighbor_info = nodes_data.get(neighbor, {})
+                                # Resolve neighbor base to full SSID for node lookup
+                                neighbor_full = self.netrom_ssid_map.get(neighbor, neighbor)
+                                neighbor_info = nodes_data.get(neighbor_full, {})
                                 neighbor_neighbors = neighbor_info.get('neighbors', [])
                                 if self.verbose:
                                     print("    Checking {} neighbors: {} (looking for {})".format(neighbor, neighbor_neighbors[:5] if len(neighbor_neighbors) > 5 else neighbor_neighbors, target_base))
