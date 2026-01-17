@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.54
+Version: 1.7.55
 """
 
-__version__ = '1.7.54'
+__version__ = '1.7.55'
 
 import sys
 import socket
@@ -807,6 +807,11 @@ class NodeCrawler:
                 # Banner/info is sent immediately after CONNECTED, followed by prompt
                 # This tells us the actual node SSID in use
                 try:
+                    # First, try sending a CR to skip INFO banner
+                    # Some nodes will show prompt immediately without dumping entire INFO
+                    tn.write(b'\r')
+                    time.sleep(0.5)  # Brief delay for node to respond
+                    
                     # Look for BPQ remote prompt: "} " at end of banner
                     # Allow 30s for banner at 1200 baud over RF hops
                     if self.verbose:
