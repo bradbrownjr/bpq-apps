@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.56] - 2026-01-16
+### Changed
+- Clarified: BPQ waits for input after connection (no auto-banner)
+- CR requests prompt directly, avoiding INFO display entirely
+
 ## [nodemap 1.7.55] - 2026-01-16
 ### Changed
 - Send CR after connection to skip INFO banner before waiting for prompt

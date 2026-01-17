@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.55
+Version: 1.7.56
 """
 
-__version__ = '1.7.55'
+__version__ = '1.7.56'
 
 import sys
 import socket
@@ -804,16 +804,16 @@ class NodeCrawler:
                 
                 # Wait for remote node prompt after connection
                 # BPQ remote nodes use "ALIAS:CALLSIGN-SSID} " prompt format
-                # Banner/info is sent immediately after CONNECTED, followed by prompt
-                # This tells us the actual node SSID in use
+                # After connection, BPQ waits for input - no auto-banner
+                # Send CR to request prompt without triggering INFO display
                 try:
-                    # First, try sending a CR to skip INFO banner
-                    # Some nodes will show prompt immediately without dumping entire INFO
+                    # Send CR to get prompt without INFO banner
+                    # BPQ will respond with prompt immediately instead of showing full INFO
                     tn.write(b'\r')
                     time.sleep(0.5)  # Brief delay for node to respond
                     
-                    # Look for BPQ remote prompt: "} " at end of banner
-                    # Allow 30s for banner at 1200 baud over RF hops
+                    # Look for BPQ remote prompt: "} " at end of response
+                    # Allow 30s for response at 1200 baud over RF hops
                     if self.verbose:
                         print("    Waiting for remote node prompt (30s timeout)...")
                     prompt_data = tn.read_until(b'} ', timeout=30)
