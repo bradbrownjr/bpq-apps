@@ -44,6 +44,10 @@ for f in nodemap.py nodemap-html.py map_boundaries.py; do wget -O "$f" "https://
 - **Resume Capability**: Continues interrupted crawls from unexplored nodes
 - **Timeout Protection**: Handles slow RF links with adaptive timeouts
 - **Data Preservation**: Merge mode preserves historical data across runs
+- **Silent Mode**: Non-interactive operation for cron jobs and scripted crawls (`-y`/`--yes`)
+- **Version Tracking**: Log files include version headers for troubleshooting via SCP
+- **Exclusion Filtering**: Works in query (`-q`), display (`-d`), and crawl modes
+- **Detailed Logging**: Telnet traffic and debug logs with timestamps and metadata
 
 ### Network Assumptions
 
@@ -329,6 +333,7 @@ SSID ambiguity, or intermittent links. Use this workflow to systematically reach
 - Connections between nodes with frequency/port data
 - SSID mappings and routing quality scores
 - Metadata (timestamp, mode, total counts)
+- `nodemap_version` field for version tracking
 
 **nodemap.csv** - Connection list with:
 - From/To callsigns
@@ -338,6 +343,25 @@ SSID ambiguity, or intermittent links. Use this workflow to systematically reach
 - Node types
 
 **nodemap_partial_[CALLSIGN].json/csv** - Created on Ctrl+C interrupt
+
+**telnet.log** - Telnet traffic log (with `-l` or `--log`):
+- Header includes: version, timestamp, node hostname, callsign
+- Timestamped SEND/RECV entries for all telnet commands/responses
+- Useful for troubleshooting multi-hop connection issues
+- Example header:
+  ```
+  ============================================================
+  BPQ Node Map Crawler v1.7.78
+  ============================================================
+  Started: 2026-01-17 14:32:15
+  Node: localhost (callsign: KC1JMH)
+  ============================================================
+  ```
+
+**debug.log** - Verbose debug output (with `-D` or `--debug-log`):
+- Same header as telnet.log for version/timestamp tracking
+- Detailed crawl progress and discovery information
+- Helpful for identifying connection/routing issues
 
 **exclusions.txt** - Optional blocklist file for `-x` option:
 ```
@@ -395,7 +419,8 @@ Adaptive timeouts for 1200 baud simplex RF:
 
 ### Requirements
 
-- Python 3.5.3+
+- Python 3.5.3+ (3.5.3 is target, but 3.6+ recommended for reliability)
+- Python 3.13+: Install telnetlib3 via `pip install telnetlib3` (telnetlib removed from stdlib)
 - Access to BPQ telnet port (default: 8010)
 - `bpq32.cfg` readable by script
 
