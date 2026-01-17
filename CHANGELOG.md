@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.66] - 2026-01-16
+### Fixed
+- CLI-forced SSIDs (--callsign) now exempt nodes from NetRom alias/consensus checks
+- Nodes with forced SSID no longer skipped due to tied votes or missing alias
+- Example: `./nodemap.py K1NYY-15 --callsign WD1O-15` now crawls WD1O-15 even if no alias found
+- Allows correcting bad SSID data and crawling neighbors without NetRom discovery
+
 ## [nodemap 1.7.65] - 2026-01-16
 ### Fixed
 - START_NODE + --callsign now uses default max_hops=4 instead of 0

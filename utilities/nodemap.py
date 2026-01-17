@@ -25,7 +25,7 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.65
+Version: 1.7.66
 """
 
 __version__ = '1.7.66'
