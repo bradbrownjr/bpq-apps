@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.50
+Version: 1.7.51
 """
 
-__version__ = '1.7.50'
+__version__ = '1.7.51'
 
 import sys
 import socket
@@ -1381,6 +1381,12 @@ class NodeCrawler:
                     self.skipped_no_route.add(neighbor_base)
                     if self.verbose:
                         print("  Skipping {} (not in any ROUTES table)".format(neighbor))
+                    continue
+                
+                # Skip if SSID has tied votes (already marked as skipped during consensus)
+                if neighbor_base in self.skipped_no_ssid:
+                    if self.verbose:
+                        print("  Skipping {} (tied SSID votes)".format(neighbor))
                     continue
                 
                 # Determine SSID to use for this unexplored neighbor

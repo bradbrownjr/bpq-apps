@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.51] - 2026-01-16
+### Fixed
+- Added missing check for tied SSID votes during unexplored neighbor processing
+- KB1TAE and similar nodes with tied votes now properly skipped during planning
+- Was checking "not in ROUTES" but not "has tied votes"
+
 ## [nodemap 1.7.50] - 2026-01-16
 ### Fixed
 - Removed redundant SSID filtering check during crawl phase
