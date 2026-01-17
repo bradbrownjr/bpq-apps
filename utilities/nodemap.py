@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.79
+Version: 1.7.80
 """
 
-__version__ = '1.7.79'
+__version__ = '1.7.80'
 
 import sys
 import socket
@@ -1351,8 +1351,10 @@ class NodeCrawler:
         for node_data in nodes_data.values():
             netrom = node_data.get('netrom_ssids', {})
             for base_call, full_ssid in netrom.items():
-                # Only count valid callsigns (skip corrupted data)
-                if self._is_valid_callsign(base_call) and self._is_likely_node_ssid(full_ssid):
+                # Only count valid callsigns WITH explicit SSID (skip bare callsigns and corrupted data)
+                # Bare callsigns in ROUTES are ambiguous - could be any service
+                # Node SSIDs should have explicit -N suffix
+                if self._is_valid_callsign(base_call) and '-' in full_ssid and self._is_likely_node_ssid(full_ssid):
                     ssid_votes[base_call][full_ssid] += 1
         
         # Use ROUTES consensus to build SSID map

@@ -13,6 +13,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tooltips appear near cursor on mousemove and follow mouse position
 - Better visibility of network topology while hovering for information
 
+## [nodemap 1.7.80] - 2026-01-17
+### Fixed
+- ROUTES consensus now requires explicit SSID (rejects bare callsigns like "KB1TAE")
+- Bare callsigns in netrom_ssids are ambiguous and should not count as valid node SSIDs
+- Prevents queueing nodes that only appear in MHEARD without proper ROUTES entries
+- Stale JSON data with bare callsigns no longer causes connection attempts to unreachable nodes
+
 ## [nodemap 1.7.79] - 2026-01-17
 ### Fixed
 - Resume mode no longer skips nodes that lack a NetRom alias
