@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.78
+Version: 1.7.79
 """
 
-__version__ = '1.7.78'
+__version__ = '1.7.79'
 
 import sys
 import socket
@@ -1474,15 +1474,11 @@ class NodeCrawler:
                         print("  Skipping {} (tied SSID votes)".format(neighbor))
                     continue
                 
-                # Skip if no NetRom alias available (CRITICAL for routing)
-                # Without an alias in call_to_alias, connection will timeout
-                # This catches nodes that are in ROUTES but not in any NODES table
-                # UNLESS user has CLI-forced the SSID (explicit override)
-                if neighbor_base not in self.call_to_alias and neighbor_base not in self.cli_forced_ssids:
-                    self.skipped_no_route.add(neighbor_base)
-                    if self.verbose:
-                        print("  Skipping {} (no NetRom alias for routing)".format(neighbor))
-                    continue
+                # NOTE: We do NOT skip nodes that lack a NetRom alias!
+                # If the node is in ROUTES (ssid_votes check above passed), we can reach it.
+                # The connection logic queries ROUTES at each hop to get port numbers.
+                # Example: At KX1EMA, ROUTES shows "1 WD1O-15 200" - we can "C 1 WD1O-15"
+                # This allows crawling nodes that appear in ROUTES but not in NODES tables.
                 
                 # Determine SSID to use for this unexplored neighbor
                 # SSID Selection Standard: CLI > ROUTES consensus > base callsign only

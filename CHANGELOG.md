@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.79] - 2026-01-17
+### Fixed
+- Resume mode no longer skips nodes that lack a NetRom alias
+- Nodes in ROUTES tables can now be crawled using port-based connections
+- Connection logic queries ROUTES at each hop to get port numbers (C PORT CALL-SSID)
+- Example: At KX1EMA, ROUTES shows "1 WD1O-15" so we can "C 1 WD1O-15"
+- This enables automatic crawling of nodes that appear in ROUTES but not NODES tables
+
 ## [nodemap 1.7.78] - 2026-01-17
 ### Added
 - Version and metadata headers in log files (telnet.log, debug.log)
