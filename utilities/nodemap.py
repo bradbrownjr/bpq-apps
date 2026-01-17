@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.37
+Version: 1.7.38
 """
 
-__version__ = '1.7.37'
+__version__ = '1.7.38'
 
 import sys
 import socket
@@ -1218,6 +1218,9 @@ class NodeCrawler:
         
         unexplored = []
         nodes_data = existing['nodes']
+        
+        # Populate self.nodes from existing data (needed for new-only mode skip check)
+        self.nodes = nodes_data.copy()
         
         # Mark all previously visited nodes
         for callsign in nodes_data.keys():

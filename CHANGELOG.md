@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.38] - 2026-01-16
+### Fixed
+- new-only mode now populates self.nodes from existing JSON data
+- Fixes new-only mode re-crawling known nodes (self.nodes was always empty)
+- Skip check at crawl_node() requires self.nodes to be populated, not just self.visited
+
 ## [nodemap 1.7.37] - 2026-01-16
 ### Fixed
 - route_ports now restored ONLY from local node's heard_on_ports, not all nodes
