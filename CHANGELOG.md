@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.68] - 2026-01-17
+### Fixed
+- ROUTES port fallback: When no NetRom alias exists at intermediate hop, query ROUTES for port
+- Use `C PORT CALLSIGN-SSID` format (e.g., `C 1 WD1O-15`) to connect via ROUTES table
+- Previous callsign-only fallback (`C WD1O-15`) violated BPQ requirement for port number
+- Now correctly replicates manual connection method through intermediate nodes
+
 ## [nodemap 1.7.67] - 2026-01-17
 ### Fixed
 - Target-only mode: `--callsign` now ONLY crawls the target node, not all neighbors

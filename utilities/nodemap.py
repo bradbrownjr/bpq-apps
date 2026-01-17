@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.67
+Version: 1.7.68
 """
 
-__version__ = '1.7.67'
+__version__ = '1.7.68'
 
 import sys
 import socket
@@ -636,21 +636,47 @@ class NodeCrawler:
                             # Intermediate hop (i > 0) and no alias found in current node's NODES
                             # Cannot do expanded discovery without breaking our connection path
                             # 
-                            # FALLBACK: Try connecting with full callsign+SSID
-                            # BPQ may route via ROUTES table even without NODES entry
-                            # This works when target is in ROUTES/MHEARD but not NODES
-                            if full_callsign:
+                            # FALLBACK: Query ROUTES to get port number, then use C PORT CALLSIGN-SSID
+                            # This works when target is in ROUTES but not in NODES table
+                            if self.verbose:
+                                print("    {} not in current node's NODES table".format(lookup_call))
+                                print("    Querying ROUTES for port information...")
+                            
+                            try:
+                                routes_output = self._send_command(tn, 'ROUTES', timeout=15, expect_content='!')
+                                routes, route_ports, route_ssids = self._parse_routes(routes_output)
+                                
+                                # Check if target is in ROUTES
+                                if lookup_call in route_ports or lookup_call in routes:
+                                    port_num = route_ports.get(lookup_call)
+                                    target_ssid = route_ssids.get(lookup_call) or full_callsign
+                                    
+                                    if port_num:
+                                        # Found port - use C PORT CALLSIGN-SSID
+                                        cmd = "C {} {}\r".format(port_num, target_ssid).encode('ascii')
+                                        connect_target = "{} {} (via ROUTES port)".format(port_num, target_ssid)
+                                        if self.verbose:
+                                            print("    Found in ROUTES: port {}, SSID {}".format(port_num, target_ssid))
+                                            print("    Issuing command: C {} {} (ROUTES fallback, hop {}/{})".format(port_num, target_ssid, i+1, len(path)))
+                                    else:
+                                        # In routes but no port (shouldn't happen, but handle gracefully)
+                                        if self.verbose:
+                                            print("    {} in ROUTES but no port number - cannot connect".format(lookup_call))
+                                            print("    Connection impossible without port - aborting")
+                                        tn.close()
+                                        return None
+                                else:
+                                    # Not in ROUTES either
+                                    if self.verbose:
+                                        print("    {} not in ROUTES table either".format(lookup_call))
+                                        print("    Connection impossible - target not routable from this node")
+                                    tn.close()
+                                    return None
+                                    
+                            except Exception as e:
                                 if self.verbose:
-                                    print("    {} not in current node's NODES table".format(lookup_call))
-                                    print("    Trying callsign fallback: C {} (may work via ROUTES)".format(full_callsign))
-                                cmd = "C {}\r".format(full_callsign).encode('ascii')
-                                connect_target = "{} (callsign fallback, no alias)".format(full_callsign)
-                            else:
-                                # No SSID known either - truly cannot proceed
-                                if self.verbose:
-                                    print("    {} not in current node's NODES table".format(lookup_call))
-                                    print("    No SSID known - cannot attempt callsign fallback")
-                                    print("    Connection impossible without NetRom alias - aborting")
+                                    print("    ROUTES query failed: {}".format(e))
+                                    print("    Connection impossible without routing data - aborting")
                                 tn.close()
                                 return None
                     
