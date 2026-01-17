@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.11
+Version: 1.4.12
 """
 
-__version__ = '1.4.11'
+__version__ = '1.4.12'
 
 import sys
 import json
@@ -1129,7 +1129,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     svg_lines.append('    .node { cursor: pointer; }')
     svg_lines.append('    .node:hover circle { r: 10; }')
     svg_lines.append('    .node text { font-family: sans-serif; font-size: 10px; }')
-    svg_lines.append('    .connection { stroke-opacity: 0.6; transition: stroke-opacity 0.2s, stroke-width 0.2s; }')
+    svg_lines.append('    .connection { stroke-opacity: 0.6; transition: stroke-opacity 0.2s, stroke-width 0.2s; cursor: help; }')
     svg_lines.append('    .connection:hover { stroke-opacity: 1.0; stroke-width: 4; }')
     svg_lines.append('    .connection.highlighted { stroke-opacity: 1.0; stroke-width: 4; }')
     svg_lines.append('    .connection.dimmed { stroke-opacity: 0.15; }')
@@ -1138,8 +1138,18 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     svg_lines.append('    .state { fill: #e8e8e8; stroke: #999; stroke-width: 1; }')
     svg_lines.append('    .county { fill: none; stroke: #bbb; stroke-width: 0.5; stroke-dasharray: 2,2; }')
     svg_lines.append('    .state-label { font-family: sans-serif; font-size: 12px; fill: #666; }')
+    svg_lines.append('    #tooltip { position: fixed; background: rgba(0,0,0,0.75); color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 12px; z-index: 1000; white-space: pre-wrap; max-width: 250px; pointer-events: none; display: none; }')
     svg_lines.append('  </style>')
     svg_lines.append('  <script><![CDATA[')
+    svg_lines.append('    var tooltip = null;')
+    svg_lines.append('    function showTooltip(e, text) {')
+    svg_lines.append('      if (!tooltip) { tooltip = document.createElement("div"); tooltip.id = "tooltip"; document.body.appendChild(tooltip); }')
+    svg_lines.append('      tooltip.textContent = text;')
+    svg_lines.append('      tooltip.style.left = (e.clientX + 10) + "px";')
+    svg_lines.append('      tooltip.style.top = (e.clientY + 10) + "px";')
+    svg_lines.append('      tooltip.style.display = "block";')
+    svg_lines.append('    }')
+    svg_lines.append('    function hideTooltip() { if (tooltip) tooltip.style.display = "none"; }')
     svg_lines.append('    function highlightNode(callsign) {')
     svg_lines.append('      // Dim all connections')
     svg_lines.append('      var connections = document.querySelectorAll(".connection");')
@@ -1232,9 +1242,9 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         else:
             freq_label = "{} MHz".format(conn['frequency']) if conn.get('frequency') else "Unknown"
         
-        svg_lines.append('    <line x1="{:.1f}" y1="{:.1f}" x2="{:.1f}" y2="{:.1f}" {} class="connection" data-from="{}" data-to="{}">'.format(
-            x1, y1, x2, y2, style_attrs, conn['from'], conn['to']))
-        svg_lines.append('      <title>{} ↔ {} ({})</title>'.format(conn['from'], conn['to'], freq_label))
+        tooltip_text = "{} ↔ {}\\n{}".format(conn['from'], conn['to'], freq_label)
+        svg_lines.append('    <line x1="{:.1f}" y1="{:.1f}" x2="{:.1f}" y2="{:.1f}" {} class="connection" data-from="{}" data-to="{}" onmousemove="showTooltip(event, {});" onmouseleave="hideTooltip();">'.format(
+            x1, y1, x2, y2, style_attrs, conn['from'], conn['to'], repr(tooltip_text)))
         svg_lines.append('    </line>')
     svg_lines.append('  </g>')
     
@@ -1265,9 +1275,10 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         
         tooltip = "&#10;".join(tooltip_lines)  # &#10; is XML newline
         
-        svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})" onmouseenter="highlightNode(\'{}\');" onmouseleave="unhighlightAll();">'.format(x, y, node['callsign']))
+        # Convert tooltip lines to string for JavaScript
+        tooltip_str = "\\n".join(tooltip_lines)
+        svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})" onmouseenter="highlightNode(\'{}\');" onmousemove="showTooltip(event, {});" onmouseleave="unhighlightAll(); hideTooltip();">'.format(x, y, node['callsign'], repr(tooltip_str)))
         svg_lines.append('      <circle r="6" fill="{}" stroke="#333" stroke-width="1.5">'.format(color))
-        svg_lines.append('        <title>{}</title>'.format(tooltip.replace('"', '&quot;')))
         svg_lines.append('      </circle>')
         svg_lines.append('      <text x="0" y="18" text-anchor="middle">{}</text>'.format(node['display_call']))
         svg_lines.append('    </g>')

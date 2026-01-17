@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.12] - 2026-01-17
+### Changed
+- SVG tooltips now use custom HTML overlay instead of native browser tooltips
+- Tooltips are semi-transparent (75% opacity) so they don't fully obscure connection lines
+- Tooltips appear near cursor on mousemove and follow mouse position
+- Better visibility of network topology while hovering for information
+
 ## [nodemap 1.7.79] - 2026-01-17
 ### Fixed
 - Resume mode no longer skips nodes that lack a NetRom alias
