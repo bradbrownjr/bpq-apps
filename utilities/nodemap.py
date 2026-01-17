@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.57
+Version: 1.7.58
 """
 
-__version__ = '1.7.57'
+__version__ = '1.7.58'
 
 import sys
 import socket
@@ -536,8 +536,9 @@ class NodeCrawler:
                             if self.verbose:
                                 print("    Found NetRom alias: {} -> {}".format(lookup_call, alias))
                                 print("    Issuing command: C {} (discovered NetRom alias, hop {}/{})".format(alias, i+1, len(path)))
-                        else:
+                        elif i == 0:
                             # Still no alias found - try connecting to known nodes to discover more
+                            # ONLY do this from localhost (i==0) - don't disconnect from intermediate nodes
                             if self.verbose:
                                 print("    {} not in local NetRom table - trying known nodes...".format(lookup_call))
                             
@@ -613,13 +614,25 @@ class NodeCrawler:
                                         continue
                             
                             if not found_via_neighbor:
-                                # Still no route - final fallback
-                                full_callsign = self.netrom_ssid_map.get(lookup_call, callsign)
-                                cmd = "C {}\r".format(full_callsign).encode('ascii')
-                                connect_target = "{} (no route found - will fail)".format(full_callsign)
+                                # Still no route after expanded search from localhost
                                 if self.verbose:
-                                    print("    No route found after expanded search")
-                                    print("    Issuing command: C {} (final fallback - will likely fail, hop {}/{})".format(full_callsign, i+1, len(path)))
+                                    print("    No route found after expanded search from localhost")
+                                # Abort - cannot proceed without alias
+                                if self.verbose:
+                                    print("    Connection impossible without NetRom alias - aborting")
+                                tn.close()
+                                return None
+                        else:
+                            # Intermediate hop (i > 0) and no alias found in current node's NODES
+                            # Cannot do expanded discovery without breaking our connection path
+                            if self.verbose:
+                                print("    {} not in current node's NODES table".format(lookup_call))
+                                print("    Cannot discover from intermediate hop - would break connection path")
+                            # Abort - cannot proceed without alias
+                            if self.verbose:
+                                print("    Connection impossible without NetRom alias - aborting")
+                            tn.close()
+                            return None
                     
                     except Exception as e:
                         if self.verbose:

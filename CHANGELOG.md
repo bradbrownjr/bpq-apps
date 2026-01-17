@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.58] - 2026-01-16
+### Fixed
+- Expanded NetRom discovery only runs from localhost (i==0)
+- Prevents breaking connection path when on intermediate nodes
+- Aborts if alias not found in current node's NODES (can't discover further)
+- Stops connecting to BBS/RMS/CHAT nodes that break the path
+
 ## [nodemap 1.7.57] - 2026-01-16
 ### Fixed
 - Fixed syntax error from orphaned else clause (line 633)
