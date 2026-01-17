@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.56
+Version: 1.7.57
 """
 
-__version__ = '1.7.56'
+__version__ = '1.7.57'
 
 import sys
 import socket
@@ -624,28 +624,22 @@ class NodeCrawler:
                     except Exception as e:
                         if self.verbose:
                             print("    NetRom discovery failed: {}".format(e))
-                        # Fall back to basic connection attempt
-                        full_callsign = callsign
-                        cmd = "C {}\r".format(full_callsign).encode('ascii')
-                        connect_target = "{} (discovery failed)".format(full_callsign)
+                        
+                        # Final check: must have NetRom alias to proceed
+                        # Base callsign fallback does NOT work - NetRom requires alias or port
+                        if lookup_call not in self.call_to_alias:
+                            if self.verbose:
+                                print("    No NetRom alias found for {} - UNROUTABLE".format(callsign))
+                                print("    Connection impossible without alias or port - aborting")
+                            tn.close()
+                            return None
+                        
+                        # Use NetRom alias from mappings as fallback
+                        alias = self.call_to_alias[lookup_call]
+                        cmd = "C {}\r".format(alias).encode('ascii')
+                        connect_target = "{} (from mappings after discovery failure)".format(alias)
                         if self.verbose:
-                            print("    Issuing command: C {} (discovery failed, hop {}/{})".format(full_callsign, i+1, len(path)))
-                else:
-                    # Final check: must have NetRom alias to proceed
-                    # Base callsign fallback does NOT work - NetRom requires alias or port
-                    if lookup_call not in self.call_to_alias:
-                        if self.verbose:
-                            print("    No NetRom alias found for {} - UNROUTABLE".format(callsign))
-                            print("    Connection impossible without alias or port - aborting")
-                        tn.close()
-                        return None
-                    
-                    # Use NetRom alias from mappings
-                    alias = self.call_to_alias[lookup_call]
-                    cmd = "C {}\r".format(alias).encode('ascii')
-                    connect_target = "{} (from mappings)".format(alias)
-                    if self.verbose:
-                        print("    Issuing command: C {} (NetRom alias from mappings, hop {}/{})".format(alias, i+1, len(path)))
+                            print("    Issuing command: C {} (NetRom alias from mappings, hop {}/{})".format(alias, i+1, len(path)))
                 
                 # Set socket timeout before write to prevent blocking on dead connections
                 # TCP write() can block if remote end's receive buffer is full

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.57] - 2026-01-16
+### Fixed
+- Fixed syntax error from orphaned else clause (line 633)
+- Moved alias fallback logic into except block where it belongs
+
 ## [nodemap 1.7.56] - 2026-01-16
 ### Changed
 - Clarified: BPQ waits for input after connection (no auto-banner)
