@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.42
+Version: 1.7.43
 """
 
-__version__ = '1.7.42'
+__version__ = '1.7.43'
 
 import sys
 import socket
@@ -503,44 +503,19 @@ class NodeCrawler:
                         nodes_output = self._send_command(tn, 'NODES', timeout=10, expect_content=':')
                         all_aliases, discovered_ssids, _ = self._parse_nodes_aliases(nodes_output)
                         
-                        # Update global mappings, preferring aliases that match consensus SSID
-                        # or have higher SSIDs (node SSIDs tend to be higher like -15, -13)
+                        # Update global mappings - ONLY use aliases that match consensus SSID
+                        # If no consensus exists, DO NOT add to call_to_alias
+                        # Let NetRom routing figure it out with base callsign
                         for alias, full_call in all_aliases.items():
                             base_call = full_call.split('-')[0]
                             
                             # Check if this alias matches the consensus SSID for this callsign
                             consensus_ssid = self.netrom_ssid_map.get(base_call)
-                            matches_consensus = (consensus_ssid and full_call == consensus_ssid)
                             
-                            # Extract SSID number for comparison
-                            new_ssid = 0
-                            if '-' in full_call:
-                                try:
-                                    new_ssid = int(full_call.rsplit('-', 1)[1])
-                                except ValueError:
-                                    pass
-                            
-                            if base_call not in self.call_to_alias:
-                                # New entry - add it
+                            if consensus_ssid and full_call == consensus_ssid:
+                                # This alias matches consensus - safe to use
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
-                            elif matches_consensus:
-                                # This alias matches consensus SSID - replace existing
-                                self.call_to_alias[base_call] = alias
-                                self.alias_to_call[alias] = full_call
-                            else:
-                                # Check if new SSID is higher (prefer node SSIDs like -15 over service SSIDs like -2)
-                                existing_alias = self.call_to_alias[base_call]
-                                existing_call = self.alias_to_call.get(existing_alias, '')
-                                existing_ssid = 0
-                                if '-' in existing_call:
-                                    try:
-                                        existing_ssid = int(existing_call.rsplit('-', 1)[1])
-                                    except ValueError:
-                                        pass
-                                if new_ssid > existing_ssid:
-                                    self.call_to_alias[base_call] = alias
-                                    self.alias_to_call[alias] = full_call
                             
                             # Always add to alias_to_call for reverse lookups
                             if alias not in self.alias_to_call:
@@ -1998,20 +1973,16 @@ class NodeCrawler:
             
             # Update global alias mappings from NODES (routing table)
             # These are useful for routing to other nodes
-            # Prefer node aliases over service aliases (BBS, RMS, CHAT)
+            # ONLY add aliases that match consensus SSID
             for alias, full_call in other_aliases.items():
                 base_call = full_call.split('-')[0]
-                is_likely_node = self._is_likely_node_ssid(full_call)
+                consensus_ssid = self.netrom_ssid_map.get(base_call)
                 
-                # Store alias mapping for documentation
-                if base_call not in self.call_to_alias:
-                    # New entry - add it
+                # Only add to call_to_alias if this alias matches consensus
+                if consensus_ssid and full_call == consensus_ssid:
                     self.call_to_alias[base_call] = alias
-                elif is_likely_node:
-                    # Likely node SSID - replace existing suspicious SSID
-                    self.call_to_alias[base_call] = alias
-                # else: suspicious SSID and we already have a mapping - skip
                 
+                # Always add to alias_to_call for reverse lookups/documentation
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
             
@@ -2555,12 +2526,15 @@ class NodeCrawler:
                             self.call_to_alias[node_base] = node_alias_for_routing
                             self.alias_to_call[node_alias_for_routing] = node_ssid_from_routes
                         
-                        # Populate alias_to_call for all seen_aliases (reverse lookups)
+                        # Populate alias_to_call for all seen_aliases (reverse lookups only)
+                        # Do NOT add to call_to_alias unless alias matches consensus SSID
                         for alias, full_call in node_info.get('seen_aliases', {}).items():
                             base_call = full_call.split('-')[0]
-                            # Only add to call_to_alias if no entry exists
-                            if base_call not in self.call_to_alias:
-                                self.call_to_alias[base_call] = alias
+                            consensus_ssid = self.netrom_ssid_map.get(base_call)
+                            # Only add to call_to_alias if matches consensus
+                            if consensus_ssid and full_call == consensus_ssid:
+                                if base_call not in self.call_to_alias:
+                                    self.call_to_alias[base_call] = alias
                             # Always add to alias_to_call for reverse lookups
                             if alias not in self.alias_to_call:
                                 self.alias_to_call[alias] = full_call

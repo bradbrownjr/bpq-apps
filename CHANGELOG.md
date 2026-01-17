@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.43] - 2026-01-16
+### Fixed
+- STRICTLY enforce alias consensus: call_to_alias ONLY populated when alias matches consensus SSID
+- Removed ALL heuristics based on SSID numbers (no assumptions about higher/lower)
+- Fixed 3 separate code locations adding aliases without consensus check
+- If no consensus exists, alias is NOT added - let NetRom routing use base callsign
+- Follows SSID Selection Standard: consensus or nothing, never guess
+
 ## [nodemap 1.7.42] - 2026-01-16
 ### Fixed
 - Live NODES discovery now prefers aliases matching consensus SSID
