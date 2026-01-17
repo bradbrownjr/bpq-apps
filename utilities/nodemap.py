@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.74
+Version: 1.7.75
 """
 
-__version__ = '1.7.74'
+__version__ = '1.7.75'
 
 import sys
 import socket
@@ -3603,11 +3603,11 @@ class NodeCrawler:
 def main():
     """Main entry point."""
     # Check for set-grid mode first (fast exit)
-    if '--set-grid' in sys.argv:
+    if '--set-grid' in sys.argv or '-g' in sys.argv:
         set_grid_call = None
         set_grid_value = None
         for i, arg in enumerate(sys.argv):
-            if arg == '--set-grid' and i + 2 < len(sys.argv):
+            if (arg == '--set-grid' or arg == '-g') and i + 2 < len(sys.argv):
                 set_grid_call = sys.argv[i + 1].upper()
                 set_grid_value = sys.argv[i + 2]
                 break
@@ -3711,11 +3711,11 @@ def main():
         sys.exit(0)
     
     # Check for note mode (add/update note for a node)
-    if '--note' in sys.argv:
+    if '--note' in sys.argv or '-N' in sys.argv:
         note_call = None
         note_text = None
         for i, arg in enumerate(sys.argv):
-            if arg == '--note' and i + 2 < len(sys.argv):
+            if (arg == '--note' or arg == '-N') and i + 2 < len(sys.argv):
                 note_call = sys.argv[i + 1].upper()
                 note_text = sys.argv[i + 2]
                 break
@@ -3821,7 +3821,7 @@ def main():
         sys.exit(0)
     
     # Check for cleanup mode (nodes, connections, or all)
-    if '--cleanup' in sys.argv:
+    if '--cleanup' in sys.argv or '-C' in sys.argv:
         if not os.path.exists('nodemap.json'):
             colored_print("Error: nodemap.json not found", Colors.RED)
             sys.exit(1)
@@ -3829,7 +3829,7 @@ def main():
         # Determine what to clean up
         cleanup_target = 'all'  # default
         for i, arg in enumerate(sys.argv):
-            if arg == '--cleanup' and i + 1 < len(sys.argv):
+            if (arg == '--cleanup' or arg == '-C') and i + 1 < len(sys.argv):
                 next_arg = sys.argv[i + 1].lower()
                 if next_arg in ['nodes', 'connections', 'unexplored', 'all']:
                     cleanup_target = next_arg
@@ -4058,92 +4058,134 @@ def main():
     
     # Check for help flag first
     if '-h' in sys.argv or '--help' in sys.argv or '/?' in sys.argv:
-        print("BPQ Node Map Crawler v{}".format(__version__))
-        print("=" * 50)
-        print("\nAutomatically crawls packet radio network to discover topology.")
-        print("\nUsage: {} [MAX_HOPS] [START_NODE] [OPTIONS]".format(sys.argv[0]))
-        print("\nArguments:")
-        print("  MAX_HOPS         Maximum RF hops from start (default: 4, 0 with --callsign)")
-        print("                   0=local only, 1=direct neighbors, 2=neighbors+their neighbors")
-        print("  START_NODE       Callsign to begin crawl (default: local node)")
-        print("\nOptions:")
-        print("  --overwrite, -o  Overwrite existing data (default: merge)")
-        print("  --resume, -r     Resume from unexplored nodes in nodemap.json")
-        print("                   Automatically finds nodemap_partial*.json if nodemap.json missing")
-        print("  --resume FILE    Resume from specific JSON file")
-        print("  --merge FILE, -m Merge another nodemap.json file into current data")
-        print("                   Supports wildcards: --merge *.json")
-        print("  --mode MODE      Crawl mode: update (default), reaudit, new-only")
-        print("                   update: skip already-visited nodes (fastest)")
-        print("                   reaudit: re-crawl all nodes to verify/update data")
-        print("                   new-only: auto-load nodemap.json, queue unexplored neighbors")
-        print("  --exclude CALLS, -x CALLS  Exclude callsigns from crawling")
-        print("                   CALLS: comma-separated list OR filename")
-        print("                   File format: one callsign per line or comma-separated")
-        print("                   Lines starting with # are comments")
-        print("  --exclude, -x    Use default exclusions.txt file")
-        print("                   Example: --exclude AB1KI,N1REX,K1NYY")
-        print("                   Example: --exclude blocklist.txt")
-        print("                   Example: -x  (uses exclusions.txt)")
-        print("  --display-nodes, -d  Display nodes table from nodemap.json and exit")
-        print("  --user USERNAME  Telnet login username (default: prompt if needed)")
-        print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
-        print("  --callsign CALL  Force specific SSID for start node (e.g., --callsign NG1P-4)")
-        print("  --set-grid CALL GRID  Set gridsquare for callsign (e.g., --set-grid NG1P FN43vp)")
-        print("  --note CALL [TEXT]  Add/update/remove note for node")
-        print("                      With TEXT: set note (e.g., --note NG1P \"HF 7.101 MHz\")")
-        print("                      Without TEXT: remove existing note")
-        print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
-        print("  --cleanup [TARGET]  Clean up nodemap.json (nodes, connections, unexplored, or all)")
-        print("                      TARGET: nodes (duplicates/incomplete), connections (invalid),")
-        print("                              unexplored (upgrade base calls to full SSIDs),")
-        print("                              all (all of the above, default if TARGET omitted)")
-        print("  --hf             Include HF ports (VARA, ARDOP, PACTOR) in crawling")
-        print("                   Default: skip HF (too slow at 300 baud)")
-        print("  --ip             Include IP ports (AXIP, TCP, Telnet) in crawling")
-        print("                   Default: skip IP (not RF, may be temporary links)")
-        print("  --notify URL     Send notifications to webhook URL")
-        print("  --verbose, -v    Show detailed command/response output")
-        print("  --log [FILE], -l [FILE]  Log telnet traffic (default: telnet.log)")
-        print("  --debug-log [FILE], -D [FILE]  Log verbose debug output (implies -v, default: debug.log)")
-        print("  --help, -h, /?   Show this help message")
-        print("Examples:")
-        print("  {} 5              # Crawl 5 hops, merge with existing".format(sys.argv[0]))
-        print("  {} 10 WS1EC       # Crawl from WS1EC, merge results".format(sys.argv[0]))
-        print("  {} 5 --overwrite  # Crawl and completely replace data".format(sys.argv[0]))
-        print("  {} --resume       # Continue from unexplored nodes".format(sys.argv[0]))
-        print("  {} --resume nodemap_partial.json  # Resume from specific file".format(sys.argv[0]))
-        print("  {} --merge remote_nodemap.json  # Merge data from another node's perspective".format(sys.argv[0]))
-        print("  {} -m *.json      # Merge all JSON files in current directory".format(sys.argv[0]))
-        print("  {} 10 --user KC1JMH --pass ****  # With authentication".format(sys.argv[0]))
-        print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
-        print("  {} --callsign NG1P-4  # Force connection to specific SSID".format(sys.argv[0]))
-        print("  {} --set-grid NG1P FN43vp  # Add gridsquare for node".format(sys.argv[0]))
-        print("  {} --note NG1P \"HF 7.101 MHz\"  # Add note to node".format(sys.argv[0]))
-        print("  {} --note NG1P  # Remove note from node".format(sys.argv[0]))
-        print("  {} -q NG1P  # Query what we know about NG1P".format(sys.argv[0]))
-        print("\nData Storage:")
-        print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
-        print("  Overwrite mode: Completely replaces nodemap.json and nodemap.csv")
-        print("  Merge file mode: Combines data from multiple node perspectives")
-        print("\nMulti-Node Mapping:")
-        print("  1. Run script from different nodes: nodemap.py 10 > node1_map.json")
-        print("  2. Share JSON files between operators")
-        print("  3. Merge perspectives: nodemap.py --merge node2_map.json --merge node3_map.json")
-        print("  4. Result: Combined network view from all vantage points")
-        print("\nOutput Files:")
-        print("  nodemap.json      Complete network topology and node information")
-        print("  nodemap.csv       Connection list for spreadsheet analysis")
-        print("\nInstallation:")
-        print("  Place in ~/utilities/ or ~/apps/ adjacent to ~/linbpq/")
-        print("  Reads NODECALL and TCPPORT from ../linbpq/bpq32.cfg")
-        print("\nTimeout Protection:")
-        print("  Commands scale with hop count (5s + 10s/hop, max 60s)")
-        print("  Connection timeout: 20s + 20s/hop (max 2min)")
-        print("  Operation timeout: 2min + 1min/hop (max ~12min for 10 hops)")
-        print("  Staleness filter: Skips nodes not heard in >24 hours")
-        sys.exit(0)
-    
+        print("NAME")
+        print("       nodemap - BPQ packet radio network topology crawler")
+        print("")
+        print("SYNOPSIS")
+        print("       nodemap.py [MAX_HOPS] [START_NODE] [OPTIONS]")
+        print("")
+        print("VERSION")
+        print("       {}".format(__version__))
+        print("")
+        print("DESCRIPTION")
+        print("       Automatically crawls packet radio network to discover topology.")
+        print("       Connects to nodes via NetRom, retrieves MHEARD/INFO data, and")
+        print("       builds a map of node connectivity for visualization.")
+        print("")
+        print("ARGUMENTS")
+        print("       MAX_HOPS")
+        print("              Maximum RF hops from start node. Default: 4, or 0 with -c.")
+        print("              0=local only, 1=direct neighbors, 2=neighbors+their neighbors.")
+        print("")
+        print("       START_NODE")
+        print("              Callsign to begin crawl from. Default: local node.")
+        print("")
+        print("OPTIONS")
+        print("   Crawl Control:")
+        print("       -o, --overwrite")
+        print("              Overwrite existing data. Default: merge with existing.")
+        print("")
+        print("       -r, --resume [FILE]")
+        print("              Resume from unexplored nodes. Auto-finds nodemap_partial*.json")
+        print("              if nodemap.json missing. Optionally specify FILE to resume from.")
+        print("")
+        print("       -m, --merge FILE")
+        print("              Merge another nodemap.json into current data. Supports wildcards.")
+        print("")
+        print("       -M, --mode MODE")
+        print("              Crawl mode: update (default), reaudit, new-only.")
+        print("                update   - Skip already-visited nodes (fastest)")
+        print("                reaudit  - Re-crawl all nodes to verify/update data")
+        print("                new-only - Auto-load nodemap.json, queue unexplored neighbors")
+        print("")
+        print("       -x, --exclude [CALLS|FILE]")
+        print("              Exclude callsigns from crawling. CALLS: comma-separated list or")
+        print("              filename. Default: exclusions.txt if no argument given.")
+        print("")
+        print("       -H, --hf")
+        print("              Include HF ports (VARA, ARDOP, PACTOR). Default: skip (300 baud).")
+        print("")
+        print("       -I, --ip")
+        print("              Include IP ports (AXIP, TCP, Telnet). Default: skip (not RF).")
+        print("")
+        print("   Node Operations:")
+        print("       -c, --callsign CALL")
+        print("              Force specific SSID for connection (e.g., -c NG1P-4).")
+        print("")
+        print("       -g, --set-grid CALL GRID")
+        print("              Set gridsquare for callsign (e.g., -g NG1P FN43vp).")
+        print("")
+        print("       -N, --note CALL [TEXT]")
+        print("              Add/update note for node. Without TEXT, removes existing note.")
+        print("")
+        print("       -q, --query CALL")
+        print("              Query info about node (neighbors, apps, best route).")
+        print("")
+        print("       -d, --display-nodes")
+        print("              Display nodes table from nodemap.json and exit.")
+        print("")
+        print("       -C, --cleanup [TARGET]")
+        print("              Clean up nodemap.json. TARGET: nodes, connections, unexplored, all.")
+        print("              Default: all.")
+        print("")
+        print("   Authentication:")
+        print("       -u, --user USERNAME")
+        print("              Telnet login username. Default: prompt if needed.")
+        print("")
+        print("       -p, --pass PASSWORD")
+        print("              Telnet login password. Default: prompt if needed.")
+        print("")
+        print("   Logging & Debug:")
+        print("       -v, --verbose")
+        print("              Show detailed command/response output.")
+        print("")
+        print("       -l, --log [FILE]")
+        print("              Log telnet traffic. Default: telnet.log.")
+        print("")
+        print("       -D, --debug-log [FILE]")
+        print("              Log verbose debug output (implies -v). Default: debug.log.")
+        print("")
+        print("       -n, --notify URL")
+        print("              Send notifications to webhook URL.")
+        print("")
+        print("       -h, --help, /?")
+        print("              Show this help message.")
+        print("")
+        print("EXAMPLES")
+        print("       nodemap.py 5")
+        print("              Crawl 5 hops, merge with existing data.")
+        print("")
+        print("       nodemap.py 10 WS1EC")
+        print("              Crawl from WS1EC, merge results.")
+        print("")
+        print("       nodemap.py -r")
+        print("              Resume crawl from unexplored nodes.")
+        print("")
+        print("       nodemap.py -m *.json")
+        print("              Merge all JSON files in current directory.")
+        print("")
+        print("       nodemap.py -c NG1P-4")
+        print("              Force connection to specific SSID.")
+        print("")
+        print("       nodemap.py -q NG1P")
+        print("              Query what we know about NG1P.")
+        print("")
+        print("       nodemap.py -g NG1P FN43vp")
+        print("              Set gridsquare for NG1P.")
+        print("")
+        print("       nodemap.py -N NG1P \"HF 7.101 MHz\"")
+        print("              Add note to NG1P.")
+        print("")
+        print("FILES")
+        print("       nodemap.json    Complete network topology and node information")
+        print("       nodemap.csv     Connection list for spreadsheet analysis")
+        print("       exclusions.txt  Default exclusion list (one callsign per line)")
+        print("")
+        print("ENVIRONMENT")
+        print("       Reads NODECALL and TCPPORT from ../linbpq/bpq32.cfg")
+        print("")
+        print("SEE ALSO")
+        print("       nodemap-html.py - Generate visual maps from nodemap.json")
         sys.exit(0)
     
     # Check for display-nodes mode first (fast exit)
@@ -4525,8 +4567,8 @@ def main():
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     resume = '--resume' in sys.argv or '-r' in sys.argv
     generate_maps = False  # Will be set by user prompt
-    allow_hf = '--hf' in sys.argv  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
-    allow_ip = '--ip' in sys.argv  # Include IP ports (AXIP, TCP, Telnet) - not RF
+    allow_hf = '--hf' in sys.argv or '-H' in sys.argv  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
+    allow_ip = '--ip' in sys.argv or '-I' in sys.argv  # Include IP ports (AXIP, TCP, Telnet) - not RF
     
     # Parse positional and optional arguments
     i = 1
@@ -4550,10 +4592,10 @@ def main():
     unknown_args = []
     while i < len(sys.argv):
         arg = sys.argv[i]
-        if arg == '--user' and i + 1 < len(sys.argv):
+        if (arg == '--user' or arg == '-u') and i + 1 < len(sys.argv):
             username = sys.argv[i + 1]
             i += 2
-        elif arg == '--pass' and i + 1 < len(sys.argv):
+        elif (arg == '--pass' or arg == '-p') and i + 1 < len(sys.argv):
             password = sys.argv[i + 1]
             i += 2
         elif (arg == '--notify' or arg == '-n') and i + 1 < len(sys.argv):
@@ -4626,7 +4668,7 @@ def main():
                 else:
                     colored_print("Warning: No exclusions.txt found and no callsigns specified", Colors.YELLOW)
                 i += 1
-        elif arg == '--mode' and i + 1 < len(sys.argv):
+        elif (arg == '--mode' or arg == '-M') and i + 1 < len(sys.argv):
             mode_arg = sys.argv[i + 1].lower()
             if mode_arg in ['update', 'reaudit', 'new-only']:
                 crawl_mode = mode_arg
@@ -4669,7 +4711,7 @@ def main():
                 else:
                     colored_print("Warning: Skipping '{}' - cannot merge output file into itself".format(pattern), Colors.YELLOW)
             i += 2
-        elif arg == '--callsign' and i + 1 < len(sys.argv):
+        elif (arg == '--callsign' or arg == '-c') and i + 1 < len(sys.argv):
             forced_ssid = sys.argv[i + 1].upper()
             # Validate format: CALL-SSID
             if '-' not in forced_ssid:
@@ -4681,7 +4723,7 @@ def main():
             if not max_hops_explicit and not start_node:
                 max_hops = 0
             i += 2
-        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '--ip']:
+        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '-H', '--ip', '-I']:
             # Known flags without arguments
             i += 1
         elif arg.startswith('-') and not arg.isdigit():

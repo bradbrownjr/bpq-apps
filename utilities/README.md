@@ -98,58 +98,61 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
 - `START_NODE` - Callsign to start from (default: local node from bpq32.cfg)
 
 **Options:**
-- `--overwrite` or `-o` - Replace existing data (default: merge mode)
-- `--resume` or `-r` - Continue from unexplored nodes in existing data
-- `--callsign CALL-SSID` - Force specific node SSID (e.g., `--callsign NG1P-4`)
+- `-o`, `--overwrite` - Replace existing data (default: merge mode)
+- `-r`, `--resume` [FILE] - Continue from unexplored nodes in existing data
+- `-c`, `--callsign CALL-SSID` - Force specific node SSID (e.g., `-c NG1P-4`)
   - **Correction mode**: Automatically sets max_hops=0 and start_node when used alone
   - Use to fix bad SSID data without crawling entire network
-  - Example: `./nodemap.py --callsign NG1P-4` (crawls only NG1P-4, 0 neighbors)
-  - Override with explicit max_hops: `./nodemap.py 5 --callsign NG1P-4` (crawls NG1P-4 + 5 hops)
+  - Example: `./nodemap.py -c NG1P-4` (crawls only NG1P-4, 0 neighbors)
+  - Override with explicit max_hops: `./nodemap.py 5 -c NG1P-4` (crawls NG1P-4 + 5 hops)
   - Overrides auto-discovered SSID for all connection attempts (including reconnects)
   - Updates node's `netrom_ssids` in JSON to correct bad data permanently
   - Forced SSID persists for future crawls even without the flag
-- `--query CALL` or `-q CALL` - Query node info without crawling
+- `-q`, `--query CALL` - Query node info without crawling
   - Shows neighbors (explored/unexplored), apps, routes, best path
   - Use to check nodes from nodemap-html.py "unmapped nodes" list
   - Fast lookup: `./nodemap.py -q NG1P`
-- `--cleanup [TARGET]` - Clean up nodemap.json data
+- `-C`, `--cleanup [TARGET]` - Clean up nodemap.json data
   - `nodes`: Remove duplicate SSID entries and incomplete nodes (no neighbors/location/apps)
   - `connections`: Remove invalid connections (not in ROUTES or quality 0)
   - `all`: Both nodes and connections cleanup (default if TARGET omitted)
   - Automatically creates backup before making changes
-  - Examples: `./nodemap.py --cleanup`, `./nodemap.py --cleanup connections`
-- `--set-grid CALL GRID` - Set gridsquare for node (e.g., `--set-grid NG1P FN43vp`)
+  - Examples: `./nodemap.py -C`, `./nodemap.py -C connections`
+- `-g`, `--set-grid CALL GRID` - Set gridsquare for node (e.g., `-g NG1P FN43vp`)
   - Updates location data for nodes without gridsquare in INFO
   - Validates gridsquare format (warns if non-standard)
   - Offers to regenerate maps after update
-- `--display-nodes` or `-d` - Display nodes table from nodemap.json and exit
-- `--mode MODE` - Crawl mode: `update` (default), `reaudit`, `new-only`
+- `-N`, `--note CALL [TEXT]` - Add/update/remove note for node
+  - With TEXT: set note (e.g., `-N NG1P "HF 7.101 MHz"`)
+  - Without TEXT: remove existing note
+- `-d`, `--display-nodes` - Display nodes table from nodemap.json and exit
+- `-M`, `--mode MODE` - Crawl mode: `update` (default), `reaudit`, `new-only`
   - `update`: Skip already-visited nodes in current session (fastest)
   - `reaudit`: Re-crawl all nodes to verify/update data
   - `new-only`: Auto-load nodemap.json, queue only unexplored neighbors
-- `--exclude CALLS` or `-x CALLS` - Exclude callsigns from crawling
-  - Accepts comma-separated list: `--exclude AB1KI,N1REX,K1NYY`
-  - Accepts filename: `--exclude blocklist.txt`
+- `-x`, `--exclude [CALLS|FILE]` - Exclude callsigns from crawling
+  - Accepts comma-separated list: `-x AB1KI,N1REX,K1NYY`
+  - Accepts filename: `-x blocklist.txt`
   - Use `-x` alone to load default `exclusions.txt`
   - File format: one callsign per line or comma-separated, # for comments
   - Useful for filtering corrupted callsigns from AX.25 routing table pollution
-- `--hf` - Include HF ports in crawling
+- `-H`, `--hf` - Include HF ports in crawling
   - Default: Skip HF ports (VARA, ARDOP, PACTOR, 300 baud) - too slow for efficient crawling
   - HF ports detected by: Keywords (VARA, ARDOP, PACTOR, WINMOR), frequency <30 MHz, or speed ≤300 baud
   - Enable for networks with primarily HF connectivity or when specifically exploring HF links
-  - Example: `./nodemap.py 5 --hf` (crawl including HF ports)
-- `--ip` - Include IP/Internet ports in crawling
+  - Example: `./nodemap.py 5 -H` (crawl including HF ports)
+- `-I`, `--ip` - Include IP/Internet ports in crawling
   - Default: Skip IP ports (AXIP, TCP, Telnet) - not RF, may be transient Internet links
   - IP ports detected by: Keywords (TELNET, TCP, IP, UDP, AX/IP, AXIP, AXUDP)
   - Enable to map Internet-based connectivity (AXIP reflectors, Telnet connections)
-  - Example: `./nodemap.py 5 --ip` (crawl including IP ports)
-- `--merge FILE` - Combine data from another operator's nodemap.json
-- `--verbose` or `-v` - Show detailed command/response output
-- `--notify URL` - Send progress notifications to webhook
-- `--log FILE` or `-l FILE` - Log all telnet traffic for debugging (default: telnet.log)
-- `--debug-log FILE` or `-D FILE` - Log verbose debug output (implies -v, default: debug.log)
-- `--user USERNAME` - Telnet login username (default: prompt if needed)
-- `--pass PASSWORD` - Telnet login password (default: prompt if needed)
+  - Example: `./nodemap.py 5 -I` (crawl including IP ports)
+- `-m`, `--merge FILE` - Combine data from another operator's nodemap.json
+- `-v`, `--verbose` - Show detailed command/response output
+- `-n`, `--notify URL` - Send progress notifications to webhook
+- `-l`, `--log [FILE]` - Log all telnet traffic for debugging (default: telnet.log)
+- `-D`, `--debug-log [FILE]` - Log verbose debug output (implies -v, default: debug.log)
+- `-u`, `--user USERNAME` - Telnet login username (default: prompt if needed)
+- `-p`, `--pass PASSWORD` - Telnet login password (default: prompt if needed)
 
 ### Multi-Node Mapping Workflow
 
@@ -360,32 +363,32 @@ Converts nodemap.json data into visual maps: interactive HTML with Leaflet.js an
 ```
 
 **Options:**
-- `--html FILE` - Generate interactive HTML map (default: nodemap.html)
-- `--svg FILE` - Generate static SVG map (default: nodemap.svg)
-- `--input FILE` - Input JSON file (default: nodemap.json)
-- `--output-dir DIR` - Save files to directory (prompts for BPQ HTML dir)
-- `--all` - Generate both HTML and SVG formats
-- `--help, -h, /?` - Show help message
+- `-a`, `--all` - Generate both HTML and SVG formats (default if no output specified)
+- `-t`, `--html [FILE]` - Generate interactive HTML map (default: nodemap.html)
+- `-s`, `--svg [FILE]` - Generate static SVG map (default: nodemap.svg)
+- `-i`, `--input FILE` - Input JSON file (default: nodemap.json)
+- `-o`, `--output-dir DIR` - Save files to directory (prompts for BPQ HTML dir)
+- `-h`, `--help`, `/?` - Show help message
 
 **Examples:**
 ```bash
 # Generate both formats (recommended)
-./nodemap-html.py --all
+./nodemap-html.py -a
 
 # Generate only HTML
-./nodemap-html.py --html
+./nodemap-html.py -t
 
 # Generate only SVG
-./nodemap-html.py --svg
+./nodemap-html.py -s
 
 # Custom filenames
-./nodemap-html.py --html network.html --svg network.svg
+./nodemap-html.py -t network.html -s network.svg
 
 # From different input file
-./nodemap-html.py --all --input other_network.json
+./nodemap-html.py -a -i other_network.json
 
 # Save directly to BPQ web directory
-./nodemap-html.py --all --output-dir ~/linbpq/HTML/
+./nodemap-html.py -a -o ~/linbpq/HTML/
 ```
 
 ### Output

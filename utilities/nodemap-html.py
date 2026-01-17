@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.9
+Version: 1.4.10
 """
 
-__version__ = '1.4.9'
+__version__ = '1.4.10'
 
 import sys
 import json
@@ -1283,52 +1283,72 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
 
 
 def show_help():
-    """Display help information."""
-    print("Node Map HTML Generator v{}".format(__version__))
-    print("=" * 50)
+    """Display help information in man page format."""
+    print("NAME")
+    print("       nodemap-html - Generate visual maps from nodemap.json")
     print("")
-    print("Generates visual maps from nodemap.json data.")
+    print("SYNOPSIS")
+    print("       nodemap-html.py [OPTIONS]")
     print("")
-    print("Usage: {} [OPTIONS]".format(sys.argv[0]))
+    print("VERSION")
+    print("       {}".format(__version__))
     print("")
-    print("Options:")
-    print("  --html FILE       Generate interactive HTML map (default: nodemap.html)")
-    print("  --svg FILE        Generate static SVG map (default: nodemap.svg)")
-    print("  --input FILE      Input JSON file (default: nodemap.json)")
-    print("  --output-dir DIR  Save files to directory (prompts for ../linbpq/HTML)")
-    print("  --all             Generate both HTML and SVG")
-    print("  --help, -h, /?    Show this help message")
+    print("DESCRIPTION")
+    print("       Generates interactive HTML and static SVG maps from nodemap.json")
+    print("       data produced by nodemap.py. HTML maps require internet for tiles;")
+    print("       SVG maps are fully offline with state/county boundaries.")
     print("")
-    print("Examples:")
-    print("  {} --all                    # Generate both formats".format(sys.argv[0]))
-    print("  {} --html network.html      # Custom HTML filename".format(sys.argv[0]))
-    print("  {} --svg --input data.json  # SVG from custom input".format(sys.argv[0]))
+    print("OPTIONS")
+    print("       -a, --all")
+    print("              Generate both HTML and SVG maps. This is the default if no")
+    print("              output format is specified.")
     print("")
-    print("Output Files:")
-    print("  nodemap.html - Interactive Leaflet map")
-    print("                 REQUIRES INTERNET for map tiles")
-    print("                 Click nodes for detailed info")
-    print("                 Color-coded by frequency band")
+    print("       -t, --html [FILE]")
+    print("              Generate interactive HTML map. Default: nodemap.html.")
     print("")
-    print("  nodemap.svg  - Static vector map")
-    print("                 FULLY OFFLINE - no dependencies")
-    print("                 Hover nodes for basic info")
-    print("                 Can be embedded in HTML pages")
+    print("       -s, --svg [FILE]")
+    print("              Generate static SVG map. Default: nodemap.svg.")
     print("")
-    print("BPQ Web Server Setup:")
-    print("  1. Copy nodemap.html to your BPQ HTML directory:")
-    print("     cp nodemap.html ~/linbpq/HTML/")
+    print("       -i, --input FILE")
+    print("              Input JSON file. Default: nodemap.json.")
     print("")
-    print("  2. Add link in your BPQ web interface index.html:")
-    print('     <a href="nodemap.html">Network Map</a>')
+    print("       -o, --output-dir DIR")
+    print("              Save files to directory. Prompts for ../linbpq/HTML if found.")
     print("")
-    print("  3. Or add custom page in bpq32.cfg (HTML section):")
-    print("     FILE=/HTML/nodemap.html,nodemap.html")
+    print("       -h, --help, /?")
+    print("              Show this help message.")
     print("")
-    print("Note on Offline Use:")
-    print("  The HTML map requires internet to load OpenStreetMap tiles.")
-    print("  For fully offline operation, use the SVG output instead.")
-    print("  The SVG can be viewed in any web browser without connectivity.")
+    print("EXAMPLES")
+    print("       nodemap-html.py -a")
+    print("              Generate both HTML and SVG maps.")
+    print("")
+    print("       nodemap-html.py -t network.html")
+    print("              Generate HTML map with custom filename.")
+    print("")
+    print("       nodemap-html.py -s -i data.json")
+    print("              Generate SVG from custom input file.")
+    print("")
+    print("OUTPUT FILES")
+    print("       nodemap.html")
+    print("              Interactive Leaflet map. REQUIRES INTERNET for map tiles.")
+    print("              Click nodes for detailed info. Color-coded by frequency band.")
+    print("")
+    print("       nodemap.svg")
+    print("              Static vector map. FULLY OFFLINE - no dependencies.")
+    print("              Hover nodes for basic info. Can be embedded in HTML pages.")
+    print("")
+    print("BPQ WEB SERVER SETUP")
+    print("       1. Copy nodemap.html to your BPQ HTML directory:")
+    print("          cp nodemap.html ~/linbpq/HTML/")
+    print("")
+    print("       2. Add link in your BPQ web interface index.html:")
+    print('          <a href="nodemap.html">Network Map</a>')
+    print("")
+    print("       3. Or add custom page in bpq32.cfg (HTML section):")
+    print("          FILE=/HTML/nodemap.html,nodemap.html")
+    print("")
+    print("SEE ALSO")
+    print("       nodemap.py - BPQ packet radio network topology crawler")
 
 
 def main():
@@ -1354,27 +1374,27 @@ def main():
     while i < len(args):
         arg = args[i]
         
-        if arg == '--input' and i + 1 < len(args):
+        if (arg == '--input' or arg == '-i') and i + 1 < len(args):
             input_file = args[i + 1]
             i += 2
-        elif arg == '--output-dir' and i + 1 < len(args):
+        elif (arg == '--output-dir' or arg == '-o') and i + 1 < len(args):
             output_dir = args[i + 1]
             i += 2
-        elif arg == '--html':
+        elif arg == '--html' or arg == '-t':
             if i + 1 < len(args) and not args[i + 1].startswith('-'):
                 html_file = args[i + 1]
                 i += 2
             else:
                 html_file = 'nodemap.html'
                 i += 1
-        elif arg == '--svg':
+        elif arg == '--svg' or arg == '-s':
             if i + 1 < len(args) and not args[i + 1].startswith('-'):
                 svg_file = args[i + 1]
                 i += 2
             else:
                 svg_file = 'nodemap.svg'
                 i += 1
-        elif arg == '--all':
+        elif arg == '--all' or arg == '-a':
             html_file = 'nodemap.html'
             svg_file = 'nodemap.svg'
             i += 1

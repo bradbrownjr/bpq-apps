@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.75] - 2026-01-18
+### Added
+- Shorthand options for all CLI flags (POSIX style single-character)
+  - `-g` for `--set-grid`, `-N` for `--note`, `-C` for `--cleanup`
+  - `-H` for `--hf`, `-I` for `--ip`, `-M` for `--mode`
+  - `-c` for `--callsign`, `-u` for `--user`, `-p` for `--pass`
+- Man page style help output with NAME, SYNOPSIS, VERSION, DESCRIPTION,
+  OPTIONS, EXAMPLES, FILES, ENVIRONMENT, and SEE ALSO sections
+
+## [nodemap-html 1.4.10] - 2026-01-18
+### Added
+- Shorthand options for all CLI flags
+  - `-a` for `--all`, `-t` for `--html`, `-s` for `--svg`
+  - `-i` for `--input`, `-o` for `--output-dir`
+- Man page style help output
+
 ## [nodemap 1.7.74] - 2026-01-18
 ### Added
 - `--note CALL [TEXT]` flag to add/remove notes for nodes

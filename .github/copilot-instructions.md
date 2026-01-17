@@ -27,6 +27,48 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Update both docstring `Version:` and `__version__` variable when bumping versions
 - Commit and push changes to GitHub after completing work
 
+## CLI Design Standards
+**All command-line options must have both long and short forms:**
+- Long form: `--option` (GNU style, descriptive)
+- Short form: `-X` (single character, POSIX style)
+- Always support `-h`, `--help`, `/?` for help
+
+**Help output format (Linux man page style):**
+```
+NAME
+       toolname - brief description
+
+SYNOPSIS
+       toolname.py [OPTIONS] [ARGUMENTS]
+
+VERSION
+       X.Y.Z
+
+DESCRIPTION
+       Detailed explanation of what the tool does.
+
+OPTIONS
+   Category:
+       -x, --long-option [ARG]
+              Description of option. Default: value.
+
+EXAMPLES
+       toolname.py -x
+              Brief explanation.
+
+FILES
+       filename    Description of file
+
+SEE ALSO
+       related-tool.py - brief description
+```
+
+**Shorthand conventions (maintain consistency across utilities):**
+- `-h` help, `-v` verbose, `-o` overwrite/output
+- `-i` input, `-r` resume, `-m` merge, `-q` query
+- `-l` log, `-d` display, `-x` exclude
+- Use uppercase for specialized flags: `-H` HF, `-I` IP, `-C` cleanup, `-N` note, `-M` mode, `-D` debug
+
 ## Patterns
 - Menu-driven (numeric choices)
 - Q&A format for interactive tools
