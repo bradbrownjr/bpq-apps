@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.45] - 2026-01-16
+### Changed
+- SSID Selection Standard: Use ROUTES consensus (aggregate netrom_ssids from all nodes)
+- ROUTES tables are AUTHORITATIVE - they show actual node SSIDs used for routing
+- Build consensus by counting which SSID each node reports for a given base callsign
+- Removed reliance on `alias` field (was unreliable - could be BBS/RMS/CHAT prompt)
+- Updated copilot-instructions.md with correct ROUTES-based standard
+
+### Fixed
+- KS1R now correctly uses KS1R-15 (3 nodes agree) instead of KS1R-2 (BBS)
+- KC1JMH correctly uses KC1JMH-15 (4 nodes agree)
+- All SSID selection now based on network-wide ROUTES consensus
+
 ## [nodemap 1.7.44] - 2026-01-16
 ### Changed
 - SSID Selection Standard: Use node's PRIMARY ALIAS from `alias` field (from BPQ prompt)

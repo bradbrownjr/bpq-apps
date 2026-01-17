@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.44
+Version: 1.7.45
 """
 
-__version__ = '1.7.44'
+__version__ = '1.7.45'
 
 import sys
 import socket
@@ -1249,54 +1249,65 @@ class NodeCrawler:
         
         # Restore SSID mappings from previous crawl data
         # SSID Selection Standard:
-        # 1. CLI-forced SSIDs (already in cli_forced_ssids)
-        # 2. Primary alias from node's 'alias' field (from BPQ prompt like "BURG:KS1R-15}")
-        # 3. own_aliases lookup using the primary alias
-        # 4. Base callsign only (let NetRom figure it out)
+        # 1. CLI-forced SSIDs (already in cli_forced_ssids) - highest priority
+        # 2. ROUTES consensus (aggregate netrom_ssids from all nodes) - AUTHORITATIVE
+        # 3. Base callsign only (let NetRom figure it out)
+        #
+        # The 'alias' field is NOT reliable - it comes from the BPQ prompt which may be
+        # from a BBS, RMS, or CHAT service rather than the node itself.
+        # ROUTES data (stored in netrom_ssids) IS reliable - it shows actual node SSIDs.
         
-        # First pass: Build SSID map from each node's PRIMARY ALIAS
-        # The 'alias' field contains the node's self-identified primary alias from connection prompt
+        # Build ROUTES consensus by aggregating netrom_ssids from ALL crawled nodes
+        # Each node's ROUTES table shows what SSIDs it knows for its neighbors
+        from collections import defaultdict
+        ssid_votes = defaultdict(lambda: defaultdict(int))
+        
+        for node_data in nodes_data.values():
+            netrom = node_data.get('netrom_ssids', {})
+            for base_call, full_ssid in netrom.items():
+                # Only count valid callsigns (skip corrupted data)
+                if self._is_valid_callsign(base_call) and self._is_likely_node_ssid(full_ssid):
+                    ssid_votes[base_call][full_ssid] += 1
+        
+        # Use ROUTES consensus to build SSID map
+        for base_call, votes in ssid_votes.items():
+            # Pick SSID with most votes (ties go to first alphabetically for consistency)
+            best_ssid = max(votes.keys(), key=lambda s: (votes[s], s))
+            self.netrom_ssid_map[base_call] = best_ssid
+            self.ssid_source[base_call] = ('routes_consensus', time.time())
+        
+        if self.verbose and ssid_votes:
+            print("Built ROUTES consensus from {} callsigns".format(len(ssid_votes)))
+        
+        # Build alias mappings from own_aliases (for NetRom routing)
+        # We populate alias_to_call for reverse lookups, but do NOT use alias field for SSIDs
         for callsign, node_data in nodes_data.items():
             node_base = callsign.split('-')[0] if '-' in callsign else callsign
-            
-            # The 'alias' field is authoritative - it's from the BPQ prompt when we connected
-            primary_alias = node_data.get('alias')
             own_aliases = node_data.get('own_aliases', {})
             
-            if primary_alias and primary_alias in own_aliases:
-                # Found the primary alias in own_aliases - use its SSID
-                full_ssid = own_aliases[primary_alias]
-                if self._is_likely_node_ssid(full_ssid):
-                    self.netrom_ssid_map[node_base] = full_ssid
-                    self.call_to_alias[node_base] = primary_alias
-                    self.alias_to_call[primary_alias] = full_ssid
-            elif primary_alias:
-                # Primary alias exists but not in own_aliases - use callsign with SSID if present
-                if '-' in callsign and self._is_likely_node_ssid(callsign):
-                    self.netrom_ssid_map[node_base] = callsign
-                    # Can't determine call_to_alias without own_aliases entry
-        
-        # Second pass: Populate alias_to_call for all aliases (for reverse lookups)
-        # This helps with parsing but does NOT add to call_to_alias (which controls routing)
-        for callsign, node_data in nodes_data.items():
-            for alias, full_call in node_data.get('own_aliases', {}).items():
+            # For each alias this node has, map it to the full callsign
+            for alias, full_call in own_aliases.items():
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
+                    
+            # If we have ROUTES consensus for this base call, find matching alias for routing
+            if node_base in self.netrom_ssid_map:
+                consensus_ssid = self.netrom_ssid_map[node_base]
+                # Find alias that maps to this SSID
+                for alias, full_call in own_aliases.items():
+                    if full_call == consensus_ssid:
+                        self.call_to_alias[node_base] = alias
+                        break
+        
+        # Also populate alias_to_call from seen_aliases (other nodes' aliases)
+        for callsign, node_data in nodes_data.items():
             for alias, full_call in node_data.get('seen_aliases', {}).items():
                 if alias not in self.alias_to_call:
                     self.alias_to_call[alias] = full_call
         
-        # Third pass: Fill in from each node's own netrom_ssids (MHEARD data) - lowest priority
-        for callsign, node_data in nodes_data.items():
-            node_ssids = node_data.get('netrom_ssids', {})
-            for base_call, full_call in node_ssids.items():
-                # Only use if not already set by primary alias
-                if base_call not in self.netrom_ssid_map:
-                    # Skip suspicious SSIDs (out of valid range)
-                    if self._is_likely_node_ssid(full_call):
-                        self.netrom_ssid_map[base_call] = full_call
+        # Note: netrom_ssids already processed via ROUTES consensus above
         
-        # Fourth pass: Restore route_ports ONLY from LOCAL node's heard_on_ports
+        # Restore route_ports ONLY from LOCAL node's heard_on_ports
         # route_ports tells us which port on OUR node to use to reach a neighbor
         # Other nodes' heard_on_ports are their port numbers, not ours
         local_base = self.callsign.split('-')[0] if '-' in self.callsign else self.callsign
@@ -2398,52 +2409,51 @@ class NodeCrawler:
                     
                     # SSID Selection Standard (from copilot-instructions.md):
                     # 1. CLI-forced SSIDs (handled via cli_forced_ssids, highest priority)
-                    # 2. Primary alias from node's 'alias' field (from BPQ prompt)
-                    # 3. own_aliases lookup using the primary alias
-                    # 4. Base callsign only (let NetRom figure it out)
-                    # NEVER assume SSID by number - use primary alias from node's prompt
+                    # 2. ROUTES consensus (aggregate netrom_ssids from all nodes) - AUTHORITATIVE
+                    # 3. Base callsign only (let NetRom figure it out)
+                    #
+                    # The 'alias' field is NOT reliable - it comes from the BPQ prompt which may be
+                    # from a BBS, RMS, or CHAT service rather than the node itself.
+                    # ROUTES data (stored in netrom_ssids) IS reliable - it shows actual node SSIDs.
                     
-                    # PASS 1: Build SSID map from each node's PRIMARY ALIAS
+                    # Build ROUTES consensus by aggregating netrom_ssids from ALL crawled nodes
+                    from collections import defaultdict
+                    ssid_votes = defaultdict(lambda: defaultdict(int))
+                    
+                    for node_info in nodes_data.values():
+                        netrom = node_info.get('netrom_ssids', {})
+                        for base_call, full_ssid in netrom.items():
+                            if self._is_valid_callsign(base_call) and self._is_likely_node_ssid(full_ssid):
+                                ssid_votes[base_call][full_ssid] += 1
+                    
+                    # Use ROUTES consensus to build SSID map
+                    for base_call, votes in ssid_votes.items():
+                        best_ssid = max(votes.keys(), key=lambda s: (votes[s], s))
+                        self.netrom_ssid_map[base_call] = best_ssid
+                        self.ssid_source[base_call] = ('routes_consensus', time.time())
+                    
+                    if self.verbose and ssid_votes:
+                        print("Built ROUTES consensus for {} callsigns".format(len(ssid_votes)))
+                    
+                    # Build alias mappings from own_aliases (for NetRom routing)
                     for node_call, node_info in nodes_data.items():
                         node_base = node_call.split('-')[0] if '-' in node_call else node_call
-                        
-                        # The 'alias' field is authoritative - from BPQ prompt when we connected
-                        primary_alias = node_info.get('alias')
                         own_aliases = node_info.get('own_aliases', {})
                         
-                        if primary_alias and primary_alias in own_aliases:
-                            # Found the primary alias in own_aliases - use its SSID
-                            full_ssid = own_aliases[primary_alias]
-                            if self._is_likely_node_ssid(full_ssid):
-                                self.netrom_ssid_map[node_base] = full_ssid
-                                self.call_to_alias[node_base] = primary_alias
-                                self.alias_to_call[primary_alias] = full_ssid
-                        elif primary_alias:
-                            # Primary alias exists but not in own_aliases - use callsign if has SSID
-                            if '-' in node_call and self._is_likely_node_ssid(node_call):
-                                self.netrom_ssid_map[node_base] = node_call
-                    
-                    if self.verbose and self.netrom_ssid_map:
-                        print("Built SSID map for {} callsigns from primary aliases".format(len(self.netrom_ssid_map)))
-                    
-                    # PASS 2: Fill gaps from MHEARD data (lowest priority)
-                    # Also restore route_ports and populate alias_to_call
-                    node_calls_sorted = sorted(nodes_data.keys(), 
-                                              key=lambda k: (nodes_data[k].get('hop_distance', 999), k))
-                    
-                    for node_call in node_calls_sorted:
-                        node_info = nodes_data[node_call]
-                        node_base = node_call.split('-')[0] if '-' in node_call else node_call
-                        
-                        # Restore netrom_ssids from MHEARD (lowest priority, fill gaps only)
-                        for base_call, full_call in node_info.get('netrom_ssids', {}).items():
-                            if base_call not in self.netrom_ssid_map and self._is_likely_node_ssid(full_call):
-                                self.netrom_ssid_map[base_call] = full_call
-                        
-                        # Populate alias_to_call for all aliases (for reverse lookups)
-                        for alias, full_call in node_info.get('own_aliases', {}).items():
+                        # Map all aliases to their full callsigns
+                        for alias, full_call in own_aliases.items():
                             if alias not in self.alias_to_call:
                                 self.alias_to_call[alias] = full_call
+                        
+                        # If we have ROUTES consensus for this base call, find matching alias
+                        if node_base in self.netrom_ssid_map:
+                            consensus_ssid = self.netrom_ssid_map[node_base]
+                            for alias, full_call in own_aliases.items():
+                                if full_call == consensus_ssid:
+                                    self.call_to_alias[node_base] = alias
+                                    break
+                        
+                        # Also add seen_aliases
                         for alias, full_call in node_info.get('seen_aliases', {}).items():
                             if alias not in self.alias_to_call:
                                 self.alias_to_call[alias] = full_call

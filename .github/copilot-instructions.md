@@ -56,18 +56,18 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 
 **SSID Selection Standard** (CRITICAL - do not deviate):
 1. **CLI-forced SSIDs** (`--force-ssid BASE FULL`) - highest priority, user override
-2. **Primary alias from node's `alias` field** - most authoritative, from BPQ prompt (e.g., `BURG:KS1R-15}`)
-   - When we connect to a node, BPQ reports its primary alias in the prompt
-   - This `alias` field is stored in nodemap.json and maps to the node's actual SSID
-3. **own_aliases lookup** - find alias in node's own_aliases that matches the `alias` field
-4. **Base callsign only** - if no alias known, strip SSID and let NetRom routing figure it out
-- seen_aliases is NOT reliable for consensus - counts are equal across all services (BBS, RMS, CHAT, NODE)
+2. **ROUTES consensus** - aggregate `netrom_ssids` from all crawled nodes
+   - Each node's ROUTES table shows the SSIDs it uses to reach its neighbors
+   - These are the ACTUAL node SSIDs (e.g., KS1R-15), not service SSIDs (KS1R-2 BBS)
+   - Consensus = SSID seen by most nodes for a given base callsign
+3. **Base callsign only** - if no ROUTES data, strip SSID and let NetRom routing figure it out
+- The `alias` field is NOT reliable - it comes from BPQ prompt which may be BBS/RMS/CHAT
+- seen_aliases is NOT reliable - counts are equal across all services
 - NEVER use SSID number heuristics - there is NO standard for node vs service SSIDs
 - ONLY filter SSIDs outside valid range (0, >15) using _is_likely_node_ssid()
 
 **Path Building**: Uses successful_path from previous crawls
-- SSIDs determined from node's `alias` field (from connection prompt)
-- The `alias` field tells us which alias in own_aliases is the PRIMARY node alias
+- SSIDs determined from ROUTES consensus across all crawled nodes
 - Use NetRom aliases from NODES output for multi-hop connections
 - route_ports only for localhost → first hop direct connections
 
