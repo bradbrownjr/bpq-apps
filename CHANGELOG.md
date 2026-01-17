@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.41] - 2026-01-16
+### Fixed
+- Resume/new-only mode now correctly processes unexplored_neighbors from JSON
+- Previous code was looking for non-existent 'neighbors' and 'routes' fields
+- unexplored_neighbors with SSIDs are stripped to base callsign unless alias consensus exists
+- Fixes v1.7.39 not working - the whole unexplored neighbor loop was broken
+
 ## [nodemap 1.7.40] - 2026-01-16
 ### Fixed
 - Local BPQ node connection failures (Broken pipe, connection refused) now exit immediately
