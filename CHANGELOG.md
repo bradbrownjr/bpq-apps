@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.64] - 2026-01-16
+### Fixed
+- Verify START_NODE has NetRom alias or is direct neighbor before attempting crawl
+- Prevents timeout errors when user specifies unroutable node as start point
+- Use JSON own_aliases as fallback for routing when no ROUTES consensus
+- Eliminates redundant NetRom discovery for previously crawled nodes
+- Prioritizes historical JSON data over live discovery for known nodes
+
 ## [nodemap 1.7.63] - 2026-01-16
 ### Changed
 - Added _normalize_callsign() helper for case-insensitive comparisons

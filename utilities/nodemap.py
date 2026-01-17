@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.63
+Version: 1.7.64
 """
 
-__version__ = '1.7.63'
+__version__ = '1.7.64'
 
 import sys
 import socket
@@ -2525,6 +2525,18 @@ class NodeCrawler:
                                 if full_call == consensus_ssid:
                                     self.call_to_alias[node_base] = alias
                                     break
+                        else:
+                            # No ROUTES consensus, but node was previously crawled
+                            # Use historical own_aliases as fallback for routing
+                            # Pick first alias that matches node SSID pattern (likely the node alias)
+                            for alias, full_call in own_aliases.items():
+                                call_base = full_call.split('-')[0] if '-' in full_call else full_call
+                                if call_base == node_base and self._is_likely_node_ssid(full_call):
+                                    self.call_to_alias[node_base] = alias
+                                    if node_base not in self.netrom_ssid_map:
+                                        self.netrom_ssid_map[node_base] = full_call
+                                        self.ssid_source[node_base] = ('json_fallback', time.time())
+                                    break
                         
                         # Also add seen_aliases
                         for alias, full_call in node_info.get('seen_aliases', {}).items():
@@ -2601,6 +2613,18 @@ class NodeCrawler:
                             
                             if other_unexplored:
                                 colored_print("Try one of these unexplored nodes instead: {}".format(', '.join(sorted(other_unexplored)[:10])), Colors.CYAN)
+                            return
+                        
+                        # Verify node is routable (has NetRom alias or is direct neighbor)
+                        if target_base not in self.call_to_alias and target_base not in self.route_ports:
+                            colored_print("Error: {} is not routable (no NetRom alias in network data)".format(target_base), Colors.RED)
+                            colored_print("NetRom routing requires an alias from the NODES table.", Colors.YELLOW)
+                            colored_print("This node may be offline or unreachable from your location.", Colors.YELLOW)
+                            
+                            # Check if it was previously crawled
+                            if target_base in nodes_data or target_ssid in nodes_data:
+                                colored_print("Note: {} exists in nodemap.json but lacks routing information.".format(target_base), Colors.YELLOW)
+                                colored_print("Try crawling from a node closer to {} in the network topology.".format(target_base), Colors.CYAN)
                             return
                         
                         if self.verbose:
