@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.7
+Version: 1.4.8
 """
 
-__version__ = '1.4.7'
+__version__ = '1.4.8'
 
 import sys
 import json
@@ -477,6 +477,9 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                 elif port_type == 'ip':
                     # IP link without frequency - still record it
                     links_found.add((None, 'ip'))
+                elif port_type == 'hf':
+                    # HF link without frequency (VARA/ARDOP/PACTOR) - record it
+                    links_found.add((None, 'hf'))
             for port_num in heard_ports_neighbor:
                 port_info = node_port_info.get(neighbor_key, {}).get(port_num, {})
                 freq = port_info.get('frequency')
@@ -485,6 +488,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                     links_found.add((freq, port_type))
                 elif port_type == 'ip':
                     links_found.add((None, 'ip'))
+                elif port_type == 'hf':
+                    links_found.add((None, 'hf'))
             
             # If no MHEARD port info, fall back to first RF port (legacy behavior)
             if not links_found:
