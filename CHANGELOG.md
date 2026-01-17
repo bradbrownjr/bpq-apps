@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.50] - 2026-01-16
+### Fixed
+- Removed redundant SSID filtering check during crawl phase
+- All node filtering now happens during planning phase only (no duplicate checks)
+- Eliminates duplicate "Skipping KB1TAE" messages
+
 ## [nodemap 1.7.49] - 2026-01-16
 ### Changed
 - Skip nodes not in any ROUTES table (unreachable via NetRom)

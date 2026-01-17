@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.49
+Version: 1.7.50
 """
 
-__version__ = '1.7.49'
+__version__ = '1.7.50'
 
 import sys
 import socket
@@ -3033,13 +3033,6 @@ class NodeCrawler:
             self.queue = deque(queue_list)
             
             callsign, path, quality = self.queue.popleft()
-            
-            # Skip nodes with insufficient SSID data (tied votes)
-            base_call = callsign.split('-')[0] if '-' in callsign else callsign
-            if base_call in self.skipped_no_ssid:
-                if self.verbose:
-                    print("Skipping {} (insufficient SSID data, tied votes)".format(callsign))
-                continue
             
             # Limit depth to prevent excessive crawling from discovered neighbors
             # BUT: Don't apply limit to the initial starting node (even if remote)
