@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.7.65
 """
 
-__version__ = '1.7.65'
+__version__ = '1.7.66'
 
 import sys
 import socket
@@ -1402,7 +1402,8 @@ class NodeCrawler:
                     continue
                 
                 # Skip if SSID has tied votes (already marked as skipped during consensus)
-                if neighbor_base in self.skipped_no_ssid:
+                # UNLESS user has CLI-forced the SSID (override consensus)
+                if neighbor_base in self.skipped_no_ssid and neighbor_base not in self.cli_forced_ssids:
                     if self.verbose:
                         print("  Skipping {} (tied SSID votes)".format(neighbor))
                     continue
@@ -1410,7 +1411,8 @@ class NodeCrawler:
                 # Skip if no NetRom alias available (CRITICAL for routing)
                 # Without an alias in call_to_alias, connection will timeout
                 # This catches nodes that are in ROUTES but not in any NODES table
-                if neighbor_base not in self.call_to_alias:
+                # UNLESS user has CLI-forced the SSID (explicit override)
+                if neighbor_base not in self.call_to_alias and neighbor_base not in self.cli_forced_ssids:
                     self.skipped_no_route.add(neighbor_base)
                     if self.verbose:
                         print("  Skipping {} (no NetRom alias for routing)".format(neighbor))
