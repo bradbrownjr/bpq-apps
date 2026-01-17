@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.70
+Version: 1.7.71
 """
 
-__version__ = '1.7.70'
+__version__ = '1.7.71'
 
 import sys
 import socket
@@ -4678,10 +4678,9 @@ def main():
             crawler.ssid_source[base_call] = ('cli', time.time())
             cli_forced_ssids[base_call] = forced_ssid
             colored_print("Forcing SSID: {} (will update SSID map for future crawls)".format(forced_ssid), Colors.GREEN)
-            # --callsign means crawl TO this node, not start FROM it
-            # Store as target, don't set start_node
-            if not start_node:
-                forced_target = base_call
+            # --callsign means crawl TO this specific node only (target-only mode)
+            # Always set forced_target - works with or without start_node
+            forced_target = base_call
         
         # Pass CLI-forced SSIDs to crawler so they survive resume
         crawler.cli_forced_ssids = cli_forced_ssids
