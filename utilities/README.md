@@ -185,6 +185,63 @@ For comprehensive network coverage, coordinate with other operators:
 
 4. **Result**: Comprehensive network map showing connectivity from all vantage points
 
+### Exploring Unreached Nodes
+
+After the initial crawl, some nodes may remain unexplored due to missing NetRom routes, 
+SSID ambiguity, or intermittent links. Use this workflow to systematically reach them:
+
+**Step 1: Identify unexplored nodes**
+```bash
+# Show nodes table with unexplored neighbors
+./nodemap.py -d
+
+# Filter out known-bad callsigns (packet corruption artifacts)
+./nodemap.py -d -x
+```
+
+**Step 2: Build exclusions file from garbage callsigns**
+```bash
+# Extract unexplored list and append to exclusions
+./nodemap.py -d | tail -n 2 | head -n 1 >> exclusions.txt
+
+# Edit exclusions.txt - keep only invalid callsigns (packet loss artifacts)
+# Format: one per line, or comma-separated. Lines starting with # are comments.
+# Example bad calls: KM1JMH, KX1nMA, nB1uI (obvious corruption)
+```
+
+**Step 3: Find a path to unexplored nodes**
+```bash
+# Query a nearby node to see its neighbors and routes
+./nodemap.py -q KC1JMH -x
+
+# Check if the unexplored node appears in any routes
+# Look at "Routes (N reachable nodes)" section for quality values
+```
+
+**Step 4: Crawl through a known neighbor**
+```bash
+# Start from a node that can reach the target
+./nodemap.py 3 KC1JMH --callsign TARGET-15
+
+# Or use full crawl from a closer starting point
+./nodemap.py 5 NEIGHBOR_NODE
+```
+
+**Step 5: Verify and iterate**
+```bash
+# Check if the node was reached
+./nodemap.py -q TARGET -x
+
+# Regenerate maps with new data
+./nodemap-html.py --all
+```
+
+**Tips:**
+- Use `--verbose` during targeted crawls to see connection attempts
+- Check `nodemap-html.py` output for "Unmapped Nodes" list
+- Nodes with quality 0 in ROUTES are blocked by sysop - try alternate paths
+- If a node has no NetRom alias, it cannot be reached via multi-hop routing
+
 ### Data Storage Modes
 
 **Default mode (merge):**
