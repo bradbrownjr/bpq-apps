@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.63] - 2026-01-16
+### Changed
+- Added _normalize_callsign() helper for case-insensitive comparisons
+- Normalize all callsigns to uppercase when storing/comparing
+- Applies to: callsign init, exclude set, alias maps, SSID maps, ROUTES/NODES parsing, MHEARD
+- Ensures packet radio case assumptions hold (uppercase standard) even with mixed-case stale data
+
 ## [nodemap 1.7.62] - 2026-01-16
 ### Fixed
 - Display-nodes exclusion filtering now case-insensitive (fixes KX1nMA vs KX1NMA)

@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.62
+Version: 1.7.63
 """
 
-__version__ = '1.7.62'
+__version__ = '1.7.63'
 
 import sys
 import socket
@@ -114,7 +114,7 @@ class NodeCrawler:
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
-        self.callsign = callsign if callsign else self._find_callsign()
+        self.callsign = self._normalize_callsign(callsign if callsign else self._find_callsign())
         self.max_hops = max_hops
         self.username = username  # None means prompt when needed
         self.password = password  # None means prompt when needed
@@ -127,7 +127,7 @@ class NodeCrawler:
         self.resume = resume
         self.resume_file = None  # Set externally if specific file needed
         self.crawl_mode = crawl_mode  # 'update', 'reaudit', or 'new-only'
-        self.exclude = exclude if exclude else set()  # Nodes to skip
+        self.exclude = {self._normalize_callsign(c) for c in exclude} if exclude else set()  # Nodes to skip
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.skipped_no_ssid = {}  # Nodes skipped due to tied SSID votes: {callsign: {votes}}
@@ -216,6 +216,14 @@ class NodeCrawler:
         if not callsign:
             return False
         return NodeCrawler.CALLSIGN_PATTERN.match(callsign.upper()) is not None
+    
+    @staticmethod
+    def _normalize_callsign(callsign):
+        """Normalize callsign to uppercase for case-insensitive comparisons.
+        Packet radio uses uppercase, but handle mixed-case from stale data."""
+        if not callsign:
+            return callsign
+        return callsign.upper()
     
     def _find_callsign(self):
         """Extract callsign from bpq32.cfg."""
@@ -831,8 +839,8 @@ class NodeCrawler:
                     # Example: "WINFLD:N1QFY-4} " means node is N1QFY-4
                     prompt_match = re.search(r'(\w+):(\w+(?:-\d+)?)\}\s*$', prompt_text)
                     if prompt_match:
-                        prompt_alias = prompt_match.group(1)
-                        prompt_callsign = prompt_match.group(2)
+                        prompt_alias = self._normalize_callsign(prompt_match.group(1))
+                        prompt_callsign = self._normalize_callsign(prompt_match.group(2))
                         base_call = prompt_callsign.split('-')[0]
                         
                         # Store the ACTUAL node SSID we're connected to
@@ -1044,7 +1052,7 @@ class NodeCrawler:
             # Match callsign with optional SSID, followed by timestamp
             match = re.match(r'^(\w+(?:-\d+)?)\s+(\d+):(\d+):(\d+):(\d+)', line)
             if match:
-                full_callsign = match.group(1)
+                full_callsign = self._normalize_callsign(match.group(1))
                 callsign = full_callsign.split('-')[0]  # Strip SSID for base call
                 
                 # Validate callsign format
@@ -1590,6 +1598,8 @@ class NodeCrawler:
         # First pass: Look for aliased entries like "CCEBBS:WS1EC-2"
         matches = re.findall(r'(\w+):(\w+(?:-\d+)?)', output)
         for alias, callsign in matches:
+            alias = self._normalize_callsign(alias)
+            callsign = self._normalize_callsign(callsign)
             # Validate callsign format
             if self._is_valid_callsign(callsign):
                 aliases[alias] = callsign
@@ -1610,6 +1620,7 @@ class NodeCrawler:
         # Exclude entries already found via aliases
         non_aliased = re.findall(r'\b([A-Z]{1,2}\d[A-Z]{1,3}-\d{1,2})\b', output)
         for full_callsign in non_aliased:
+            full_callsign = self._normalize_callsign(full_callsign)
             base_call = full_callsign.rsplit('-', 1)[0]
             # Skip if we already have this from aliased entries
             if base_call in netrom_ssids:
@@ -1770,7 +1781,7 @@ class NodeCrawler:
                 match = re.search(r'>\s+(\d+)\s+(\w+(?:-\d+)?)\s+(\d+)', line)
                 if match:
                     port_num = int(match.group(1))
-                    full_call = match.group(2)
+                    full_call = self._normalize_callsign(match.group(2))
                     quality = int(match.group(3))
                     base_call = full_call.split('-')[0]
                     
@@ -1788,7 +1799,7 @@ class NodeCrawler:
             match = re.search(r'^\s+(\d+)\s+(\w+(?:-\d+)?)\s+(\d+)', line)
             if match:
                 port_num = int(match.group(1))
-                full_call = match.group(2)
+                full_call = self._normalize_callsign(match.group(2))
                 quality = int(match.group(3))
                 base_call = full_call.split('-')[0]
                 
@@ -1812,6 +1823,7 @@ class NodeCrawler:
             path: Connection path to reach this node
         """
         # Check if node is excluded (match both full callsign and base callsign)
+        callsign = self._normalize_callsign(callsign)
         base_call = callsign.split('-')[0] if '-' in callsign else callsign
         if callsign in self.exclude or base_call in self.exclude:
             if self.verbose:
