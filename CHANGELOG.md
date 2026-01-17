@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.54] - 2026-01-16
+### Fixed
+- NetRom discovery now runs from intermediate nodes, not just first hop
+- Allows finding aliases for next hop from current node's NODES table
+- Reduces failed connections when alias not in previously crawled data
+
 ## [nodemap 1.7.53] - 2026-01-16
 ### Fixed
 - Connection now aborts if no NetRom alias found (base callsign does NOT work)

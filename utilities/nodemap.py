@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.53
+Version: 1.7.54
 """
 
-__version__ = '1.7.53'
+__version__ = '1.7.54'
 
 import sys
 import socket
@@ -495,10 +495,10 @@ class NodeCrawler:
                     if self.verbose:
                         full_call = self.alias_to_call.get(alias, 'unknown')
                         print("    Issuing command: C {} (NetRom alias for {}, hop {}/{})".format(alias, full_call, i+1, len(path)))
-                elif i == 0:  # Only try NetRom discovery for first hop
-                    # No known path - try NetRom discovery from local node
+                else:
+                    # No known alias - try NetRom discovery from current hop
                     if self.verbose:
-                        print("    No known route to {} - attempting NetRom discovery...".format(callsign))
+                        print("    No known route to {} - attempting NetRom discovery from current node...".format(callsign))
                     
                     # Get NODES command to discover aliases
                     try:
