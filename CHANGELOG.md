@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.62] - 2026-01-16
+### Fixed
+- Display-nodes exclusion filtering now case-insensitive (fixes KX1nMA vs KX1NMA)
+- Unexplored column comparison also case-insensitive
+
 ## [nodemap 1.7.61] - 2026-01-16
 ### Fixed
 - Display-nodes (-d) now respects exclusions file when used with -x flag

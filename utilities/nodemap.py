@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.61
+Version: 1.7.62
 """
 
-__version__ = '1.7.61'
+__version__ = '1.7.62'
 
 import sys
 import socket
@@ -3905,9 +3905,9 @@ def main():
             # Unexplored = neighbor base callsigns not in explored base callsigns
             unexplored = all_neighbors - explored
             
-            # Filter out excluded nodes from unexplored list
+            # Filter out excluded nodes from unexplored list (case-insensitive)
             if exclude_nodes:
-                unexplored = unexplored - exclude_nodes
+                unexplored = {call for call in unexplored if call.upper() not in exclude_nodes}
             
             # Print nodes table
             print("\nNodes in nodemap.json ({} total):\n".format(len(nodes_data)))
@@ -3939,12 +3939,13 @@ def main():
                 
                 neighbors = node.get('neighbors', [])
                 
-                # Find unexplored neighbors (base callsigns)
+                # Find unexplored neighbors (base callsigns, case-insensitive)
                 # Convert neighbors to base callsigns and check against unexplored set
                 unexplored_neighbors = []
+                unexplored_upper = {u.upper() for u in unexplored}
                 for n in neighbors:
                     n_base = n.split('-')[0] if '-' in n else n
-                    if n_base in unexplored:
+                    if n_base.upper() in unexplored_upper:
                         unexplored_neighbors.append(n)
                 
                 # Format neighbors list (first 2, then count)
