@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.60] - 2026-01-16
+### Fixed
+- Display-nodes (-d) now correctly strips SSIDs when comparing explored vs unexplored
+- Prevents showing already-crawled nodes (KC1JMH-15, KS1R-15, etc) as "Unexplored"
+- Both node keys and neighbor lists now normalized to base callsigns for comparison
+
 ## [nodemap 1.7.59] - 2026-01-16
 ### Fixed
 - Skip nodes without NetRom alias during planning phase

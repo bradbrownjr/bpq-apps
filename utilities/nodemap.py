@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.59
+Version: 1.7.60
 """
 
-__version__ = '1.7.59'
+__version__ = '1.7.60'
 
 import sys
 import socket
@@ -3864,15 +3864,20 @@ def main():
                 print("No nodes found in nodemap.json")
                 sys.exit(0)
             
-            # Build set of explored nodes
-            explored = set(nodes_data.keys())
+            # Build set of explored base callsigns (without SSID)
+            explored = set()
+            for callsign in nodes_data.keys():
+                base = callsign.split('-')[0] if '-' in callsign else callsign
+                explored.add(base)
             
-            # Build set of all mentioned neighbors
+            # Build set of all mentioned neighbor base callsigns
             all_neighbors = set()
             for node in nodes_data.values():
-                all_neighbors.update(node.get('neighbors', []))
+                for neighbor in node.get('neighbors', []):
+                    base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                    all_neighbors.add(base)
             
-            # Unexplored = neighbors not in explored nodes
+            # Unexplored = neighbor base callsigns not in explored base callsigns
             unexplored = all_neighbors - explored
             
             # Print nodes table
