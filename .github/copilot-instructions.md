@@ -22,6 +22,7 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Descriptive names, small functions, docstrings
 - Handle poor radio conditions (packet loss, intermittent connectivity)
 - Document changes in CHANGELOG.md
+- Document new and changed features to the respective README.md files
 - Include help args (-h, --help, /?) in utilities and CLI tools
 - Update both docstring `Version:` and `__version__` variable when bumping versions
 - Commit and push changes to GitHub after completing work
