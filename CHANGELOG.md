@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.48] - 2026-01-16
+### Fixed
+- Exclusion matching now checks both full callsign and base callsign
+- `--exclude KC1JMF` now skips KC1JMF, KC1JMF-15, KC1JMF-1, etc. (all SSIDs)
+- Fixes issue where KC1JMF-15 was not being excluded despite KC1JMF in exclusions list
+- Applied to both crawl_node and unexplored_neighbors processing
+
 ## [nodemap 1.7.47] - 2026-01-16
 ### Changed
 - Skip nodes with tied SSID votes instead of using base callsign (base callsign = user, not node)

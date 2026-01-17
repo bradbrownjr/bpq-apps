@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.47
+Version: 1.7.48
 """
 
-__version__ = '1.7.47'
+__version__ = '1.7.48'
 
 import sys
 import socket
@@ -1369,9 +1369,9 @@ class NodeCrawler:
             
             # Process each unexplored neighbor
             for neighbor in unexplored_neighbors:
-                # Skip if already visited or excluded
+                # Skip if already visited or excluded (check both full callsign and base)
                 neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
-                if neighbor in self.visited or neighbor_base in self.visited or neighbor in self.exclude:
+                if neighbor in self.visited or neighbor_base in self.visited or neighbor in self.exclude or neighbor_base in self.exclude:
                     continue
                 
                 # Determine SSID to use for this unexplored neighbor
@@ -1777,8 +1777,9 @@ class NodeCrawler:
             callsign: Node callsign to crawl
             path: Connection path to reach this node
         """
-        # Check if node is excluded
-        if callsign in self.exclude:
+        # Check if node is excluded (match both full callsign and base callsign)
+        base_call = callsign.split('-')[0] if '-' in callsign else callsign
+        if callsign in self.exclude or base_call in self.exclude:
             if self.verbose:
                 print("  Skipping {} (excluded via --exclude)".format(callsign))
             return
