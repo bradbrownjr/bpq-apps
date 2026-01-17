@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.46
+Version: 1.7.47
 """
 
-__version__ = '1.7.46'
+__version__ = '1.7.47'
 
 import sys
 import socket
@@ -130,6 +130,7 @@ class NodeCrawler:
         self.exclude = exclude if exclude else set()  # Nodes to skip
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
+        self.skipped_no_ssid = {}  # Nodes skipped due to tied SSID votes: {callsign: {votes}}
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
         self.connections = []  # List of [node1, node2, port] connections
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
@@ -1271,7 +1272,7 @@ class NodeCrawler:
         
         # Use ROUTES consensus to build SSID map
         # Only use consensus if there's a CLEAR winner (more votes than any other)
-        # If tied, use base callsign only per SSID Selection Standard
+        # If tied, skip this node - insufficient routing data
         for base_call, votes in ssid_votes.items():
             sorted_votes = sorted(votes.items(), key=lambda x: (-x[1], x[0]))
             best_ssid, best_count = sorted_votes[0]
@@ -1282,11 +1283,10 @@ class NodeCrawler:
                 self.netrom_ssid_map[base_call] = best_ssid
                 self.ssid_source[base_call] = ('routes_consensus', time.time())
             else:
-                # Tied votes - use base callsign only, let NetRom figure it out
-                self.netrom_ssid_map[base_call] = base_call
-                self.ssid_source[base_call] = ('base_only_tied', time.time())
+                # Tied votes - skip this node, insufficient routing data
+                self.skipped_no_ssid[base_call] = dict(votes)
                 if self.verbose:
-                    print("  No consensus for {} (tied: {}), using base callsign".format(
+                    print("  No consensus for {} (tied: {}), skipping".format(
                         base_call, dict(votes)))
         
         if self.verbose and ssid_votes:
@@ -2441,7 +2441,7 @@ class NodeCrawler:
                     
                     # Use ROUTES consensus to build SSID map
                     # Only use consensus if there's a CLEAR winner (more votes than any other)
-                    # If tied, use base callsign only per SSID Selection Standard
+                    # If tied, skip this node - insufficient routing data
                     for base_call, votes in ssid_votes.items():
                         sorted_votes = sorted(votes.items(), key=lambda x: (-x[1], x[0]))
                         best_ssid, best_count = sorted_votes[0]
@@ -2452,11 +2452,10 @@ class NodeCrawler:
                             self.netrom_ssid_map[base_call] = best_ssid
                             self.ssid_source[base_call] = ('routes_consensus', time.time())
                         else:
-                            # Tied votes - use base callsign only, let NetRom figure it out
-                            self.netrom_ssid_map[base_call] = base_call
-                            self.ssid_source[base_call] = ('base_only_tied', time.time())
+                            # Tied votes - skip this node, insufficient routing data
+                            self.skipped_no_ssid[base_call] = dict(votes)
                             if self.verbose:
-                                print("  No consensus for {} (tied: {}), using base callsign".format(
+                                print("  No consensus for {} (tied: {}), skipping".format(
                                     base_call, dict(votes)))
                     
                     if self.verbose and ssid_votes:
@@ -3025,6 +3024,13 @@ class NodeCrawler:
             
             callsign, path, quality = self.queue.popleft()
             
+            # Skip nodes with insufficient SSID data (tied votes)
+            base_call = callsign.split('-')[0] if '-' in callsign else callsign
+            if base_call in self.skipped_no_ssid:
+                if self.verbose:
+                    print("Skipping {} (insufficient SSID data, tied votes)".format(callsign))
+                continue
+            
             # Limit depth to prevent excessive crawling from discovered neighbors
             # BUT: Don't apply limit to the initial starting node (even if remote)
             # max_hops means "explore neighbors to this depth FROM starting node"
@@ -3070,8 +3076,16 @@ class NodeCrawler:
         else:
             print("No failed connections.")
         
+        # Report nodes skipped due to insufficient SSID data
+        if self.skipped_no_ssid:
+            colored_print("Skipped (insufficient SSID data): {} nodes".format(len(self.skipped_no_ssid)), Colors.YELLOW)
+            for base_call, votes in sorted(self.skipped_no_ssid.items()):
+                print("  {}: tied votes {}".format(base_call, votes))
+            print("  Use --force-ssid BASE FULL to manually specify SSIDs for these nodes")
+        
         # Notify crawl completion
-        self._send_notification("Crawl complete: {} nodes, {} failed".format(len(self.nodes), len(self.failed)))
+        self._send_notification("Crawl complete: {} nodes, {} failed, {} skipped".format(
+            len(self.nodes), len(self.failed), len(self.skipped_no_ssid)))
         
         # Display summary table
         if self.nodes:

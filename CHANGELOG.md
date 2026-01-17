@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.47] - 2026-01-16
+### Changed
+- Skip nodes with tied SSID votes instead of using base callsign (base callsign = user, not node)
+- Track skipped nodes in `skipped_no_ssid` dict with their vote counts
+- Report skipped nodes at end of crawl with suggestion to use --force-ssid
+- Notification now includes skipped count
+
+### Fixed
+- Don't try to connect to base callsign (e.g., KB1TAE) - that's a user station, not a node
+
 ## [nodemap 1.7.46] - 2026-01-16
 ### Fixed
 - ROUTES consensus: Only use SSID when there's a CLEAR winner (more votes than others)
