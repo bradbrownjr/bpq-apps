@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.66
+Version: 1.7.67
 """
 
-__version__ = '1.7.66'
+__version__ = '1.7.67'
 
 import sys
 import socket
@@ -147,6 +147,8 @@ class NodeCrawler:
         self.queued_paths = set()  # Track queued paths to avoid duplicates: {(callsign, tuple(path))}
         self.timeout = 10  # Telnet timeout in seconds
         self.cli_forced_ssids = {}  # SSIDs forced via --callsign CLI option: {base_call: full_ssid}
+        self.target_only_mode = False  # When True, only crawl target node (no neighbor discovery)
+        self.target_callsign = None  # The specific target callsign when using --callsign
     
     def _debug_log(self, message):
         """Log message to debug log (if --debug-log set). Always logs, regardless of verbose."""
@@ -633,14 +635,24 @@ class NodeCrawler:
                         else:
                             # Intermediate hop (i > 0) and no alias found in current node's NODES
                             # Cannot do expanded discovery without breaking our connection path
-                            if self.verbose:
-                                print("    {} not in current node's NODES table".format(lookup_call))
-                                print("    Cannot discover from intermediate hop - would break connection path")
-                            # Abort - cannot proceed without alias
-                            if self.verbose:
-                                print("    Connection impossible without NetRom alias - aborting")
-                            tn.close()
-                            return None
+                            # 
+                            # FALLBACK: Try connecting with full callsign+SSID
+                            # BPQ may route via ROUTES table even without NODES entry
+                            # This works when target is in ROUTES/MHEARD but not NODES
+                            if full_callsign:
+                                if self.verbose:
+                                    print("    {} not in current node's NODES table".format(lookup_call))
+                                    print("    Trying callsign fallback: C {} (may work via ROUTES)".format(full_callsign))
+                                cmd = "C {}\r".format(full_callsign).encode('ascii')
+                                connect_target = "{} (callsign fallback, no alias)".format(full_callsign)
+                            else:
+                                # No SSID known either - truly cannot proceed
+                                if self.verbose:
+                                    print("    {} not in current node's NODES table".format(lookup_call))
+                                    print("    No SSID known - cannot attempt callsign fallback")
+                                    print("    Connection impossible without NetRom alias - aborting")
+                                tn.close()
+                                return None
                     
                     except Exception as e:
                         if self.verbose:
@@ -2305,6 +2317,11 @@ class NodeCrawler:
                     'intermittent': is_intermittent  # Mark unreliable/failed connections
                 })
                 
+                # Skip neighbor queuing in target-only mode (--callsign used)
+                # In this mode, we only crawl the specific target, not discover network
+                if self.target_only_mode:
+                    continue
+                
                 # Add unvisited neighbors to queue - allow multiple paths per node
                 # Queue all valid paths, prioritized by route quality from current node
                 # Only queue if within hop limit (next hop would be hop_count + 1)
@@ -2960,121 +2977,175 @@ class NodeCrawler:
                 colored_print("Starting network crawl from local node: {}...".format(starting_callsign), Colors.GREEN)
             
             # Handle forced_target (from --callsign flag)
-            # This means we want to crawl TO a specific target node, not start FROM it
-            if forced_target and not start_node:
-                # Find path to forced target through existing topology
+            # This means we want to crawl TO a specific target node
+            if forced_target:
                 target_base = forced_target
                 target_ssid = self.cli_forced_ssids.get(target_base) or self.netrom_ssid_map.get(target_base)
                 
                 if not target_ssid:
                     colored_print("Error: No SSID found for {} in network data".format(target_base), Colors.RED)
+                    colored_print("Use --callsign {}-SSID to specify the full callsign".format(target_base), Colors.YELLOW)
                     return
                 
-                if self.verbose:
-                    print("Finding path to forced target: {} ({})".format(target_base, target_ssid))
-                
-                # Use the same BFS path-finding logic from start_node handling
-                nodes_data = existing.get('nodes', {}) if existing else {}
-                if not nodes_data:
-                    colored_print("Error: No topology data available for path finding", Colors.RED)
-                    colored_print("Run a full crawl first to build network map", Colors.YELLOW)
-                    return
-                
-                # Populate netrom_ssid_map and route_ports from topology data
-                # Priority: 1) Node's own SSID (from routes where it's listed as direct neighbor)
-                #           2) netrom_ssids from other nodes
-                for node_call, node_info in nodes_data.items():
-                    # First, store the node's own SSID (this is authoritative)
-                    # The key in nodes_data IS the authoritative SSID (e.g., "KC1JMH-15")
-                    base_node = node_call.split('-')[0] if '-' in node_call else node_call
-                    if '-' in node_call and base_node not in self.netrom_ssid_map:
-                        self.netrom_ssid_map[base_node] = node_call
-                        self.ssid_source[base_node] = ('routes', time.time())
-                    
-                    # Then store SSIDs this node knows about (secondary)
-                    for base_call, full_call in node_info.get('netrom_ssids', {}).items():
-                        # Only set if we don't have an authoritative source already
-                        if base_call not in self.netrom_ssid_map:
-                            self.netrom_ssid_map[base_call] = full_call
-                            self.ssid_source[base_call] = ('topology', time.time())
-                    
-                    # Store route ports (which port neighbors are heard on)
-                    for neighbor_call, port_num in node_info.get('heard_on_ports', []):
-                        if port_num is not None and neighbor_call not in self.route_ports:
-                            self.route_ports[neighbor_call] = port_num
+                # Enable target-only mode: only crawl the target, don't discover network
+                self.target_only_mode = True
+                self.target_callsign = target_ssid
                 
                 if self.verbose:
-                    print("Loaded {} SSID mappings and {} port mappings from topology".format(
-                        len(self.netrom_ssid_map), len(self.route_ports)))
+                    print("Target-only mode enabled: will only crawl {}".format(target_ssid))
                 
-                # BFS to find shortest path
-                queue = [(self.callsign, [])]
-                visited = {self.callsign}
-                found_path = False
-                forced_path = []
-                
-                if self.verbose:
-                    print("Starting BFS from {} (looking for {})".format(self.callsign, target_base))
-                    print("Available nodes in topology: {}".format(', '.join(sorted(nodes_data.keys()))))
-                
-                while queue and not found_path:
-                    current, path = queue.pop(0)
-                    current_info = nodes_data.get(current, {})
-                    neighbors = current_info.get('neighbors', [])
+                if start_node:
+                    # Both start_node and forced_target provided
+                    # Path: local -> start_node -> target
+                    # Example: ./nodemap.py K1NYY-15 --callsign WD1O-15
+                    #   start_node = K1NYY-15 (already resolved with path in starting_path)
+                    #   forced_target = WD1O
+                    # We need to extend starting_path to include start_node, then target is at end
                     
-                    if self.verbose and neighbors:
-                        print("  Checking {} neighbors: {}".format(current, neighbors))
-                    
-                    for neighbor in neighbors:
-                        if neighbor in visited:
-                            continue
-                        visited.add(neighbor)
-                        new_path = path + [neighbor]
-                        
-                        if neighbor == target_base:
-                            forced_path = path
-                            found_path = True
-                            if self.verbose:
-                                if forced_path:
-                                    print("Found {} reachable via: {}".format(target_base, ' -> '.join(forced_path)))
-                                else:
-                                    print("Found {} as direct neighbor".format(target_base))
-                            break
-                        
-                        # Try to look up neighbor by name, or by resolved SSID if it's a base call
-                        neighbor_info = nodes_data.get(neighbor, {})
-                        if not neighbor_info and '-' not in neighbor:
-                            # Neighbor is base call, try to resolve to SSID
-                            neighbor_ssid = self.netrom_ssid_map.get(neighbor)
-                            if neighbor_ssid:
-                                neighbor_info = nodes_data.get(neighbor_ssid, {})
-                                if self.verbose and neighbor_info:
-                                    print("    Resolved {} to {}".format(neighbor, neighbor_ssid))
-                        
-                        neighbor_neighbors = neighbor_info.get('neighbors', [])
-                        if self.verbose and neighbor_neighbors:
-                            print("    {} has neighbors: {} (looking for {})".format(neighbor, neighbor_neighbors[:5] if len(neighbor_neighbors) > 5 else neighbor_neighbors, target_base))
-                        if target_base in neighbor_neighbors:
-                            forced_path = new_path
-                            found_path = True
-                            if self.verbose:
-                                print("Found {} reachable via: {}".format(target_base, ' -> '.join(forced_path)))
-                            break
-                        
-                        queue.append((neighbor, new_path))
-                
-                if found_path:
-                    # Queue the target with found path
-                    starting_callsign = target_ssid
-                    starting_path = forced_path
                     if self.verbose:
-                        print("Queuing {} with path: {}".format(target_ssid, ' -> '.join(forced_path) if forced_path else "(direct)"))
+                        print("Building path through {} to target {}".format(start_node, target_ssid))
+                    
+                    # starting_path already contains path to start_node (from BFS above)
+                    # The target is reachable from start_node
+                    # New path = starting_path + [start_node] (start_node becomes intermediate)
+                    # But starting_path might already include start_node if it was found via BFS
+                    
+                    # Check if start_node sees the target in its neighbors
+                    start_base = start_node.split('-')[0] if '-' in start_node else start_node
+                    start_ssid = self.netrom_ssid_map.get(start_base, start_node)
+                    start_info = nodes_data.get(start_ssid, {}) if existing else {}
+                    if not start_info:
+                        start_info = nodes_data.get(start_node, {}) if existing else {}
+                    
+                    start_neighbors = start_info.get('neighbors', [])
+                    if target_base not in start_neighbors and target_ssid.split('-')[0] not in start_neighbors:
+                        colored_print("Warning: {} not in {}'s neighbor list".format(target_base, start_node), Colors.YELLOW)
+                        colored_print("Target may not be reachable from start node", Colors.YELLOW)
+                    
+                    # Build final path: starting_path leads to start_node, add start_node as intermediate
+                    if starting_path:
+                        # starting_path doesn't include start_node itself
+                        final_path = starting_path + [start_ssid]
+                    else:
+                        # start_node is direct neighbor of local node
+                        final_path = [start_ssid]
+                    
+                    # Queue the TARGET (not the start_node)
+                    starting_callsign = target_ssid
+                    starting_path = final_path
+                    
+                    if self.verbose:
+                        print("Queuing target {} with path: {}".format(target_ssid, ' -> '.join(final_path)))
+                
                 else:
-                    colored_print("Error: Cannot find path to {} in topology".format(target_base), Colors.RED)
-                    return
+                    # Only forced_target, no start_node - find path to target
+                    if self.verbose:
+                        print("Finding path to forced target: {} ({})".format(target_base, target_ssid))
+                    
+                    # Use the same BFS path-finding logic from start_node handling
+                    nodes_data = existing.get('nodes', {}) if existing else {}
+                    if not nodes_data:
+                        colored_print("Error: No topology data available for path finding", Colors.RED)
+                        colored_print("Run a full crawl first to build network map", Colors.YELLOW)
+                        return
+                    
+                    # Populate netrom_ssid_map and route_ports from topology data
+                    # Priority: 1) Node's own SSID (from routes where it's listed as direct neighbor)
+                    #           2) netrom_ssids from other nodes
+                    for node_call, node_info in nodes_data.items():
+                        # First, store the node's own SSID (this is authoritative)
+                        # The key in nodes_data IS the authoritative SSID (e.g., "KC1JMH-15")
+                        base_node = node_call.split('-')[0] if '-' in node_call else node_call
+                        if '-' in node_call and base_node not in self.netrom_ssid_map:
+                            self.netrom_ssid_map[base_node] = node_call
+                            self.ssid_source[base_node] = ('routes', time.time())
+                        
+                        # Then store SSIDs this node knows about (secondary)
+                        for base_call, full_call in node_info.get('netrom_ssids', {}).items():
+                            # Only set if we don't have an authoritative source already
+                            if base_call not in self.netrom_ssid_map:
+                                self.netrom_ssid_map[base_call] = full_call
+                                self.ssid_source[base_call] = ('topology', time.time())
+                        
+                        # Store route ports (which port neighbors are heard on)
+                        for neighbor_call, port_num in node_info.get('heard_on_ports', []):
+                            if port_num is not None and neighbor_call not in self.route_ports:
+                                self.route_ports[neighbor_call] = port_num
+                    
+                    if self.verbose:
+                        print("Loaded {} SSID mappings and {} port mappings from topology".format(
+                            len(self.netrom_ssid_map), len(self.route_ports)))
+                    
+                    # BFS to find shortest path
+                    queue = [(self.callsign, [])]
+                    visited = {self.callsign}
+                    found_path = False
+                    forced_path = []
+                    
+                    if self.verbose:
+                        print("Starting BFS from {} (looking for {})".format(self.callsign, target_base))
+                        print("Available nodes in topology: {}".format(', '.join(sorted(nodes_data.keys()))))
+                    
+                    while queue and not found_path:
+                        current, path = queue.pop(0)
+                        current_info = nodes_data.get(current, {})
+                        neighbors = current_info.get('neighbors', [])
+                        
+                        if self.verbose and neighbors:
+                            print("  Checking {} neighbors: {}".format(current, neighbors))
+                        
+                        for neighbor in neighbors:
+                            if neighbor in visited:
+                                continue
+                            visited.add(neighbor)
+                            new_path = path + [neighbor]
+                            
+                            if neighbor == target_base:
+                                forced_path = path
+                                found_path = True
+                                if self.verbose:
+                                    if forced_path:
+                                        print("Found {} reachable via: {}".format(target_base, ' -> '.join(forced_path)))
+                                    else:
+                                        print("Found {} as direct neighbor".format(target_base))
+                                break
+                            
+                            # Try to look up neighbor by name, or by resolved SSID if it's a base call
+                            neighbor_info = nodes_data.get(neighbor, {})
+                            if not neighbor_info and '-' not in neighbor:
+                                # Neighbor is base call, try to resolve to SSID
+                                neighbor_ssid = self.netrom_ssid_map.get(neighbor)
+                                if neighbor_ssid:
+                                    neighbor_info = nodes_data.get(neighbor_ssid, {})
+                                    if self.verbose and neighbor_info:
+                                        print("    Resolved {} to {}".format(neighbor, neighbor_ssid))
+                            
+                            neighbor_neighbors = neighbor_info.get('neighbors', [])
+                            if self.verbose and neighbor_neighbors:
+                                print("    {} has neighbors: {} (looking for {})".format(neighbor, neighbor_neighbors[:5] if len(neighbor_neighbors) > 5 else neighbor_neighbors, target_base))
+                            if target_base in neighbor_neighbors:
+                                forced_path = new_path
+                                found_path = True
+                                if self.verbose:
+                                    print("Found {} reachable via: {}".format(target_base, ' -> '.join(forced_path)))
+                                break
+                            
+                            queue.append((neighbor, new_path))
+                    
+                    if found_path:
+                        # Queue the target with found path
+                        starting_callsign = target_ssid
+                        starting_path = forced_path
+                        if self.verbose:
+                            print("Queuing {} with path: {}".format(target_ssid, ' -> '.join(forced_path) if forced_path else "(direct)"))
+                    else:
+                        colored_print("Error: Cannot find path to {} in topology".format(target_base), Colors.RED)
+                        return
             
             print("BPQ node: {}:{}".format(self.host, self.port))
             print("Max hops: {}".format(self.max_hops))
+            if self.target_only_mode:
+                print("Mode: Target-only (crawling {} only)".format(self.target_callsign))
             print("-" * 50)
             
             # Start with specified or local node (with path if remote)

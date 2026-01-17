@@ -1,0 +1,241 @@
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 22.04.5 LTS
+Release:        22.04
+Codename:       jammy
+HostnameKC1JMH-SB
+IP address: 172.18.11.127
+Users online: 0
+Tmux sessions, enter 'ts #' to reconnect: no server running on /tmp/tmux-1000/default
+bradb@KC1JMH-SB:~$ ssh ect@ws1ec.mainepacketradio.org -p 4722
+Enter passphrase for key '/home/bradb/.ssh/id_rsa':
+Enter passphrase for key '/home/bradb/.ssh/id_rsa':
+
+Welcome to the Cumberland County EMA
+located at 22 High Street, Windham, ME
+
+This packet radio node is managed by
+the Wireless Society of Southern Maine
+and the Maine Emergency Packet Network
+
+Your sysop is Brad Brown, KC1JMH
+Email- kc1jmh@mainehamradio.com
+
+Last login: Fri Jan 16 20:46:29 2026 from 74.78.128.141
+Current time: Sat Jan 17 11:34:47 EST 2026
+Uptime: 11:34:47 up 3 days,  2:43,  3 users,  load average: 0.16, 0.13, 0.10
+
+Node processes:
+469   ?  09:48:48  direwolf
+4397  ?  00:13:48  linbpq
+ect@WS1EC:~ $ ./nodemap.py K1NYY-15 --callsign WD1O-15 -D -l -x -n https://notify.lynwood.us/packet ^C
+ect@WS1EC:~ $ cd utilities/
+ect@WS1EC:~/utilities $ - seemed to scan every node but the one I asked for: WD1O
+-bash: -: command not found
+s to ignore whatect@WS1EC:~/utilities $ - seems to ignore what's in the json and what's discovered on the noTS and ROUTES that the target node was last heard on
+-bash: -: command not found
+ect@WS1EC:~/utilities $ - tries the netrom alias but doesn't try the call sign and ssid when it fails; maybe try on each available port if it's not listed in the ports or routes list of a node ^C
+ect@WS1EC:~/utilities $ cat ~/utilities/nodemap.json" | head -200
+> ^C
+ect@WS1EC:~/utilities $ cat ~/utilities/nodemap.json | head -200
+{
+  "intermittent_links": {
+    "N1QFY>K1NYY": [
+      "2026-01-17 01:05:29"
+    ],
+    "N1REX>AB1KI": [
+      "2026-01-17 00:57:10"
+    ],
+    "K1NYY-15>KX1EMA": [
+      "2026-01-17 00:27:25"
+    ],
+    "K1NYY-15>WD1O": [
+      "2026-01-17 00:34:00"
+    ],
+    "K1NYY-15>KS1R": [
+      "2026-01-17 00:30:33"
+    ],
+    "K1NYY-15>AB1KI": [
+      "2026-01-17 00:36:50"
+    ],
+    "K1NYY-15>KY2D": [
+      "2026-01-17 00:24:35"
+    ],
+    "N1REX>K1NYY": [
+      "2026-01-17 01:01:10"
+    ]
+  },
+  "nodes": {
+    "WS1EC": {
+      "gridsquare": "FN43SR",
+      "own_aliases": {
+        "CCEMA": "WS1EC-15",
+        "CCECHA": "WS1EC-5",
+        "CCEBBS": "WS1EC-2",
+        "CCERMS": "WS1EC-10"
+      },
+      "location_source": "info",
+      "hop_distance": 0,
+      "alias": "CCEMA",
+      "explored_neighbors": [],
+      "type": "BPQ",
+      "info": "CCEMA:WS1EC-15} LINBPQ32 NODE WS1EC-15 AT WINDHAM, ME FN43SR \r\n\r\nThis node is located atthe Cumberland County EMA, and is maintained by the\r\nWireless Society of Southern Maine - Emergency Communications Team.\r\nFor info about the club visit mainehamradio.com\r\n\r\nThis node is connected to the Maine Emergency Packet Network (MEPN), which\r\nallows traffic to flow freely between nodes on the state-wide UHF backbone.\r\nVisit mainepacketradio.org for more info.\r\n\r\nPorts\r\n-----\r\nPORT 1: UHF Backbone, inter-node only\r\nPORT 2: 145.050 MHz at 1200 Baud\r\n\r\nApplications\r\n------------\r\nBBS\tInter-node Mail\t     WS1EC-2\r\nRMS\tWinlink Email\t     WS1EC-10\r\nCHAT\tChat Rooms           WS1EC-5\r\nTEST\tPractice exams\r\nFORMS   Fillable msg forms\r\nFORTUNE\tCheer up with a joke\r\n\r\nInternet\r\n--------\r\nBANDS\tHamQSL.com report\r\nGOPHER  Browse the Internet\r\nNEWS    Read news articles\r\nQRZ\tQRZ.com Call Lookup\r\nSPACE\tNOAA Space Weather\r\nWX\tNWS Weather Reports\r\n\r\nNavigation\r\n----------\r\nB\tDisconnect\r\n?    List commands\r\n\r\nRadio users should connect to 'CCEMA' instead of WS1EC-15 to be greeted with the main menu.\r\n\r\nSysops:\r\nBrad Brown, KC1JMH, kc1jmh@mainehamradio.com\r\nTim Watson, KB1HNZ, kb1hnz@mainehamradio.com\r\n\r\nUse \"I\" for this info page\r\nUse \"?\" for all commands \r\n\r\nde WS1EC>",
+      "type_source": "info",
+      "neighbors": [
+        "KC1JMH"
+      ],
+      "routes": {
+        "KC1JMH": 168
+      },
+      "netrom_ssids": {
+        "KC1JMH": "KC1JMH-15"
+      },
+      "heard_on_ports": [
+        [
+          "KC1JMH",
+          1
+        ]
+      ],
+      "successful_path": [],
+      "commands": [
+        "CCEMA:WS1EC-15}",
+        "BBS",
+        "CHAT",
+        "FORTUNE",
+        "RMS",
+        "WX",
+        "SYSINFO",
+        "CALLOUT",
+        "SPACE",
+        "BANDS",
+        "QRZ",
+        "GOPHER",
+        "NEWS",
+        "TEST",
+        "FORMS",
+        "CONNECT",
+        "BYE",
+        "INFO",
+        "NODES",
+        "PORTS",
+        "ROUTES",
+        "USERS",
+        "MHEARD"
+      ],
+      "intermittent_neighbors": [],
+      "ports": [
+        {
+          "frequency": 433.3,
+          "description": "433.300 MHz 1200 BAUD",
+          "is_rf": true,
+          "number": 1,
+          "speed": 1200
+        },
+        {
+          "frequency": 145.05,
+          "description": "145.050 MHz @ 1200 b/s",
+          "is_rf": true,
+          "number": 2,
+          "speed": 1200
+        },
+        {
+          "frequency": null,
+          "description": "AX/IP/UDP",
+          "is_rf": false,
+          "number": 8,
+          "speed": null
+        },
+        {
+          "frequency": null,
+          "description": "Telnet Server",
+          "is_rf": false,
+          "number": 9,
+          "speed": null
+        }
+      ],
+      "location": {
+        "state": "EM",
+        "grid": "FN43SR",
+        "city": "Cumberland County"
+      },
+      "unexplored_neighbors": [
+        "KC1JMH-15"
+      ],
+      "applications": [
+        "BBS",
+        "CHAT",
+        "FORTUNE",
+        "RMS",
+        "WX",
+        "SYSINFO",
+        "CALLOUT",
+        "SPACE",
+        "BANDS",
+        "QRZ",
+        "GOPHER",
+        "NEWS",
+        "TEST",
+        "FORMS"
+      ],
+      "seen_aliases": {
+        "CMBWBK": "KC1JMH-15"
+      }
+    },
+    "N1QFY-15": {
+      "gridsquare": "FN54CF",
+      "own_aliases": {
+        "CHTGNR": "N1QFY-4",
+        "RMSGNR": "N1QFY-10",
+        "BBSGNR": "N1QFY-2",
+        "KNNGNR": "N1QFY-15"
+      },
+      "location_source": "info",
+      "hop_distance": 1,
+      "alias": "KNNGNR",
+      "explored_neighbors": [],
+      "type": "BPQ",
+      "info": "KNNGNR:N1QFY-15} BPQ32 N1QFY-15 at Gardiner, ME  FN54CF \r\nPort 1: 145.07 MHz @ 1200 Baud\r\nSysop:  wd1o@arrl.net",
+      "type_source": "info",
+      "neighbors": [
+        "KC1JMH",
+        "N1REX",
+        "KB1TAE",
+        "W1EMA",
+        "K1NYY",
+        "KS1R",
+        "WD1O",
+        "NG1P",
+        "KX1EMA",
+        "AB1KI"
+      ],
+      "routes": {
+        "N1REX": 200,
+        "K1NYY": 200,
+        "KC1JMH": 200,
+        "NG1P": 200
+      },
+      "netrom_ssids": {
+        "KB1TAE": "KB1TAE",
+        "N1REX": "N1REX-15",
+        "WD1O": "WD1O-15",
+        "KC1JMH": "KC1JMH-15",
+        "WD1F": "WD1F",
+        "AB1KI": "AB1KI-15",
+        "KX1EMA": "KX1EMA-15",
+        "W1EMA": "W1EMA-15",
+        "K1NYY": "K1NYY-15",
+        "KS1R": "KS1R-15",
+        "NG1P": "NG1P-4"
+      },
+      "heard_on_ports": [
+        [
+          "KC1JMH",
+          1
+        ],
+        [
+          "N1REX",
+          1
+        ],
+        [
+          "KB1TAE",
+ect@WS1EC:~/utilities $ cat ~/utilities/nodemap.json | head -200

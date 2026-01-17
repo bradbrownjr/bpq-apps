@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.67] - 2026-01-17
+### Fixed
+- Target-only mode: `--callsign` now ONLY crawls the target node, not all neighbors
+- When both START_NODE and --callsign provided, path is START_NODE → target (not START_NODE crawl)
+- Example: `./nodemap.py K1NYY-15 --callsign WD1O-15` now crawls WD1O-15 only via K1NYY-15
+- Callsign fallback: When no NetRom alias exists, try `C CALLSIGN-SSID` directly
+- Allows connecting to nodes in ROUTES/MHEARD that lack NODES table entry
+
+### Added
+- `target_only_mode` flag to restrict crawling to specific target
+- Display "Mode: Target-only" when --callsign is used
+- Improved verbose output for target-only path building
+
 ## [nodemap 1.7.66] - 2026-01-16
 ### Fixed
 - CLI-forced SSIDs (--callsign) now exempt nodes from NetRom alias/consensus checks

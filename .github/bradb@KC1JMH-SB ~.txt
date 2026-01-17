@@ -1,0 +1,1289 @@
+K1NYY-15     1                 FN54hc       -                         -
+KC1JMH-15    1      CMBWBK     FN43TQ       KS1R, N1QFY (+3)          -
+KS1R-15      1      BURG       FN53CT       VE1YAR, KC1JMF (+18)      VE1YAR, N1LJK (+7)
+KY2D         2      KY2D2M     FN54fa       -                         -
+N1QFY-15     1      KNNGNR     FN54CF       KC1JMH, N1REX (+8)        KB1TAE, W1EMA (+2)
+N1REX-15     1      LNCWHT     FN54EF       AB1KI, N1QFY (+2)         -
+NG1P-4       2      TOPCHT     FN53aw       KC1JMH, N1QFY (+9)        KB1TAE
+W1DTX        3                 FN54vm       -                         -
+WS1EC        0      CCEMA      FN43SR       KC1JMH                    -
+
+Total nodes: 10
+Unexplored neighbors: 11
+Unexplored: KB1TAE, KX1EMA, KX1nMA, N1LJK, VE1YAR, W1EMA, W1KRP, W1LH, W1ZE, WD1F, WD1O
+Total connections: 5
+ect@WS1EC:~/utilities $ nano exclusions.txt
+ect@WS1EC:~/utilities $ ./nodemap.py  -d -x
+
+Nodes in nodemap.json (10 total):
+
+Callsign     Hops   Alias      Gridsquare   Neighbors                 Unexplored
+---------------------------------------------------------------------------------------------------------
+AB1KI        2      RMSABN     FN54JM       N1QFY, W1LH (+7)          W1LH, KX1EMA (+2)
+K1NYY-15     1                 FN54hc       -                         -
+KC1JMH-15    1      CMBWBK     FN43TQ       KS1R, N1QFY (+3)          -
+KS1R-15      1      BURG       FN53CT       VE1YAR, KC1JMF (+18)      VE1YAR, N1LJK (+7)
+KY2D         2      KY2D2M     FN54fa       -                         -
+N1QFY-15     1      KNNGNR     FN54CF       KC1JMH, N1REX (+8)        KB1TAE, W1EMA (+2)
+N1REX-15     1      LNCWHT     FN54EF       AB1KI, N1QFY (+2)         -
+NG1P-4       2      TOPCHT     FN53aw       KC1JMH, N1QFY (+9)        KB1TAE
+W1DTX        3                 FN54vm       -                         -
+WS1EC        0      CCEMA      FN43SR       KC1JMH                    -
+
+Total nodes: 10
+Unexplored neighbors: 11
+Unexplored: KB1TAE, KX1EMA, KX1nMA, N1LJK, VE1YAR, W1EMA, W1KRP, W1LH, W1ZE, WD1F, WD1O
+Total connections: 5
+ect@WS1EC:~/utilities $ cat exclusions.txt
+# Bad call sign data from packet loss
+E1QFY, KC1JMF, KM1JMH, KX1RMA, KX1nMA, N1Q, N1QYY, N5QFY, N8QFQ, Q1QFY, Y1QFN, Y1QFY, KC1JEH, KX1KMA, KX1nMA
+ect@WS1EC:~/utilities $ nano exclusions.txt
+ect@WS1EC:~/utilities $ clear
+ect@WS1EC:~/utilities $ ./nodemap.py  -d -x
+
+Nodes in nodemap.json (10 total):
+
+Callsign     Hops   Alias      Gridsquare   Neighbors                 Unexplored
+---------------------------------------------------------------------------------------------------------
+AB1KI        2      RMSABN     FN54JM       N1QFY, W1LH (+7)          W1LH, KX1EMA (+2)
+K1NYY-15     1                 FN54hc       -                         -
+KC1JMH-15    1      CMBWBK     FN43TQ       KS1R, N1QFY (+3)          -
+KS1R-15      1      BURG       FN53CT       VE1YAR, KC1JMF (+18)      VE1YAR, N1LJK (+7)
+KY2D         2      KY2D2M     FN54fa       -                         -
+N1QFY-15     1      KNNGNR     FN54CF       KC1JMH, N1REX (+8)        KB1TAE, W1EMA (+2)
+N1REX-15     1      LNCWHT     FN54EF       AB1KI, N1QFY (+2)         -
+NG1P-4       2      TOPCHT     FN53aw       KC1JMH, N1QFY (+9)        KB1TAE
+W1DTX        3                 FN54vm       -                         -
+WS1EC        0      CCEMA      FN43SR       KC1JMH                    -
+
+Total nodes: 10
+Unexplored neighbors: 11
+Unexplored: KB1TAE, KX1EMA, KX1nMA, N1LJK, VE1YAR, W1EMA, W1KRP, W1LH, W1ZE, WD1F, WD1O
+Total connections: 5
+ect@WS1EC:~/utilities $ cat exclusions.txt
+# Bad call sign data from packet loss
+E1QFY, KC1JMF, KM1JMH, KX1RMA, KX1nMA, N1Q, N1QYY, N5QFY, N8QFQ, Q1QFY, Y1QFN, Y1QFY, KC1JEH, KX1KMA
+ect@WS1EC:~/utilities $ wget --no-cache -O nodemap.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py && (cat nodemap.py | head -n 30)
+--2026-01-16 23:14:52--  https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.110.133, 185.199.109.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 245519 (240K) [text/plain]
+Saving to: ‘nodemap.py’
+
+nodemap.py                         100%[================================================================>] 239.76K  1.12MB/s    in 0.2s
+
+2026-01-16 23:14:53 (1.12 MB/s) - ‘nodemap.py’ saved [245519/245519]
+
+#!/usr/bin/env python3
+"""
+Node Map Crawler for BPQ Packet Radio Networks
+-----------------------------------------------
+Automatically crawls through packet radio nodes to discover network topology.
+Connects to nodes, retrieves MHEARD lists and INFO, and builds a map of
+node connectivity for visualization.
+
+Features:
+- Discovers nodes via MHEARD lists on RF ports
+- Extracts location data from INFO command
+- Traverses network breadth-first to avoid loops
+- Uses ROUTES command to find optimal paths
+- Handles BPQ, FBB, and JNOS nodes
+- Exports to JSON and CSV formats
+- Reads BPQ telnet port from bpq32.cfg automatically
+- Skips IP-based ports (focuses on RF connectivity)
+
+Network Resources:
+- Maine Packet Network: https://www.mainepacketradio.org/
+- Network Map: https://n1xp.com/HAM/content/pkt/MEPktNtMap.pdf
+- Station Map: https://n1xp.com/HAM/content/pkt/MEPktStMap.pdf
+- BPQ Commands: https://cheatography.com/gcremerius/cheat-sheets/bpq-user-and-sysop-commands/
+- BPQ Node Commands: https://www.cantab.net/users/john.wiseman/Documents/NodeCommands.html
+
+Author: Brad Brown, KC1JMH
+Date: January 2026
+Version: 1.7.63
+"""
+
+ect@WS1EC:~/utilities $ ./nodemap.py  -d -x
+
+Nodes in nodemap.json (10 total):
+
+Callsign     Hops   Alias      Gridsquare   Neighbors                 Unexplored
+---------------------------------------------------------------------------------------------------------
+AB1KI        2      RMSABN     FN54JM       N1QFY, W1LH (+7)          W1LH, KX1EMA (+2)
+K1NYY-15     1                 FN54hc       -                         -
+KC1JMH-15    1      CMBWBK     FN43TQ       KS1R, N1QFY (+3)          -
+KS1R-15      1      BURG       FN53CT       VE1YAR, KC1JMF (+18)      VE1YAR, N1LJK (+6)
+KY2D         2      KY2D2M     FN54fa       -                         -
+N1QFY-15     1      KNNGNR     FN54CF       KC1JMH, N1REX (+8)        KB1TAE, W1EMA (+2)
+N1REX-15     1      LNCWHT     FN54EF       AB1KI, N1QFY (+2)         -
+NG1P-4       2      TOPCHT     FN53aw       KC1JMH, N1QFY (+9)        KB1TAE
+W1DTX        3                 FN54vm       -                         -
+WS1EC        0      CCEMA      FN43SR       KC1JMH                    -
+
+Total nodes: 10
+Unexplored neighbors: 10
+Unexplored: KB1TAE, KX1EMA, N1LJK, VE1YAR, W1EMA, W1KRP, W1LH, W1ZE, WD1F, WD1O
+Total connections: 5
+ect@WS1EC:~/utilities $ ./nodemap.py  -q KX1EMA
+Node KX1EMA not found in nodemap.json
+Hint: Run crawl with --callsign KX1EMA-SSID to force specific SSID
+ect@WS1EC:~/utilities $ ./nodemap.py  -q KX1EMA-15
+Node KX1EMA-15 not found in nodemap.json
+Hint: Run crawl with --callsign KX1EMA-SSID to force specific SSID
+ect@WS1EC:~/utilities $ ./nodemap.py  -q WD1O
+Node WD1O not found in nodemap.json
+Hint: Run crawl with --callsign WD1O-SSID to force specific SSID
+ect@WS1EC:~/utilities $ ./nodemap.py  -q k1nyy
+
+============================================================
+Node: K1NYY-15
+============================================================
+Alias: None
+Type: BPQ
+Hop Distance: 1
+Grid Square: FN54hc
+Best Route: KC1JMH > K1NYY-15
+
+Neighbors (0 total):
+
+Known SSIDs for K1NYY:
+  K1NYY           (ROUTES in 4 nodes)
+  K1NYY-15        (Current node (crawled); MHEARD by 5 nodes)
+
+Hint: Use --callsign K1NYY to force recrawl with specific SSID
+============================================================
+ect@WS1EC:~/utilities $ ./nodemap.py K1NYY-15 --callsign WD1O-15 -D -l -x -n https://notify.lynwood.us/packet
+BPQ Node Map Crawler v1.7.63
+==================================================
+Loaded 14 exclusions from exclusions.txt
+Found BPQ telnet port: 8010
+Found node callsign: WS1EC
+Excluding nodes: E1QFY, KC1JEH, KC1JMF, KM1JMH, KX1KMA, KX1NMA, KX1RMA, N1Q, N1QYY, N5QFY, N8QFQ, Q1QFY, Y1QFN, Y1QFY
+Logging: telnet -> telnet.log, debug -> debug.log
+Mode: Merge (updating existing nodemap.json)
+Crawl Mode: Update (skip visited nodes)
+Forcing SSID: WD1O-15 (will update SSID map for future crawls)
+Starting network crawl from: K1NYY-15...
+Loaded existing data with 10 nodes: AB1KI, K1NYY-15, KC1JMH-15, KS1R-15, KY2D, N1QFY-15, N1REX-15, NG1P-4, W1DTX, WS1EC
+  No consensus for W1EMA (tied: {'W1EMA-2': 1, 'W1EMA-15': 1}), skipping
+  No consensus for WD1F (tied: {'WD1F': 1, 'WD1F-1': 1}), skipping
+  No consensus for W1DTX (tied: {'W1DTX-4': 1, 'W1DTX-7': 1}), skipping
+  No consensus for KB1TAE (tied: {'KB1TAE': 1, 'KB1TAE-15': 1, 'KB1TAE-2': 1}), skipping
+Built ROUTES consensus for 33 callsigns
+Loaded 1 port mappings from existing nodemap.json
+Loaded 7 NetRom aliases from existing nodemap.json
+Looking for path to K1NYY among known neighbors...
+  Checking WS1EC (resolved to WS1EC-15) neighbors: ['KC1JMH']
+    Checking KC1JMH neighbors: ['KS1R', 'N1QFY', 'N1REX', 'K1NYY', 'WS1EC'] (looking for K1NYY)
+Found K1NYY reachable via: KC1JMH
+BPQ node: localhost:8010
+Max hops: 0
+--------------------------------------------------
+Queuing K1NYY-15 with path: ['KC1JMH']
+Crawling K1NYY-15 (via KC1JMH)
+  Authentication required...
+    Username: KC1JMH
+    Password:
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/2)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    No known route to K1NYY-15 - attempting NetRom discovery from current node...
+    Sending command: NODES
+    Response (641 bytes):
+    CMBWBK:KC1JMH-15} Nodes
+    BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2
+    BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15
+    CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10
+    CHABUR:KS1R-13      CHTGNR:N1
+    Found NetRom alias: K1NYY -> LLNWDB
+    Issuing command: C LLNWDB (discovered NetRom alias, hop 2/2)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Sending command: ?
+    Response (75 bytes):
+    LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Available commands: LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+    Sending command: PORTS
+    Response (132 bytes):
+    LLNWDB:K1NYY-15} Ports
+      1 433.300 MHz @ 1200 Baud
+      2 144.99 MHz @ 1200 Baud
+      9 Telnet Server
+
+    Sending command: NODES
+    Response (516 bytes):
+    LLNWDB:K1NYY-15} Nodes
+    BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2
+    BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15
+    CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10
+    CHABUR:KS1R-13      CHTGNR:N1Q
+    Sending command: ROUTES
+    Response (241 bytes):
+    LLNWDB:K1NYY-15} Routes
+      1 AB1KI-15  200 0!
+      1 K1DQ-15   0 0!
+    > 1 KC1JMH-15 200 15!
+    > 1 KS1R-15   200 11!
+      1 KX1EMA-15 200 0!
+    > 2 KY2D-15   200 0!
+      1 N1QFY-15  0 0!
+    > 1 N1REX-15  200 8!
+      1 W1EMA-15  0 0!
+      1 WD1O-15   200 0!
+
+    Ignoring K1DQ-15 (quality 0 - sysop blocked route)
+    Ignoring N1QFY-15 (quality 0 - sysop blocked route)
+    Ignoring W1EMA-15 (quality 0 - sysop blocked route)
+    Node SSID from ROUTES: WD1O = WD1O-15 (authoritative)
+    Node SSID from ROUTES: AB1KI = AB1KI-15 (authoritative)
+    Node SSID from ROUTES: KS1R = KS1R-15 (authoritative)
+    Node SSID from ROUTES: N1REX = N1REX-15 (authoritative)
+    Node SSID from ROUTES: KX1EMA = KX1EMA-15 (authoritative)
+    Node SSID from ROUTES: KY2D = KY2D-15 (authoritative)
+    Node SSID from ROUTES: KC1JMH = KC1JMH-15 (authoritative)
+    Sending command: MHEARD 1
+    Response (880 bytes):
+    LLNWDB:K1NYY-15} Heard List for Port 1
+    KC1JMH-15  00:00:00:00
+    KX1EMA-15  00:00:00:09
+    W1EMA-15   00:00:00:09
+    N1REX-15   00:00:00:26
+    KS1R-15    00:00:01:09
+    N1QFY-15   00:00:01:35
+    K1NYY-15   00:00:02:01
+    WD1O-15    00:00:02:16
+    WD1F       00:00:08:15
+    AB1KI-15
+    KC1JMH in ROUTES as KC1JMH-15 (authoritative)
+    KX1EMA in ROUTES as KX1EMA-15 (authoritative)
+    MHEARD SSID for W1EMA: W1EMA-15 (not in ROUTES table)
+    N1REX in ROUTES as N1REX-15 (authoritative)
+    KS1R in ROUTES as KS1R-15 (authoritative)
+    MHEARD SSID for N1QFY: N1QFY-15 (not in ROUTES table)
+    MHEARD SSID for K1NYY: K1NYY-15 (not in ROUTES table)
+    WD1O in ROUTES as WD1O-15 (authoritative)
+    MHEARD WD1F (no SSID - not a node, skipping)
+    AB1KI in ROUTES as AB1KI-15 (authoritative)
+    Ignoring W1EMA-2 (already have W1EMA-15)
+    Ignoring K1NYY-2 (already have K1NYY-15)
+    MHEARD SSID for KB1TAE: KB1TAE-15 (not in ROUTES table)
+    MHEARD SSID for nB1uI: nB1uI-15 (not in ROUTES table)
+    MHEARD SSID for AB1KIb: AB1KIb-15 (not in ROUTES table)
+    MHEARD SSID for At1KI: At1KI-15 (not in ROUTES table)
+    MHEARD SSID for KX1NMA: KX1NMA-15 (not in ROUTES table)
+    MHEARD SSID for KM1JMH: KM1JMH-15 (not in ROUTES table)
+    MHEARD SSID for W1DTX: W1DTX-15 (not in ROUTES table)
+    Sending command: MHEARD 2
+    Response (208 bytes):
+    LLNWDB:K1NYY-15} Heard List for Port 2
+    KY2D-15    00:00:01:50
+    KY2D-4     00:00:02:36
+    N1LJK-1    00:06:46:12
+    K1JAK      04:07:28:29
+    N1LJK      05:10:41:44
+    N1LJK-5    06:15:49:00
+
+    KY2D in ROUTES as KY2D-15 (authoritative)
+    MHEARD SSID for N1LJK: N1LJK-1 (not in ROUTES table)
+    MHEARD K1JAK (no SSID - not a node, skipping)
+    Ignoring N1LJK-5 (already have N1LJK-1)
+    Updated SSID from newer MHEARD: AB1KIb = AB1KIb-15
+    Updated SSID from newer MHEARD: W1EMA = W1EMA-15
+    Updated SSID from newer MHEARD: At1KI = At1KI-15
+    Updated SSID from newer MHEARD: KB1TAE = KB1TAE-15
+    Updated SSID from newer MHEARD: KX1NMA = KX1NMA-15
+    Updated SSID from newer MHEARD: W1DTX = W1DTX-15
+    Updated SSID from newer MHEARD: nB1uI = nB1uI-15
+    Port info from MHEARD: AB1KIb on port 1
+    Port info from MHEARD: WD1O on port 1
+    Port info from MHEARD: W1EMA on port 1
+    Port info from MHEARD: At1KI on port 1
+    Port info from MHEARD: KB1TAE on port 1
+    Port info from MHEARD: KX1NMA on port 1
+    Port info from MHEARD: W1DTX on port 1
+    Port info from MHEARD: KM1JMH on port 1
+    Port info from MHEARD: AB1KI on port 1
+    Port info from MHEARD: N1LJK on port 2
+    Port info from MHEARD: KX1EMA on port 1
+    Port info from MHEARD: N1QFY on port 1
+    Port info from MHEARD: K1NYY on port 1
+    Port info from MHEARD: nB1uI on port 1
+    Sending command: INFO
+    Response (119 bytes):
+    LLNWDB:K1NYY-15} BPQ32 BBS K1NYY-15 at Waldoboro, ME  FN54HC
+    Port 1: 144.990 MHz @ 1200 Baud
+    Sysop:  wd1o@arrl.net
+
+    Sending command: ?
+    Response (75 bytes):
+    LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Extracted primary alias from prompt: LLNWDB
+  Found 17 neighbors: AB1KIb, WD1O, W1EMA, KS1R, AB1KI, N1REX, At1KI, KB1TAE, KM1JMH, W1DTX, KY2D, KC1JMH, KX1NMA, N1LJK, KX1EMA, N1QFY, nB1uI
+  Node type: BPQ
+  RF Ports: 2
+  Applications: 2 (RMS, BBS)
+  Commands: 11
+  Own Aliases: 3
+--------------------------------------------------
+Crawl complete. Found 1 nodes.
+No failed connections.
+Skipped (insufficient SSID data): 4 nodes
+  KB1TAE: tied votes {'KB1TAE': 1, 'KB1TAE-15': 1, 'KB1TAE-2': 1}
+  W1DTX: tied votes {'W1DTX-4': 1, 'W1DTX-7': 1}
+  W1EMA: tied votes {'W1EMA-2': 1, 'W1EMA-15': 1}
+  WD1F: tied votes {'WD1F': 1, 'WD1F-1': 1}
+  Use --force-ssid BASE FULL to manually specify SSIDs for these nodes
+
+================================================================================================
+NETWORK SUMMARY
+================================================================================================
+CALLSIGN   HOPS PORTS  APPS  CMDS  NBRS   FAILED UNEXPLRD   GRID/LOCATION
+------------------------------------------------------------------------------------------------
+K1NYY-15   1    2      2     11    17            17         FN54HC
+================================================================================================
+Total: 1 nodes, 7 connections
+================================================================================================
+Merging with 10 existing nodes...
+Merged into nodemap.json (10 nodes)
+Exported to nodemap.csv
+
+Network map complete!
+Nodes discovered: 1
+Connections found: 7
+
+Generate HTML/SVG maps? (Y/n):
+
+Generating maps...
+
+Node Map HTML Generator v1.4.6
+
+
+Found linbpq HTML directory: /home/ect/linbpq/HTML
+Save files there? (Y/n):
+Files will be saved to /home/ect/linbpq/HTML
+Loaded 10 nodes and 12 connections from nodemap.json
+Nodes with grid squares: 10
+
+Generated ../linbpq/HTML/nodemap.html (10 nodes, 16 connections)
+Generated ../linbpq/HTML/nodemap.svg (10 nodes, 16 connections)
+
+Map generation complete!
+Maps generated successfully!
+ect@WS1EC:~/utilities $ wget --no-cache -O nodemap.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py && (cat nodemap.py | head -n 30)
+--2026-01-16 23:41:22--  https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 247714 (242K) [text/plain]
+Saving to: ‘nodemap.py’
+
+nodemap.py                         100%[================================================================>] 241.91K  1.13MB/s    in 0.2s
+
+2026-01-16 23:41:22 (1.13 MB/s) - ‘nodemap.py’ saved [247714/247714]
+
+#!/usr/bin/env python3
+"""
+Node Map Crawler for BPQ Packet Radio Networks
+-----------------------------------------------
+Automatically crawls through packet radio nodes to discover network topology.
+Connects to nodes, retrieves MHEARD lists and INFO, and builds a map of
+node connectivity for visualization.
+
+Features:
+- Discovers nodes via MHEARD lists on RF ports
+- Extracts location data from INFO command
+- Traverses network breadth-first to avoid loops
+- Uses ROUTES command to find optimal paths
+- Handles BPQ, FBB, and JNOS nodes
+- Exports to JSON and CSV formats
+- Reads BPQ telnet port from bpq32.cfg automatically
+- Skips IP-based ports (focuses on RF connectivity)
+
+Network Resources:
+- Maine Packet Network: https://www.mainepacketradio.org/
+- Network Map: https://n1xp.com/HAM/content/pkt/MEPktNtMap.pdf
+- Station Map: https://n1xp.com/HAM/content/pkt/MEPktStMap.pdf
+- BPQ Commands: https://cheatography.com/gcremerius/cheat-sheets/bpq-user-and-sysop-commands/
+- BPQ Node Commands: https://www.cantab.net/users/john.wiseman/Documents/NodeCommands.html
+
+Author: Brad Brown, KC1JMH
+Date: January 2026
+Version: 1.7.65
+"""
+
+ect@WS1EC:~/utilities $ ./nodemap.py K1NYY-15 --callsign WD1O-15 -D -l -x -n https://notify.lynwood.us/packet
+BPQ Node Map Crawler v1.7.65
+==================================================
+Loaded 14 exclusions from exclusions.txt
+Found BPQ telnet port: 8010
+Found node callsign: WS1EC
+Excluding nodes: E1QFY, KC1JEH, KC1JMF, KM1JMH, KX1KMA, KX1NMA, KX1RMA, N1Q, N1QYY, N5QFY, N8QFQ, Q1QFY, Y1QFN, Y1QFY
+Logging: telnet -> telnet.log, debug -> debug.log
+Mode: Merge (updating existing nodemap.json)
+Crawl Mode: Update (skip visited nodes)
+Forcing SSID: WD1O-15 (will update SSID map for future crawls)
+Starting network crawl from: K1NYY-15...
+Loaded existing data with 10 nodes: AB1KI, K1NYY-15, KC1JMH-15, KS1R-15, KY2D, N1QFY-15, N1REX-15, NG1P-4, W1DTX, WS1EC
+  No consensus for N1LJK (tied: {'N1LJK-5': 1, 'N1LJK-1': 1}), skipping
+  No consensus for WD1F (tied: {'WD1F': 1, 'WD1F-1': 1}), skipping
+  No consensus for W1DTX (tied: {'W1DTX-15': 1, 'W1DTX-7': 1, 'W1DTX-4': 1}), skipping
+Built ROUTES consensus for 38 callsigns
+Loaded 1 port mappings from existing nodemap.json
+Loaded 9 NetRom aliases from existing nodemap.json
+Looking for path to K1NYY among known neighbors...
+  Checking WS1EC (resolved to WS1EC-15) neighbors: ['KC1JMH']
+    Checking KC1JMH neighbors: ['KS1R', 'N1QFY', 'N1REX', 'K1NYY', 'WS1EC'] (looking for K1NYY)
+Found K1NYY reachable via: KC1JMH
+BPQ node: localhost:8010
+Max hops: 4
+--------------------------------------------------
+Queuing K1NYY-15 with path: ['KC1JMH']
+Crawling K1NYY-15 (via KC1JMH)
+  Authentication required...
+    Username: KC1JMH
+    Password:
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/2)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/2)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Sending command: ?
+    Response (75 bytes):
+    LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Available commands: LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+    Sending command: PORTS
+    Response (132 bytes):
+    LLNWDB:K1NYY-15} Ports
+      1 433.300 MHz @ 1200 Baud
+      2 144.99 MHz @ 1200 Baud
+      9 Telnet Server
+
+    Sending command: NODES
+    Response (516 bytes):
+    LLNWDB:K1NYY-15} Nodes
+    BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2
+    BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15
+    CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10
+    CHABUR:KS1R-13      CHTGNR:N1Q
+    Sending command: ROUTES
+    Response (241 bytes):
+    LLNWDB:K1NYY-15} Routes
+      1 AB1KI-15  200 0!
+      1 K1DQ-15   0 0!
+    > 1 KC1JMH-15 200 15!
+    > 1 KS1R-15   200 11!
+      1 KX1EMA-15 200 0!
+    > 2 KY2D-15   200 0!
+      1 N1QFY-15  0 0!
+    > 1 N1REX-15  200 8!
+      1 W1EMA-15  0 0!
+      1 WD1O-15   200 0!
+
+    Ignoring K1DQ-15 (quality 0 - sysop blocked route)
+    Ignoring N1QFY-15 (quality 0 - sysop blocked route)
+    Ignoring W1EMA-15 (quality 0 - sysop blocked route)
+    Node SSID from ROUTES: KY2D = KY2D-15 (authoritative)
+    Node SSID from ROUTES: WD1O = WD1O-15 (authoritative)
+    Node SSID from ROUTES: KX1EMA = KX1EMA-15 (authoritative)
+    Node SSID from ROUTES: KC1JMH = KC1JMH-15 (authoritative)
+    Node SSID from ROUTES: N1REX = N1REX-15 (authoritative)
+    Node SSID from ROUTES: AB1KI = AB1KI-15 (authoritative)
+    Node SSID from ROUTES: KS1R = KS1R-15 (authoritative)
+    Sending command: MHEARD 1
+    Response (880 bytes):
+    LLNWDB:K1NYY-15} Heard List for Port 1
+    KC1JMH-15  00:00:00:00
+    WD1O-15    00:00:00:06
+    KX1EMA-15  00:00:00:07
+    N1REX-15   00:00:00:10
+    N1QFY-15   00:00:00:11
+    KS1R-15    00:00:00:50
+    W1EMA-15   00:00:02:36
+    K1NYY-15   00:00:02:51
+    WD1F       00:00:23:28
+    AB1KI-15
+    KC1JMH in ROUTES as KC1JMH-15 (authoritative)
+    WD1O in ROUTES as WD1O-15 (authoritative)
+    KX1EMA in ROUTES as KX1EMA-15 (authoritative)
+    N1REX in ROUTES as N1REX-15 (authoritative)
+    MHEARD SSID for N1QFY: N1QFY-15 (not in ROUTES table)
+    KS1R in ROUTES as KS1R-15 (authoritative)
+    MHEARD SSID for W1EMA: W1EMA-15 (not in ROUTES table)
+    MHEARD SSID for K1NYY: K1NYY-15 (not in ROUTES table)
+    MHEARD WD1F (no SSID - not a node, skipping)
+    AB1KI in ROUTES as AB1KI-15 (authoritative)
+    Ignoring W1EMA-2 (already have W1EMA-15)
+    Ignoring K1NYY-2 (already have K1NYY-15)
+    MHEARD SSID for KB1TAE: KB1TAE-15 (not in ROUTES table)
+    MHEARD SSID for nB1uI: nB1uI-15 (not in ROUTES table)
+    MHEARD SSID for AB1KIb: AB1KIb-15 (not in ROUTES table)
+    MHEARD SSID for At1KI: At1KI-15 (not in ROUTES table)
+    MHEARD SSID for KX1NMA: KX1NMA-15 (not in ROUTES table)
+    MHEARD SSID for KM1JMH: KM1JMH-15 (not in ROUTES table)
+    MHEARD SSID for W1DTX: W1DTX-15 (not in ROUTES table)
+    Sending command: MHEARD 2
+    Response (208 bytes):
+    LLNWDB:K1NYY-15} Heard List for Port 2
+    KY2D-15    00:00:01:36
+    KY2D-4     00:00:17:52
+    N1LJK-1    00:07:01:28
+    K1JAK      04:07:43:45
+    N1LJK      05:10:57:00
+    N1LJK-5    06:16:04:16
+
+    KY2D in ROUTES as KY2D-15 (authoritative)
+    MHEARD SSID for N1LJK: N1LJK-1 (not in ROUTES table)
+    MHEARD K1JAK (no SSID - not a node, skipping)
+    Ignoring N1LJK-5 (already have N1LJK-1)
+    Updated SSID from newer MHEARD: N1LJK = N1LJK-1
+    Updated SSID from newer MHEARD: W1DTX = W1DTX-15
+    Port info from MHEARD: WD1O on port 1
+    Port info from MHEARD: W1EMA on port 1
+    Port info from MHEARD: KB1TAE on port 1
+    Port info from MHEARD: N1LJK on port 2
+    Port info from MHEARD: AB1KI on port 1
+    Port info from MHEARD: AB1KIb on port 1
+    Port info from MHEARD: W1DTX on port 1
+    Port info from MHEARD: K1NYY on port 1
+    Port info from MHEARD: KM1JMH on port 1
+    Port info from MHEARD: At1KI on port 1
+    Port info from MHEARD: KX1EMA on port 1
+    Port info from MHEARD: N1QFY on port 1
+    Port info from MHEARD: KX1NMA on port 1
+    Port info from MHEARD: nB1uI on port 1
+    Sending command: INFO
+    Response (119 bytes):
+    LLNWDB:K1NYY-15} BPQ32 BBS K1NYY-15 at Waldoboro, ME  FN54HC
+    Port 1: 144.990 MHz @ 1200 Baud
+    Sysop:  wd1o@arrl.net
+
+    Sending command: ?
+    Response (75 bytes):
+    LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Extracted primary alias from prompt: LLNWDB
+    Skipping KC1JMH (already in path: KC1JMH > K1NYY-15)
+  Found 17 neighbors: WD1O, nB1uI, W1EMA, KB1TAE, At1KI, KY2D, N1LJK, N1REX, AB1KI, AB1KIb, W1DTX, KM1JMH, KX1EMA, KC1JMH, N1QFY, KX1NMA, KS1R
+  Node type: BPQ
+  RF Ports: 2
+  Applications: 2 (RMS, BBS)
+  Commands: 11
+  Own Aliases: 3
+Crawling WD1O (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/3)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: ...
+    No known route to WD1O - attempting NetRom discovery from current node...
+    Sending command: NODES
+    Warning: Expected ':' not found in response
+    Response (81 bytes):
+    Node K1NYY-15 at Waldoboro, ME  FN54HC
+    Use "?" for commands and "I" for info.
+
+    WD1O not in current node's NODES table
+    Cannot discover from intermediate hop - would break connection path
+    Connection impossible without NetRom alias - aborting
+  Skipping WD1O (connection failed)
+Crawling KY2D (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+^C
+
+Crawl interrupted by user.
+Partial results:
+  Nodes: 1
+  Connections: 7
+Exported to nodemap_partial_K1NYY-15.json (1 nodes)
+Exported to nodemap_partial_K1NYY-15.csv
+ect@WS1EC:~/utilities $ wget --no-cache -O nodemap.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py && (cat nodemap.py | head -n 30)
+--2026-01-16 23:59:42--  https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap.py
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.109.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 247957 (242K) [text/plain]
+Saving to: ‘nodemap.py’
+
+nodemap.py                         100%[================================================================>] 242.15K  1.14MB/s    in 0.2s
+
+2026-01-16 23:59:43 (1.14 MB/s) - ‘nodemap.py’ saved [247957/247957]
+
+#!/usr/bin/env python3
+"""
+Node Map Crawler for BPQ Packet Radio Networks
+-----------------------------------------------
+Automatically crawls through packet radio nodes to discover network topology.
+Connects to nodes, retrieves MHEARD lists and INFO, and builds a map of
+node connectivity for visualization.
+
+Features:
+- Discovers nodes via MHEARD lists on RF ports
+- Extracts location data from INFO command
+- Traverses network breadth-first to avoid loops
+- Uses ROUTES command to find optimal paths
+- Handles BPQ, FBB, and JNOS nodes
+- Exports to JSON and CSV formats
+- Reads BPQ telnet port from bpq32.cfg automatically
+- Skips IP-based ports (focuses on RF connectivity)
+
+Network Resources:
+- Maine Packet Network: https://www.mainepacketradio.org/
+- Network Map: https://n1xp.com/HAM/content/pkt/MEPktNtMap.pdf
+- Station Map: https://n1xp.com/HAM/content/pkt/MEPktStMap.pdf
+- BPQ Commands: https://cheatography.com/gcremerius/cheat-sheets/bpq-user-and-sysop-commands/
+- BPQ Node Commands: https://www.cantab.net/users/john.wiseman/Documents/NodeCommands.html
+
+Author: Brad Brown, KC1JMH
+Date: January 2026
+Version: 1.7.66
+"""
+
+ect@WS1EC:~/utilities $ ./nodemap.py K1NYY-15 --callsign WD1O-15 -D -l -x -n https://notify.lynwood.us/packet
+BPQ Node Map Crawler v1.7.66
+==================================================
+Loaded 14 exclusions from exclusions.txt
+Found BPQ telnet port: 8010
+Found node callsign: WS1EC
+Excluding nodes: E1QFY, KC1JEH, KC1JMF, KM1JMH, KX1KMA, KX1NMA, KX1RMA, N1Q, N1QYY, N5QFY, N8QFQ, Q1QFY, Y1QFN, Y1QFY
+Logging: telnet -> telnet.log, debug -> debug.log
+Mode: Merge (updating existing nodemap.json)
+Crawl Mode: Update (skip visited nodes)
+Forcing SSID: WD1O-15 (will update SSID map for future crawls)
+Starting network crawl from: K1NYY-15...
+Loaded existing data with 10 nodes: AB1KI, K1NYY-15, KC1JMH-15, KS1R-15, KY2D, N1QFY-15, N1REX-15, NG1P-4, W1DTX, WS1EC
+  No consensus for W1DTX (tied: {'W1DTX-15': 1, 'W1DTX-4': 1, 'W1DTX-7': 1}), skipping
+  No consensus for WD1F (tied: {'WD1F-1': 1, 'WD1F': 1}), skipping
+  No consensus for N1LJK (tied: {'N1LJK-5': 1, 'N1LJK-1': 1}), skipping
+Built ROUTES consensus for 38 callsigns
+Loaded 1 port mappings from existing nodemap.json
+Loaded 9 NetRom aliases from existing nodemap.json
+Looking for path to K1NYY among known neighbors...
+  Checking WS1EC (resolved to WS1EC-15) neighbors: ['KC1JMH']
+    Checking KC1JMH neighbors: ['KS1R', 'N1QFY', 'N1REX', 'K1NYY', 'WS1EC'] (looking for K1NYY)
+Found K1NYY reachable via: KC1JMH
+BPQ node: localhost:8010
+Max hops: 4
+--------------------------------------------------
+Queuing K1NYY-15 with path: ['KC1JMH']
+Crawling K1NYY-15 (via KC1JMH)
+  Authentication required...
+    Username: KC1JMH
+    Password:
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/2)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/2)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Sending command: ?
+    Response (75 bytes):
+    LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Available commands: LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+    Sending command: PORTS
+    Response (132 bytes):
+    LLNWDB:K1NYY-15} Ports
+      1 433.300 MHz @ 1200 Baud
+      2 144.99 MHz @ 1200 Baud
+      9 Telnet Server
+
+    Sending command: NODES
+    Response (558 bytes):
+    LLNWDB:K1NYY-15} Nodes
+    BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2
+    BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15
+    CCEBBS:WS1EC-2      CCECHA:WS1EC-5      CCEMA:WS1EC-15      CCERMS:WS1EC-10
+    CHABUR:KS1R-13      CHTGNR:N1Q
+    Sending command: ROUTES
+    Response (241 bytes):
+    LLNWDB:K1NYY-15} Routes
+      1 AB1KI-15  200 0!
+      1 K1DQ-15   0 0!
+    > 1 KC1JMH-15 200 15!
+    > 1 KS1R-15   200 11!
+    > 1 KX1EMA-15 200 4!
+    > 2 KY2D-15   200 0!
+      1 N1QFY-15  0 0!
+    > 1 N1REX-15  200 8!
+      1 W1EMA-15  0 0!
+      1 WD1O-15   200 0!
+
+    Ignoring K1DQ-15 (quality 0 - sysop blocked route)
+    Ignoring N1QFY-15 (quality 0 - sysop blocked route)
+    Ignoring W1EMA-15 (quality 0 - sysop blocked route)
+    Node SSID from ROUTES: N1REX = N1REX-15 (authoritative)
+    Node SSID from ROUTES: WD1O = WD1O-15 (authoritative)
+    Node SSID from ROUTES: KY2D = KY2D-15 (authoritative)
+    Node SSID from ROUTES: AB1KI = AB1KI-15 (authoritative)
+    Node SSID from ROUTES: KX1EMA = KX1EMA-15 (authoritative)
+    Node SSID from ROUTES: KC1JMH = KC1JMH-15 (authoritative)
+    Node SSID from ROUTES: KS1R = KS1R-15 (authoritative)
+    Sending command: MHEARD 1
+    Response (880 bytes):
+    LLNWDB:K1NYY-15} Heard List for Port 1
+    KC1JMH-15  00:00:00:00
+    KS1R-15    00:00:00:15
+    KX1EMA-15  00:00:00:22
+    WD1O-15    00:00:00:41
+    N1REX-15   00:00:00:53
+    W1EMA-15   00:00:01:21
+    K1NYY-15   00:00:01:53
+    N1QFY-15   00:00:02:07
+    WD1F       00:00:11:55
+    AB1KI-15
+    KC1JMH in ROUTES as KC1JMH-15 (authoritative)
+    KS1R in ROUTES as KS1R-15 (authoritative)
+    KX1EMA in ROUTES as KX1EMA-15 (authoritative)
+    WD1O in ROUTES as WD1O-15 (authoritative)
+    N1REX in ROUTES as N1REX-15 (authoritative)
+    MHEARD SSID for W1EMA: W1EMA-15 (not in ROUTES table)
+    MHEARD SSID for K1NYY: K1NYY-15 (not in ROUTES table)
+    MHEARD SSID for N1QFY: N1QFY-15 (not in ROUTES table)
+    MHEARD WD1F (no SSID - not a node, skipping)
+    AB1KI in ROUTES as AB1KI-15 (authoritative)
+    Ignoring W1EMA-2 (already have W1EMA-15)
+    Ignoring K1NYY-2 (already have K1NYY-15)
+    MHEARD SSID for KB1TAE: KB1TAE-15 (not in ROUTES table)
+    MHEARD SSID for nB1uI: nB1uI-15 (not in ROUTES table)
+    MHEARD SSID for AB1KIb: AB1KIb-15 (not in ROUTES table)
+    MHEARD SSID for At1KI: At1KI-15 (not in ROUTES table)
+    MHEARD SSID for KX1NMA: KX1NMA-15 (not in ROUTES table)
+    MHEARD SSID for KM1JMH: KM1JMH-15 (not in ROUTES table)
+    MHEARD SSID for W1DTX: W1DTX-15 (not in ROUTES table)
+    Sending command: MHEARD 2
+    Response (208 bytes):
+    LLNWDB:K1NYY-15} Heard List for Port 2
+    KY2D-15    00:00:00:26
+    KY2D-4     00:00:36:40
+    N1LJK-1    00:07:20:16
+    K1JAK      04:08:02:33
+    N1LJK      05:11:15:48
+    N1LJK-5    06:16:23:04
+
+    KY2D in ROUTES as KY2D-15 (authoritative)
+    MHEARD SSID for N1LJK: N1LJK-1 (not in ROUTES table)
+    MHEARD K1JAK (no SSID - not a node, skipping)
+    Ignoring N1LJK-5 (already have N1LJK-1)
+    Updated SSID from newer MHEARD: N1LJK = N1LJK-1
+    Updated SSID from newer MHEARD: W1DTX = W1DTX-15
+    Port info from MHEARD: KB1TAE on port 1
+    Port info from MHEARD: K1NYY on port 1
+    Port info from MHEARD: N1QFY on port 1
+    Port info from MHEARD: At1KI on port 1
+    Port info from MHEARD: N1LJK on port 2
+    Port info from MHEARD: AB1KIb on port 1
+    Port info from MHEARD: WD1O on port 1
+    Port info from MHEARD: KX1NMA on port 1
+    Port info from MHEARD: W1DTX on port 1
+    Port info from MHEARD: AB1KI on port 1
+    Port info from MHEARD: nB1uI on port 1
+    Port info from MHEARD: KM1JMH on port 1
+    Port info from MHEARD: W1EMA on port 1
+    Sending command: INFO
+    Response (119 bytes):
+    LLNWDB:K1NYY-15} BPQ32 BBS K1NYY-15 at Waldoboro, ME  FN54HC
+    Port 1: 144.990 MHz @ 1200 Baud
+    Sysop:  wd1o@arrl.net
+
+    Sending command: ?
+    Response (75 bytes):
+    LLNWDB:K1NYY-15} RMS BBS CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Extracted primary alias from prompt: LLNWDB
+    Skipping KC1JMH (already in path: KC1JMH > K1NYY-15)
+  Found 17 neighbors: KB1TAE, N1REX, W1DTX, At1KI, KY2D, N1LJK, KX1EMA, AB1KIb, KS1R, KC1JMH, WD1O, N1QFY, KX1NMA, AB1KI, nB1uI, KM1JMH, W1EMA
+  Node type: BPQ
+  RF Ports: 2
+  Applications: 2 (RMS, BBS)
+  Commands: 11
+  Own Aliases: 3
+Crawling N1REX (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/3)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LNCWHT (NetRom alias for N1REX-15, hop 3/3)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connected to N1REX
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: ...
+    Sending command: ?
+    Response (173 bytes):
+    Node N1REX-15 Node LNCWHT - Whitefield, ME  FN54EF
+    Use "?" for commands and "I" for info.
+    LNCWHT:N1REX-15} RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Available commands: Node N1REX-15 Node LNCWHT - Whitefield, ME FN54EF Use "?" for commands and "I" for info. LNCWHT:N1REX-15} RMS BBS CHAT
+    Sending command: PORTS
+    Response (132 bytes):
+    LNCWHT:N1REX-15} Ports
+      1 433.10 MHz @ 1200 Baud
+      2 145.09 MHz @ 1200 Baud
+      9 Telnet Server
+
+    Sending command: NODES
+    Response (538 bytes):
+    LNCWHT:N1REX-15} Nodes
+    BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2     BBSWBK:KC1JMH-2
+    BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15        CHABUR:KS1R-13
+    CHTGNR:N1QFY-4      CHTRKD:KX1EMA-4     CHTWBK:KC1JMH-4     CHTWHT:N1REX-4
+    CMBWBK:KC1JMH-15    KNNGNR:N1Q
+    Sending command: ROUTES
+    Response (113 bytes):
+    LNCWHT:N1REX-15} Routes
+    > 1 K1NYY-15  200 14!
+    > 1 N1QFY-15  200 15!
+      1 AB1KI-15  200 0!
+      1 KC1JMH-15 0 0!
+
+    Ignoring KC1JMH-15 (quality 0 - sysop blocked route)
+    Node SSID from ROUTES: AB1KI = AB1KI-15 (authoritative)
+    Node SSID from ROUTES: K1NYY = K1NYY-15 (authoritative)
+    Node SSID from ROUTES: N1QFY = N1QFY-15 (authoritative)
+    Sending command: MHEARD 1
+    Response (208 bytes):
+    LNCWHT:N1REX-15} Heard List for Port 1
+    K1NYY-15   00:00:00:00
+    KC1JMH-15  00:00:00:02
+    N1QFY-15   00:00:00:04
+    AB1KI-15   00:13:56:01
+    K1NYY-2    00:14:20:08
+    AB1KI-2    00:14:35:34
+
+    K1NYY in ROUTES as K1NYY-15 (authoritative)
+    MHEARD SSID for KC1JMH: KC1JMH-15 (not in ROUTES table)
+    N1QFY in ROUTES as N1QFY-15 (authoritative)
+    AB1KI in ROUTES as AB1KI-15 (authoritative)
+    Sending command: MHEARD 2
+    Response (68 bytes):
+    LNCWHT:N1REX-15} Heard List for Port 2
+    N1LCN      00:00:29:05
+
+    MHEARD N1LCN (no SSID - not a node, skipping)
+    Sending command: INFO
+    Response (215 bytes):
+    LNCWHT:N1REX-15} BPQ32 Node LNCWHT - Whitefield, ME  FN54EF
+    Port 1: 433.100 MHz @ 1200 Baud
+    Port 2: 145.090 MHz @ 1200 Baud
+    N1REX-2: BBS @  N1REX.ME.USA.NA
+    N1REX-4: CHAT
+    N1REX-10: RMS
+    Sysop:  wd1o@arrl.net
+
+    Sending command: ?
+    Response (80 bytes):
+    LNCWHT:N1REX-15} RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Extracted primary alias from prompt: LNCWHT
+  Found 4 neighbors: N1QFY, AB1KI, K1NYY, KC1JMH
+  Node type: BPQ
+  RF Ports: 2
+  Applications: 3 (RMS, BBS, CHAT)
+  Commands: 12
+  Own Aliases: 4
+Crawling KY2D (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/3)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C KY2D2M (NetRom alias for KY2D-15, hop 3/3)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connection to KY2D (via KY2D2M) timed out after 90.4s (expected timeout: 90s)
+    Direct port connection failed - trying NetRom alias: KY2D2M
+    Waiting for NetRom connection (timeout: 5s remaining)...
+  Skipping KY2D (connection failed)
+Crawling KX1EMA (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/3)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C KNXEOC (NetRom alias for KX1EMA-15, hop 3/3)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connection to KX1EMA (via KNXEOC) timed out after 90.3s (expected timeout: 90s)
+    Direct port connection failed - trying NetRom alias: KNXEOC
+    Waiting for NetRom connection (timeout: 5s remaining)...
+  Skipping KX1EMA (connection failed)
+Crawling KS1R (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/3)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: ...
+    Issuing command: C BURG (NetRom alias for KS1R-15, hop 3/3)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connection to KS1R (via BURG) timed out after 90.3s (expected timeout: 90s)
+    Direct port connection failed - trying NetRom alias: BURG
+    Waiting for NetRom connection (timeout: 5s remaining)...
+  Skipping KS1R (connection failed)
+Crawling WD1O (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/3)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: ...
+    No known route to WD1O - attempting NetRom discovery from current node...
+    Sending command: NODES
+    Response (495 bytes):
+    Node K1NYY-15 at Waldoboro, ME  FN54HC
+    Use "?" for commands and "I" for info.
+    LLNWDB:K1NYY-15} Nodes
+    BBSABN:AB1KI-2      BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSRKD:KX1EMA-2
+    BBSWDB:K1NYY-2      BBSWHT:N1REX-2      BURG:KS1R-15        CHABUR:KS1R-13
+    CHTGNR:N1QFY-4      CHTRKD:KX1E
+    WD1O not in current node's NODES table
+    Cannot discover from intermediate hop - would break connection path
+    Connection impossible without NetRom alias - aborting
+  Skipping WD1O (connection failed)
+Crawling AB1KI (via KC1JMH > K1NYY-15)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/3)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/3)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: ...
+    Issuing command: C KNXABN (NetRom alias for AB1KI-15, hop 3/3)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connection to AB1KI (via KNXABN) timed out after 90.4s (expected timeout: 90s)
+    Direct port connection failed - trying NetRom alias: KNXABN
+    Waiting for NetRom connection (timeout: 5s remaining)...
+  Skipping AB1KI (connection failed)
+Crawling N1QFY (via KC1JMH > K1NYY-15 > N1REX)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/4)
+    Waiting for connection (timeout: 225s for 4 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/4)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LNCWHT (NetRom alias for N1REX-15, hop 3/4)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to N1REX
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C KNNGNR (NetRom alias for N1QFY-15, hop 4/4)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connected to N1QFY
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Sending command: ?
+    Response (80 bytes):
+    KNNGNR:N1QFY-15} RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Available commands: KNNGNR:N1QFY-15} RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+    Sending command: PORTS
+    Response (132 bytes):
+    KNNGNR:N1QFY-15} Ports
+      1 433.300 MHz @ 1200 Baud
+      2 145.070 MHz @ 1200 Baud
+      9 Telnet Server
+
+    Sending command: NODES
+    Response (640 bytes):
+    KNNGNR:N1QFY-15} Nodes
+    BBSBUR:KS1R-2       BBSGNR:N1QFY-2      BBSWBK:KC1JMH-2     BBSWDB:K1NYY-2
+    BBSWHT:N1REX-2      BURG:KS1R-15        CCEBBS:WS1EC-2      CCECHA:WS1EC-5
+    CCEMA:WS1EC-15      CCERMS:WS1EC-10     CHABUR:KS1R-13      CHTGNR:N1QFY-4
+    CHTWBK:KC1JMH-4     CHTWHT:N1R
+    Sending command: ROUTES
+    Response (174 bytes):
+    KNNGNR:N1QFY-15} Routes
+      1 AB1KI-15  0 0!
+      1 K1NYY-15  200 0!
+    > 1 KC1JMH-15 200 14!
+      1 KS1R-15   0 0!
+    > 1 N1REX-15  200 7!
+    > 2 NG1P-4    200 9!
+      1 WD1O-15   0 0!
+
+    Ignoring AB1KI-15 (quality 0 - sysop blocked route)
+    Ignoring KS1R-15 (quality 0 - sysop blocked route)
+    Ignoring WD1O-15 (quality 0 - sysop blocked route)
+    Node SSID from ROUTES: N1REX = N1REX-15 (authoritative)
+    Node SSID from ROUTES: K1NYY = K1NYY-15 (authoritative)
+    Node SSID from ROUTES: KC1JMH = KC1JMH-15 (authoritative)
+    Node SSID from ROUTES: NG1P = NG1P-4 (authoritative)
+    Sending command: MHEARD 1
+    Response (432 bytes):
+    KNNGNR:N1QFY-15} Heard List for Port 1
+    N1REX-15   00:00:00:00
+    K1NYY-15   00:00:00:01
+    KC1JMH-15  00:00:00:04
+    KS1R-15    00:00:00:22
+    KX1EMA-15  00:00:05:40
+    WD1O-15    00:00:14:48
+    WD1F       00:00:24:49
+    AB1KI-15   00:14:25:30
+    K1NYY-2    00:14:51:16
+    AB1KI-2
+    N1REX in ROUTES as N1REX-15 (authoritative)
+    K1NYY in ROUTES as K1NYY-15 (authoritative)
+    KC1JMH in ROUTES as KC1JMH-15 (authoritative)
+    MHEARD SSID for KS1R: KS1R-15 (not in ROUTES table)
+    MHEARD SSID for KX1EMA: KX1EMA-15 (not in ROUTES table)
+    MHEARD SSID for WD1O: WD1O-15 (not in ROUTES table)
+    MHEARD WD1F (no SSID - not a node, skipping)
+    MHEARD SSID for AB1KI: AB1KI-15 (not in ROUTES table)
+    Ignoring AB1KI-2 (already have AB1KI-15)
+    Ignoring KX1EMA-2 (already have KX1EMA-15)
+    MHEARD SSID for W1EMA: W1EMA-15 (not in ROUTES table)
+    Ignoring W1EMA-2 (already have W1EMA-15)
+    Sending command: MHEARD 2
+    Response (180 bytes):
+    KNNGNR:N1QFY-15} Heard List for Port 2
+    NG1P-4     00:00:00:30
+    KB1TAE     00:00:20:11
+    N1REX-9    00:13:32:03
+    KB1EZZ     00:14:49:30
+    KB1TAE-4   00:18:59:37
+
+    NG1P in ROUTES as NG1P-4 (authoritative)
+    MHEARD KB1TAE (no SSID - not a node, skipping)
+    MHEARD KB1EZZ (no SSID - not a node, skipping)
+    MHEARD SSID for KB1TAE: KB1TAE-4 (not in ROUTES table)
+    Sending command: INFO
+    Response (113 bytes):
+    KNNGNR:N1QFY-15} BPQ32 N1QFY-15 at Gardiner, ME  FN54CF
+    Port 1: 145.07 MHz @ 1200 Baud
+    Sysop:  wd1o@arrl.net
+
+    Sending command: ?
+    Response (80 bytes):
+    KNNGNR:N1QFY-15} RMS BBS CHAT CONNECT BYE INFO NODES PORTS ROUTES USERS MHEARD
+
+  Extracted primary alias from prompt: KNNGNR
+    Skipping KC1JMH (already in path: KC1JMH > K1NYY-15 > N1REX > N1QFY)
+  Found 10 neighbors: KB1TAE, N1REX, K1NYY, KX1EMA, KS1R, KC1JMH, WD1O, AB1KI, NG1P, W1EMA
+  Node type: BPQ
+  RF Ports: 2
+  Applications: 3 (RMS, BBS, CHAT)
+  Commands: 12
+  Own Aliases: 4
+Crawling AB1KI (via KC1JMH > K1NYY-15 > N1REX)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/4)
+    Waiting for connection (timeout: 225s for 4 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/4)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LNCWHT (NetRom alias for N1REX-15, hop 3/4)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to N1REX
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: ...
+    Issuing command: C KNXABN (NetRom alias for AB1KI-15, hop 4/4)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connection to AB1KI (via KNXABN) timed out after 90.3s (expected timeout: 90s)
+    Direct port connection failed - trying NetRom alias: KNXABN
+    Waiting for NetRom connection (timeout: 5s remaining)...
+  Skipping AB1KI (connection failed)
+Crawling K1NYY (via KC1JMH > K1NYY-15 > N1REX)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/4)
+    Waiting for connection (timeout: 225s for 4 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/4)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: ...
+    Issuing command: C LNCWHT (NetRom alias for N1REX-15, hop 3/4)
+    Waiting for connection (timeout: 135s for 2 hops)...
+  Connected to N1REX
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 4/4)
+    Waiting for connection (timeout: 90s for 1 hop)...
+  Connection to K1NYY (via LLNWDB) timed out after 90.4s (expected timeout: 90s)
+    Direct port connection failed - trying NetRom alias: LLNWDB
+    Waiting for NetRom connection (timeout: 5s remaining)...
+  Skipping K1NYY (connection failed)
+Crawling K1NYY (via KC1JMH > K1NYY-15 > N1REX > N1QFY)
+  Authentication required...
+  Waiting for node prompt...
+  Connected to local node
+  Using direct port connection to KC1JMH on port 1
+    Issuing command: C 1 KC1JMH-15 (direct port connection, hop 1/5)
+    Waiting for connection (timeout: 240s for 5 hops)...
+  Connected to KC1JMH
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LLNWDB (NetRom alias for K1NYY-15, hop 2/5)
+    Waiting for connection (timeout: 225s for 4 hops)...
+  Connected to K1NYY-15
+    Waiting for remote node prompt (30s timeout)...
+    Received remote prompt: and "I" for info....
+    Issuing command: C LNCWHT (NetRom alias for N1REX-15, hop 3/5)
+    Waiting for connection (timeout: 180s for 3 hops)...
+  Connection to N1REX (via LNCWHT) timed out after 180.2s (expected timeout: 180s)
+    Direct port connection failed - trying NetRom alias: LNCWHT
+    Waiting for NetRom connection (timeout: 5s remaining)...
+  Skipping K1NYY (connection failed)
+Skipping NG1P (5 hops > max 4)
+--------------------------------------------------
+Crawl complete. Found 3 nodes.
+No failed connections.
+Skipped (insufficient SSID data): 3 nodes
+  N1LJK: tied votes {'N1LJK-5': 1, 'N1LJK-1': 1}
+  W1DTX: tied votes {'W1DTX-15': 1, 'W1DTX-4': 1, 'W1DTX-7': 1}
+  WD1F: tied votes {'WD1F-1': 1, 'WD1F': 1}
+  Use --force-ssid BASE FULL to manually specify SSIDs for these nodes
+
+================================================================================================
+NETWORK SUMMARY
+================================================================================================
+CALLSIGN   HOPS PORTS  APPS  CMDS  NBRS   FAILED UNEXPLRD   GRID/LOCATION
+------------------------------------------------------------------------------------------------
+K1NYY-15   1    2      2     11    17     5      17         FN54HC
+N1QFY      3    2      3     12    10     1      8          FN54CF
+N1REX      2    2      3     12    4      2      3          FN54EF
+================================================================================================
+Total: 3 nodes, 14 connections
+================================================================================================
+Merging with 10 existing nodes...
+  Deduplicating: keeping N1REX-15 over N1REX
+  Deduplicating: keeping N1QFY-15 over N1QFY
+Merged into nodemap.json (10 nodes)
+Exported to nodemap.csv
+
+Network map complete!
+Nodes discovered: 3
+Connections found: 14
+
+Generate HTML/SVG maps? (Y/n):
+
+Generating maps...
+
+Node Map HTML Generator v1.4.6
+
+
+Found linbpq HTML directory: /home/ect/linbpq/HTML
+Save files there? (Y/n):
+Files will be saved to /home/ect/linbpq/HTML
+Loaded 10 nodes and 16 connections from nodemap.json
+Nodes with grid squares: 10
+
+Generated ../linbpq/HTML/nodemap.html (10 nodes, 16 connections)
+Generated ../linbpq/HTML/nodemap.svg (10 nodes, 16 connections)
+
+Map generation complete!
+Maps generated successfully!
+ect@WS1EC:~/utilities $

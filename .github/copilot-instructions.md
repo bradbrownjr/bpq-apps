@@ -103,7 +103,8 @@ bpq-apps/
 ## Testing
 - SSH: ect@ws1ec.mainepacketradio.org -p 4722
 - Verify Py3.5.3 compatibility, ASCII output
-- WSL preferred over PowerShell
+- WSL terminals required (SSH keys configured, POSIX compatibility)
+- Never use PowerShell for SSH or remote commands
 
 ## Notification Webhook
 Before requesting user testing or executing commands requiring interaction, send notification:
