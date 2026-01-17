@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.64
+Version: 1.7.65
 """
 
-__version__ = '1.7.64'
+__version__ = '1.7.65'
 
 import sys
 import socket
@@ -4402,9 +4402,10 @@ def main():
             if '-' not in forced_ssid:
                 colored_print("Error: --callsign requires SSID (e.g., NG1P-4)", Colors.RED)
                 sys.exit(1)
-            # If max_hops wasn't explicitly set, default to 0 for --callsign (correction mode)
-            # --callsign is a correction tool to fix one node's SSID, not a full crawl
-            if not max_hops_explicit:
+            # If max_hops wasn't explicitly set AND no START_NODE specified, default to 0 for --callsign (correction mode)
+            # --callsign alone is a correction tool to fix one node's SSID, not a full crawl
+            # But if START_NODE is specified, user wants a normal crawl with forced SSID
+            if not max_hops_explicit and not start_node:
                 max_hops = 0
             i += 2
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:

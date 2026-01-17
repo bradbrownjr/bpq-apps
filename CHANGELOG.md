@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.65] - 2026-01-16
+### Fixed
+- START_NODE + --callsign now uses default max_hops=4 instead of 0
+- Correction mode (max_hops=0) only applies when --callsign used alone
+- Example: `./nodemap.py K1NYY-15 --callsign WD1O-15` now crawls 4 hops from K1NYY-15
+- Example: `./nodemap.py --callsign WD1O-15` still uses correction mode (0 hops)
+
 ## [nodemap 1.7.64] - 2026-01-16
 ### Fixed
 - Verify START_NODE has NetRom alias or is direct neighbor before attempting crawl
