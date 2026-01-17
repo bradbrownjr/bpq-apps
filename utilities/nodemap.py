@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.51
+Version: 1.7.52
 """
 
-__version__ = '1.7.51'
+__version__ = '1.7.52'
 
 import sys
 import socket
@@ -631,23 +631,23 @@ class NodeCrawler:
                         if self.verbose:
                             print("    Issuing command: C {} (discovery failed, hop {}/{})".format(full_callsign, i+1, len(path)))
                 else:
-                    # Fallback: use callsign-SSID without port
-                    # May fail if not a direct neighbor
-                    if not full_callsign:
-                        full_callsign = callsign  # Use base callsign
+                    # Final fallback: check if we have NetRom alias in mappings
+                    # This can happen if alias was discovered during earlier crawls but not in current NODES
+                    if lookup_call in self.call_to_alias:
+                        alias = self.call_to_alias[lookup_call]
+                        cmd = "C {}\r".format(alias).encode('ascii')
+                        connect_target = "{} (from mappings)".format(alias)
                         if self.verbose:
-                            print("    No NetRom SSID found for {}, using base callsign".format(callsign))
-                    
-                    # IMPORTANT: Don't use "C CALLSIGN-SSID" without port - BPQ requires port number
-                    # Instead, suggest user find NetRom alias or add to existing network data
-                    if self.verbose:
-                        print("    Warning: No port or NetRom alias for {} - connection will likely fail".format(callsign))
-                        print("    Suggestion: Connect to a known node first, get NODES list to find aliases")
-                    
-                    cmd = "C {}\r".format(full_callsign).encode('ascii')
-                    connect_target = "{} (no port - likely to fail)".format(full_callsign)
-                    if self.verbose:
-                        print("    Issuing command: C {} (fallback without port - BPQ may reject, hop {}/{})".format(full_callsign, i+1, len(path)))
+                            print("    Issuing command: C {} (NetRom alias from mappings, hop {}/{})".format(alias, i+1, len(path)))
+                    else:
+                        # No alias found - use base callsign and let NetRom routing figure it out
+                        # NEVER use "C CALLSIGN-SSID" without port - BPQ requires port number
+                        base_callsign = lookup_call
+                        cmd = "C {}\r".format(base_callsign).encode('ascii')
+                        connect_target = "{} (base callsign - NetRom routing)".format(base_callsign)
+                        if self.verbose:
+                            print("    No alias found for {} - using base callsign".format(callsign))
+                            print("    Issuing command: C {} (base callsign fallback, hop {}/{})".format(base_callsign, i+1, len(path)))
                 
                 # Set socket timeout before write to prevent blocking on dead connections
                 # TCP write() can block if remote end's receive buffer is full

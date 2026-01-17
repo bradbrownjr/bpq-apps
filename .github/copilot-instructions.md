@@ -74,6 +74,14 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Use NetRom aliases from NODES output for multi-hop connections
 - route_ports only for localhost → first hop direct connections
 
+**Connection Command Priority** (hop 2+):
+1. NetRom alias from `call_to_alias` mapping (C ALIAS) - ALWAYS prefer
+2. Base callsign only (C BASEONLY) - let NetRom routing figure it out
+3. NEVER use "C CALLSIGN-SSID" without port - BPQ requires port number
+- Fallback without port (C CALL-SSID) WILL FAIL beyond first hop
+- Port numbers vary per node, only localhost route_ports are usable
+- If no alias and not first hop, must use base callsign only
+
 ## Repository Structure
 ```
 bpq-apps/

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.52] - 2026-01-16
+### Fixed
+- Connection fallback now checks call_to_alias mappings before using base callsign
+- No longer attempts "C CALLSIGN-SSID" without port (always fails beyond first hop)
+- Fallback priority: NetRom alias from mappings → base callsign (let NetRom route)
+
 ## [nodemap 1.7.51] - 2026-01-16
 ### Fixed
 - Added missing check for tied SSID votes during unexplored neighbor processing
