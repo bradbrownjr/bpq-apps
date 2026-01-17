@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.59] - 2026-01-16
+### Fixed
+- Skip nodes without NetRom alias during planning phase
+- Catches nodes in ROUTES but not in any NODES table (unreachable)
+- Prevents 15+ failed connection attempts to unroutable nodes
+- Nodes like VE1YAR, KC1JMF, N1LJK, W1LH, etc now skipped upfront
+
 ## [nodemap 1.7.58] - 2026-01-16
 ### Fixed
 - Expanded NetRom discovery only runs from localhost (i==0)

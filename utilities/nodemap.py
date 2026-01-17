@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.58
+Version: 1.7.59
 """
 
-__version__ = '1.7.58'
+__version__ = '1.7.59'
 
 import sys
 import socket
@@ -1397,6 +1397,15 @@ class NodeCrawler:
                 if neighbor_base in self.skipped_no_ssid:
                     if self.verbose:
                         print("  Skipping {} (tied SSID votes)".format(neighbor))
+                    continue
+                
+                # Skip if no NetRom alias available (CRITICAL for routing)
+                # Without an alias in call_to_alias, connection will timeout
+                # This catches nodes that are in ROUTES but not in any NODES table
+                if neighbor_base not in self.call_to_alias:
+                    self.skipped_no_route.add(neighbor_base)
+                    if self.verbose:
+                        print("  Skipping {} (no NetRom alias for routing)".format(neighbor))
                     continue
                 
                 # Determine SSID to use for this unexplored neighbor
