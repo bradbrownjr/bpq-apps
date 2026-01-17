@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.76
+Version: 1.7.77
 """
 
-__version__ = '1.7.76'
+__version__ = '1.7.77'
 
 import sys
 import socket
@@ -4408,6 +4408,31 @@ def main():
             colored_print("Run a crawl first to generate network data", Colors.RED)
             sys.exit(1)
         
+        # Parse exclusions if -x flag present
+        exclude_nodes = set()
+        if '--exclude' in sys.argv or '-x' in sys.argv:
+            try:
+                x_idx = sys.argv.index('--exclude') if '--exclude' in sys.argv else sys.argv.index('-x')
+                # Check if next arg exists and isn't another option
+                if x_idx + 1 < len(sys.argv) and not sys.argv[x_idx + 1].startswith('-'):
+                    exclude_file = sys.argv[x_idx + 1]
+                else:
+                    exclude_file = 'exclusions.txt'
+                
+                if os.path.isfile(exclude_file):
+                    with open(exclude_file, 'r') as f:
+                        content = f.read()
+                    for line in content.replace(',', '\n').split('\n'):
+                        call = line.strip().upper()
+                        if call and not call.startswith('#'):
+                            call = call.split('#')[0].strip()
+                            if call:
+                                exclude_nodes.add(call)
+                    if '-v' in sys.argv or '--verbose' in sys.argv:
+                        print("Loaded {} exclusions from {}".format(len(exclude_nodes), exclude_file))
+            except Exception as e:
+                pass  # Ignore exclusion errors in query mode
+        
         try:
             with open('nodemap.json', 'r') as f:
                 data = json.load(f)
@@ -4476,6 +4501,11 @@ def main():
             neighbors = node_data.get('neighbors', [])
             explored = node_data.get('explored_neighbors', [])
             unexplored = node_data.get('unexplored_neighbors', [])
+            
+            # Filter out excluded nodes from unexplored list
+            if exclude_nodes and unexplored:
+                unexplored = [n for n in unexplored if n.upper() not in exclude_nodes and 
+                              (n.split('-')[0].upper() if '-' in n else n.upper()) not in exclude_nodes]
             
             print("\nNeighbors ({} total):".format(len(neighbors)))
             if explored:

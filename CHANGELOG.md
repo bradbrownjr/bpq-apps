@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.77] - 2026-01-17
+### Added
+- `-x`/`--exclude` support in query mode (`-q`) to filter unexplored neighbors
+- Example: `nodemap.py -q K1NYY-15 -x` filters bad callsigns from neighbor list
+
 ## [nodemap 1.7.76] - 2026-01-18
 ### Added
 - Silent/autonomous mode (`-y`/`--yes`) for cron jobs and scripted operation
