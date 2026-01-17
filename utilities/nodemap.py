@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.72
+Version: 1.7.73
 """
 
-__version__ = '1.7.72'
+__version__ = '1.7.73'
 
 import sys
 import socket
@@ -4287,8 +4287,16 @@ def main():
             if rf_ports:
                 print("\nRF Ports ({}):".format(len(rf_ports)))
                 for port in rf_ports:
-                    freq = port.get('frequency', 'Unknown')
-                    print("  Port {}: {} MHz".format(port.get('port_num'), freq))
+                    port_num = port.get('number')
+                    freq = port.get('frequency')
+                    desc = port.get('description', '')
+                    port_type = port.get('port_type', 'rf')
+                    if freq:
+                        print("  Port {}: {} MHz".format(port_num, freq))
+                    elif port_type == 'hf':
+                        print("  Port {}: {} (HF)".format(port_num, desc))
+                    else:
+                        print("  Port {}: {}".format(port_num, desc))
             
             # Known SSIDs - helps decide which SSID to use for recrawl
             print("\nKnown SSIDs for {}:".format(base_call))
