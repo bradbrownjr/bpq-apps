@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.60
+Version: 1.7.61
 """
 
-__version__ = '1.7.60'
+__version__ = '1.7.61'
 
 import sys
 import socket
@@ -3854,6 +3854,31 @@ def main():
             colored_print("Run a crawl first to generate network data", Colors.RED)
             sys.exit(1)
         
+        # Parse exclusions if -x flag present (before display)
+        exclude_nodes = set()
+        if '--exclude' in sys.argv or '-x' in sys.argv:
+            try:
+                x_idx = sys.argv.index('--exclude') if '--exclude' in sys.argv else sys.argv.index('-x')
+                # Check if next arg exists and isn't another option
+                if x_idx + 1 < len(sys.argv) and not sys.argv[x_idx + 1].startswith('-'):
+                    exclude_file = sys.argv[x_idx + 1]
+                else:
+                    exclude_file = 'exclusions.txt'
+                
+                if os.path.isfile(exclude_file):
+                    with open(exclude_file, 'r') as f:
+                        content = f.read()
+                    for line in content.replace(',', '\n').split('\n'):
+                        call = line.strip().upper()
+                        if call and not call.startswith('#'):
+                            call = call.split('#')[0].strip()
+                            if call:
+                                exclude_nodes.add(call)
+                    if verbose or '-v' in sys.argv or '--verbose' in sys.argv:
+                        print("Loaded {} exclusions from {}".format(len(exclude_nodes), exclude_file))
+            except Exception as e:
+                pass  # Ignore exclusion errors in display mode
+        
         try:
             with open('nodemap.json', 'r') as f:
                 data = json.load(f)
@@ -3879,6 +3904,10 @@ def main():
             
             # Unexplored = neighbor base callsigns not in explored base callsigns
             unexplored = all_neighbors - explored
+            
+            # Filter out excluded nodes from unexplored list
+            if exclude_nodes:
+                unexplored = unexplored - exclude_nodes
             
             # Print nodes table
             print("\nNodes in nodemap.json ({} total):\n".format(len(nodes_data)))
@@ -3910,8 +3939,13 @@ def main():
                 
                 neighbors = node.get('neighbors', [])
                 
-                # Find unexplored neighbors
-                unexplored_neighbors = [n for n in neighbors if n in unexplored]
+                # Find unexplored neighbors (base callsigns)
+                # Convert neighbors to base callsigns and check against unexplored set
+                unexplored_neighbors = []
+                for n in neighbors:
+                    n_base = n.split('-')[0] if '-' in n else n
+                    if n_base in unexplored:
+                        unexplored_neighbors.append(n)
                 
                 # Format neighbors list (first 2, then count)
                 if len(neighbors) == 0:

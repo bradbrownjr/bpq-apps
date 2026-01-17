@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.61] - 2026-01-16
+### Fixed
+- Display-nodes (-d) now respects exclusions file when used with -x flag
+- Parses exclusions.txt before displaying unexplored neighbors
+- Filters both summary unexplored list and per-node unexplored columns
+- Supports comma-separated values in exclusions.txt
+
 ## [nodemap 1.7.60] - 2026-01-16
 ### Fixed
 - Display-nodes (-d) now correctly strips SSIDs when comparing explored vs unexplored
