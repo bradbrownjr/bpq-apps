@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.81] - 2026-01-17
+### Fixed
+- Added alias validation to prevent callsigns being used as NetRom aliases
+- New `_is_valid_netrom_alias()` validates that aliases are not callsign patterns
+- New `_set_call_to_alias()` helper enforces validation at all assignment points
+- Connection logic now detects and warns about invalid aliases (callsign stored as alias)
+- Fixes bug where nodes without known aliases would attempt "C W1EMA" instead of ROUTES fallback
+- Invalid aliases now trigger proper NetRom discovery or ROUTES-based port lookup
+
 ## [nodemap-html 1.4.12] - 2026-01-17
 ### Changed
 - SVG tooltips now use custom HTML overlay instead of native browser tooltips

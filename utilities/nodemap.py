@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.80
+Version: 1.7.81
 """
 
-__version__ = '1.7.80'
+__version__ = '1.7.81'
 
 import sys
 import socket
@@ -517,6 +517,15 @@ class NodeCrawler:
                 
                 # Direct port connection (C PORT CALL) only for first hop from localhost
                 # Subsequent hops MUST use NetRom routing (already connected via AX.25)
+                
+                # Check for valid alias (not a callsign - that would be a bug)
+                alias = self.call_to_alias.get(lookup_call)
+                if alias and (alias == lookup_call or self._is_valid_callsign(alias)):
+                    # Bug: callsign was stored as its own alias
+                    if self.verbose:
+                        print("    WARNING: Invalid alias '{}' for {} (callsign stored as alias - bug!)".format(alias, lookup_call))
+                    alias = None  # Invalidate and fall through to discovery
+                
                 if i == 0 and port_num and full_callsign:
                     # Direct neighbor with known port and SSID: C PORT CALLSIGN-SSID
                     # Fastest method - goes straight to neighbor, no NetRom routing
@@ -524,10 +533,9 @@ class NodeCrawler:
                     connect_target = "{} {} (port {}, direct)".format(port_num, full_callsign, port_num)
                     if self.verbose:
                         print("    Issuing command: C {} {} (direct port connection, hop {}/{})".format(port_num, full_callsign, i+1, len(path)))
-                elif self.call_to_alias.get(lookup_call):
+                elif alias:
                     # NetRom alias available: C ALIAS
                     # Uses NetRom routing - slower but works for non-direct neighbors
-                    alias = self.call_to_alias.get(lookup_call)
                     cmd = "C {}\r".format(alias).encode('ascii')
                     connect_target = alias
                     if self.verbose:
@@ -554,7 +562,7 @@ class NodeCrawler:
                             
                             if consensus_ssid and full_call == consensus_ssid:
                                 # This alias matches consensus - safe to use
-                                self.call_to_alias[base_call] = alias
+                                self._set_call_to_alias(base_call, alias, 'NODES_discovery')
                                 self.alias_to_call[alias] = full_call
                             
                             # Always add to alias_to_call for reverse lookups
@@ -822,10 +830,14 @@ class NodeCrawler:
                         print("  Connection to {} (via {}) timed out (no CONNECTED response)".format(callsign, connect_target))
                     
                     # If direct port connection failed, try NetRom alias as fallback
-                    if port_num and self.call_to_alias.get(lookup_call):
-                        alias = self.call_to_alias.get(lookup_call)
+                    # But ONLY if alias is valid (not a callsign - that would be a bug)
+                    fallback_alias = self.call_to_alias.get(lookup_call)
+                    if fallback_alias and (fallback_alias == lookup_call or self._is_valid_callsign(fallback_alias)):
+                        fallback_alias = None  # Invalid alias, don't use
+                    
+                    if port_num and fallback_alias:
                         if self.verbose:
-                            print("    Direct port connection failed - trying NetRom alias: {}".format(alias))
+                            print("    Direct port connection failed - trying NetRom alias: {}".format(fallback_alias))
                         
                         # Clear any buffered data
                         try:
@@ -834,7 +846,7 @@ class NodeCrawler:
                             pass
                         
                         # Try NetRom connection
-                        cmd = "C {}\r".format(alias).encode('ascii')
+                        cmd = "C {}\r".format(fallback_alias).encode('ascii')
                         try:
                             tn.write(cmd)
                         except:
@@ -912,7 +924,7 @@ class NodeCrawler:
                         # Store the ACTUAL node SSID we're connected to
                         self.netrom_ssid_map[base_call] = prompt_callsign
                         self.alias_to_call[prompt_alias] = prompt_callsign
-                        self.call_to_alias[base_call] = prompt_alias
+                        self._set_call_to_alias(base_call, prompt_alias, 'prompt_extraction')
                         
                         if self.verbose:
                             print("    Connected to node: {} ({}) - stored for routing".format(prompt_callsign, prompt_alias))
@@ -1396,7 +1408,7 @@ class NodeCrawler:
                 # Find alias that maps to this SSID
                 for alias, full_call in own_aliases.items():
                     if full_call == consensus_ssid:
-                        self.call_to_alias[node_base] = alias
+                        self._set_call_to_alias(node_base, alias, 'JSON_own_aliases')
                         break
         
         # Also populate alias_to_call from seen_aliases (other nodes' aliases)
@@ -1572,6 +1584,54 @@ class NodeCrawler:
         except (ValueError, IndexError):
             return False
     
+    def _is_valid_netrom_alias(self, alias, base_call=None):
+        """
+        Check if an alias is a valid NetRom alias (not a callsign stored by mistake).
+        
+        Valid NetRom aliases are 6-character names like "CHABUR", "KNXSTG", etc.
+        Invalid: callsigns stored as aliases (bug) like "KS1R" for "KS1R"
+        
+        Args:
+            alias: The alias string to validate
+            base_call: Optional base callsign - if alias == base_call, it's invalid
+            
+        Returns:
+            True if valid alias, False if it looks like a callsign
+        """
+        if not alias:
+            return False
+        
+        # If alias equals base callsign, it's definitely wrong
+        if base_call and alias == base_call:
+            return False
+        
+        # If alias looks like a callsign, it's wrong
+        if self._is_valid_callsign(alias):
+            return False
+        
+        return True
+    
+    def _set_call_to_alias(self, base_call, alias, source='unknown'):
+        """
+        Safely set a call-to-alias mapping, validating that alias is not a callsign.
+        
+        Args:
+            base_call: Base callsign (e.g., 'KS1R')
+            alias: NetRom alias (e.g., 'CHABUR')
+            source: Debug string for logging where this was called from
+            
+        Returns:
+            True if set successfully, False if alias was invalid
+        """
+        if not self._is_valid_netrom_alias(alias, base_call):
+            if self.verbose:
+                print("    WARNING: Rejecting invalid alias '{}' for {} (from {})".format(
+                    alias, base_call, source))
+            return False
+        
+        self.call_to_alias[base_call] = alias
+        return True
+    
     def _parse_ports(self, output):
         """
         Parse PORTS output to extract port details.
@@ -1724,8 +1784,6 @@ class NodeCrawler:
                 netrom_ssids[base_call] = full_callsign
                 if base_call not in neighbors:
                     neighbors.append(base_call)
-        
-        return aliases, netrom_ssids, neighbors
         
         return aliases, netrom_ssids, neighbors
     
@@ -2116,7 +2174,7 @@ class NodeCrawler:
                 
                 # Only add to call_to_alias if this alias matches consensus
                 if consensus_ssid and full_call == consensus_ssid:
-                    self.call_to_alias[base_call] = alias
+                    self._set_call_to_alias(base_call, alias, 'crawl_NODES')
                 
                 # Always add to alias_to_call for reverse lookups/documentation
                 if alias not in self.alias_to_call:
@@ -2635,7 +2693,7 @@ class NodeCrawler:
                             consensus_ssid = self.netrom_ssid_map[node_base]
                             for alias, full_call in own_aliases.items():
                                 if full_call == consensus_ssid:
-                                    self.call_to_alias[node_base] = alias
+                                    self._set_call_to_alias(node_base, alias, 'resume_consensus')
                                     break
                         else:
                             # No ROUTES consensus, but node was previously crawled
@@ -2644,7 +2702,7 @@ class NodeCrawler:
                             for alias, full_call in own_aliases.items():
                                 call_base = full_call.split('-')[0] if '-' in full_call else full_call
                                 if call_base == node_base and self._is_likely_node_ssid(full_call):
-                                    self.call_to_alias[node_base] = alias
+                                    self._set_call_to_alias(node_base, alias, 'resume_fallback')
                                     if node_base not in self.netrom_ssid_map:
                                         self.netrom_ssid_map[node_base] = full_call
                                         self.ssid_source[node_base] = ('json_fallback', time.time())
