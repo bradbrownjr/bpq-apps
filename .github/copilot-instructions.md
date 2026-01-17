@@ -63,7 +63,10 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
    - Each node's ROUTES table shows the SSIDs it uses to reach its neighbors
    - These are the ACTUAL node SSIDs (e.g., KS1R-15), not service SSIDs (KS1R-2 BBS)
    - Consensus = SSID seen by most nodes for a given base callsign
-3. **Base callsign only** - if no ROUTES data, strip SSID and let NetRom routing figure it out
+3. **SKIP if no NetRom alias** - nodes without alias in `call_to_alias` are UNROUTABLE
+   - Base callsign fallback (C BASEONLY) does NOT work - causes timeouts
+   - NetRom requires alias or port - without alias, node cannot be reached
+   - Mark as skipped during planning phase, do not attempt connection
 - The `alias` field is NOT reliable - it comes from BPQ prompt which may be BBS/RMS/CHAT
 - seen_aliases is NOT reliable - counts are equal across all services
 - NEVER use SSID number heuristics - there is NO standard for node vs service SSIDs
@@ -75,12 +78,12 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - route_ports only for localhost → first hop direct connections
 
 **Connection Command Priority** (hop 2+):
-1. NetRom alias from `call_to_alias` mapping (C ALIAS) - ALWAYS prefer
-2. Base callsign only (C BASEONLY) - let NetRom routing figure it out
-3. NEVER use "C CALLSIGN-SSID" without port - BPQ requires port number
-- Fallback without port (C CALL-SSID) WILL FAIL beyond first hop
-- Port numbers vary per node, only localhost route_ports are usable
-- If no alias and not first hop, must use base callsign only
+1. Direct port (C PORT CALL) - first hop only, requires route_ports entry
+2. NetRom alias (C ALIAS) - from `call_to_alias` mapping
+3. **SKIP if no alias** - connection WILL timeout without NetRom alias
+- NEVER use "C CALLSIGN-SSID" without port - requires port number in BPQ
+- NEVER use "C BASEONLY" - NetRom requires alias, base callsign will timeout
+- Nodes without alias are UNROUTABLE - skip during planning phase
 
 ## Repository Structure
 ```

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.53] - 2026-01-16
+### Fixed
+- Connection now aborts if no NetRom alias found (base callsign does NOT work)
+- Removed base callsign fallback - NetRom requires alias or port, no exceptions
+- Updated copilot-instructions.md: skip nodes without alias during planning
+
 ## [nodemap 1.7.52] - 2026-01-16
 ### Fixed
 - Connection fallback now checks call_to_alias mappings before using base callsign
