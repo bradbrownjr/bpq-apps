@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.69
+Version: 1.7.70
 """
 
-__version__ = '1.7.69'
+__version__ = '1.7.70'
 
 import sys
 import socket
@@ -1613,9 +1613,14 @@ class NodeCrawler:
                 port_type = 'ip'
                 is_rf = False
             # Check for HF digital modes (slow, typically 300 baud or less)
-            elif any(x in desc_upper for x in ['VARA', 'ARDOP', 'PACTOR', 'WINMOR', 'PACKET HF', 'HF PACKET']):
+            # Match standalone "HF" or mode names like VARA, ARDOP, PACTOR
+            elif any(x in desc_upper for x in ['VARA', 'ARDOP', 'PACTOR', 'WINMOR', 'PACKET HF', 'HF PACKET', ' HF', 'HF ']):
                 port_type = 'hf'
                 is_rf = True  # HF is RF, but we may want to skip it
+            # Check if description is just "HF" or starts/ends with HF
+            elif desc_upper == 'HF' or desc_upper.startswith('HF ') or desc_upper.endswith(' HF'):
+                port_type = 'hf'
+                is_rf = True
             # Check for HF by frequency (below 30 MHz)
             elif frequency and frequency < 30.0:
                 port_type = 'hf'
@@ -2141,9 +2146,6 @@ class NodeCrawler:
                 if port_type == 'hf' and not self.allow_hf:
                     if self.verbose:
                         print("    Skipping HF port {} ({})".format(port_info['number'], port_info['description']))
-                    continue
-                if not port_info['is_rf'] and not self.allow_ip:
-                    # Legacy fallback: skip non-RF if not explicitly allowing IP
                     continue
                     
                 if check_deadline():

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.70] - 2026-01-17
+### Fixed
+- HF detection: Added standalone "HF" keyword (e.g., port description "HF" or "3 HF")
+- Removed redundant legacy is_rf fallback in MHEARD loop
+
 ## [nodemap-html 1.4.7] - 2026-01-17
 ### Added
 - Link type visualization: IP links shown as dotted cyan, HF links as dashed yellow
