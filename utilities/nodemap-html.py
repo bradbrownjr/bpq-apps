@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.8
+Version: 1.4.9
 """
 
-__version__ = '1.4.8'
+__version__ = '1.4.9'
 
 import sys
 import json
@@ -369,6 +369,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             'state': state,
             'type': node_type,
             'sponsor': sponsor,
+            'note': node_data.get('note', ''),  # Sysop-added note
             'netrom_access': netrom_access,
             'applications': applications,
             'frequencies': frequencies,
@@ -625,6 +626,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         .popup-content .label { font-weight: bold; color: #666; }
         .popup-content .apps { color: #2196F3; }
         .popup-content .freqs { color: #FF9800; }
+        .popup-content .note { background: #fff3cd; padding: 6px 8px; border-radius: 4px; margin: 8px 0; font-style: italic; color: #856404; border-left: 3px solid #ffc107; }
         .info-box {
             background: white;
             padding: 10px;
@@ -698,6 +700,11 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             // Build popup content
             var popup = '<div class="popup-content">';
             popup += '<h3>' + node.callsign + '</h3>';
+            
+            // Show note first if present (important info)
+            if (node.note) {
+                popup += '<div class="note">' + node.note + '</div>';
+            }
             
             if (node.city || node.state) {
                 popup += '<p><span class="label">Location:</span> ' + 
@@ -1226,6 +1233,11 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         neighbor_label = ' (from network)' if node.get('incomplete_crawl', False) else ''
         tooltip_lines.append("RF Neighbors: {}{}".format(node['rf_neighbors'], neighbor_label))
         tooltip_lines.append("IP Neighbors: {}{}".format(node['ip_neighbors'], neighbor_label))
+        
+        # Add note if present
+        if node.get('note'):
+            tooltip_lines.append("Note: {}".format(node['note']))
+        
         tooltip = "&#10;".join(tooltip_lines)  # &#10; is XML newline
         
         svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})" onmouseenter="highlightNode(\'{}\');" onmouseleave="unhighlightAll();">'.format(x, y, node['callsign']))

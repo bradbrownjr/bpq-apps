@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.74] - 2026-01-18
+### Added
+- `--note CALL [TEXT]` flag to add/remove notes for nodes
+- Notes stored in `note` field of nodemap.json
+- Notes displayed in HTML popups (yellow highlight) and SVG tooltips
+- Useful for maintenance schedules, HF frequencies, offline status, etc.
+- Auto-regenerates maps after adding/removing notes
+
+## [nodemap-html 1.4.9] - 2026-01-18
+### Added
+- Note display in HTML popups with yellow background styling
+- Note display in SVG tooltips ("Note: ..." line)
+
 ## [nodemap 1.7.70] - 2026-01-17
 ### Fixed
 - HF detection: Added standalone "HF" keyword (e.g., port description "HF" or "3 HF")

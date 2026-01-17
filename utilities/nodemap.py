@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.73
+Version: 1.7.74
 """
 
-__version__ = '1.7.73'
+__version__ = '1.7.74'
 
 import sys
 import socket
@@ -3710,6 +3710,116 @@ def main():
         
         sys.exit(0)
     
+    # Check for note mode (add/update note for a node)
+    if '--note' in sys.argv:
+        note_call = None
+        note_text = None
+        for i, arg in enumerate(sys.argv):
+            if arg == '--note' and i + 2 < len(sys.argv):
+                note_call = sys.argv[i + 1].upper()
+                note_text = sys.argv[i + 2]
+                break
+        
+        if not note_call or note_text is None:
+            colored_print("Error: --note requires CALLSIGN and \"NOTE TEXT\"", Colors.RED)
+            print("Example: {} --note WD1O \"HF port: 7.101 MHz VARA\"".format(sys.argv[0]))
+            print("Example: {} --note KS1R \"Offline weekdays, active weekends\"".format(sys.argv[0]))
+            print("To clear a note, use empty string: --note WD1O \"\"")
+            sys.exit(1)
+        
+        if not os.path.exists('nodemap.json'):
+            colored_print("Error: nodemap.json not found", Colors.RED)
+            colored_print("Run a crawl first to generate network data", Colors.RED)
+            sys.exit(1)
+        
+        try:
+            with open('nodemap.json', 'r') as f:
+                data = json.load(f)
+            
+            nodes_data = data.get('nodes', {})
+            base_call = note_call.split('-')[0] if '-' in note_call else note_call
+            
+            # Find node by base callsign or exact match
+            node_key = None
+            if note_call in nodes_data:
+                node_key = note_call
+            else:
+                # Try finding by base callsign
+                matches = [k for k in nodes_data.keys() if k.split('-')[0] == base_call]
+                if not matches:
+                    colored_print("Node {} not found in nodemap.json".format(note_call), Colors.RED)
+                    colored_print("Available nodes: {}".format(', '.join(sorted(nodes_data.keys()))), Colors.YELLOW)
+                    sys.exit(1)
+                elif len(matches) > 1:
+                    colored_print("Multiple SSIDs found for {}: {}".format(base_call, ', '.join(matches)), Colors.YELLOW)
+                    response = input("Update all variants? (Y/n): ").strip().lower()
+                    if response in ['', 'y', 'yes']:
+                        # Update all variants
+                        for match in matches:
+                            if note_text:
+                                nodes_data[match]['note'] = note_text
+                                print("Updated note for {}: {}".format(match, note_text))
+                            else:
+                                # Clear note
+                                if 'note' in nodes_data[match]:
+                                    del nodes_data[match]['note']
+                                print("Cleared note for {}".format(match))
+                        
+                        # Save back to file
+                        with open('nodemap.json', 'w') as f:
+                            json.dump(data, f, indent=2)
+                        colored_print("\nSaved to nodemap.json", Colors.GREEN)
+                        sys.exit(0)
+                    else:
+                        node_key = matches[0]
+                        print("Updating only: {}".format(node_key))
+                else:
+                    node_key = matches[0]
+            
+            # Update/clear the node's note
+            old_note = nodes_data[node_key].get('note', '')
+            if note_text:
+                nodes_data[node_key]['note'] = note_text
+                if old_note:
+                    print("Updated note for {}: \"{}\" -> \"{}\"".format(node_key, old_note, note_text))
+                else:
+                    print("Added note for {}: \"{}\"".format(node_key, note_text))
+            else:
+                # Clear note
+                if 'note' in nodes_data[node_key]:
+                    del nodes_data[node_key]['note']
+                print("Cleared note for {} (was: \"{}\")".format(node_key, old_note))
+            
+            # Save back to file
+            with open('nodemap.json', 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            colored_print("Saved to nodemap.json", Colors.GREEN)
+            
+            # Offer to regenerate maps
+            response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            if response in ['', 'y', 'yes']:
+                print("\nGenerating maps...")
+                html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
+                try:
+                    import subprocess
+                    result = subprocess.call(['python3', html_script, '--all'])
+                    if result == 0:
+                        colored_print("Maps generated successfully!", Colors.GREEN)
+                    else:
+                        colored_print("Warning: Map generation exited with code {}".format(result), Colors.YELLOW)
+                except Exception as e:
+                    colored_print("Error generating maps: {}".format(e), Colors.RED)
+            
+        except json.JSONDecodeError as e:
+            colored_print("Error parsing nodemap.json: {}".format(e), Colors.RED)
+            sys.exit(1)
+        except Exception as e:
+            colored_print("Error updating nodemap.json: {}".format(e), Colors.RED)
+            sys.exit(1)
+        
+        sys.exit(0)
+    
     # Check for cleanup mode (nodes, connections, or all)
     if '--cleanup' in sys.argv:
         if not os.path.exists('nodemap.json'):
@@ -3980,6 +4090,9 @@ def main():
         print("  --pass PASSWORD  Telnet login password (default: prompt if needed)")
         print("  --callsign CALL  Force specific SSID for start node (e.g., --callsign NG1P-4)")
         print("  --set-grid CALL GRID  Set gridsquare for callsign (e.g., --set-grid NG1P FN43vp)")
+        print("  --note CALL [TEXT]  Add/update/remove note for node")
+        print("                      With TEXT: set note (e.g., --note NG1P \"HF 7.101 MHz\")")
+        print("                      Without TEXT: remove existing note")
         print("  --query CALL, -q Query info about node (neighbors, apps, best route)")
         print("  --cleanup [TARGET]  Clean up nodemap.json (nodes, connections, unexplored, or all)")
         print("                      TARGET: nodes (duplicates/incomplete), connections (invalid),")
@@ -4006,6 +4119,8 @@ def main():
         print("  {} --notify https://example.com/webhook  # Send progress notifications".format(sys.argv[0]))
         print("  {} --callsign NG1P-4  # Force connection to specific SSID".format(sys.argv[0]))
         print("  {} --set-grid NG1P FN43vp  # Add gridsquare for node".format(sys.argv[0]))
+        print("  {} --note NG1P \"HF 7.101 MHz\"  # Add note to node".format(sys.argv[0]))
+        print("  {} --note NG1P  # Remove note from node".format(sys.argv[0]))
         print("  {} -q NG1P  # Query what we know about NG1P".format(sys.argv[0]))
         print("\nData Storage:")
         print("  Merge mode (default): Updates existing nodemap.json, preserves old data")
