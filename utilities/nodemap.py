@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.39
+Version: 1.7.40
 """
 
-__version__ = '1.7.39'
+__version__ = '1.7.40'
 
 import sys
 import socket
@@ -858,7 +858,24 @@ class NodeCrawler:
             
             return tn
             
+        except (socket.error, OSError) as e:
+            # Network/socket errors - check if this is local or remote connection failure
+            if not path:
+                # Failed to connect to LOCAL BPQ node - this is fatal
+                colored_print("FATAL: Cannot connect to local BPQ node at {}:{} - {}".format(
+                    self.host, self.port, e), Colors.RED)
+                colored_print("Local BPQ node must be running and accessible. Exiting.", Colors.RED)
+                sys.exit(1)
+            else:
+                # Failed to connect to REMOTE node - this is expected for unreachable nodes
+                colored_print("Error connecting: {}".format(e), Colors.RED)
+                return None
         except Exception as e:
+            # Other exceptions
+            if not path:
+                # Any error connecting to LOCAL node is fatal
+                colored_print("FATAL: Error connecting to local BPQ node - {}".format(e), Colors.RED)
+                sys.exit(1)
             colored_print("Error connecting: {}".format(e), Colors.RED)
             return None
     

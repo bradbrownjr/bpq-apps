@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.40] - 2026-01-16
+### Fixed
+- Local BPQ node connection failures (Broken pipe, connection refused) now exit immediately
+- Prevents crawler from continuing when localhost telnet connection is lost
+- Distinguishes fatal local errors from expected remote node connection failures
+
 ## [nodemap 1.7.39] - 2026-01-16
 ### Fixed
 - Unexplored neighbors now use base callsign only (no SSID) unless alias consensus exists
