@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.46] - 2026-01-16
+### Fixed
+- ROUTES consensus: Only use SSID when there's a CLEAR winner (more votes than others)
+- When votes are tied (e.g., KB1TAE-2:1, KB1TAE-15:1), use base callsign only
+- Per SSID Selection Standard: "if no ROUTES data, strip SSID and let NetRom figure it out"
+- Tied consensus is effectively "no clear data" - don't guess arbitrarily
+
 ## [nodemap 1.7.45] - 2026-01-16
 ### Changed
 - SSID Selection Standard: Use ROUTES consensus (aggregate netrom_ssids from all nodes)

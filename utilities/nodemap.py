@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.45
+Version: 1.7.46
 """
 
-__version__ = '1.7.45'
+__version__ = '1.7.46'
 
 import sys
 import socket
@@ -1270,11 +1270,24 @@ class NodeCrawler:
                     ssid_votes[base_call][full_ssid] += 1
         
         # Use ROUTES consensus to build SSID map
+        # Only use consensus if there's a CLEAR winner (more votes than any other)
+        # If tied, use base callsign only per SSID Selection Standard
         for base_call, votes in ssid_votes.items():
-            # Pick SSID with most votes (ties go to first alphabetically for consistency)
-            best_ssid = max(votes.keys(), key=lambda s: (votes[s], s))
-            self.netrom_ssid_map[base_call] = best_ssid
-            self.ssid_source[base_call] = ('routes_consensus', time.time())
+            sorted_votes = sorted(votes.items(), key=lambda x: (-x[1], x[0]))
+            best_ssid, best_count = sorted_votes[0]
+            
+            # Check if there's a clear winner (no tie for first place)
+            if len(sorted_votes) == 1 or best_count > sorted_votes[1][1]:
+                # Clear consensus - use this SSID
+                self.netrom_ssid_map[base_call] = best_ssid
+                self.ssid_source[base_call] = ('routes_consensus', time.time())
+            else:
+                # Tied votes - use base callsign only, let NetRom figure it out
+                self.netrom_ssid_map[base_call] = base_call
+                self.ssid_source[base_call] = ('base_only_tied', time.time())
+                if self.verbose:
+                    print("  No consensus for {} (tied: {}), using base callsign".format(
+                        base_call, dict(votes)))
         
         if self.verbose and ssid_votes:
             print("Built ROUTES consensus from {} callsigns".format(len(ssid_votes)))
@@ -2427,10 +2440,24 @@ class NodeCrawler:
                                 ssid_votes[base_call][full_ssid] += 1
                     
                     # Use ROUTES consensus to build SSID map
+                    # Only use consensus if there's a CLEAR winner (more votes than any other)
+                    # If tied, use base callsign only per SSID Selection Standard
                     for base_call, votes in ssid_votes.items():
-                        best_ssid = max(votes.keys(), key=lambda s: (votes[s], s))
-                        self.netrom_ssid_map[base_call] = best_ssid
-                        self.ssid_source[base_call] = ('routes_consensus', time.time())
+                        sorted_votes = sorted(votes.items(), key=lambda x: (-x[1], x[0]))
+                        best_ssid, best_count = sorted_votes[0]
+                        
+                        # Check if there's a clear winner (no tie for first place)
+                        if len(sorted_votes) == 1 or best_count > sorted_votes[1][1]:
+                            # Clear consensus - use this SSID
+                            self.netrom_ssid_map[base_call] = best_ssid
+                            self.ssid_source[base_call] = ('routes_consensus', time.time())
+                        else:
+                            # Tied votes - use base callsign only, let NetRom figure it out
+                            self.netrom_ssid_map[base_call] = base_call
+                            self.ssid_source[base_call] = ('base_only_tied', time.time())
+                            if self.verbose:
+                                print("  No consensus for {} (tied: {}), using base callsign".format(
+                                    base_call, dict(votes)))
                     
                     if self.verbose and ssid_votes:
                         print("Built ROUTES consensus for {} callsigns".format(len(ssid_votes)))
