@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.44] - 2026-01-16
+### Changed
+- SSID Selection Standard: Use node's PRIMARY ALIAS from `alias` field (from BPQ prompt)
+- Removed consensus counting from seen_aliases (was unreliable - equal counts for all services)
+- Primary alias is authoritative: when we connect, BPQ reports "BURG:KS1R-15}" in prompt
+- The `alias` field maps to own_aliases to find the actual node SSID
+- Updated copilot-instructions.md with correct SSID Selection Standard
+
+### Fixed
+- KS1R now correctly uses BURG (KS1R-15) instead of BBSBUR (KS1R-2)
+- All SSID selection now based on actual node identity, not service alias counting
+
 ## [nodemap 1.7.43] - 2026-01-16
 ### Fixed
 - STRICTLY enforce alias consensus: call_to_alias ONLY populated when alias matches consensus SSID

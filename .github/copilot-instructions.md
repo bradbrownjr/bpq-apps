@@ -56,20 +56,18 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 
 **SSID Selection Standard** (CRITICAL - do not deviate):
 1. **CLI-forced SSIDs** (`--force-ssid BASE FULL`) - highest priority, user override
-2. **Alias consensus** - aggregate SSIDs from all nodes' own_aliases + seen_aliases (most authoritative)
-   - own_aliases: node's self-reported aliases from NODES output
-   - seen_aliases: what other nodes report about their neighbors
-   - Both contain full SSIDs (KC1JMH-15), unlike routes which use base callsigns
-3. **Base callsign only** - if no consensus, strip SSID and let NetRom discovery find it during crawl
-4. **MHEARD data (netrom_ssids)** - lowest priority, only to fill gaps, includes transient/port-specific SSIDs
-- NEVER use routes table SSIDs - they're base callsigns in JSON, service SSIDs when queried live
-- NEVER filter by hardcoded service SSID numbers (-2, -4, -5, -10, etc.) - varies by sysop
+2. **Primary alias from node's `alias` field** - most authoritative, from BPQ prompt (e.g., `BURG:KS1R-15}`)
+   - When we connect to a node, BPQ reports its primary alias in the prompt
+   - This `alias` field is stored in nodemap.json and maps to the node's actual SSID
+3. **own_aliases lookup** - find alias in node's own_aliases that matches the `alias` field
+4. **Base callsign only** - if no alias known, strip SSID and let NetRom routing figure it out
+- seen_aliases is NOT reliable for consensus - counts are equal across all services (BBS, RMS, CHAT, NODE)
+- NEVER use SSID number heuristics - there is NO standard for node vs service SSIDs
 - ONLY filter SSIDs outside valid range (0, >15) using _is_likely_node_ssid()
-- Service/node distinction determined by data source priority, NOT SSID number
 
 **Path Building**: Uses successful_path from previous crawls
-- SSIDs determined from own_aliases/seen_aliases consensus (from NODES output)
-- Never assume SSID conventions (BBS=-2, RMS=-10, etc.) - always use consensus or base callsign
+- SSIDs determined from node's `alias` field (from connection prompt)
+- The `alias` field tells us which alias in own_aliases is the PRIMARY node alias
 - Use NetRom aliases from NODES output for multi-hop connections
 - route_ports only for localhost → first hop direct connections
 
