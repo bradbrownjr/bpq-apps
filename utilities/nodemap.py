@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.41
+Version: 1.7.42
 """
 
-__version__ = '1.7.41'
+__version__ = '1.7.42'
 
 import sys
 import socket
@@ -503,21 +503,48 @@ class NodeCrawler:
                         nodes_output = self._send_command(tn, 'NODES', timeout=10, expect_content=':')
                         all_aliases, discovered_ssids, _ = self._parse_nodes_aliases(nodes_output)
                         
-                        # Update global mappings, preferring node aliases over service aliases
+                        # Update global mappings, preferring aliases that match consensus SSID
+                        # or have higher SSIDs (node SSIDs tend to be higher like -15, -13)
                         for alias, full_call in all_aliases.items():
                             base_call = full_call.split('-')[0]
-                            is_likely_node = self._is_likely_node_ssid(full_call)
                             
-                            # Add or update mapping, preferring likely node SSIDs
+                            # Check if this alias matches the consensus SSID for this callsign
+                            consensus_ssid = self.netrom_ssid_map.get(base_call)
+                            matches_consensus = (consensus_ssid and full_call == consensus_ssid)
+                            
+                            # Extract SSID number for comparison
+                            new_ssid = 0
+                            if '-' in full_call:
+                                try:
+                                    new_ssid = int(full_call.rsplit('-', 1)[1])
+                                except ValueError:
+                                    pass
+                            
                             if base_call not in self.call_to_alias:
                                 # New entry - add it
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
-                            elif is_likely_node:
-                                # Likely node SSID - replace existing
+                            elif matches_consensus:
+                                # This alias matches consensus SSID - replace existing
                                 self.call_to_alias[base_call] = alias
                                 self.alias_to_call[alias] = full_call
-                            # else: suspicious SSID and we already have a mapping - skip
+                            else:
+                                # Check if new SSID is higher (prefer node SSIDs like -15 over service SSIDs like -2)
+                                existing_alias = self.call_to_alias[base_call]
+                                existing_call = self.alias_to_call.get(existing_alias, '')
+                                existing_ssid = 0
+                                if '-' in existing_call:
+                                    try:
+                                        existing_ssid = int(existing_call.rsplit('-', 1)[1])
+                                    except ValueError:
+                                        pass
+                                if new_ssid > existing_ssid:
+                                    self.call_to_alias[base_call] = alias
+                                    self.alias_to_call[alias] = full_call
+                            
+                            # Always add to alias_to_call for reverse lookups
+                            if alias not in self.alias_to_call:
+                                self.alias_to_call[alias] = full_call
                         
                         # Update SSID mappings
                         for base_call, full_call in discovered_ssids.items():

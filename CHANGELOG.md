@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.42] - 2026-01-16
+### Fixed
+- Live NODES discovery now prefers aliases matching consensus SSID
+- For uncrawled nodes, prefers higher SSIDs (like -15) over lower SSIDs (like -2)
+- Node SSIDs tend to be higher numbers, service SSIDs (BBS, RMS) tend to be lower
+- Fixes connecting to BBSBUR (KS1R-2) instead of BURG (KS1R-15)
+
 ## [nodemap 1.7.41] - 2026-01-16
 ### Fixed
 - Resume/new-only mode now correctly processes unexplored_neighbors from JSON
