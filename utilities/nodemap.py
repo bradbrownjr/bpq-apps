@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.71
+Version: 1.7.72
 """
 
-__version__ = '1.7.71'
+__version__ = '1.7.72'
 
 import sys
 import socket
@@ -1867,6 +1867,7 @@ class NodeCrawler:
             # Look for other route lines (non-direct neighbors)
             # Format: "  PORT CALLSIGN-SSID QUALITY METRIC"
             # Example: "  1 K1NYY-15  200 0!" (reachable via intermediate hop)
+            # The port number indicates which port the node was last heard on
             # Skip routes with quality 0 (blocked/poor paths that sysop disabled)
             match = re.search(r'^\s+(\d+)\s+(\w+(?:-\d+)?)\s+(\d+)', line)
             if match:
@@ -1880,6 +1881,7 @@ class NodeCrawler:
                     if quality > 0:
                         if base_call not in routes:  # Don't overwrite direct neighbor entries
                             routes[base_call] = quality
+                            ports[base_call] = port_num  # Store port for connection fallback
                             ssids[base_call] = full_call  # AUTHORITATIVE node SSID from ROUTES
                     elif self.verbose:
                         print("    Ignoring {} (quality 0 - sysop blocked route)".format(full_call))
