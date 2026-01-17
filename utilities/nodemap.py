@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.75
+Version: 1.7.76
 """
 
-__version__ = '1.7.75'
+__version__ = '1.7.76'
 
 import sys
 import socket
@@ -153,6 +153,7 @@ class NodeCrawler:
         self.cli_forced_ssids = {}  # SSIDs forced via --callsign CLI option: {base_call: full_ssid}
         self.target_only_mode = False  # When True, only crawl target node (no neighbor discovery)
         self.target_callsign = None  # The specific target callsign when using --callsign
+        self.silent_mode = False  # When True, skip all interactive prompts (for cron/scripts)
     
     def _debug_log(self, message):
         """Log message to debug log (if --debug-log set). Always logs, regardless of verbose."""
@@ -2817,31 +2818,40 @@ class NodeCrawler:
                                     print("  {}) {} ({}, quality {})".format(i, node, grid, quality))
                                 print("")
                                 
-                                # Prompt user to choose intermediate node
-                                try:
-                                    choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
-                                    
-                                    if not choice:
-                                        colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
-                                        return
-                                    
-                                    choice_idx = int(choice) - 1
-                                    if choice_idx < 0 or choice_idx >= len(sorted_nodes):
-                                        colored_print("Error: Invalid choice", Colors.RED)
-                                        return
-                                    
-                                    intermediate_node = sorted_nodes[choice_idx][0]
-                                    print("Selected: {} -> {}".format(intermediate_node, target_base))
-                                    
-                                    # Intermediate is a direct neighbor, so path is just [intermediate, target]
+                                # In silent mode, auto-select best option (first in quality-sorted list)
+                                if self.silent_mode:
+                                    intermediate_node = sorted_nodes[0][0]
+                                    print("Auto-selected: {} -> {}".format(intermediate_node, target_base))
                                     starting_path = [intermediate_node, target_ssid]
                                     if self.verbose:
                                         print("Built path: {}".format(' -> '.join(starting_path)))
                                     found_path = True
+                                else:
+                                    # Prompt user to choose intermediate node
+                                    try:
+                                        choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
                                         
-                                except (ValueError, KeyboardInterrupt, EOFError):
-                                    print("")
-                                    colored_print("Cancelled", Colors.YELLOW)
+                                        if not choice:
+                                            colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
+                                            return
+                                        
+                                        choice_idx = int(choice) - 1
+                                        if choice_idx < 0 or choice_idx >= len(sorted_nodes):
+                                            colored_print("Error: Invalid choice", Colors.RED)
+                                            return
+                                        
+                                        intermediate_node = sorted_nodes[choice_idx][0]
+                                        print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                        
+                                        # Intermediate is a direct neighbor, so path is just [intermediate, target]
+                                        starting_path = [intermediate_node, target_ssid]
+                                        if self.verbose:
+                                            print("Built path: {}".format(' -> '.join(starting_path)))
+                                        found_path = True
+                                            
+                                    except (ValueError, KeyboardInterrupt, EOFError):
+                                        print("")
+                                        colored_print("Cancelled", Colors.YELLOW)
                                     return
                             else:
                                 # No direct neighbors have heard it - search all nodes
@@ -2888,32 +2898,41 @@ class NodeCrawler:
                                             print("  {}) {} ({}, {})".format(i, node, grid, hop_str))
                                         print("")
                                         
-                                        # Prompt user to choose intermediate node
-                                        try:
-                                            choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
-                                            
-                                            if not choice:
-                                                colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
-                                                return
-                                            
-                                            choice_idx = int(choice) - 1
-                                            if choice_idx < 0 or choice_idx >= len(sorted_nodes):
-                                                colored_print("Error: Invalid choice", Colors.RED)
-                                                return
-                                            
-                                            intermediate_node, hops, intermediate_path = sorted_nodes[choice_idx]
-                                            print("Selected: {} -> {}".format(intermediate_node, target_base))
-                                            
-                                            # Build complete path: intermediate_path + target
+                                        # In silent mode, auto-select best option (first in sorted list)
+                                        if self.silent_mode:
+                                            intermediate_node, hops, intermediate_path = sorted_nodes[0]
+                                            print("Auto-selected: {} -> {}".format(intermediate_node, target_base))
                                             starting_path = intermediate_path + [target_ssid]
                                             if self.verbose:
                                                 print("Built path: {}".format(' -> '.join(starting_path)))
                                             found_path = True
+                                        else:
+                                            # Prompt user to choose intermediate node
+                                            try:
+                                                choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_nodes))).strip()
                                                 
-                                        except (ValueError, KeyboardInterrupt, EOFError):
-                                            print("")
-                                            colored_print("Cancelled", Colors.YELLOW)
-                                            return
+                                                if not choice:
+                                                    colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
+                                                    return
+                                            
+                                                choice_idx = int(choice) - 1
+                                                if choice_idx < 0 or choice_idx >= len(sorted_nodes):
+                                                    colored_print("Error: Invalid choice", Colors.RED)
+                                                    return
+                                                
+                                                intermediate_node, hops, intermediate_path = sorted_nodes[choice_idx]
+                                                print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                                
+                                                # Build complete path: intermediate_path + target
+                                                starting_path = intermediate_path + [target_ssid]
+                                                if self.verbose:
+                                                    print("Built path: {}".format(' -> '.join(starting_path)))
+                                                found_path = True
+                                                    
+                                            except (ValueError, KeyboardInterrupt, EOFError):
+                                                print("")
+                                                colored_print("Cancelled", Colors.YELLOW)
+                                                return
                                     else:
                                         # No nodes heard it - continue to all-nodes fallback
                                         pass
@@ -2934,20 +2953,10 @@ class NodeCrawler:
                                             print("  {}) {} ({}, {} neighbors)".format(i, node, grid, num_neighbors))
                                         print("")
                                         
-                                        try:
-                                            choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_all))).strip()
-                                            
-                                            if not choice:
-                                                colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
-                                                return
-                                            
-                                            choice_idx = int(choice) - 1
-                                            if choice_idx < 0 or choice_idx >= len(sorted_all):
-                                                colored_print("Error: Invalid choice", Colors.RED)
-                                                return
-                                            
-                                            intermediate_node = sorted_all[choice_idx][0]
-                                            print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                        # In silent mode, auto-select best option (most connected)
+                                        if self.silent_mode:
+                                            intermediate_node = sorted_all[0][0]
+                                            print("Auto-selected: {} -> {}".format(intermediate_node, target_base))
                                             
                                             # Find path to intermediate
                                             queue_to_int = [(self.callsign, [])]
@@ -2966,7 +2975,6 @@ class NodeCrawler:
                                                         queue_to_int.append((nbr, path + [nbr]))
                                             
                                             if path_to_int is not None:
-                                                # Build complete path
                                                 starting_path = path_to_int + [target_ssid]
                                                 if self.verbose:
                                                     print("Built path: {}".format(' -> '.join(starting_path)))
@@ -2974,18 +2982,59 @@ class NodeCrawler:
                                             else:
                                                 colored_print("Error: Cannot find path to {}".format(intermediate_node), Colors.RED)
                                                 return
+                                        else:
+                                            try:
+                                                choice = input("Choose a node to connect through (1-{}, or blank to skip): ".format(len(sorted_all))).strip()
                                                 
-                                        except (ValueError, KeyboardInterrupt, EOFError):
-                                            print("")
-                                            colored_print("Cancelled", Colors.YELLOW)
-                                            return
+                                                if not choice:
+                                                    colored_print("Skipping {} - no path specified".format(target_base), Colors.YELLOW)
+                                                    return
+                                                
+                                                choice_idx = int(choice) - 1
+                                                if choice_idx < 0 or choice_idx >= len(sorted_all):
+                                                    colored_print("Error: Invalid choice", Colors.RED)
+                                                    return
+                                                
+                                                intermediate_node = sorted_all[choice_idx][0]
+                                                print("Selected: {} -> {}".format(intermediate_node, target_base))
+                                                
+                                                # Find path to intermediate
+                                                queue_to_int = [(self.callsign, [])]
+                                                visited_to_int = {self.callsign}
+                                                path_to_int = None
+                                                
+                                                while queue_to_int:
+                                                    curr, path = queue_to_int.pop(0)
+                                                    if curr == intermediate_node:
+                                                        path_to_int = path
+                                                        break
+                                                    curr_info = nodes_data.get(curr, {})
+                                                    for nbr in curr_info.get('neighbors', []):
+                                                        if nbr not in visited_to_int:
+                                                            visited_to_int.add(nbr)
+                                                            queue_to_int.append((nbr, path + [nbr]))
+                                                
+                                                if path_to_int is not None:
+                                                    # Build complete path
+                                                    starting_path = path_to_int + [target_ssid]
+                                                    if self.verbose:
+                                                        print("Built path: {}".format(' -> '.join(starting_path)))
+                                                    found_path = True
+                                                else:
+                                                    colored_print("Error: Cannot find path to {}".format(intermediate_node), Colors.RED)
+                                                    return
+                                                    
+                                            except (ValueError, KeyboardInterrupt, EOFError):
+                                                print("")
+                                                colored_print("Cancelled", Colors.YELLOW)
+                                                return
                                     else:
                                         colored_print("Error: No nodes in topology to route through", Colors.RED)
                                         colored_print("Try crawling more nodes first to build the network topology", Colors.YELLOW)
                                         return
                                     
-                                    # If we got here and still no path, allow manual callsign entry
-                                    if not found_path:
+                                    # If we got here and still no path, allow manual callsign entry (skip in silent mode)
+                                    if not found_path and not self.silent_mode:
                                         print("")
                                         colored_print("Unable to find automatic path to {}".format(target_base), Colors.YELLOW)
                                         print("You can manually specify an intermediate node callsign.")
@@ -4148,6 +4197,10 @@ def main():
         print("       -n, --notify URL")
         print("              Send notifications to webhook URL.")
         print("")
+        print("       -y, --yes")
+        print("              Silent/autonomous mode. Assumes 'yes' to all prompts.")
+        print("              Requires -u and -p for authentication. Auto-generates maps.")
+        print("")
         print("       -h, --help, /?")
         print("              Show this help message.")
         print("")
@@ -4175,6 +4228,9 @@ def main():
         print("")
         print("       nodemap.py -N NG1P \"HF 7.101 MHz\"")
         print("              Add note to NG1P.")
+        print("")
+        print("       nodemap.py 10 -y -u KC1JMH -p mypass")
+        print("              Autonomous mode: crawl 10 hops, no prompts, auto-generate maps.")
         print("")
         print("FILES")
         print("       nodemap.json    Complete network topology and node information")
@@ -4566,7 +4622,8 @@ def main():
     resume_file = None  # File to resume from (None = auto-detect)
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     resume = '--resume' in sys.argv or '-r' in sys.argv
-    generate_maps = False  # Will be set by user prompt
+    generate_maps = False  # Will be set by user prompt or silent mode
+    silent_mode = '--yes' in sys.argv or '-y' in sys.argv  # Autonomous mode - no prompts
     allow_hf = '--hf' in sys.argv or '-H' in sys.argv  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
     allow_ip = '--ip' in sys.argv or '-I' in sys.argv  # Include IP ports (AXIP, TCP, Telnet) - not RF
     
@@ -4723,7 +4780,7 @@ def main():
             if not max_hops_explicit and not start_node:
                 max_hops = 0
             i += 2
-        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '-H', '--ip', '-I']:
+        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '-H', '--ip', '-I', '--yes', '-y']:
             # Known flags without arguments
             i += 1
         elif arg.startswith('-') and not arg.isdigit():
@@ -4739,11 +4796,19 @@ def main():
         print("Run '{} --help' for usage information.".format(sys.argv[0]))
         sys.exit(1)
     
+    # Silent mode validation: requires username and password
+    if silent_mode:
+        if not username or not password:
+            colored_print("Error: Silent mode (-y/--yes) requires -u USERNAME and -p PASSWORD", Colors.RED)
+            sys.exit(1)
+        generate_maps = True  # Auto-generate maps in silent mode
+    
     # Merge mode is default; use --overwrite to disable
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler with specified crawl mode and exclusions
     crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, allow_hf=allow_hf, allow_ip=allow_ip)
+    crawler.silent_mode = silent_mode  # Set silent mode for skipping interactive prompts
     
     # Set resume file if specified
     if resume_file:
@@ -4877,7 +4942,7 @@ def main():
         
         # Prompt to generate maps (after seeing results)
         html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
-        if os.path.isfile(html_script):
+        if os.path.isfile(html_script) and not silent_mode:
             print("")
             try:
                 response = input("Generate HTML/SVG maps? (Y/n): ").strip().lower()
@@ -4887,7 +4952,7 @@ def main():
                 print("")
                 print("Skipping map generation")
         
-        # Prompt for missing gridsquares
+        # Prompt for missing gridsquares (skip in silent mode)
         missing_grids = []
         for callsign, node_data in crawler.nodes.items():
             location = node_data.get('location', {})
@@ -4895,7 +4960,7 @@ def main():
             if not grid:
                 missing_grids.append(callsign)
         
-        if missing_grids and not crawler.resume:
+        if missing_grids and not crawler.resume and not silent_mode:
             print("\n{} node(s) missing gridsquare data: {}".format(
                 len(missing_grids), ', '.join(sorted(missing_grids))))
             response = input("Set gridsquares now? (y/N): ").strip().lower()

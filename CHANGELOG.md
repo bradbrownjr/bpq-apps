@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.76] - 2026-01-18
+### Added
+- Silent/autonomous mode (`-y`/`--yes`) for cron jobs and scripted operation
+  - Requires `-u` USERNAME and `-p` PASSWORD
+  - Auto-generates maps (skips "Generate maps?" prompt)
+  - Auto-selects best path when route discovery prompts appear
+  - Skips interactive gridsquare entry prompts
+  - Example: `nodemap.py 10 -y -u KC1JMH -p mypass`
+
 ## [nodemap-html 1.4.11] - 2026-01-18
 ### Added
 - HF Access indicator in popups shows HF port descriptions (VARA, ARDOP, PACTOR)

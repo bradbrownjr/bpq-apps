@@ -100,6 +100,12 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
 **Options:**
 - `-o`, `--overwrite` - Replace existing data (default: merge mode)
 - `-r`, `--resume` [FILE] - Continue from unexplored nodes in existing data
+- `-y`, `--yes` - Silent/autonomous mode for cron/scripts
+  - Requires `-u` and `-p` (username and password)
+  - Auto-answers "yes" to all prompts (map generation, path selection)
+  - Skips interactive gridsquare entry
+  - Auto-selects best path when route discovery prompts
+  - Example: `./nodemap.py 10 -y -u KC1JMH -p mypass`
 - `-c`, `--callsign CALL-SSID` - Force specific node SSID (e.g., `-c NG1P-4`)
   - **Correction mode**: Automatically sets max_hops=0 and start_node when used alone
   - Use to fix bad SSID data without crawling entire network
@@ -235,6 +241,12 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py 10 --verbose --log debug.txt         # Detailed logging
 ./nodemap.py 5 --notify https://my.webhook.com    # Progress notifications
 ./nodemap.py 10 --user KC1JMH --pass mypass       # With authentication
+
+# Silent/autonomous mode (cron, scripts)
+./nodemap.py 10 -y -u KC1JMH -p mypass            # Non-interactive crawl
+./nodemap.py 5 -y -u KC1JMH -p pass --mode new-only  # Automated new-node discovery
+# Cron example (nightly full crawl):
+# 0 2 * * * cd /home/pi/nodemap && ./nodemap.py 15 -y -u KC1JMH -p mypass >> crawl.log 2>&1
 
 # Force specific SSID (when node has multiple)
 ./nodemap.py --callsign NG1P-4                    # Correction mode: crawls only NG1P-4 (0 hops)
