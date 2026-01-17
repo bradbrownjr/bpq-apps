@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.48
+Version: 1.7.49
 """
 
-__version__ = '1.7.48'
+__version__ = '1.7.49'
 
 import sys
 import socket
@@ -131,6 +131,7 @@ class NodeCrawler:
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.skipped_no_ssid = {}  # Nodes skipped due to tied SSID votes: {callsign: {votes}}
+        self.skipped_no_route = set()  # Nodes skipped: not in any ROUTES table (unreachable)
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
         self.connections = []  # List of [node1, node2, port] connections
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
@@ -1374,8 +1375,16 @@ class NodeCrawler:
                 if neighbor in self.visited or neighbor_base in self.visited or neighbor in self.exclude or neighbor_base in self.exclude:
                     continue
                 
+                # Skip if not in any ROUTES table (unreachable via NetRom)
+                # Nodes only in MHEARD but not ROUTES are likely user stations or offline nodes
+                if neighbor_base not in ssid_votes:
+                    self.skipped_no_route.add(neighbor_base)
+                    if self.verbose:
+                        print("  Skipping {} (not in any ROUTES table)".format(neighbor))
+                    continue
+                
                 # Determine SSID to use for this unexplored neighbor
-                # SSID Selection Standard: CLI > primary alias > base callsign only
+                # SSID Selection Standard: CLI > ROUTES consensus > base callsign only
                 # unexplored_neighbors may contain SSIDs from routes/MHEARD - only trust netrom_ssid_map
                 neighbor_to_queue = neighbor
                 
@@ -3084,9 +3093,16 @@ class NodeCrawler:
                 print("  {}: tied votes {}".format(base_call, votes))
             print("  Use --force-ssid BASE FULL to manually specify SSIDs for these nodes")
         
+        # Report nodes skipped because not in any ROUTES table
+        if self.skipped_no_route:
+            colored_print("Skipped (not in ROUTES): {} nodes".format(len(self.skipped_no_route)), Colors.YELLOW)
+            print("  Not in any ROUTES table: {}".format(', '.join(sorted(self.skipped_no_route))))
+            print("  These are likely user stations, offline nodes, or packet loss artifacts")
+        
         # Notify crawl completion
+        total_skipped = len(self.skipped_no_ssid) + len(self.skipped_no_route)
         self._send_notification("Crawl complete: {} nodes, {} failed, {} skipped".format(
-            len(self.nodes), len(self.failed), len(self.skipped_no_ssid)))
+            len(self.nodes), len(self.failed), total_skipped))
         
         # Display summary table
         if self.nodes:

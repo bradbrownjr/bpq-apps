@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.49] - 2026-01-16
+### Changed
+- Skip nodes not in any ROUTES table (unreachable via NetRom)
+- Track skipped nodes in `skipped_no_route` set
+- Report unreachable nodes at end of crawl
+- Updated copilot-instructions: cannot use "C CALL-SSID" beyond first hop (needs port)
+- Port numbers vary between nodes - only localhost route_ports usable
+
+### Fixed
+- Stop attempting connections to nodes only in MHEARD (likely user stations or offline)
+- KX1KMA and similar nodes now properly skipped instead of timing out
+
 ## [nodemap 1.7.48] - 2026-01-16
 ### Fixed
 - Exclusion matching now checks both full callsign and base callsign

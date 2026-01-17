@@ -52,7 +52,10 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Once connected to local node via telnet, all AX.25 NetRom connections inherit auth
 - Direct port connections (C PORT CALL) only valid for first hop from localhost
 - Subsequent hops MUST use NetRom routing (C ALIAS) - never "C PORT CALL" after first hop
+- **Cannot use "C CALLSIGN-SSID" beyond first hop** - requires port number in BPQ
+- Port numbers vary between nodes - only localhost route_ports are usable
 - Port-specific SSIDs (KC1JMH-7) are for MHEARD tracking, not connection routing
+- **Skip nodes not in any ROUTES table** - unreachable via NetRom (likely user stations or offline)
 
 **SSID Selection Standard** (CRITICAL - do not deviate):
 1. **CLI-forced SSIDs** (`--force-ssid BASE FULL`) - highest priority, user override
