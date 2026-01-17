@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.11] - 2026-01-18
+### Added
+- HF Access indicator in popups shows HF port descriptions (VARA, ARDOP, PACTOR)
+- HF Access shown even when no specific frequency is listed
+- Useful for nodes with HF gateway capability (use --note to add dial-in frequencies)
+
 ## [nodemap 1.7.75] - 2026-01-18
 ### Added
 - Shorthand options for all CLI flags (POSIX style single-character)

@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.10
+Version: 1.4.11
 """
 
-__version__ = '1.4.10'
+__version__ = '1.4.11'
 
 import sys
 import json
@@ -297,8 +297,15 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         
         # Get frequencies from ports (with band color)
         frequencies = []
+        hf_ports = []  # Track HF port descriptions
         for port in node_data.get('ports', []):
-            if port.get('is_rf') and port.get('frequency'):
+            port_type = port.get('port_type', 'rf' if port.get('is_rf') else 'ip')
+            if port_type == 'hf':
+                # HF port - track description even without frequency
+                desc = port.get('description', '')
+                if desc and desc not in hf_ports:
+                    hf_ports.append(desc)
+            elif port.get('is_rf') and port.get('frequency'):
                 freq = port['frequency']
                 band = get_band_name(freq)
                 color = get_band_color(freq)
@@ -373,6 +380,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             'netrom_access': netrom_access,
             'applications': applications,
             'frequencies': frequencies,
+            'hf_ports': hf_ports,  # HF access methods (VARA, ARDOP, etc.)
             'ssids': ssids,
             'rf_neighbors': rf_neighbor_count,
             'ip_neighbors': ip_neighbor_count,
@@ -626,6 +634,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         .popup-content .label { font-weight: bold; color: #666; }
         .popup-content .apps { color: #2196F3; }
         .popup-content .freqs { color: #FF9800; }
+        .popup-content .hf-access { color: #FFC107; font-weight: 500; }
         .popup-content .note { background: #fff3cd; padding: 6px 8px; border-radius: 4px; margin: 8px 0; font-style: italic; color: #856404; border-left: 3px solid #ffc107; }
         .info-box {
             background: white;
@@ -728,6 +737,11 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                              freq.text + '</span><br>';
                 });
                 popup += '</p>';
+            }
+            
+            if (node.hf_ports && node.hf_ports.length > 0) {
+                popup += '<p><span class="label">HF Access:</span><br>';
+                popup += '<span class="hf-access">' + node.hf_ports.join(', ') + '</span></p>';
             }
             
             if (node.netrom_access && node.netrom_access.length > 0) {
@@ -888,8 +902,15 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         
         # Build frequency list for tooltip
         freq_list = []
+        hf_ports = []  # Track HF port descriptions
         for port in node_data.get('ports', []):
-            if port.get('is_rf') and port.get('frequency'):
+            port_type = port.get('port_type', 'rf' if port.get('is_rf') else 'ip')
+            if port_type == 'hf':
+                # HF port - track description
+                desc = port.get('description', '')
+                if desc and desc not in hf_ports:
+                    hf_ports.append(desc)
+            elif port.get('is_rf') and port.get('frequency'):
                 freq_list.append("{} MHz".format(port['frequency']))
         
         # Extract base callsign for display (without SSID)
@@ -944,7 +965,9 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             'grid': grid,
             'frequency': primary_freq,
             'frequencies': freq_list,
+            'hf_ports': hf_ports,  # HF access methods
             'type': node_data.get('type', 'Unknown'),
+            'note': node_data.get('note', ''),  # Sysop-added note
             'rf_neighbors': rf_neighbor_count,
             'ip_neighbors': ip_neighbor_count,
             'incomplete_crawl': incomplete_crawl
@@ -1228,6 +1251,8 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             tooltip_lines.append("Type: {}".format(node['type']))
         if node['frequencies']:
             tooltip_lines.append("Frequencies: {}".format(", ".join(node['frequencies'])))
+        if node.get('hf_ports'):
+            tooltip_lines.append("HF Access: {}".format(", ".join(node['hf_ports'])))
         
         # Add neighbor counts with label if from network (incomplete crawl)
         neighbor_label = ' (from network)' if node.get('incomplete_crawl', False) else ''
