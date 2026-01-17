@@ -93,12 +93,24 @@ SEE ALSO
 ## Nodemap Crawler Constraints
 **Authentication**: Only localhost telnet requires auth (username/password)
 - Once connected to local node via telnet, all AX.25 NetRom connections inherit auth
-- Direct port connections (C PORT CALL) only valid for first hop from localhost
-- Subsequent hops MUST use NetRom routing (C ALIAS) - never "C PORT CALL" after first hop
-- **Cannot use "C CALLSIGN-SSID" beyond first hop** - requires port number in BPQ
-- Port numbers vary between nodes - only localhost route_ports are usable
-- Port-specific SSIDs (KC1JMH-7) are for MHEARD tracking, not connection routing
-- **Skip nodes not in any ROUTES table** - unreachable via NetRom (likely user stations or offline)
+
+**Connection Methods** (in priority order):
+
+**Hop 1 (first hop from localhost):**
+1. Direct port: `C PORT CALL-SSID` (requires route_ports entry from local node's ROUTES)
+2. NetRom alias: `C ALIAS` (from `call_to_alias` mapping)
+
+**Hop 2+ (subsequent intermediate hops):**
+1. Direct port: `C PORT CALL-SSID` (query intermediate node's ROUTES for port number)
+2. NetRom alias: `C ALIAS` (from `call_to_alias` mapping)
+3. FALLBACK: Query ROUTES at current node to get port number, then use `C PORT CALL-SSID`
+
+**Key insights:**
+- Each node's ROUTES table contains everything needed to reach neighbors: `PORT CALL-SSID QUALITY`
+- ROUTES can be queried at ANY intermediate node to discover port numbers
+- Port numbers ARE valid beyond first hop (unlike what BPQ docs suggest)
+- Example at KX1EMA: ROUTES shows `1 WD1O-15 200` → can issue `C 1 WD1O-15`
+- NetRom aliases are nice-to-have but not strictly required if ROUTES port info is available
 
 **SSID Selection Standard** (CRITICAL - do not deviate):
 1. **CLI-forced SSIDs** (`--force-ssid BASE FULL`) - highest priority, user override
@@ -106,27 +118,22 @@ SEE ALSO
    - Each node's ROUTES table shows the SSIDs it uses to reach its neighbors
    - These are the ACTUAL node SSIDs (e.g., KS1R-15), not service SSIDs (KS1R-2 BBS)
    - Consensus = SSID seen by most nodes for a given base callsign
-3. **SKIP if no NetRom alias** - nodes without alias in `call_to_alias` are UNROUTABLE
-   - Base callsign fallback (C BASEONLY) does NOT work - causes timeouts
-   - NetRom requires alias or port - without alias, node cannot be reached
-   - Mark as skipped during planning phase, do not attempt connection
+3. **Discovered at connection time** - ROUTES fallback queries intermediate node's ROUTES
 - The `alias` field is NOT reliable - it comes from BPQ prompt which may be BBS/RMS/CHAT
 - seen_aliases is NOT reliable - counts are equal across all services
 - NEVER use SSID number heuristics - there is NO standard for node vs service SSIDs
 - ONLY filter SSIDs outside valid range (0, >15) using _is_likely_node_ssid()
 
+**Node Routing Reachability**:
+- **Reachable**: Node appears in ANY node's ROUTES table (proof it exists and is routable)
+- **Unreachable**: Node ONLY in MHEARD (never in ROUTES) - likely user station or offline
+- **Bridging gap**: Even if node lacks NetRom alias, ROUTES fallback allows connection via port numbers
+
 **Path Building**: Uses successful_path from previous crawls
 - SSIDs determined from ROUTES consensus across all crawled nodes
-- Use NetRom aliases from NODES output for multi-hop connections
-- route_ports only for localhost → first hop direct connections
-
-**Connection Command Priority** (hop 2+):
-1. Direct port (C PORT CALL) - first hop only, requires route_ports entry
-2. NetRom alias (C ALIAS) - from `call_to_alias` mapping
-3. **SKIP if no alias** - connection WILL timeout without NetRom alias
-- NEVER use "C CALLSIGN-SSID" without port - requires port number in BPQ
-- NEVER use "C BASEONLY" - NetRom requires alias, base callsign will timeout
-- Nodes without alias are UNROUTABLE - skip during planning phase
+- Use NetRom aliases from NODES output when available (faster than ROUTES fallback)
+- Query ROUTES at each intermediate hop for port numbers when alias unavailable
+- route_ports from localhost's ROUTES only for first-hop direct connections
 
 ## Repository Structure
 ```
