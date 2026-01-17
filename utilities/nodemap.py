@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.38
+Version: 1.7.39
 """
 
-__version__ = '1.7.38'
+__version__ = '1.7.39'
 
 import sys
 import socket
@@ -1391,8 +1391,22 @@ class NodeCrawler:
                         print("    Skipping {} from {} (quality 0 - parent has blocked route)".format(neighbor, callsign))
                     continue
                 
-                # Use the node SSID from parent's routes (authoritative)
+                # Determine SSID to use for this unexplored neighbor
+                # SSID Selection Standard: CLI > own_aliases/seen_aliases consensus > base callsign only
+                # NEVER use routes/MHEARD SSIDs for NEW nodes - may be service SSIDs (BBS, RMS, etc.)
                 neighbor_to_queue = parent_route_ssid
+                
+                # Check if we have alias consensus for this neighbor
+                if neighbor_base in self.netrom_ssid_map:
+                    # We have consensus - use it (from own_aliases/seen_aliases or CLI)
+                    neighbor_to_queue = self.netrom_ssid_map[neighbor_base]
+                elif '-' in parent_route_ssid and not self._is_likely_node_ssid(parent_route_ssid):
+                    # Suspicious SSID from routes (0, >15, etc.) - strip to base callsign
+                    neighbor_to_queue = neighbor_base
+                elif '-' in parent_route_ssid:
+                    # Routes SSID is in valid range but no consensus - strip to base callsign
+                    # Let NetRom discovery find the correct node SSID during crawl
+                    neighbor_to_queue = neighbor_base
                 
                 # Calculate path to this neighbor
                 # Priority:

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.39] - 2026-01-16
+### Fixed
+- Unexplored neighbors now use base callsign only (no SSID) unless alias consensus exists
+- Prevents using service SSIDs (BBS -2, RMS -10) from routes tables for new nodes
+- NetRom discovery during crawl will find correct node SSID from NODES output
+- Follows SSID Selection Standard: only use own_aliases/seen_aliases consensus, never routes SSIDs
+
 ## [nodemap 1.7.38] - 2026-01-16
 ### Fixed
 - new-only mode now populates self.nodes from existing JSON data
