@@ -56,17 +56,20 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 
 **SSID Selection Standard** (CRITICAL - do not deviate):
 1. **CLI-forced SSIDs** (`--force-ssid BASE FULL`) - highest priority, user override
-2. **ROUTES consensus** - aggregate SSIDs from all nodes' ROUTES tables (most authoritative)
-3. **own_aliases primary node alias** - prefer SSID from node's primary alias field
-4. **own_aliases fallback** - scan own_aliases for base_call match with valid SSID (1-15)
-5. **MHEARD data** - lowest priority, includes transient/port-specific SSIDs
+2. **Alias consensus** - aggregate SSIDs from all nodes' own_aliases + seen_aliases (most authoritative)
+   - own_aliases: node's self-reported aliases from NODES output
+   - seen_aliases: what other nodes report about their neighbors
+   - Both contain full SSIDs (KC1JMH-15), unlike routes which use base callsigns
+3. **Base callsign only** - if no consensus, strip SSID and let NetRom discovery find it during crawl
+4. **MHEARD data (netrom_ssids)** - lowest priority, only to fill gaps, includes transient/port-specific SSIDs
+- NEVER use routes table SSIDs - they're base callsigns in JSON, service SSIDs when queried live
 - NEVER filter by hardcoded service SSID numbers (-2, -4, -5, -10, etc.) - varies by sysop
 - ONLY filter SSIDs outside valid range (0, >15) using _is_likely_node_ssid()
 - Service/node distinction determined by data source priority, NOT SSID number
 
 **Path Building**: Uses successful_path from previous crawls
-- SSIDs determined from network ROUTES tables (authoritative source)
-- Never assume SSID conventions (BBS=-2, RMS=-10, etc.) - always query network
+- SSIDs determined from own_aliases/seen_aliases consensus (from NODES output)
+- Never assume SSID conventions (BBS=-2, RMS=-10, etc.) - always use consensus or base callsign
 - Use NetRom aliases from NODES output for multi-hop connections
 - route_ports only for localhost → first hop direct connections
 
