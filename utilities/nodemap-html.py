@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.6
+Version: 1.4.7
 """
 
-__version__ = '1.4.6'
+__version__ = '1.4.7'
 
 import sys
 import json
@@ -385,7 +385,20 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
     for node in map_nodes:
         node_coords[node['callsign']] = (node['lat'], node['lon'])
     
-    # Build port->frequency lookup for each node
+    # Build port->info lookup for each node (frequency and port_type)
+    node_port_info = {}  # {callsign: {port_num: {'frequency': MHz, 'port_type': 'rf'|'hf'|'ip'}}}
+    for callsign, node_data in nodes.items():
+        node_port_info[callsign] = {}
+        for port in node_data.get('ports', []):
+            port_num = port.get('number')
+            if port_num is not None:
+                node_port_info[callsign][port_num] = {
+                    'frequency': port.get('frequency'),
+                    'port_type': port.get('port_type', 'rf' if port.get('is_rf') else 'ip'),
+                    'is_rf': port.get('is_rf', False)
+                }
+    
+    # Legacy lookup for backward compatibility
     node_port_freqs = {}  # {callsign: {port_num: frequency}}
     for callsign, node_data in nodes.items():
         node_port_freqs[callsign] = {}
@@ -407,7 +420,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                     node_heard_ports[callsign][neighbor_base].append(port_num)
     
     # Track connections by node pair AND band to draw multiple lines
-    seen_connections = {}  # {(from, to): set of frequencies}
+    # Store tuples of (frequency, port_type) for each connection
+    seen_connections = {}  # {(from, to): set of (frequency, port_type) tuples}
     
     for callsign, node_data in nodes.items():
         # Skip nodes without coordinates
@@ -445,38 +459,48 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             if conn_key not in seen_connections:
                 seen_connections[conn_key] = set()
             
-            # Get frequencies from BOTH directions (A heard B on port X, B heard A on port Y)
+            # Get port info from BOTH directions (A heard B on port X, B heard A on port Y)
             # This node's view: what port did we hear neighbor on?
             heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
             # Neighbor's view: what port did neighbor hear us on?
             neighbor_base_key = neighbor_key.split('-')[0] if '-' in neighbor_key else neighbor_key
             heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
             
-            # Collect frequencies from both directions
-            freqs_found = set()
+            # Collect (frequency, port_type) tuples from both directions
+            links_found = set()
             for port_num in heard_ports_this:
-                freq = node_port_freqs.get(callsign, {}).get(port_num)
+                port_info = node_port_info.get(callsign, {}).get(port_num, {})
+                freq = port_info.get('frequency')
+                port_type = port_info.get('port_type', 'rf')
                 if freq:
-                    freqs_found.add(freq)
+                    links_found.add((freq, port_type))
+                elif port_type == 'ip':
+                    # IP link without frequency - still record it
+                    links_found.add((None, 'ip'))
             for port_num in heard_ports_neighbor:
-                freq = node_port_freqs.get(neighbor_key, {}).get(port_num)
+                port_info = node_port_info.get(neighbor_key, {}).get(port_num, {})
+                freq = port_info.get('frequency')
+                port_type = port_info.get('port_type', 'rf')
                 if freq:
-                    freqs_found.add(freq)
+                    links_found.add((freq, port_type))
+                elif port_type == 'ip':
+                    links_found.add((None, 'ip'))
             
             # If no MHEARD port info, fall back to first RF port (legacy behavior)
-            if not freqs_found:
+            if not links_found:
                 for port in node_data.get('ports', []):
                     if port.get('is_rf') and port.get('frequency'):
-                        freqs_found.add(port['frequency'])
+                        port_type = port.get('port_type', 'rf')
+                        links_found.add((port['frequency'], port_type))
                         break
             
-            # Add new frequencies we haven't drawn yet for this pair
-            for freq in freqs_found:
-                if freq not in seen_connections[conn_key]:
-                    seen_connections[conn_key].add(freq)
+            # Add new links we haven't drawn yet for this pair
+            for link_info in links_found:
+                if link_info not in seen_connections[conn_key]:
+                    seen_connections[conn_key].add(link_info)
     
     # Now build map_connections from seen_connections
-    for conn_key, frequencies in seen_connections.items():
+    for conn_key, link_infos in seen_connections.items():
         from_call, to_call = conn_key
         if from_call not in node_coords or to_call not in node_coords:
             continue
@@ -484,7 +508,15 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         from_lat, from_lon = node_coords[from_call]
         to_lat, to_lon = node_coords[to_call]
         
-        for freq in frequencies:
+        for freq, port_type in link_infos:
+            # Determine color based on link type
+            if port_type == 'ip':
+                color = '#00BCD4'  # Cyan for IP links
+            elif port_type == 'hf':
+                color = '#FFEB3B'  # Yellow for HF links
+            else:
+                color = get_band_color(freq)  # Normal band color for RF
+            
             map_connections.append({
                 'from': from_call,
                 'to': to_call,
@@ -492,8 +524,9 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                 'from_lon': from_lon,
                 'to_lat': to_lat,
                 'to_lon': to_lon,
-                'color': get_band_color(freq),
-                'frequency': freq
+                'color': color,
+                'frequency': freq,
+                'link_type': port_type  # 'rf', 'hf', or 'ip'
             })
     
     if not map_nodes:
@@ -619,17 +652,31 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             if (drawnConnections.has(key)) return;
             drawnConnections.add(key);
             
-            var line = L.polyline([
-                [conn.from_lat, conn.from_lon],
-                [conn.to_lat, conn.to_lon]
-            ], {
+            // Line style based on link type
+            var lineStyle = {
                 color: conn.color,
                 weight: 2,
                 opacity: 0.7
-            }).addTo(map);
+            };
             
-            var freq = conn.frequency ? conn.frequency + ' MHz' : 'Unknown';
-            line.bindTooltip(conn.from + ' ↔ ' + conn.to + '<br>' + freq);
+            // IP links: dotted cyan line
+            if (conn.link_type === 'ip') {
+                lineStyle.dashArray = '5, 5';
+                lineStyle.opacity = 0.6;
+            }
+            // HF links: dashed line
+            else if (conn.link_type === 'hf') {
+                lineStyle.dashArray = '10, 5';
+            }
+            
+            var line = L.polyline([
+                [conn.from_lat, conn.from_lon],
+                [conn.to_lat, conn.to_lon]
+            ], lineStyle).addTo(map);
+            
+            var freq = conn.frequency ? conn.frequency + ' MHz' : (conn.link_type === 'ip' ? 'Internet' : 'Unknown');
+            var linkType = conn.link_type ? ' (' + conn.link_type.toUpperCase() + ')' : '';
+            line.bindTooltip(conn.from + ' ↔ ' + conn.to + '<br>' + freq + linkType);
         });
         
         // Add node markers
@@ -1137,9 +1184,21 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         
         x1, y1 = project(conn['from_lat'], conn['from_lon'])
         x2, y2 = project(conn['to_lat'], conn['to_lon'])
-        freq_label = "{} MHz".format(conn['frequency']) if conn.get('frequency') else "Unknown"
-        svg_lines.append('    <line x1="{:.1f}" y1="{:.1f}" x2="{:.1f}" y2="{:.1f}" stroke="{}" stroke-width="2" class="connection" data-from="{}" data-to="{}">'.format(
-            x1, y1, x2, y2, conn['color'], conn['from'], conn['to']))
+        link_type = conn.get('link_type', 'rf')
+        
+        # Line style based on link type
+        style_attrs = 'stroke="{}" stroke-width="2"'.format(conn['color'])
+        if link_type == 'ip':
+            style_attrs += ' stroke-dasharray="5,5"'  # Dotted for IP
+            freq_label = "Internet (IP)"
+        elif link_type == 'hf':
+            style_attrs += ' stroke-dasharray="10,5"'  # Dashed for HF
+            freq_label = "{} MHz (HF)".format(conn['frequency']) if conn.get('frequency') else "HF"
+        else:
+            freq_label = "{} MHz".format(conn['frequency']) if conn.get('frequency') else "Unknown"
+        
+        svg_lines.append('    <line x1="{:.1f}" y1="{:.1f}" x2="{:.1f}" y2="{:.1f}" {} class="connection" data-from="{}" data-to="{}">'.format(
+            x1, y1, x2, y2, style_attrs, conn['from'], conn['to']))
         svg_lines.append('      <title>{} ↔ {} ({})</title>'.format(conn['from'], conn['to'], freq_label))
         svg_lines.append('    </line>')
     svg_lines.append('  </g>')

@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.68
+Version: 1.7.69
 """
 
-__version__ = '1.7.68'
+__version__ = '1.7.69'
 
 import sys
 import socket
@@ -93,7 +93,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None, allow_hf=False, allow_ip=False):
         """
         Initialize crawler.
         
@@ -111,6 +111,8 @@ class NodeCrawler:
             resume: Resume from unexplored nodes in existing nodemap.json (default: False)
             crawl_mode: How to handle existing nodes: 'update' (skip known), 'reaudit' (re-crawl all), 'new-only' (only new nodes)
             exclude: Set of callsigns to exclude from crawling (default: None)
+            allow_hf: Include HF ports (VARA, ARDOP, PACTOR) in crawling (default: False - too slow at 300 baud)
+            allow_ip: Include IP ports (AXIP, TCP, Telnet) in crawling (default: False - not RF)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -128,6 +130,8 @@ class NodeCrawler:
         self.resume_file = None  # Set externally if specific file needed
         self.crawl_mode = crawl_mode  # 'update', 'reaudit', or 'new-only'
         self.exclude = {self._normalize_callsign(c) for c in exclude} if exclude else set()  # Nodes to skip
+        self.allow_hf = allow_hf  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
+        self.allow_ip = allow_ip  # Include IP ports (AXIP, TCP, Telnet) - not RF
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.skipped_no_ssid = {}  # Nodes skipped due to tied SSID votes: {callsign: {votes}}
@@ -1556,9 +1560,11 @@ class NodeCrawler:
               2 145.050 MHz @ 1200 b/s
               8 AX/IP/UDP
               9 Telnet Server
+              3 VARA HF
         
         Returns:
-            List of port dictionaries with number, frequency, speed, type
+            List of port dictionaries with number, frequency, speed, type, port_type
+            port_type: 'rf' (VHF/UHF), 'hf' (VARA/ARDOP/PACTOR), 'ip' (AXIP/TCP/Telnet)
         """
         ports = []
         lines = output.split('\n')
@@ -1599,16 +1605,37 @@ class NodeCrawler:
             # Full description is everything after port number
             description = rest
             
-            # Determine if it's RF or IP-based
+            # Classify port type: rf (VHF/UHF), hf (VARA/ARDOP/PACTOR), ip (AXIP/TCP/Telnet)
             desc_upper = description.upper()
-            is_rf = not any(x in desc_upper for x in ['TELNET', 'TCP', 'IP', 'UDP', 'AX/IP'])
+            
+            # Check for IP-based ports first
+            if any(x in desc_upper for x in ['TELNET', 'TCP', 'IP', 'UDP', 'AX/IP', 'AXIP', 'AXUDP']):
+                port_type = 'ip'
+                is_rf = False
+            # Check for HF digital modes (slow, typically 300 baud or less)
+            elif any(x in desc_upper for x in ['VARA', 'ARDOP', 'PACTOR', 'WINMOR', 'PACKET HF', 'HF PACKET']):
+                port_type = 'hf'
+                is_rf = True  # HF is RF, but we may want to skip it
+            # Check for HF by frequency (below 30 MHz)
+            elif frequency and frequency < 30.0:
+                port_type = 'hf'
+                is_rf = True
+            # Check for HF by slow speed (300 baud or less typically HF)
+            elif speed and speed <= 300:
+                port_type = 'hf'
+                is_rf = True
+            else:
+                # Default: VHF/UHF RF port
+                port_type = 'rf'
+                is_rf = True
             
             ports.append({
                 'number': port_num,
                 'description': description,
                 'frequency': frequency,  # MHz as float (433.3, 145.05, etc.)
                 'speed': speed,
-                'is_rf': is_rf
+                'is_rf': is_rf,
+                'port_type': port_type  # 'rf', 'hf', or 'ip'
             })
         
         return ports
@@ -2104,79 +2131,93 @@ class NodeCrawler:
             mheard_ports = {}  # {callsign: port_num}
             mheard_ssids = {}  # {base_callsign: 'CALLSIGN-SSID'} - from actual RF
             for port_info in ports_list:
-                if port_info['is_rf']:
-                    if check_deadline():
-                        return
-                    port_num = port_info['number']
-                    mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout, expect_content='Heard')
-                    time.sleep(inter_cmd_delay)
+                port_type = port_info.get('port_type', 'rf')
+                # Filter ports based on type and allow_hf/allow_ip flags
+                # RF (VHF/UHF) always included; HF only if --hf; IP only if --ip
+                if port_type == 'ip' and not self.allow_ip:
+                    if self.verbose:
+                        print("    Skipping IP port {} ({})".format(port_info['number'], port_info['description']))
+                    continue
+                if port_type == 'hf' and not self.allow_hf:
+                    if self.verbose:
+                        print("    Skipping HF port {} ({})".format(port_info['number'], port_info['description']))
+                    continue
+                if not port_info['is_rf'] and not self.allow_ip:
+                    # Legacy fallback: skip non-RF if not explicitly allowing IP
+                    continue
                     
-                    # Parse MHEARD with full callsign-SSID info
-                    lines = mheard_output.split('\n')
-                    for line in lines:
-                        # Skip header lines
-                        if 'Heard List' in line or not line.strip():
+                if check_deadline():
+                    return
+                port_num = port_info['number']
+                mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout, expect_content='Heard')
+                time.sleep(inter_cmd_delay)
+                
+                # Parse MHEARD with full callsign-SSID info
+                lines = mheard_output.split('\n')
+                for line in lines:
+                    # Skip header lines
+                    if 'Heard List' in line or not line.strip():
+                        continue
+                    
+                    # Look for callsign with SSID: "KC1JMH-15  00:00:00:03"
+                    match = re.match(r'^(\w+(?:-\d+)?)\s+(\d+):(\d+):(\d+):(\d+)', line)
+                    if match:
+                        full_callsign = match.group(1)
+                        base_call = full_callsign.split('-')[0]
+                        
+                        # Validate callsign format
+                        if not self._is_valid_callsign(base_call):
                             continue
                         
-                        # Look for callsign with SSID: "KC1JMH-15  00:00:00:03"
-                        match = re.match(r'^(\w+(?:-\d+)?)\s+(\d+):(\d+):(\d+):(\d+)', line)
-                        if match:
-                            full_callsign = match.group(1)
-                            base_call = full_callsign.split('-')[0]
-                            
-                            # Validate callsign format
-                            if not self._is_valid_callsign(base_call):
-                                continue
-                            
-                            # Check if this has a node SSID (contains -number)
-                            # Stations without SSID are likely user stations or digipeaters
-                            # They can't be crawled as nodes (no BPQ commands)
-                            has_ssid = '-' in full_callsign
-                            
-                            # SSID Selection: Prefer ROUTES over MHEARD
-                            # ROUTES shows actual node SSIDs; MHEARD may include apps/operators
-                            if base_call in routes_ssids:
-                                # Already have authoritative SSID from ROUTES - use it
-                                if base_call not in mheard_ssids:
-                                    mheard_ssids[base_call] = routes_ssids[base_call]
-                                    if self.verbose:
-                                        print("    {} in ROUTES as {} (authoritative)".format(base_call, routes_ssids[base_call]))
-                            elif base_call in routes and routes[base_call] == 0:
-                                # Station is in ROUTES but with quality 0 (sysop blocked)
-                                if self.verbose and has_ssid:
-                                    print("    Skipping {} (quality 0 in ROUTES - sysop blocked route)".format(full_callsign))
-                                # Don't add to mheard_ssids or neighbors - skip this station
-                                continue
-                            elif base_call not in mheard_ssids:
-                                # First MHEARD entry for this callsign, not in ROUTES
-                                if has_ssid:
-                                    mheard_ssids[base_call] = full_callsign
-                                    if self.verbose:
-                                        print("    MHEARD SSID for {}: {} (not in ROUTES table)".format(base_call, full_callsign))
-                                else:
-                                    # No SSID - likely user station, skip it
-                                    if self.verbose:
-                                        print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
-                                    continue
-                            elif self.verbose and has_ssid:
-                                # Already have SSID for this base call
-                                existing = mheard_ssids[base_call]
-                                existing_has_ssid = '-' in existing
-                                # If we already have a no-SSID entry, replace with SSID entry
-                                if not existing_has_ssid and has_ssid:
-                                    mheard_ssids[base_call] = full_callsign
-                                    print("    Upgraded {} to {} (found SSID)".format(existing, full_callsign))
-                                else:
-                                    print("    Ignoring {} (already have {})".format(full_callsign, existing))
-                            
-                            # Only add to neighbor list if it has an SSID (is a node)
-                            # Stations without SSIDs can't be crawled
+                        # Check if this has a node SSID (contains -number)
+                        # Stations without SSID are likely user stations or digipeaters
+                        # They can't be crawled as nodes (no BPQ commands)
+                        has_ssid = '-' in full_callsign
+                        
+                        # SSID Selection: Prefer ROUTES over MHEARD
+                        # ROUTES shows actual node SSIDs; MHEARD may include apps/operators
+                        if base_call in routes_ssids:
+                            # Already have authoritative SSID from ROUTES - use it
+                            if base_call not in mheard_ssids:
+                                mheard_ssids[base_call] = routes_ssids[base_call]
+                                if self.verbose:
+                                    print("    {} in ROUTES as {} (authoritative)".format(base_call, routes_ssids[base_call]))
+                        elif base_call in routes and routes[base_call] == 0:
+                            # Station is in ROUTES but with quality 0 (sysop blocked)
+                            if self.verbose and has_ssid:
+                                print("    Skipping {} (quality 0 in ROUTES - sysop blocked route)".format(full_callsign))
+                            # Don't add to mheard_ssids or neighbors - skip this station
+                            continue
+                        elif base_call not in mheard_ssids:
+                            # First MHEARD entry for this callsign, not in ROUTES
                             if has_ssid:
-                                mheard_neighbors.append(base_call)
-                                
-                                # Store port info
-                                if base_call not in mheard_ports:
-                                    mheard_ports[base_call] = port_num
+                                mheard_ssids[base_call] = full_callsign
+                                if self.verbose:
+                                    print("    MHEARD SSID for {}: {} (not in ROUTES table)".format(base_call, full_callsign))
+                            else:
+                                # No SSID - likely user station, skip it
+                                if self.verbose:
+                                    print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
+                                continue
+                        elif self.verbose and has_ssid:
+                            # Already have SSID for this base call
+                            existing = mheard_ssids[base_call]
+                            existing_has_ssid = '-' in existing
+                            # If we already have a no-SSID entry, replace with SSID entry
+                            if not existing_has_ssid and has_ssid:
+                                mheard_ssids[base_call] = full_callsign
+                                print("    Upgraded {} to {} (found SSID)".format(existing, full_callsign))
+                            else:
+                                print("    Ignoring {} (already have {})".format(full_callsign, existing))
+                        
+                        # Only add to neighbor list if it has an SSID (is a node)
+                        # Stations without SSIDs can't be crawled
+                        if has_ssid:
+                            mheard_neighbors.append(base_call)
+                            
+                            # Store port info
+                            if base_call not in mheard_ports:
+                                mheard_ports[base_call] = port_num
             
             # Update global netrom_ssid_map with MHEARD data
             # Priority: 1) ROUTES (already stored above - authoritative)
@@ -3940,6 +3981,10 @@ def main():
         print("                      TARGET: nodes (duplicates/incomplete), connections (invalid),")
         print("                              unexplored (upgrade base calls to full SSIDs),")
         print("                              all (all of the above, default if TARGET omitted)")
+        print("  --hf             Include HF ports (VARA, ARDOP, PACTOR) in crawling")
+        print("                   Default: skip HF (too slow at 300 baud)")
+        print("  --ip             Include IP ports (AXIP, TCP, Telnet) in crawling")
+        print("                   Default: skip IP (not RF, may be temporary links)")
         print("  --notify URL     Send notifications to webhook URL")
         print("  --verbose, -v    Show detailed command/response output")
         print("  --log [FILE], -l [FILE]  Log telnet traffic (default: telnet.log)")
@@ -4353,6 +4398,8 @@ def main():
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     resume = '--resume' in sys.argv or '-r' in sys.argv
     generate_maps = False  # Will be set by user prompt
+    allow_hf = '--hf' in sys.argv  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
+    allow_ip = '--ip' in sys.argv  # Include IP ports (AXIP, TCP, Telnet) - not RF
     
     # Parse positional and optional arguments
     i = 1
@@ -4507,7 +4554,7 @@ def main():
             if not max_hops_explicit and not start_node:
                 max_hops = 0
             i += 2
-        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d']:
+        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '--ip']:
             # Known flags without arguments
             i += 1
         elif arg.startswith('-') and not arg.isdigit():
@@ -4527,7 +4574,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler with specified crawl mode and exclusions
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, allow_hf=allow_hf, allow_ip=allow_ip)
     
     # Set resume file if specified
     if resume_file:

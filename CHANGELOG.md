@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.7] - 2026-01-17
+### Added
+- Link type visualization: IP links shown as dotted cyan, HF links as dashed yellow
+- Support for `port_type` field from nodemap.json (rf, hf, ip)
+- Tooltip now shows link type (RF/HF/IP) alongside frequency
+
+### Changed  
+- Connection color logic: IP=cyan, HF=yellow, RF=band-based colors
+- SVG output uses same dash patterns as HTML for IP/HF links
+
+## [nodemap 1.7.69] - 2026-01-17
+### Added
+- `--hf` flag to include HF ports (VARA, ARDOP, PACTOR) in crawling
+- `--ip` flag to include IP ports (AXIP, TCP, Telnet) in crawling
+- Port type classification: 'rf' (VHF/UHF), 'hf' (slow digital), 'ip' (Internet)
+- HF detection: VARA/ARDOP/PACTOR keywords, frequency <30 MHz, speed ≤300 baud
+
+### Changed
+- Default behavior: Skip HF ports (too slow at 300 baud for crawling)
+- Default behavior: Skip IP ports (not RF, may be temporary links)
+- MHEARD loop now filters by port_type instead of just is_rf flag
+
 ## [nodemap 1.7.68] - 2026-01-17
 ### Fixed
 - ROUTES port fallback: When no NetRom alias exists at intermediate hop, query ROUTES for port
