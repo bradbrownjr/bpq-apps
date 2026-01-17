@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.77
+Version: 1.7.78
 """
 
-__version__ = '1.7.77'
+__version__ = '1.7.78'
 
 import sys
 import socket
@@ -155,6 +155,25 @@ class NodeCrawler:
         self.target_callsign = None  # The specific target callsign when using --callsign
         self.silent_mode = False  # When True, skip all interactive prompts (for cron/scripts)
     
+    def _write_log_header(self, log_file):
+        """Write header with version and metadata to log file on first use."""
+        if not log_file or not os.path.exists(log_file):
+            return
+        
+        # Check if file just created (size 0) or empty
+        try:
+            file_size = os.path.getsize(log_file)
+            if file_size == 0:
+                with open(log_file, 'w') as f:
+                    f.write("=" * 60 + "\n")
+                    f.write("BPQ Node Map Crawler v{}\n".format(__version__))
+                    f.write("=" * 60 + "\n")
+                    f.write("Started: {}\n".format(time.strftime('%Y-%m-%d %H:%M:%S')))
+                    f.write("Node: {} (callsign: {})\n".format(self.host, self.callsign))
+                    f.write("=" * 60 + "\n\n")
+        except Exception:
+            pass  # Silently ignore header write failures
+    
     def _debug_log(self, message):
         """Log message to debug log (if --debug-log set). Always logs, regardless of verbose."""
         if self.debug_log:
@@ -162,6 +181,8 @@ class NodeCrawler:
             if self.debug_handle is None:
                 try:
                     self.debug_handle = open(self.debug_log, 'a')
+                    # Write header to new debug log
+                    self._write_log_header(self.debug_log)
                 except Exception as e:
                     colored_print("Warning: Could not open debug log {}: {}".format(self.debug_log, e), Colors.YELLOW)
                     self.debug_log = None
@@ -302,6 +323,8 @@ class NodeCrawler:
         if self.log_handle is None:
             try:
                 self.log_handle = open(self.log_file, 'a')
+                # Write header to new log file
+                self._write_log_header(self.log_file)
             except Exception as e:
                 colored_print("Warning: Could not open log file {}: {}".format(self.log_file, e), Colors.YELLOW)
                 self.log_file = None

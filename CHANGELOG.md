@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.78] - 2026-01-17
+### Added
+- Version and metadata headers in log files (telnet.log, debug.log)
+- Log headers include: version, timestamp, node hostname, and callsign
+- Helps identify which version generated logs for troubleshooting via SCP
+
 ## [nodemap 1.7.77] - 2026-01-17
 ### Added
 - `-x`/`--exclude` support in query mode (`-q`) to filter unexplored neighbors
