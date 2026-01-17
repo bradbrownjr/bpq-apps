@@ -81,9 +81,11 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
 - **Not in ROUTES**: Node not reachable from current vantage point
 
 **RF vs IP Separation:**
-- Focuses exclusively on RF connectivity for actual packet radio topology
-- Ignores Telnet/TCP ports to avoid Internet-based connections
-- Maps real over-the-air packet radio network structure
+- Focuses on RF connectivity for true packet radio topology
+- **Default**: Skips HF ports (VARA/ARDOP/PACTOR, 300 baud too slow) and IP ports (Telnet/AXIP, not RF)
+- Use `--hf` to include HF digital modes (for predominantly HF networks)
+- Use `--ip` to include Internet-based connections (AXIP reflectors, Telnet routing)
+- Maps real over-the-air VHF/UHF packet radio network structure by default
 
 ### Usage
 
@@ -131,6 +133,16 @@ If nodemap.json has incorrect SSID (e.g., connected to BBS instead of node):
   - Use `-x` alone to load default `exclusions.txt`
   - File format: one callsign per line or comma-separated, # for comments
   - Useful for filtering corrupted callsigns from AX.25 routing table pollution
+- `--hf` - Include HF ports in crawling
+  - Default: Skip HF ports (VARA, ARDOP, PACTOR, 300 baud) - too slow for efficient crawling
+  - HF ports detected by: Keywords (VARA, ARDOP, PACTOR, WINMOR), frequency <30 MHz, or speed ≤300 baud
+  - Enable for networks with primarily HF connectivity or when specifically exploring HF links
+  - Example: `./nodemap.py 5 --hf` (crawl including HF ports)
+- `--ip` - Include IP/Internet ports in crawling
+  - Default: Skip IP ports (AXIP, TCP, Telnet) - not RF, may be transient Internet links
+  - IP ports detected by: Keywords (TELNET, TCP, IP, UDP, AX/IP, AXIP, AXUDP)
+  - Enable to map Internet-based connectivity (AXIP reflectors, Telnet connections)
+  - Example: `./nodemap.py 5 --ip` (crawl including IP ports)
 - `--merge FILE` - Combine data from another operator's nodemap.json
 - `--verbose` or `-v` - Show detailed command/response output
 - `--notify URL` - Send progress notifications to webhook
@@ -201,6 +213,11 @@ For comprehensive network coverage, coordinate with other operators:
 ./nodemap.py 5 -x blocklist.txt          # Load exclusions from file
 ./nodemap.py 5 -x                        # Use default exclusions.txt
 ./nodemap.py 10 --mode new-only -x       # Combine with other options
+
+# Port type filtering (advanced)
+./nodemap.py 5 --hf                      # Include HF ports (VARA, ARDOP, PACTOR, etc.)
+./nodemap.py 5 --ip                      # Include IP ports (AXIP, Telnet reflectors)
+./nodemap.py 5 --hf --ip                 # Include both HF and IP ports (maximum coverage)
 
 # Resume interrupted crawls
 ./nodemap.py --resume             # Continue from unexplored nodes
@@ -320,11 +337,14 @@ Converts nodemap.json data into visual maps: interactive HTML with Leaflet.js an
 
 - **Dual Output Formats**: Interactive HTML map AND static SVG
 - **Multi-Band Connection Lines**: Separate colored lines for each frequency band
-  - 🔵 Blue: 2m (144-148 MHz)
-  - 🟠 Orange: 70cm (420-450 MHz)
-  - 🟣 Purple: 1.25m/220 MHz (222-225 MHz)
-  - 🟢 Green: 6m (50-54 MHz)
-  - ⚫ Gray: Unknown/Other
+  - 🔵 Blue: 2m (144-148 MHz) - solid
+  - 🟠 Orange: 70cm (420-450 MHz) - solid
+  - 🟣 Purple: 1.25m/220 MHz (222-225 MHz) - solid
+  - 🟢 Green: 6m (50-54 MHz) - solid
+  - ⚫ Gray: Unknown/Other - solid
+  - 🟨 Yellow: HF ports (VARA, ARDOP, PACTOR) - dashed
+  - 🔵 Cyan: IP ports (AXIP, TCP, Telnet) - dotted
+- **Link Type Indicators**: Visual distinction between RF, HF digital modes, and Internet connectivity
 - **RF Connection Detection**: Uses MHEARD port data to determine actual frequencies
 - **Node Markers**: Color-coded by primary operating frequency
 - **Info Popups**: Callsign, location, ports, frequencies, applications, neighbors
