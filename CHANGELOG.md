@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [utilities README] - 2026-01-18
+### Changed
+- Rewrote utilities/README.md for clarity and conciseness
+- Removed verbose explanations and redundant sections
+- Reorganized content: Quick Start, Usage, Common Tasks, Output Files, How It Works
+- Condensed option documentation while preserving technical accuracy
+- Simplified examples to focus on common use cases
+- Reduced overall length by ~60% while maintaining all essential information
+
 ## [nodemap-html 1.4.13] - 2026-01-17
 ### Fixed
 - SVG tooltips now properly display line breaks as `<br>` tags instead of literal `\n` characters
