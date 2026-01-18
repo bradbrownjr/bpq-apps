@@ -1144,7 +1144,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     svg_lines.append('    var tooltip = null;')
     svg_lines.append('    function showTooltip(e, text) {')
     svg_lines.append('      if (!tooltip) { tooltip = document.createElement("div"); tooltip.id = "tooltip"; document.body.appendChild(tooltip); }')
-    svg_lines.append('      tooltip.textContent = text;')
+    svg_lines.append('      tooltip.innerHTML = text.split("\\\\n").join("<br>");')
     svg_lines.append('      tooltip.style.left = (e.clientX + 10) + "px";')
     svg_lines.append('      tooltip.style.top = (e.clientY + 10) + "px";')
     svg_lines.append('      tooltip.style.display = "block";')
