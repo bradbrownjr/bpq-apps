@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html 1.4.13] - 2026-01-17
+### Fixed
+- SVG tooltips now properly display line breaks as `<br>` tags instead of literal `\n` characters
+- JavaScript `showTooltip()` now splits escaped newlines and converts to HTML line breaks
+
 ## [nodemap 1.7.82] - 2026-01-17
 ### Fixed
 - Authentication now properly waits for password prompt using read_until with timeout

@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.12
+Version: 1.4.13
 """
 
-__version__ = '1.4.12'
+__version__ = '1.4.13'
 
 import sys
 import json
