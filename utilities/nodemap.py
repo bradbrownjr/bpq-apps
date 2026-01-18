@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.81
+Version: 1.7.82
 """
 
-__version__ = '1.7.81'
+__version__ = '1.7.82'
 
 import sys
 import socket
@@ -454,11 +454,25 @@ class NodeCrawler:
                 
                 # Send username
                 tn.write("{}\r".format(self.username).encode('ascii'))
-                time.sleep(0.5)
+                self._log('SEND', "{}\r".format(self.username).encode('ascii'))
                 
-                # Check for password prompt
-                response = tn.read_very_eager().decode('ascii', errors='ignore')
-                if 'password:' in response.lower():
+                # Wait for password prompt (with timeout) - don't use read_very_eager
+                # Server may take time to respond, especially if validating username
+                try:
+                    response = tn.read_until(b':', timeout=10).decode('ascii', errors='ignore')
+                    self._log('RECV', response.encode('ascii'))
+                except socket.timeout:
+                    response = tn.read_very_eager().decode('ascii', errors='ignore')
+                    self._log('RECV', response.encode('ascii'))
+                
+                # Check for authentication errors
+                response_lower = response.lower()
+                if 'invalid' in response_lower or 'unknown' in response_lower or 'bad' in response_lower:
+                    print("  Authentication failed: invalid username")
+                    tn.close()
+                    return None
+                
+                if 'password:' in response_lower or 'password' in response_lower:
                     # Prompt for password if not provided
                     if self.password is None:
                         import getpass
@@ -466,7 +480,26 @@ class NodeCrawler:
                     
                     # Send password
                     tn.write("{}\r".format(self.password).encode('ascii'))
+                    self._log('SEND', "(password)\r".encode('ascii'))
                     time.sleep(0.5)
+                    
+                    # Check for auth success/failure
+                    try:
+                        auth_response = tn.read_until(b'>', timeout=5).decode('ascii', errors='ignore')
+                        self._log('RECV', auth_response.encode('ascii'))
+                        auth_lower = auth_response.lower()
+                        if 'invalid' in auth_lower or 'incorrect' in auth_lower or 'failed' in auth_lower:
+                            print("  Authentication failed: incorrect password")
+                            tn.close()
+                            return None
+                    except socket.timeout:
+                        pass  # May not get response before prompt, that's OK
+                else:
+                    # No password prompt - server may have rejected username silently
+                    # or doesn't require password. Check for prompt.
+                    if '>' not in response and '}' not in response:
+                        print("  Warning: No password prompt received after username")
+                        print("  Server response: {}".format(response[:100] if response else '(empty)'))
             
             # Wait for command prompt
             print("  Waiting for node prompt...")

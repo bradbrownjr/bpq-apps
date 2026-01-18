@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap 1.7.82] - 2026-01-17
+### Fixed
+- Authentication now properly waits for password prompt using read_until with timeout
+- Detects and reports authentication failures (invalid username, incorrect password)
+- Warns if no password prompt received after sending username
+- Fixes issue where invalid username caused silent failure and broken pipe error
+- Auth exchanges now logged to telnet log for debugging
+
 ## [nodemap 1.7.81] - 2026-01-17
 ### Fixed
 - Added alias validation to prevent callsigns being used as NetRom aliases
