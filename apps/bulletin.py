@@ -121,7 +121,6 @@ def get_callsign():
         pass
     
     # No valid callsign from BPQ, prompt user
-    print()  # Add space before prompting
     while True:
         try:
             call = input("Enter your callsign: ").strip().upper()
