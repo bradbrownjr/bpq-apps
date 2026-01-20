@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from predict import geo, solar, ionosphere
 
 # App version
-VERSION = "1.2"
+VERSION = "1.3"
 APP_NAME = "predict.py"
 
 # Display width
@@ -200,9 +200,11 @@ def prompt_location(prompt_text, allow_callsign=False):
     """
     print("")
     print(prompt_text)
-    print("  Enter: gridsquare, GPS coords, state, or country")
     if allow_callsign:
+        print("  Enter: gridsquare, GPS coords, state, country")
         print("         or callsign for automatic lookup")
+    else:
+        print("  Enter: gridsquare, GPS coords, state, or country")
     print("  (Q to cancel)")
     print("")
     
@@ -272,7 +274,7 @@ def get_my_location():
             if confirm.upper() != 'N':
                 return (coords[0], coords[1], bpq_grid)
     
-    return prompt_location("Enter YOUR location:")
+    return prompt_location("Enter YOUR location:", allow_callsign=True)
 
 
 def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):

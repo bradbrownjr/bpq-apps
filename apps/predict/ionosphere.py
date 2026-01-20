@@ -18,7 +18,7 @@ Limitations:
 - No multi-hop optimization
 
 Author: Brad Brown KC1JMH
-Version: 1.0
+Version: 1.2
 Date: January 2026
 """
 

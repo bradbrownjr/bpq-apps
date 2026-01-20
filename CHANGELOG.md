@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [predict 1.3] - 2026-01-20
+### Changed
+- Enable callsign lookup for user's own location (not just other stations)
+- Improve help text to show callsign option when applicable
+
 ## [predict 1.2] - 2026-01-20
 ### Fixed
 - Replace Unicode warning symbol (⚠) with ASCII-only [!] for AX.25 compatibility
