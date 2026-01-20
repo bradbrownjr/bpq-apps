@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [predict 1.0] - 2026-01-20
+### Added
+- New HF propagation estimator app (predict.py)
+- Estimates best bands and times for HF contacts between two locations
+- Simplified ionospheric model (~70-80% accuracy vs full VOACAP ~90%)
+- Resilient solar data strategy: online → cached → user input → defaults
+- Location input: gridsquare, GPS, DMS, US state, country, callsign lookup
+- Callsign gridsquare lookup via HamDB API
+- BPQ LOCATOR config integration for user's location
+- Support library in apps/predict/:
+  - geo.py: Coordinate conversion, great-circle distance/bearing
+  - solar.py: Solar data fetching with caching (hamqsl.com)
+  - ionosphere.py: MUF estimation using ITU-R correlations
+  - regions.json: US state + 50 country centroids
+
 ## [utilities README] - 2026-01-18
 ### Changed
 - Rewrote utilities/README.md for clarity and conciseness

@@ -9,6 +9,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [gopher.py](#gopherpy)
   - [hamqsl.py](#hamqslpy)
   - [hamtest.py](#hamtestpy)
+  - [predict.py](#predictpy)
   - [qrz3.py](#qrz3py)
   - [rss-news.py](#rss-newspy)
   - [space.py](#spacepy)
@@ -78,6 +79,37 @@ hamtest.py
 - Select license class from main menu
 - Answer multiple choice questions (A, B, C, D)
 - Press 'Q' during exam to quit back to menu
+
+predict.py
+----------
+**Type**: Python  
+**Purpose**: HF propagation estimator - best bands/times for contacts  
+**Information source**: hamqsl.com solar data, simplified ITU-R ionospheric model  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Simplified model (~70-80% accuracy). For precise predictions, use voacap.com.
+
+**Download or update**:  
+```wget -O predict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict.py && chmod +x predict.py```  
+```mkdir -p predict && wget -O predict/__init__.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/__init__.py```  
+```wget -O predict/geo.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/geo.py```  
+```wget -O predict/solar.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/solar.py```  
+```wget -O predict/ionosphere.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/ionosphere.py```  
+```wget -O predict/regions.json https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/regions.json```
+
+**Features**:
+- Estimates best HF bands (80m-10m) and times for contacts
+- Resilient solar data: online → cached → user input → defaults
+- Location input: gridsquare, GPS, DMS, US state, country, callsign
+- Callsign gridsquare lookup via HamDB API
+- BPQ LOCATOR config integration
+- Works offline with cached or user-supplied solar data
+
+**Usage**:
+- Select prediction type from menu (me to ham, me to place, place to place)
+- Enter locations as gridsquare, coordinates, state, country, or callsign
+- View band reliability estimates and recommended frequencies
+
+qrz3.py
 - Use option 5 to manually update question pools
 
 qrz3.py
