@@ -65,11 +65,25 @@ Sysop tools for BBS management and network monitoring:
 
 See [utilities/README.md](utilities/README.md) for detailed documentation.
 
-## Getting Started
+## Installation
 
-1. **Installation**: See [docs/INSTALLATION.md](docs/INSTALLATION.md) for complete setup instructions
-2. **Configuration Examples**: Check [docs/examples/](docs/examples/) for inetd and bpq32.cfg configuration samples
-3. **Application Details**: Browse [apps/README.md](apps/README.md) for individual app documentation
+All applications feature automatic updates and can be installed with simple wget commands:
+
+```bash
+# Download any application
+wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/[script-name].py
+chmod +x [script-name].py
+
+# Example: Install forms application
+wget -O forms.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms.py
+chmod +x forms.py
+```
+
+**Complete Setup**: See [docs/INSTALLATION.md](docs/INSTALLATION.md) for detailed installation and BPQ configuration instructions.
+
+## Development
+
+This repository includes [GitHub Copilot instructions](.github/copilot-instructions.md) for AI-assisted development, including the auto-update protocol and coding standards for packet radio applications.
 
 ## Directory Structure
 
