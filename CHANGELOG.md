@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [predict 1.1] - 2026-01-20
+### Changed
+- Display all 8 HF bands (80m, 40m, 30m, 20m, 17m, 15m, 12m, 10m) for comprehensive predictions
+- Previously showed only 5 most common bands; now includes all amateur HF allocations
+
 ## [predict 1.0] - 2026-01-20
 ### Added
 - New HF propagation estimator app (predict.py)

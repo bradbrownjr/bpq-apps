@@ -37,8 +37,8 @@ BANDS = {
     '10m': {'freq': 28.5, 'low': 28.0, 'high': 29.7},
 }
 
-# Simplified band list for display (most common)
-DISPLAY_BANDS = ['80m', '40m', '20m', '15m', '10m']
+# All HF bands for prediction (comprehensive coverage)
+DISPLAY_BANDS = ['80m', '40m', '30m', '20m', '17m', '15m', '12m', '10m']
 
 # Earth radius for geometry calculations
 EARTH_RADIUS_KM = 6371.0
