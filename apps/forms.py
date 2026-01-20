@@ -130,11 +130,13 @@ class FormsApp:
             existing_files = set(f['filename'] for f in self.forms)
             for github_form in github_forms:
                 should_download = False
+                is_new_form = False
                 
                 if github_form not in existing_files:
                     # New form - download it
                     print("Downloading new form: {}".format(github_form))
                     should_download = True
+                    is_new_form = True
                 else:
                     # Existing form - check if GitHub version is newer
                     github_version = self.get_github_form_version(github_form)
@@ -153,6 +155,11 @@ class FormsApp:
                             with open(filepath, 'r') as f:
                                 form_data = json.load(f)
                                 form_data['filename'] = github_form
+                                # Mark as new or updated (in-memory only, not persisted)
+                                if is_new_form:
+                                    form_data['_status'] = 'NEW'
+                                else:
+                                    form_data['_status'] = 'UPDATED'
                                 # Update or add to forms list
                                 if github_form in existing_files:
                                     # Replace existing form in list
@@ -270,7 +277,12 @@ class FormsApp:
         sorted_forms = sorted(self.forms, key=lambda f: f.get('title', 'Untitled Form').lower())
         
         for idx, form in enumerate(sorted_forms, 1):
-            print("{}. {}".format(idx, form.get('title', 'Untitled Form')))
+            title = form.get('title', 'Untitled Form')
+            # Add status indicator if form is new or just updated
+            status = form.get('_status', '')
+            if status:
+                title = "{} - {}".format(title, status)
+            print("{}. {}".format(idx, title))
             desc = form.get('description', '')
             if desc:
                 print("   {}".format(self.wrap_text(desc, width=LINE_WIDTH-3)))
