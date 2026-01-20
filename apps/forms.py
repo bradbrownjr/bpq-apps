@@ -117,21 +117,34 @@ class FormsApp:
                     
                     # Download the new version
                     script_path = os.path.abspath(__file__)
-                    with urllib.request.urlopen(github_url, timeout=30) as response:
-                        content = response.read()
-                    
-                    # Write to temporary file first, then replace
-                    temp_path = script_path + '.tmp'
-                    with open(temp_path, 'wb') as f:
-                        f.write(content)
-                    
-                    # Replace old file with new one
-                    os.replace(temp_path, script_path)
-                    
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nQuitting...")
-                    sys.exit(0)
+                    try:
+                        # Get current file permissions
+                        import stat
+                        current_mode = os.stat(script_path).st_mode
+                        
+                        # Write to temporary file first, then replace
+                        temp_path = script_path + '.tmp'
+                        with open(temp_path, 'wb') as f:
+                            f.write(content.encode('utf-8'))
+                        
+                        # Set permissions on temp file to match original
+                        os.chmod(temp_path, current_mode)
+                        
+                        # Replace old file with new one
+                        os.replace(temp_path, script_path)
+                        
+                        print("\nUpdate installed successfully!")
+                        print("Please re-run this command to use the updated version.")
+                        print("\nQuitting...")
+                        sys.exit(0)
+                    except Exception as e:
+                        print("\nError installing update: {}".format(e))
+                        # Clean up temp file if it exists
+                        if os.path.exists(temp_path):
+                            try:
+                                os.remove(temp_path)
+                            except:
+                                pass
         except Exception as e:
             # Don't block startup if update check fails
             pass
