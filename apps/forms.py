@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: October 2025
 """
 
@@ -61,7 +61,7 @@ class FormsApp:
     def __init__(self):
         self.forms = []
         self.user_call = ""
-        self.version = "1.2"
+        self.version = "1.5"
         self.bpq_callsign = None  # Callsign passed from BPQ
         
     def clear_screen(self):
