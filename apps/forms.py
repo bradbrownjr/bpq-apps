@@ -99,9 +99,7 @@ class FormsApp:
     def check_for_app_update(self):
         """Check if forms.py has an update available on GitHub"""
         try:
-            print("Checking for application updates...")
-            
-            # Get the version from GitHub's forms.py
+            # Get the version from GitHub's forms.py (silent check)
             github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms.py"
             with urllib.request.urlopen(github_url, timeout=10) as response:
                 content = response.read().decode('utf-8')
@@ -176,8 +174,7 @@ class FormsApp:
                 is_new_form = False
                 
                 if github_form not in existing_files:
-                    # New form - download it
-                    print("Downloading new form: {}".format(github_form))
+                    # New form - download it silently
                     should_download = True
                     is_new_form = True
                 else:
@@ -186,8 +183,6 @@ class FormsApp:
                     if github_version:
                         local_version = local_form_versions.get(github_form, '0.0')
                         if self.compare_versions(github_version, local_version) > 0:
-                            print("Updating {}: v{} -> v{}".format(
-                                github_form, local_version, github_version))
                             should_download = True
                 
                 if should_download:
@@ -225,9 +220,8 @@ class FormsApp:
         return True
     
     def get_github_forms(self):
-        """Get list of available form templates from GitHub repository"""
+        """Get list of available form templates from GitHub repository (silent operation)"""
         try:
-            print("Checking GitHub for available forms...")
             with urllib.request.urlopen(GITHUB_FORMS_URL, timeout=10) as response:
                 data = json.loads(response.read().decode('utf-8'))
             
@@ -237,17 +231,14 @@ class FormsApp:
                 if item['type'] == 'file' and item['name'].endswith('.frm'):
                     forms.append(item['name'])
             
-            if forms:
-                print("Found {} forms on GitHub".format(len(forms)))
             return forms
             
-        except Exception as e:
-            print("Note: Could not check GitHub repository: {}".format(e))
-            print("Will use local forms only.")
+        except Exception:
+            # Silent on network errors - use local forms only
             return []
     
     def download_form(self, filename):
-        """Download a form template from GitHub"""
+        """Download a form template from GitHub (silent on success)"""
         url = "{}/{}".format(GITHUB_RAW_URL, filename)
         local_path = os.path.join(FORMS_DIR, filename)
         
@@ -258,11 +249,10 @@ class FormsApp:
             with open(local_path, 'wb') as f:
                 f.write(data)
             
-            print("Successfully downloaded {}".format(filename))
             return True
             
-        except Exception as e:
-            print("Error downloading {}: {}".format(filename, e))
+        except Exception:
+            # Silent on errors - form updates are not critical
             return False
     
     def get_github_form_version(self, filename):
