@@ -20,7 +20,7 @@ The 'S' flag strips SSID from callsign for cleaner display.
 Remove 'S' to include SSID (e.g., KC1JMH-8).
 
 Author: Brad Brown KC1JMH
-Version: 1.0
+Version: 1.1
 Date: January 2026
 """
 
@@ -323,55 +323,54 @@ def show_stats(data):
         for i, (author, count) in enumerate(sorted_authors[:5]):
             print("  {}. {} ({} messages)".format(i + 1, author, count))
 
-def main_menu(callsign):
-    """Display main menu and handle user input"""
+def main_loop(callsign):
+    """Main program loop with RSS News style interface"""
     current_page = 0
     
+    # Show initial header and messages
+    print("\n" + "=" * 50)
+    print("Community Bulletin Board - {}".format(callsign))
+    print("=" * 50)
+    
+    data = load_messages()
+    display_messages(data, callsign, current_page)
+    
     while True:
-        print("\n" + "=" * 50)
-        print("Community Bulletin Board - {}".format(callsign))
-        print("=" * 50)
-        print("1. View messages")
-        print("2. Post message")
-        print("3. Delete message")
-        print("4. Next page")
-        print("5. Previous page")
-        print("6. Statistics")
-        print("Q. Quit")
-        print()
-        
         try:
-            choice = input("Choice: ").strip().upper()
+            # Simple prompt like RSS News app
+            choice = input("\nP)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit :> ").strip().upper()
             
-            if choice == 'Q':
-                print("73!")
+            if choice.startswith('Q'):
+                print("\n73!")
                 break
-            elif choice == '1':
-                data = load_messages()
-                display_messages(data, callsign, current_page)
-            elif choice == '2':
+            elif choice.startswith('P'):
                 data = load_messages()
                 updated_data = post_message(data, callsign)
                 if save_messages(updated_data):
                     current_page = 0  # Reset to first page to see new message
-            elif choice == '3':
+                    data = load_messages()
+                    display_messages(data, callsign, current_page)
+            elif choice.startswith('D'):
                 data = load_messages()
                 updated_data = delete_message(data, callsign)
-                save_messages(updated_data)
-            elif choice == '4':
+                if save_messages(updated_data):
+                    # Refresh display after deletion
+                    data = load_messages()
+                    display_messages(data, callsign, current_page)
+            elif choice.startswith('N'):
                 current_page += 1
                 data = load_messages()
                 display_messages(data, callsign, current_page)
-            elif choice == '5':
+            elif choice.startswith('PR'):
                 if current_page > 0:
                     current_page -= 1
                 data = load_messages()
                 display_messages(data, callsign, current_page)
-            elif choice == '6':
+            elif choice.startswith('S'):
                 data = load_messages()
                 show_stats(data)
             else:
-                print("Invalid choice. Try again.")
+                print("Invalid choice. P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit")
                 
         except (EOFError, KeyboardInterrupt):
             print("\n73!")
@@ -380,9 +379,9 @@ def main_menu(callsign):
 def main():
     """Main application entry point"""
     # Check for app updates
-    check_for_app_update("1.0", "bulletin.py")
+    check_for_app_update("1.1", "bulletin.py")
     
-    print("Community Bulletin Board v1.0")
+    print("Community Bulletin Board v1.1")
     print("=============================")
     
     # Get callsign from BPQ or user input
@@ -390,12 +389,8 @@ def main():
     
     print("\nWelcome, {}!".format(callsign))
     
-    # Show recent messages first
-    data = load_messages()
-    display_messages(data, callsign, 0, 5)
-    
-    # Enter main menu
-    main_menu(callsign)
+    # Enter main program loop
+    main_loop(callsign)
 
 if __name__ == '__main__':
     main()

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [bulletin 1.1] - 2026-01-20
+### Changed
+- Simplified interface to match RSS News app pattern
+- Replace numbered menu with prompt-based navigation: `P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit`
+- Show messages immediately on startup (no separate "view messages" option needed)
+- Refresh message display automatically after posting or deleting
+- Standardize interface pattern across BPQ apps
+
 ## [bulletin 1.0] - 2026-01-20
 ### Added
 - New community bulletin board application (bulletin.py)

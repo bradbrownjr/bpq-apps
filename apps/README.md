@@ -53,6 +53,7 @@ bulletin.py
 - JSON storage with callsign, timestamp, and message text
 - Chronological display (newest first)
 - Messages marked with '*' can be deleted by author
+- Simple prompt-based interface like RSS News app
 
 **BPQ32 Configuration**:
 ```
@@ -61,12 +62,13 @@ APPLICATION 8,BULLETIN,C 9 HOST 8 S
 The 'S' flag strips SSID from callsign for cleaner display. Remove 'S' to include SSID.
 
 **Usage**:
-- Menu-driven interface with numeric choices
-- Option 1: View messages (shows 10 per page)
-- Option 2: Post new message
-- Option 3: Delete your own messages
-- Option 4/5: Navigate pages (next/previous)
-- Option 6: View statistics
+- Shows messages immediately on startup
+- Simple prompt: `P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit`
+- P: Post new message (80 characters max)
+- D: Delete your own messages
+- N: Next page of messages
+- Pr: Previous page of messages  
+- S: View statistics (total messages, recent activity, top contributors)
 - Q: Quit
 
 **Data Storage**:
