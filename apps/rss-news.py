@@ -115,7 +115,15 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rss-news.conf")
 PAGE_SIZE = 20  # Lines per page for pagination
 MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
 SOCKET_TIMEOUT = 30  # Timeout for requests in seconds
-LINE_WIDTH = 40  # Maximum line width for wrapping
+
+def get_line_width():
+    """Get terminal width, fallback to 40 for piped input"""
+    try:
+        return os.get_terminal_size().columns
+    except (OSError, ValueError):
+        return 40  # Fallback for piped input or non-terminal
+
+LINE_WIDTH = get_line_width()  # Dynamic terminal width
 MAX_ARTICLES = 15  # Maximum number of articles to display per feed
 
 

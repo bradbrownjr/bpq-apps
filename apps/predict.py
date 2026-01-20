@@ -45,7 +45,14 @@ VERSION = "1.4"
 APP_NAME = "predict.py"
 
 # Display width
-LINE_WIDTH = 40
+def get_line_width():
+    """Get terminal width, fallback to 40 for piped input"""
+    try:
+        return os.get_terminal_size().columns
+    except (OSError, ValueError):
+        return 40  # Fallback for piped input or non-terminal
+
+LINE_WIDTH = get_line_width()
 
 
 def check_for_app_update(current_version, script_name):

@@ -51,9 +51,17 @@ import urllib.error
 # -------------
 FORMS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "forms")
 EXPORT_FILE = "../linbpq/infile"  # Single file for all messages (BPQ import format)
-LINE_WIDTH = 40  # Maximum line width for display
 GITHUB_FORMS_URL = "https://api.github.com/repos/bradbrownjr/bpq-apps/contents/apps/forms"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms"
+
+def get_line_width():
+    """Get terminal width, fallback to 40 for piped input"""
+    try:
+        return os.get_terminal_size().columns
+    except (OSError, ValueError):
+        return 40  # Fallback for piped input or non-terminal
+
+LINE_WIDTH = get_line_width()  # Dynamic terminal width
 
 class FormsApp:
     """Main forms application class"""
