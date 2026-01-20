@@ -1,6 +1,18 @@
 # bpq-apps
 Custom applications for a BPQ32 packet radio node
 
+## Table of Contents
+- [Features](#features)
+- [Applications](#applications)
+- [Games](#games)
+- [Utilities](#utilities)
+- [Installation](#installation)
+- [Development](#development)
+
+## Features
+
+**🔄 Automatic Updates**: All Python applications include built-in auto-update functionality that checks for new versions on GitHub at startup. Updates are downloaded and installed automatically with a 3-second timeout for reliable operation even when internet connectivity is limited.
+
 Here are some custom applications I am working on for my
 local packet radio node, which runs on a Raspberry Pi B+
 running John Wiseman's linbpq32 downloadable from:

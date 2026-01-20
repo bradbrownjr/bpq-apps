@@ -24,6 +24,14 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Document changes in CHANGELOG.md
 - Document new and changed features to the respective README.md files
 - Include help args (-h, --help, /?) in utilities and CLI tools
+- **Auto-Update Protocol:** All Python apps must include auto-update functionality
+  - Add version string to docstring: `Version: X.Y`
+  - Include `check_for_app_update()` and `compare_versions()` functions
+  - Call `check_for_app_update("X.Y", "script.py")` at startup
+  - 3-second timeout for GitHub checks (silent failure if no internet)
+  - Atomic updates with executable permission preservation
+  - Clean error handling with temporary file cleanup
+- **README Documentation:** All README.md files longer than one paragraph must include table of contents
 - **Version bumping protocol:**
   - Update docstring `Version:` field in app modules
   - Update `__version__` variable when present

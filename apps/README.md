@@ -1,5 +1,35 @@
 # BBS Apps
-Applications designed to run via BPQ BBS APPLICATION commands or standalone. See below for purpose, setup and usage of individual applications.
+Applications designed to run via BPQ BBS APPLICATION commands or standalone.
+
+## Table of Contents
+- [Features](#features)
+- [Applications](#applications)
+  - [callout.py](#calloutpy)
+  - [forms.py](#formspy)
+  - [gopher.py](#gopherpy)
+  - [hamqsl.py](#hamqslpy)
+  - [hamtest.py](#hamtestpy)
+  - [qrz3.py](#qrz3py)
+  - [rss-news.py](#rss-newspy)
+  - [space.py](#spacepy)
+  - [wx.py](#wxpy)
+  - [wx-me.py](#wx-mepy)
+  - [wxnws-ftp.py](#wxnws-ftppy)
+- [Installation](#installation)
+- [BPQ Configuration](#bpq-configuration)
+
+## Features
+
+**🔄 Automatic Updates**: All applications automatically check for updates on startup. When a newer version is available on GitHub, it will be downloaded and installed automatically. The check has a 3-second timeout to ensure fast startup even without internet connectivity.
+
+**📻 Packet Radio Optimized**: Designed for low-bandwidth AX.25 packet radio with:
+- Plain ASCII text output (no ANSI codes or Unicode)
+- Minimal data usage
+- 80-column terminal compatibility
+- Simple command-based navigation
+- Fast startup and response times
+
+## Applications
 
 callout.py
 ----------

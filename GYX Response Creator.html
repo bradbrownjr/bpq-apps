@@ -1,0 +1,1377 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><title>GYX Response Creator</title>
+
+<script>
+
+
+
+ function Checkifinbrowser() {
+
+ var x= document.getElementById("testCall").value; 
+ var n = x.search("{Msg");
+ if (n>-1) { 
+ document.getElementById('Submit').style.visibility='visible';//HIDE after test
+  //alert('You are running this form outside of Winlink.\n \nWhen you have completed the form, SAVE the data and then give or send the SAVED data file to the radio operator. The operator will load the SAVED data into the correct form and send via winlink. ');
+ } else {document.getElementById('Submit').style.visibility='visible';  }
+}
+
+
+function AutoGrowTextArea(textField)
+{
+if (textField.clientHeight < textField.scrollHeight)
+{
+textField.style.height = textField.scrollHeight + "px";
+if (textField.clientHeight < textField.scrollHeight)
+{
+textField.style.height = (textField.scrollHeight * 2 - textField.clientHeight) + "px";
+}
+}
+}
+function Countthelines(f) { var text1 = f
+var text2 = text1.replace(/\s+$/,"");
+var split2 = text2.split("\n"); var mytotal = split2.length * 17;
+if (mytotal < 150) {
+mytotal = 150;
+}
+var tstr = mytotal.toString();
+return tstr;
+}
+function newfix(f){
+var ThisText = document.getElementById(f).value;
+var makeit = Countthelines(ThisText);
+document.getElementById(f).style.height = makeit+"px"; }
+function Fixarea() {
+newfix("Message");
+// newfix("reply");
+AutoGrowTextArea(document.getElementById("Message"));
+// AutoGrowTextArea(document.getElementById("reply"));
+}
+function RWS(str){
+var text2 = str.replace(/\s+$/,"");
+return text2.trim();
+}
+</script>
+<style type="text/css">
+body, td, th {
+font-family: Arial,Helvetica,sans-serif;
+font-size: 12px;
+font-weight: inherit;
+}
+.zentriert {
+font-size: 12px;
+font-weight: inherit;
+}
+input, select {
+padding: 2px;
+-moz-border-radius-topleft: 2px;
+-moz-border-radius-topright: 2px;
+-moz-border-radius-bottomright: 2px;
+-moz-border-radius-bottomleft: 2px;
+font-family: Arial,Helvetica,sans-serif;
+font-size: 12px;
+font-weight: inherit;
+}
+textarea {
+padding: 2px;
+-moz-border-radius-topleft: 2px;
+-moz-border-radius-topright: 2px;
+-moz-border-radius-bottomright: 2px;
+-moz-border-radius-bottomleft: 2px;
+font-family: Arial,Helvetica,sans-serif;
+font-size: 12px;
+font-weight: inherit;
+}
+.rechtsbuendig {
+font-size: 12px;
+font-weight: inherit;
+}
+.SubmitBtn {
+font-size: 12px;
+font-weight: inherit;
+}
+.version {
+color: #666666;
+position: relative;
+left: 3px;
+top: 3px;
+font-size: 12px;
+font-weight: inherit;
+}
+ input[type=button] {
+
+  border: 1.5px solid #0f88f2;;
+   border-radius:.25rem;
+  
+  font-size: 14px;
+  padding: 2px 2px;
+ background-color: white;
+  text-decoration: none;
+  margin: 2px 2px;
+  cursor: pointer;
+}
+input[type=submit] {
+ border: 1.5px solid green;
+  border-radius:.25rem;
+  background-color: white;
+ 
+  padding: 2px 2px;
+  font-size: 14px;
+   cursor: pointer;
+}
+input[type=reset] {
+ border: 1.5px solid red;
+ border-radius:.25rem;
+  background-color: white;
+ 
+  padding: 2px 2px;
+  font-size: 14px;
+   cursor: pointer;
+}
+input[type=regular] {
+ border: 2px solid #999999;
+  border-radius:.25rem;
+width:50px;
+  background-color: white;
+ 
+  padding: 2px 2px;
+  font-size: 12px;
+   cursor: pointer;
+}
+input[type=blue1] {
+ border: 1.5px solid #0f88f2;
+
+   border-radius:.25rem;
+  color: black;
+  padding: 2px 2px;
+  text-decoration: none;
+  margin: 2px 2px;
+  cursor: pointer;
+}
+
+</style>
+<script type="text/javascript">
+function TimeNow(Timefld) {
+var txt;
+var d = new Date(),
+thisyear = d.getFullYear();
+thismonth= d.getMonth();
+thismonth = thismonth+1;
+thisday = d.getDate();
+h = (d.getHours()<10?'0':'') + d.getHours()
+m = (d.getMinutes()<10?'0':'') + d.getMinutes()
+s = (d.getSeconds()<10?'0':'') + d.getSeconds();
+var myprompt = thisyear+ '-'+thismonth+'-'+thisday+' '+h + ':' + m ;
+var RightNow = prompt("", myprompt);
+document.getElementById(Timefld).value = RightNow;
+document.getElementById(FocusFld).focus();
+} </script>
+<style type="text/css">
+body, td, th {
+font-family: Arial,Helvetica,sans-serif;
+font-size: 12px;
+font-weight: inherit;
+}
+.zentriert {
+font-size: 12px;
+font-weight: inherit;
+}
+input, select {
+padding: 1px;
+-moz-border-radius-topleft: 2px;
+-moz-border-radius-topright: 2px;
+-moz-border-radius-bottomright: 2px;
+-moz-border-radius-bottomleft: 2px;
+font-family: Arial,Helvetica,sans-serif;
+font-size: 12px;
+font-weight: inherit;
+}
+textarea {
+padding: 1px;
+-moz-border-radius-topleft: 2px;
+-moz-border-radius-topright: 2px;
+-moz-border-radius-bottomright: 2px;
+-moz-border-radius-bottomleft: 2px;
+font-family: Arial,Helvetica,sans-serif;
+font-size: 12px;
+font-weight: inherit;
+}
+.rechtsbuendig {
+font-size: 12px;
+font-weight: inherit;
+}
+.SubmitBtn {
+font-size: 12px;let table = document.getElementById("myTable");
+table.deleteRow(-1); // Removes the last row
+// OR
+let lastRowIndex = table.rows.length - 1;
+if (lastRowIndex >= 0) { // Ensure there are rows to delete
+    table.deleteRow(lastRowIndex);
+}
+font-weight: inherit;
+}
+.version {
+color: #666666;
+position: relative;
+left: 0px;
+top: 3px;
+font-size: 12px;
+font-weight: inherit;
+}
+    hr.r {
+  border-top: 1px dashed red;
+}
+</style>
+<style>
+/*
+body {color:#000; background:#fff; font:100%/1.5 arial,sans-serif;}
+h2 {margin-top:0}
+*/
+/* Styling applied to classes only */
+/* Pop-up content shifted off-screen when not in view.
+Still readable by screen-reader software.
+When targeted it fills the browser window.
+*/
+.pop-up {
+	position:absolute;
+	top:0;
+	left:-500em;
+	visibility: visible;
+}
+.pop-up:target {position:static; left:0;}
+/* The pop-up itself */
+.popBox {
+	background:#ffffff;
+	position:absolute;
+	left:8%;
+	right:8%;
+	top:10%;
+	bottom:10%;
+	z-index:10;
+	border:1px solid #3a3a3a;
+/* CSS3 where available: rounded corners, drop-shadow, and fade in. */
+border-radius:.25rem;
+box-shadow:0 .5rem .5rem rgba(0,0,0,.5);
+	opacity:0;
+	transition: opacity 0.8s ease-out;
+	visibility: visible;
+}
+:target .popBox {position:fixed; opacity:1;}
+/* Light box properties */
+.lightbox {
+display:none;
+text-indent:-200em;
+background-color:rgba(0,0,0,.4);
+width:100%;
+height:100%;
+position:fixed;
+top:0;
+left:0;
+bottom:0;
+right:0;
+z-index:5;
+}
+:target .lightbox {display:block;}
+/* The pop-ups close link, moved via CSS to the top right of the pop-up */
+.close:link,
+.close:visited {
+	position: absolute;
+	top: -0.75em;
+	right: -0.75em;
+	display: block;
+	width: 2em;
+	height: 2em;
+	line-height: 1.8;
+	padding: 0;
+	text-align: center;
+	text-decoration: none;
+	background-color: #000;
+	border: 2px solid #fff;
+	color: #fff;
+	border-radius: 50%;
+box-shadow: 0 0 .5rem .5rem rba(0,0,0,.5);
+	visibility: visible;
+}
+.close:before {content:"X";}
+.close:hover,
+.close:active,
+.close:focus {
+box-shadow: 0 0 .5rem .5rem rba(255,0,0,.5);
+background-color: #c00;
+color: #fff;
+}
+.close span {
+text-indent: -200em;
+display: block;
+}
+/* The pop-up content div will scroll if it has too much content */
+.popScroll {
+	position:absolute;
+	top: 1rem;
+	left: 1rem;
+	right: 1rem;
+	bottom: 1rem;
+	overflow-y: auto;
+*overflow-y: scroll;
+	padding-right: 0.5em;
+	visibility: visible;
+}
+.popScroll h2 {margin-top:0}
+.MSGtext {  
+font-family: Arial,Helvetica,sans-serif;  
+  
+font-size: 12px;  
+}
+.style40 {font-family: Arial, Helvetica, sans-serif}
+.SubmitBtn1 {font-size: 12px;
+font-weight: inherit;
+}
+.SubmitBtn1 {font-size: 12px;
+font-weight: inherit;
+}
+    
+    .popBoxS {
+	background:#ffffff;
+	position:absolute;
+	left:10%;
+	right:40%;
+	top:2%;
+	bottom:40%;
+	z-index:10;
+	border:1px solid #3a3a3a;
+/* CSS3 where available: rounded corners, drop-shadow, and fade in. */
+border-radius:.25rem;
+box-shadow:0 .5rem .5rem rgba(0,0,0,.5);
+	opacity:0;
+	transition: opacity 0.8s ease-out;
+	visibility: visible;
+}
+:target .popBoxS {position:fixed; opacity:1;}
+/* Light box properties */
+.lightbox {
+display:none;
+text-indent:-200em;
+background-color:rgba(0,0,0,.4);
+width:100%;
+height:100%;
+position:fixed;
+top:0;
+left:0;
+bottom:0;
+right:0;
+z-index:5;
+}
+:target .lightbox {display:block;}
+/* The pop-ups close link, moved via CSS to the top right of the pop-up */
+.close:link,
+.close:visited {
+	position: absolute;
+	top: -0.75em;
+	right: -0.75em;
+	display: block;
+	width: 2em;
+	height: 2em;
+	line-height: 1.8;
+	padding: 0;
+	text-align: center;
+	text-decoration: none;
+	background-color: #000;
+	border: 2px solid #fff;
+	color: #fff;
+	border-radius: 50%;
+box-shadow: 0 0 .5rem .5rem rba(0,0,0,.5);
+	visibility: visible;
+}
+.close:before {content:"X";}
+.close:hover,
+.close:active,
+.close:focus {
+box-shadow: 0 0 .5rem .5rem rba(255,0,0,.5);
+background-color: #c00;
+color: #fff;
+}
+.close span {
+text-indent: -200em;
+display: block;
+}
+/* The pop-up content div will scroll if it has too much content */
+.popScroll {
+	position:absolute;
+	top: 1rem;
+	left: 1rem;
+	right: 1rem;
+	bottom: 1rem;
+	overflow-y: auto;
+*overflow-y: scroll;
+	padding-right: 0.5em;
+	visibility: visible;
+}
+.popScroll h2 {margin-top:0}
+.zentriert1 {font-size: 12px;
+font-weight: inherit;
+}
+.zentriert1 {font-size: 12px;
+font-weight: inherit;
+}
+.style7 {color: #FF0000;
+	font-size: 10px;
+}
+.style7 {font-size: 10px}
+.style7 {color: #333333;
+	font-size: 10px;
+}
+.style7 {    font-size: 10px;
+    text-align: left;
+}
+    hr.reddash {
+  border-top: 2px dashed red;
+}
+</style>
+<script type="text/javascript">
+function TimeNow(Timefld) {
+var txt;
+var d = new Date(),
+thisyear = d.getFullYear();
+thismonth= d.getMonth();
+thismonth = thismonth+1;
+thisday = d.getDate();
+h = (d.getHours()<10?'0':'') + d.getHours()
+m = (d.getMinutes()<10?'0':'') + d.getMinutes()
+s = (d.getSeconds()<10?'0':'') + d.getSeconds();
+var myprompt = thismonth+'/'+thisday ;
+var RightNow = prompt("", myprompt);
+   if (RightNow.length > 5){ var RightNow=RightNow.slice(0, 5)}
+    
+document.getElementById(Timefld).value = RightNow;
+
+} 
+
+function DateforFile(RightNow) {
+var txt;
+var d = new Date(),
+thisyear = d.getFullYear();
+thismonth= d.getMonth();
+thismonth = thismonth+1;
+if (thismonth < 10) { thismonth = "0" + thismonth}
+
+thisday = d.getDate();
+if (thisday < 10) { thisday = "0" + thisday}
+
+h = (d.getHours()<10?'0':'') + d.getHours()
+m = (d.getMinutes()<10?'0':'') + d.getMinutes()
+var myprompt = thisyear+ '-'+thismonth+'-'+thisday+' '+h + '-' + m ;
+return myprompt;
+}
+
+  window.onload = function () { 
+ 
+ //Check the support for the File API support 
+ if (window.File && window.FileReader && window.FileList && window.Blob) {
+    var fileSelected = document.getElementById('txtfiletoread');
+	
+    fileSelected.addEventListener('change', function (e) { 
+         //Set the extension for the file 
+         var fileExtension = /text.*/; 
+         //Get the file object 
+         var fileTobeRead = fileSelected.files[0];
+        //Check of the extension match 
+         if (fileTobeRead.type.match(fileExtension)) { 
+             //Initialize the FileReader object to read the 2file 
+			
+             var fileReader = new FileReader(); 
+             fileReader.onload = function (e) { 
+                 var fileContents = document.getElementById('filecontents'); 
+                
+				document.getElementById('parseme').value =fileReader.result;
+				populateForm(obj = document.getElementById('parseme').value);
+					 } 
+             fileReader.readAsText(fileTobeRead); 
+         } 
+         else { 
+             alert("Please select text file"); 
+         }
+ 
+    }, false);
+} 
+ else { 
+     alert("Files are not supported"); 
+ } 
+//Checkifinbrowser();
+getit();
+     // disableSave ();
+     // disableEmail();
+ }
+ 
+    
+	function numbersonly(evt)  
+{  
+var charCode = (evt.which) ? evt.which : event.keyCode  
+if (charCode > 47 && (charCode < 58)) { document.getElementById('MaxChar').value=92-document.getElementById('NameCount').value;
+return true;  }
+return false;  
+
+} 
+function addSemi(myStr){
+var S= myStr;
+if (myStr.trim().length != 0) {
+S = S+';';}
+return S;
+}
+	   function store(){
+ 	var formatted= document.getElementById("Organization");
+     localStorage.setItem("RRIStrip", formatted.value);
+    }
+
+    function RestoreTitle() {
+
+var RightNow = document.getElementById('Organization').value;
+
+document.getElementById('Organization').value = RightNow;
+document.getElementById('SubjectText').innerHTML = RightNow;
+store();
+}
+	function getit() {
+	var storedValue = localStorage.getItem("Organization");
+	document.getElementById('Organization').value = storedValue;
+	RestoreTitle();
+	}
+    
+  
+    
+  
+    
+     function wordcount(s) {  
+   var maxtotal = document.getElementById('MaxChar').value;    
+cnt= s.length;
+
+  if (cnt > maxtotal){ var s=s.slice(0, maxtotal); alert ('more than '+maxtotal+' chars');console.log(s)}
+         document.getElementById('Message').value = s;  
+         cnt= s.length;
+         document.getElementById('check2').value = cnt;  
+ }  
+    
+ function wordcount2(s) {  
+
+    var maxtotal = document.getElementById('MaxChar').value;    
+    var s2 = document.getElementById('Message').value;
+    var charmax = s2.replace(/  \s+/g, "x");
+      
+    var cnt= charmax.length;
+   //   console.log(cnt);
+ 
+//document.getElementById('check2').value = cnt;  
+    if (cnt > maxtotal)
+        { var charmax=charmax.substring(0, maxtotal); alert ('more than '+maxtotal+' chars')}
+    document.getElementById('Message').value = charmax;     console.log(charmax);
+    var tarea =  document.getElementById('Message').value; document.getElementById('check2').value = cnt;  console.log(cnt);
+    cnt= tarea.value.length;
+   
+    
+   tarea.selectionStart = tarea.selectionEnd = tarea.value.length;
+        
+     tarea.focus();
+ }  
+    
+function combineaddresses() {
+    var x1 =document.getElementById('To_Name').value; 
+   var x2 =document.getElementById('cellemail').value;
+         document.getElementById('SendToAddresses').value = x2+x1;
+}
+function checkform(){
+    x=document.getElementById('SendToAddresses').value;
+    if( x.length < 5){alert ("You must enter an Email address or a Phone number."); 
+               return false}
+return true;
+    
+}
+    function highlightRowsWithSpaces() {
+        const table = document.getElementById("myTable");
+
+        for (let i = 0; i < table.rows.length; i++) {
+            const row = table.rows[i];
+            let hasSpace = false;
+
+            for (let j = 0; j < row.cells.length; j++) {
+                const cell = row.cells[j];
+                const cellText = cell.textContent || cell.innerText;
+              
+            //
+
+                if (cellText.includes("  ") ) {
+                    hasSpace = true;
+                    break; // No need to check other cells in this row
+                }
+            }
+
+            if (hasSpace) {
+                row.style.backgroundColor = "LemonChiffon";
+            } else {
+                row.style.backgroundColor = ""; // Reset if no spaces
+            }
+        }
+    }
+    function addInputField(k) {
+      // Create a new input element
+      const newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.name = 'newField'+k;
+         newInput.id = 'newField'+k;
+      newInput.placeholder = 'Enter additional info';
+
+      // Append the new input to the form
+      const form = document.getElementById('myform');
+      form.appendChild(newInput);
+    }
+   function mynewFunction (){
+       
+       myreset3();
+       
+           var j=1;
+ var s1 = document.getElementById('Message').value;
+       s1=s1.trim();
+       //rempve last 2 //
+         x1 = s1.length;
+       x2= s1.indexOf("//");
+    
+           
+        last2 = s1.slice(-2); 
+       if (last2 == "//") {
+           newString = s1.slice(0, -2);
+           s1= newString
+           
+       }
+       //newString = originalString.slice(0, -2)
+    s1=s1.replaceAll('//',"/  /");
+        s1=s1.replaceAll('/ /',"/  /");
+      
+        var fields= s1.split("/");
+        //alert(fields);
+    // Reference to the table
+    const table = document.getElementById("myTable");
+const tableBody = document.getElementById("myTable").getElementsByTagName("tbody")[0];
+    // Loop through the array and add rows dynamically
+ var firstans;
+fields.forEach((field, index) => {
+  const row = document.createElement("tr");
+
+  const labelCell = document.createElement("td");
+  const label = document.createElement("label");
+  const idName = `ans_${index}`; // D and name with index
+    
+  label.textContent = field; if(index==0){firstans = field};
+  //  if index==0 {firstans= field}
+  label.setAttribute("for", idName);
+  labelCell.appendChild(label);
+//alert (field);
+  const inputCell = document.createElement("td");
+  const input = document.createElement("input");
+  input.setAttribute("type", "text");
+  input.setAttribute("id", idName);
+  input.setAttribute("name", idName);
+    
+   //input.setAttribute("value", field);//shows the field
+    
+    field=label.textContent.trim(); 
+ if (field==''){input.setAttribute("readonly", "readonly");
+                // input.setAttribute("visibilty", "none")<br />
+                  //input.style.display = 'none';
+                  //test
+}
+  inputCell.appendChild(input);
+
+  row.appendChild(labelCell);
+  row.appendChild(inputCell);
+  tableBody.appendChild(row);
+});;   
+     document.getElementById('ans_'+0).value=firstans;document.getElementById('EXname').value=firstans;
+    highlightRowsWithSpaces()}
+    function myFunction() {
+        
+        var s1 = document.getElementById('Message').value;
+        var s2= s1.split("/");
+        
+       var table = document.getElementById("myTable");   
+        //document.getElementById("demo").innerHTML = myArray[1]; 
+        x1 = s2.length;
+for (let j = 1; j < x1; j++) {
+//alert (j);
+var newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.name = 'newField'+j;
+         newInput.id = 'newField'+j;
+      newInput.placeholder = 'Enter additional info';
+  var row = table.insertRow(j);
+  var cell1 = row.insertCell(0);
+  var cell2 = row.insertCell(1); ;
+   // addInputField(j)
+  cell1.innerHTML = s2[j-1];
+    str="<input type 'text' name='ans'"+j+">"
+  cell2 = newInput;
+    // '<input type="text" name="'question'+j" id="'question'+j">' ;
+//const form = document.getElementById('myform');
+ // form.appendChild(newInput);
+    
+}
+    }
+    
+function createStrip() {
+    
+    var s1 = document.getElementById('Message').value;
+        var s2= s1.split("/");
+    x1=s2.length;
+   var st=""
+    for (let j = 0; j < x1-2; j++){
+        //{alert(j);
+        
+      // t1= document.getElementById('ans_'+j).value; if(t1=="" && t2 =='   '){t1="..."};
+         thisans =  document.getElementById('ans_'+j).value;
+        //thisans=thisans.trim();
+        if (thisans == '') {thisans = "   "}; //
+          st = st +  thisans;
+        // st = st +  document.getElementById('ans_'+j).value;
+            st = st+'/';   
+         document.getElementById('myStrip').value= st;
+            
+        }
+<!--   st =st.toUpperCase(); -->
+ document.getElementById('myStrip').value= st +'/';    
+}
+
+    function copytoClip(Whichfield,thetxt) {
+  var copyText = document.getElementById(Whichfield);
+  copyText.select();
+  copyText.setSelectionRange(0, 99999)
+  document.execCommand("copy");
+ alert(thetxt+'\n'+ copyText.value);
+  return false;
+}
+
+    function copyToClipboard() {
+        var a = document.getElementById('Message').value;
+        var b = document.getElementById('myStrip').value;
+  var formattedText = "Original Request Strip:\n\n"+a+"\n\nResponse Strip:\n\n"+b;
+
+  navigator.clipboard.writeText(formattedText).then(() => {
+    console.log('Text copied to clipboard');
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+  });
+        alert("Strips copied to clipboard");
+}
+    function SetupTitle() {
+var myprompt = '';
+var myttemp = document.getElementById('Organization').value;
+var RightNow = prompt("Enter Agency/Group Title",   myprompt);
+if (RightNow.length == 0) { RightNow = myttemp}
+document.getElementById('Organization').value = RightNow;
+document.getElementById('SubjectText').innerHTML = RightNow;
+store();
+}
+function Getsubject() {
+var myprompt = '';
+var temps = document.getElementById('Status').value;
+var templ = document.getElementById('Location').value;
+var tempsender = document.getElementById('MsgSender').value;
+myttemp = "Winlink Check-in "+temps + " - " +tempsender + " - " +templ;
+    document.getElementById('Newsubject').value = myttemp;
+myprompt = "Winlink Check-in "+temps + " - " +tempsender + " - " +templ;
+var RightNow = prompt("Message Subject:",   myprompt);
+if (RightNow ==null) { RightNow = myttemp}
+document.getElementById('Newsubject').value = RightNow;
+}
+    
+    function SetupTitle() {
+var myprompt = '';
+var myttemp = document.getElementById('Organization').value;
+var RightNow = prompt("Enter Agency/Group Title",   myprompt);
+if (RightNow.length == 0) { RightNow = myttemp}
+document.getElementById('Organization').value = RightNow;
+document.getElementById('SubjectText').innerHTML = RightNow;
+store();
+}
+    
+    function myreset3(){
+        
+        let table = document.getElementById("myTable");
+let tableRows = table.getElementsByTagName('tr');
+let rowCount = tableRows.length; 
+        
+
+// Iterate backward to avoid issues with shifting indices
+for (let x = rowCount-1 ; x > 0; x--) {
+    
+    table.deleteRow(x);
+    //table.removeChild(table[x]);
+}
+    }
+        
+ function insertthis(myprompt,str){
+   
+var msg=document.getElementById('Message').value;
+if(myprompt !==''){
+var RightNow = prompt( myprompt,'');
+str = str.replace('$',RightNow);}
+ //document.getElementById('MessageTXT').value = msg +str;
+    document.getElementById('Message').value = str;
+document.getElementById('closeme').click();
+//wordcount(document.getElementById('Message').value);
+tarea =  document.getElementById('Message');
+    var msgsofar= document.getElementById('Message').value;
+tarea.selectionStart = tarea.selectionEnd = tarea.value.length;
+    wordcount(msgsofar);
+        tarea.focus();
+    msgsofar= msgsofar.trim();
+    msgsofar = fixpunct(msgsofar, 'Message');  
+   
+  //  fix();
+      wordcount(msgsofar);
+
+}
+        
+ 
+</script>
+</head>
+<body>
+<div style="text-align: justify;">
+  <blockquote>
+    <p>&nbsp;</p>
+    <form  style="font-family: Arial;" pbzloc="3" onsubmit="alert('To complete your form submission, click OK and close the open browser window. You will return to the new message window so you can post your message to the outbox.');" method="post" id="myform" enctype="multipart/form-data" action="http://{FormServer}:{FormPort}">
+      <div id="pop1" class="pop-up"><!-- The pop-up block -->
+        <div class="popBox"><!-- If the content becomes larger than the pop-up this div will scroll the content -->
+          <div class="popScroll"><!-- Test for help starts here -->
+            <p> </p>     
+            
+            
+<h2>RI Strip Response Creator<br/>
+
+</h2>
+         <h4><span style="font-size: 16px">Summary</span><br>
+           
+  <font size="3" face="Arial, Helvetica, sans-serif"></h4>
+<p>This Request for Information Strip Reader and Response Creator form is
+           designed to accept Requests for Information (RI) strips with multiple elements in a spreadsheet slant separated csv format. This form will 
+           then parse the fields into individual elements, each of which will have a corresponding response field where the requested information
+           may be entered. Once
+           all of the response fields are filled out, the form will create a Response to the Request for Information (RRI) in strip format which 
+           may then be returned to the sender. Multiple RRIs may then be compiled in spreadsheet format.<br> 
+           
+         </p>
+<h4>Installation</h4>
+
+  <font size="3" face="Arial, Helvetica, sans-serif">The form consists of 2 files, an html file and a txt file. When used with Winlink Express, they
+  are installed in the Templates folder. The form will also work outside of Winlink Express. This facilitates use with other communications
+  applications. The form will work with any operating system that has a browser. Simply place the two files in a convenient location. For 
+  example, they may be installed on a thumb drive. <br>
+<h4>Overview</h4>
+The Request for Information (RI) message strip format is useful for 
+  the gathering a variety of information in a conpact and concise manner. The strip is in the form of a single row in 
+  a spreadsheet. The strip is simply a slant separated set of values. The RI serves as the header line in the spreadsheet. The set of responses
+  forms the data cells in the spreadsheet. 
+  
+  There are many forms that collect information. Weather and situation report forms are two examples. Some of these will produce a
+  a csv spreadsheet text output. However, often times a "standard" form may not be optimal in some situations where, for example, a
+  "standard" form may not include the desired elements. RI strips are simple and fast to 
+  create and may be used as standards for an organization or just serve as one-offs for particular situations.<br> <p>
+
+In use, a RI strip is generated by a group or organization and is then sent to multiple recipients. This could be for gathering a 
+specific set of information, multiple types of information, or even a survey of
+group members. <p>
+
+The strip format is transmission mode agnostic. It can be sent by any 
+digital radio mode or even voice. With certain formatting constraints a strip may be sent by cw or incorporated into the body of a radiogram. 
+    <p>
+
+The current version is based on the RI strip format developed by the Military Auxiliary Radio System (MARS). The MARS version has some
+specific formatting standards to provide compatibility with their specialized software. The MARS format will be discussed further
+below. 
+<h4>RI Example with Corresponding RRI</h4>
+The following is a simple RI example. This is a simple survey of possible participants in an exercise. 
+
+<p>ROSTER/HAM CALL SIGN/FIRST NAME/TOWN/COUNTY/STATE (2 LETTERS)/LAT (e.g. 44.123N)/LON (e.g. 069.123W)/MGRS (9 CHARACTERS)/WINLINK 
+(Y,N)/HF NBEMS (Y,N)/VHF NBEMS (Y,N)/BRIEF COMMENTS//
+
+
+<p>The first field has a simple strip title, a standard component of the format. This is followed by the specific information that is 
+requested. For consistency in the responses the 
+state name requests the 2 letter abbreviation, latitude and longitude  are requested in decimal degrees with 3 digits after the decimal 
+point (this gives adequate resolution for the intended purpose). N and W are requested for the coordinates. A minus sign could also
+be requested for the longitude in place of the W if desired. The MGRS entry requests a total of 9 characters, Next are a series of 3 capability
+items with Y(es)or N(o) responses. The strip concludes with a field for brief comments.
+
+<p> As previously noted, each field is separated by a slant (/). These are the separators in the spreadsheet. Do not use the slant 
+elsewhere. If you have no response to a field you must still include the slant. The strip is terminated by a double slant. Also, the strip must be a 
+continuous string - no line feeds or carriage returns. The form automatically inserts the title into the RRI and manages the slants. If you have no comment for a field, simply
+leave it blank.     
+
+<p>When creating or saving a strip (original RI or a Response) there must be no line feeds or carriage returns. An RI can be 
+edited or created in the Request field and then Parsed to check for errors. Changes in the Request field will be shown when 
+the RI is parsed again.
+
+<p>Outside of the tool, it is suggested that a pure text editor be used for RI creation or editing. Notepad++ is a suggested 
+application. Turn off CR and LF to prevent breaks in the strip.
+
+<p>Here is an example response:
+
+<p>ROSTER/KB1TCE/STEVE/OWLS HEAD/KNOX/ME/44.048N/069.103W/19TDJ9172/Y/Y/Y)/NEED PRACTICE WITH HF NBEMS//
+<h4>Using the Form</h4>
+<p>
+  
+  In the RI entry field you may directly enter the RI or paste an existing RI into the field.  The character counter will limit 
+  the number of characters entered. The current limit
+is 500 characters. This help to ensure that the RI is as concise as reasonably possible.    <p>
+
+Once the RI is inputted, click the "Parse Strip" button. A two column table will appear with each strip element in the left column and
+a corresponding blank input field on the right. Fill in your responses to each field. If you leave a field blank, the / separator
+will still appear in the completed strip.
+
+With the RRI strip table completed, click "Create Reply Strip." The strip will appear in the field below the button. If you want 
+to change something, return to the table and make the changes. Then click "Create Reply Strip" again. The revised strip will appear. <p>
+
+You now have two options. If the form is being used within Winlink Express, click "Submit" to load the RI and RRI into the Winlink Express
+message pane. If you are using the form as a stand-alone, click "Copy Strips to Clipboard." You may now save the strips as a text file or
+paste them into, for example, a flmsg form field. 
+
+
+<h4>Example Spreadsheet</h4>
+Below is a spreadsheet based on the above example RI and RRI. Note that the person compiling the spreadsheet edited LAT and LON to make the
+spreadsheet more readable.<br>
+<TABLE WIDTH="900" CELLPADDING="2" CELLSPACING="2" BORDER="2">
+				  <TR>
+					 <TD WIDTH="225" ALIGN="CENTER"><B>CALL SIGN</B></TD>
+					 <TD WIDTH="225" ALIGN="CENTER"><B>FIRST NAME</B></TD>
+					 <TD WIDTH="250" ALIGN="CENTER"><B>TOWN</B></TD> 
+           <TD WIDTH="225" ALIGN="CENTER"><B>COUNTY</B></TD>
+					 <TD WIDTH="225" ALIGN="CENTER"><B>STATE</B></TD>
+					 <TD WIDTH="250" ALIGN="CENTER"><B>LATITUDE</B></TD>
+           <TD WIDTH="225" ALIGN="CENTER"><B>LONGITUDE</B></TD>
+					 <TD WIDTH="225" ALIGN="CENTER"><B>MGRS</B></TD>
+					 <TD WIDTH="250" ALIGN="CENTER"><B>WINLINK</B></TD>  
+           <TD WIDTH="250" ALIGN="CENTER"><B>HF NBEMS</B></TD>
+           <TD WIDTH="225" ALIGN="CENTER"><B>VHF NBEMS</B></TD>
+					 <TD WIDTH="225" ALIGN="CENTER"><B>COMMENTS</B></TD>
+					 
+  </TR>
+				  <TR>
+					 <TD WIDTH="225">KB1TCE</TD>
+            <TD WIDTH="225">STEVE</TD>
+             <TD WIDTH="225">OWLS HEAD</TD>
+              <TD WIDTH="225">KNOX</TD> 
+               <TD WIDTH="225">ME</TD>
+               <TD WIDTH="225">44.048N</TD>   
+               <TD WIDTH="225">069.103W</TD>
+               <TD WIDTH="225">19TDJ9172</TD>
+               <TD WIDTH="225">Y</TD>
+               <TD WIDTH="225">Y</TD>
+               <TD WIDTH="225">Y</TD>
+               <TD WIDTH="225">NEED PRACTICE WITH HF NBEMS</TD>
+					 
+				  </TR>
+				  
+</TABLE>  
+   
+
+		  
+<h4>Responding to MARS Strip RIs</h4>           
+<p>
+
+<font size="3" face="Arial, Helvetica, sans-serif">This tool can also be used to respond to Request for Information (RI) strips that are sent by Army or Air Force MARS. ARES/RACES 
+operators may receive RI strips in a slant separated format. MARS has some formatting codes that may not be intuitive to the 
+Amateur community. These codes are provided to ensure that the MARS operator gets the response strip back in a format that 
+can be read by their software.            <br>  <p>
+
+The following is the list of "masks" that MARS uses.  As a simple example "/LAT DEG DEC(##.#####[N])/ 
+asks for a reply with the latitude in decimal degrees, 5 digits after the decimal point and North latitude 
+(assuming the northern hemisphere). This would look like /44.12345N/ in the Response.          <br>  
+<p>
+
+		
+		<font size="3" face="Arial, Helvetica, sans-serif"><strong># (Numerical character - no spaces)</strong>: 
+          (#) unlimited size; (###); Sets mask to collect 3 numbers.</font></li>    <br>
+        <strong><font size="3" face="Arial, Helvetica, sans-serif">A (Alphabetic character - no spaces):</font></strong> 
+<font size="3" face="Arial, Helvetica, sans-serif">
+          (A) unlimited size; (AA) sets mask to collect 2 letters.<br>      
+          
+    <strong><font size="3" face="Arial, Helvetica, sans-serif">N (Alpha-numeric character - no spaces):</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          (N) unlimited size; (NNNN) sets mask to collect 4 alpha-numeric characters.</font></ </li><br>     
+          
+    <strong><font size="3" face="Arial, Helvetica, sans-serif">X (Free text):</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          (X) unlimited length, accepts special characters and blanks; (XXXX) sets mask to collect 4 characters, none of which can be blank. </font></ </li><br>
+          
+          
+               
+                                                                                                        
+     <strong><font size="3" face="Arial, Helvetica, sans-serif">Y:</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Year, translates to #<font></ </li><br>            
+          
+     <strong><font size="3" face="Arial, Helvetica, sans-serif">M:</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Month, translates to #<font></ </li><br>  
+          
+       <strong><font size="3" face="Arial, Helvetica, sans-serif">D:</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Day, translates to #<font></ </li><br>      
+          
+        <strong><font size="3" face="Arial, Helvetica, sans-serif">H:</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Hour, ranslates to #<font></ </li><br>         
+          
+       <strong><font size="3" face="Arial, Helvetica, sans-serif">M:</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Minute, translates to #<font></ </li><br>     
+       
+      <strong><font size="3" face="Arial, Helvetica, sans-serif">,</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Comma separated list of acceptable choice answers.<font></ </li><br>
+          
+      <strong><font size="3" face="Arial, Helvetica, sans-serif">:</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Colon, Used if a label is required in RRI. For example SHELTER RI has an ASOF:field. If it's 6/15/2023@14:18 hours as I write, 
+          then DDHHMM=151418. (Note ASOF is "as of".)<font></ </li><br>    
+          
+       <strong><font size="3" face="Arial, Helvetica, sans-serif">[ ]</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          Ignore masking characters between brackets, i.e. [MST] indicates display MST for Moutain Standard Time amd do not 
+          translate the M to a #. For example, 1539MST. <font></ </li><br>   
+                   
+     
+        <strong><font size="3" face="Arial, Helvetica, sans-serif">(  )</font></strong> 
+          <font size="3" face="Arial, Helvetica, sans-serif">
+          together or separate are reserved characters and cannot be used as a mask.<font></ </li><br>   
+     
+     
+
+<p>For quesions or comments please contact KB1TCE via Winlink</p>
+            
+            <br />
+            </p>
+          </div>
+          <!-- The close pop-up link correctly positioned at the end of the content block -->
+          <a class="close" href="#links"><span>Back
+        to links</span></a> </div>
+      </div>
+      
+              <div class="pop-up" id="pop2">
+    <!-- The pop-up block -->
+    <div class="popBoxS">
+      <!-- If the content becomes larger than the pop-up this div will scroll the content -->
+      <div class="popScroll">
+     
+          <br />  <Strong> The inserted information script will replace the current text.  </Strong> <br />
+		                         
+          <br />       
+                     
+
+    <table width="100%"  border="1" cellspacing="0" cellpadding="2">
+           
+        
+            
+ <tr>
+ <td width="5%">GYX WEATHER</td>
+ <td width="95%"><a href="javascript:insertthis('','GYX WEATHER/DATE (MM-DD-YYYY)/TIME (HHMML OR HHMMZ)/CALL SIGN/SPOTTER ID (OR NA)
+ /SOURCE (Amateur Radio, Trained Spotter, Media, 
+Public Service Radio, Other 3rd Party, Direct Messaging)/LOCATION ROAD, TOWN)/STATE (AA)/CURRENT WEATHER (RELEVANT INFO, BE BRIEF)
+/SNOW, SLEET (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)/ICE ACCRETION (INCHES OR NA)/RAINFALL (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)/HAIL SIZE 
+(INCHES OR NA)/WIND DIRECTION & SPEED (AAA@MPH)/STORM DAMAGE (WIND, FLOODING, ICE JAMS, OTHER DETAILS)/MODE (Personal Observation,
+ FM Repeater, Winlink, DMR, Direct Messaging. For Others Leave Blank)/NET (NAME OF RADIO NET OR OTHER EG EMAIL, SLACK)//');">
+
+
+<p>GYX WEATHER/DATE (MM-DD-YYYY)/TIME (HHMML OR HHMMZ)/CALL SIGN/SPOTTER ID (OR NA)/SOURCE (Amateur Radio, Trained Spotter, Media, 
+Public Service Radio, Other 3rd Party, Direct Messaging)/LOCATION ROAD, TOWN)/STATE (AA)/CURRENT WEATHER (RELEVANT INFO, BE BRIEF)/SNOW, SLEET (INCHES OR NA, IF STORM 
+TOTAL ADD * EG 2.6 or 3.5*)/ICE ACCRETION (INCHES OR NA)/RAINFALL (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)/HAIL SIZE 
+(INCHES OR NA)/WIND DIRECTION & SPEED (AAA@MPH)/STORM DAMAGE (WIND, FLOODING, ICE JAMS, OTHER DETAILS)/MODE (Personal Observation, FM Repeater, Winlink, 
+DMR, Direct Messaging. For Others Leave Blank)/NET (NAME OF RADIO NET OR OTHER EG EMAIL, SLACK)//</p>
+              </a></td>
+            </tr>        
+            
+            <tr>
+              <td>GYX NAME</td>
+               <td width="95%"><a href="javascript:insertthis('','GYX STRIP//');">
+                <p>GYX STRIP//</p>
+              </a></td>
+            </tr>   
+                       
+           <tr>
+              <td>GYX NAME</td>
+               <td width="95%"><a href="javascript:insertthis('','GYX STRIP//');">
+                <p>GYX STRIP//</p>
+              </a></td>
+            </tr>   
+           
+            <tr bgcolor="#ffffe6">
+              <td>WXOBS</td>
+               <td><a href="javascript:insertthis('','WXOBS/CALL SIGN/SKYWARN ID (or NA)/CITY/STATE (AA)/MGRS (N)/NWS CWA (AAA,NA)/   /OBSERVATION TIME Z (DDHHMMZ)/   /WIND DIR (AAA)/AVE SPEED MPH (###)/GUSTS MPH (###)/   /CLOUDS (CLR,FEW,SKT,CB,OVC,TCU)/   /TEMP DEG F (###, -##)/   /BAROMETER MB (####.#)/BAROMETER 3 HR TREND (R,S,F)/   /PRECIP TYPE (RA,SN,SL,PL,GR,NONE)/CURRENT PRECIP INS (###.##,NA)/STORM TOTAL PRECIP INS (###.##,NA)/LIQUID EQUIV PRECIP INS (###.##,NA)/ /COMMENTS,DAMAGE//');">
+                <p>WXOBS/CALL SIGN/SKYWARN ID (or NA)/CITY/STATE (AA)/MGRS (N)/NWS CWA (AAA,NA)/&nbsp;&nbsp; /OBSERVATION TIME Z  (DDHHMMZ)/&nbsp;&nbsp; /WIND DIR (AAA)/AVE SPEED MPH (###)/GUSTS MPH  (###)/&nbsp;&nbsp; /CLOUDS (CLR,FEW,SKT,CB,OVC,TCU)/&nbsp;&nbsp; /TEMP DEG F  (###, -##)/&nbsp;&nbsp; /BAROMETER MB (####.#)/BAROMETER 3 HR TREND  (R,S,F)/&nbsp;&nbsp; /PRECIP TYPE (RA,SN,SL,PL,GR,NONE)/CURRENT PRECIP INS  (###.##,NA)/STORM TOTAL PRECIP INS (###.##,NA)/LIQUID EQUIV PRECIP INS  (###.##,NA)/ /COMMENTS,DAMAGE//</p>
+              </a></td>
+            </tr>     
+            
+            
+            
+       
+            <tr bgcolor="#ffffe6">
+              <td>SITREP</td>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td>OPRED</td>
+              <td>&nbsp;</td>
+            </tr>
+           
+            
+
+                        
+            <tr>
+              <td>	<strong> </strong></td>
+              <td>&nbsp;</td>
+            </tr>
+       
+       
+        </table>      
+      </div>
+      <!-- The close pop-up link correctly positioned at the end of the content block -->
+      <a href="#links" id='closeme'class="close"><span>Back to links</span></a> </div>
+  </div>
+      
+      <table style="text-align: left; width: 901px; height: 419px;" border="0">
+        <tbody align="left">
+          <tr align="justify">
+            <td style="text-align: center;">
+              <table style="font-size: 14px; text-align: left; width: 968px; height: 381px;" border="3" bordercolor="#999999" cellpadding="6" 
+cellspacing="0">
+                <tbody>
+                  <tr>
+                    <td colspan="2" style="height: 15%; text-align: center; background-color: rgb(255, 255, 234); font-size: 20px;"><p><b>
+                      
+                      
+                      GYX Request for Information Strip Reader and Response  Creator
+                      </b>
+                    
+                      <span style="font-size: 14px"></span></p>
+                      <p><span class="style20"  id="SubjectText">
+ </span>
+                          <a href="#pop1">
+<table width="100%" border="0" align="left" cellpadding="1" cellspacing="00">
+  <tbody>
+    <tr>
+      <td width="32%">
+        <input type="button" value="Setup" onclick="SetupTitle()" />
+      </b><span class="style7">&nbsp;Click to add your agency/group name to title </span></td>
+        <td width="44%"><a href="#pop1">Operator Info - Read Please
+        <input type="file" id="txtfiletoread" accept=".txt"  style="display: none;"/></td>
+      <td width="24%"><div align="center"><input name="Organization" type="hidden" id="Organization" value="RRI" />
+        <input name="EXname" type="hidden" id="EXname" />
+      </div></td>
+    </tr>
+  </tbody>
+</table></span>
+                
+                  <tr align="center">
+                    <td colspan="5" style="height: 88px; vertical-align: top; text-align: center;"><div align="left">
+                      <p>&nbsp;&nbsp;&nbsp; <strong>Request</strong>&nbsp;<span style="font-size: 12px"><small style="color: rgb(0, 102, 0);">
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Charcter count: <span class="MSGtext">
+                          <input name="check2" id="check2" size="3" maxlength="3" class="zentriert1" readonly="readonly" value="0" type="text" />
+                          </span>&nbsp;&nbsp;&nbsp;of  </small><span class="style40"> &nbsp;</span></span><strong><span style="font-weight: normal;">
+                          <input name="MaxChar" type="text" id="MaxChar" placeholder="Max"  value="700" size="6" readonly="readonly" />
+                          </span></strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#pop2" class="style27">Insert a Standard Information Strip</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#pop6" class="style27">Instructions for Standard RI Strips</a><br />
+                          <small>
+                          <textarea name="Message"  cols="140" rows="5" maxlength= doc  id="Message" placeholder="Max length is 700 characters" title="Be brief and concise." onkeyup="wordcount(this.value)"; onchange="wordcount(this.value)"></textarea>
+                          </small><br />
+                        <small>
+                        &nbsp;&nbsp;</small></p>
+                      <p>
+                        <span style="vertical-align: top; text-align: justify; height: 5%;">
+                        <input name="CopyStrip2" type="button" id="CopyStrip2" onclick="mynewFunction()" value=" Parse Strip " />
+                        </span></p>
+                   
+                      <hr class="reddash">
+                      <table name="myTable"id="myTable" width="60%" border="1" cellspacing="00" cellpadding="1">
+                        <tbody>
+                          <tr>
+                            <td width="42%" bgcolor="#CBFFC9"><strong>Strip Question</strong></td>
+                            <td width="58%" bgcolor="#CBFFC9" style="font-weight: inherit">&nbsp;&nbsp;<strong>Answer </strong></td>
+                            </tr>
+                          </tbody>
+                      </table>
+                      <p>&nbsp;</p>
+                    </div></td>
+                  </tr>
+                  <tr>
+                    <td height="38" colspan="2" bgcolor="#f8f8ff" style="vertical-align: top; text-align: justify; height: 5%;"><button type="button" onclick="createStrip()">Create Reply Strip</button>
+                      &nbsp;&nbsp;&nbsp;
+                      <p>
+                        <input name="myStrip" type="text" id="myStrip" style="width: 900px; font-weight: bold;" size="900" readonly="readonly" />
+                        <br />
+                      </p>
+                </td>
+                  </tr>
+                  <tr>
+                    <td height="38" colspan="2" align="center" style="vertical-align: top; text-align: justify; height: 5%;"><input name="CopyStrip" type="button" id="CopyStrip" onclick="copyToClipboard();" value=" Copy Strips to Clipboard " /></td>
+                  </tr>
+                  <tr>
+                    
+                    <td height="38" colspan="2" align="center" style="vertical-align: top; text-align: justify; height: 5%;">
+                      <table width="100%" border="0" cellspacing="00" cellpadding="1">
+                        <tbody>
+                          <tr>
+                            <td width="47%"><input style="height: 28px; width: 52px; " title="After submitting, close browser, then address message for posting" class="SubmitBtn1" enctype="multipart/form-data" id="Submit" method="Post" name="Submit" value="Submit" type="submit" />
+                              <small><span style="color: rgb(128, 0, 0);"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="reset" value="Reset Form" onclick="myreset3();" />
+                              </span></small> <span style="font-family:  Arial, Helvetica, sans-serif;;"><span style="font-size: 12px;">
+                              <input name="testCall" type="hidden" id="testCall" value="{MsgSender}" size="14" maxlength="</table>13" />
+                              </span></span> <b><b>
+                              <input name="Templateversion" type="hidden" id="Templateversion" value="Request for Information Strip Reader and Response Creator v 1.4R3" />
+                            </b></b>&nbsp;&nbsp;&nbsp;</td>
+                            <td width="53%">&nbsp;&nbsp;&nbsp;&nbsp;Form based on a concept by the  SHARES Region 1 Interoperability Group    Version 1.4R3</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    
+                  </tr>
+                </tbody>
+              </table>
+              <br />
+            <small>&nbsp;</small></td>
+          </tr>
+        </tbody>
+        <!-- popup starts here -->
+      </table>
+
+    </form>
+  </blockquote>
+</div>
+	<div id="pop6" class="pop-up">
+        <!-- The pop-up block -->
+        <div class="popBox">
+          <!-- If the content becomes larger than the pop-up this div will scroll the content -->
+          <div class="popScroll">
+            <p> </p>  
+            
+
+<h2>Instructions for Standard RI Strips</h2>
+
+This describes the Standard RI strips with instructions for properly responding to these strips. The first group consists of the 
+SKYWARN weather observation strip that has been developed for the Gray, Maine weather service GYX. The second group consists of 
+strips developed by Radio Relay International for broader use. The first, a weather observation strip (WXOBS), is included in this 
+release. A SITREP and OPRED (Operational Readiness) are pending.
+
+<h4>GYX SKYWARN RI STRIP</h4>
+
+Responses to this strip are designed to load directly into the GYX Google Sheets database without any alterations. Here is the RI strip followed by an example response. 
+
+<p>GYX WEATHER/DATE (MM-DD-YYYY)/TIME (HHMML OR HHMMZ)/CALL SIGN/SPOTTER ID (OR NA)/SOURCE (Amateur Radio, Trained Spotter, Media, 
+Public Service Radio, Other 3rd Party, Direct Messaging)/LOCATION ROAD, TOWN)/STATE (AA)/CURRENT WEATHER (RELEVANT INFO, BE BRIEF)/SNOW, SLEET (INCHES OR NA, IF STORM 
+TOTAL ADD * EG 2.6 or 3.5*)/ICE ACCRETION (INCHES OR NA)/RAINFALL (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)/HAIL SIZE 
+(INCHES OR NA)/WIND DIRECTION & SPEED (AAA@MPH)/STORM DAMAGE (WIND, FLOODING, ICE JAMS, OTHER DETAILS)/MODE (Personal Observation, FM Repeater, Winlink, 
+DMR, Direct Messaging. For Others Leave Blank)/NET (NAME OF RADIO NET OR OTHER EG EMAIL, SLACK)/
+
+<p>GYX WEATHER/01-02-2026/2220Z/WO1J/CU330/Amateur Radio/314 POPE RD, WINDHAM/ME/CLEAR & COLD/1.4*/NA/0,01*/NA/WNW @ 2/NONE/Personal
+Observation/REPEATER 147.045//</b>         
+
+<p>The Response strips produced by this tool are designed to be imported directly into a NWS spreadsheet. Formatting is important
+so follow the example Answers exactly. 
+
+<p>The first few fields provide the name of the strip and particulars about the date and time of the observation, information 
+about the observer and location of the observation. The DATE must have hyphens as shown (MM-DD-YYYY).  
+
+<p><b>SOURCE</b> asks for one of several specific responses and they are case specific. Copy your selection exactly. 
+
+<p>The <b>CURRENT WEATHER</b> field is asking for a brief synopsis of current weather conditions. This might include cloud cover, 
+humidity, barometer reading, etc. This is a free text field.
+
+<p> The next several fields ask for specific information to be provided in the specified format. Do not embellish these fields that 
+is what the free text <b>CURRENT WEATHER</b> field is for. Here are some specifics.
+
+<p><b>SNOW, SLEET  (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)</b> This field asks for snow or sleet accumulations in
+ inches. There is no need to include the unit in your response. It also asks for an asterisk (*) with the measurement if the
+  number represents a storm total. The response should be NA (Not Appiicable) if there was no accumulation. If, for example, it snowed buy you didn't take a measurement, just leave the field in the Response Creator blank. 	<br>
+
+<p><b>ICE ACCRETION (INCHES OR NA)</b> Self explanatory.
+
+<p><b>RAINFALL (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)</b> Same as SNOW, SLEET </b>
+
+<p><b>HAIL SIZE (INCHES OR NA</b> Same as ICE ACCRETION.
+
+
+<p><b>WIND DIRECTION & SPEED (AAA @ MPH)</b> Windspeed should be in MPH and direction in up to 3 letters e.g. N, NW, SSE.For example NNW @ 16.
+
+<p><b>STORM DAMAGE (WIND, FLOODING, ICE JAMS, ETC)</b> This is another free text field. Some other examples could include:   <br>
+Damage to structures (roof, siding, windows, etc)<br>
+Damage to vehicles (from hail and/or wind)<br>
+Trees or large limbs snapped/uprooted<br>
+Power/telephone poles and/or lines down<br>
+Road damage due to flooding<br>
+Inundation of coastal areas and an estimate of the water depth<br>
+Water in buildings or roads closed<br>
+Coastal damage caused by pounding surf<br>
+Significant coastal dune or small rock erosion
+
+<p>The final 2 fields cover how the information was transmitted by the observer. 
+<p><b>MODE (Personal Observation, FM Repeater, Winlink, DMR, Direct Messaging)</b> This is how the observer's information was transmitted. If your method 
+was not one of these, leave the entry blank. This field is also case sensitive. Personal Observation indicates that the person who 
+entered the information is the same person as identified in the Response strip. 
+
+<p><b>NET (NAME OF RADIO NET OR OTHER EG EMAIL, SLACK)</b> If the observer reported through an organized net (radio or otherwise) 
+enter the name of the net.
+
+
+
+
+<h2>Instructions for Radio Relay International RI Strips</h2>
+
+<h4>General Standard RI Strip Formatting</h4>
+
+<p>Use upper case for consistency with all transmission modes.
+
+<p>In the RI strip you will note several blank gaps between slants - / /. These are carried over to the response strip. 
+The purpose is to separate sections (sender's location, temperatore,etc.) as well as to make it less confusing when 
+transmitting by voice or cw. the Response Creator tool automatically preserves these gaps. If creating a response manually 
+simply press the spacebar 3 times to create the gap.
+
+<h4>WXOBS Information Fields</h4>
+
+WXOBS Example Response    <p>
+
+WXOBS/KB1TCE/KN83/OWLS HEAD/ME/19TDJ9172/GYX/ /301438Z/ /SSW/3/8/ /OVC/ /71/ /1020.20/F/ /RA/ /0.40/0.40/0.40/NA/ /NO DAMAGE//
+
+
+<p>NA is a Response option for some items. For example, if there is no precipitation (NONE entry for PRECIPITATION TYPE), the 
+amounts are NA. If you have no information for an item, just leave the Answer cell blank. For example, if a barometer reading 
+is not available, leave the Response entry blank.
+                                                                                                                                      
+<p>NWS CWA is the National Weather Service County Warning Area. For example, MLB is the Melbourne, FL office. In the example, GYX 
+refers to Gray, Maine. CWA does not apply to Canada, Mexico, etc.
+
+<p>MGRS (Military Grid Reference System) conversion from your latitude/longitude can be done using the GPS/Position Report in 
+Winlink Express (found under Settings) or you may use an on line converter such as the one from MapScaping, a podcast for the 
+geospatial community. The MGRS location, as shown in the example, is an alpha-numeric string. Enter the full MGRS as shown by your 
+converter or GPS. 
+
+<p>The RI may specify a certain number of characters in the response. For example, wind direction specifies 3 letters, e.g. NNW.
+However this should be taken as a maximum. Proper answers might include N, NW, etc. The same applies to 3 digits for temperature 
+(###), etc.
+
+<p>Cloud choices are CLR (Clear), FEW, SKT (Scattered), CB (Cumulonimbus), OVC (Overcast), TCU (Towering Cumulus).
+
+<p>If the response strip is transmitted using a Winlink/RRI radiogram form (Standard or ICS-213), the form will change a 
+minus sign (e.g. negative temperature) to a M. Decimal points will be changed to an R. This is standard radiogram formatting 
+and is necessary for transmission/relay by cw.
+
+<p>Precipitation choices are RA (Rain), SN (Snow), SL (Sleet), PL (Ice Pellets), GR (Hail), FZRA (Freezing Rain).
+
+<p>Comments must be very brief. Any detailed damage reports should be submitted to the appropriate target station as a separate SITREP message.
+ 
+ 
+ </td>            
+          </div>
+          <!-- The close pop-up link correctly positioned at the end of the content block -->
+      <a href="#links" class="close"><span>Back to links</span></a> </div>
+  </div> 
+ 
+ 
+ 
+ 
+ 
+          
+</body></html>
