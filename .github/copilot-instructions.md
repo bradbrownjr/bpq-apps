@@ -25,6 +25,7 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Document new and changed features to the respective README.md files
 - Include help args (-h, --help, /?) in utilities and CLI tools
 - Update both docstring `Version:` and `__version__` variable when bumping versions
+- **Form templates:** Bump `version` field in .frm JSON files when making changes (enables auto-update via forms.py)
 - Commit and push changes to GitHub after completing work
 
 ## CLI Design Standards
