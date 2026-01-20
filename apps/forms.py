@@ -266,7 +266,10 @@ class FormsApp:
         print("Available Forms:")
         print()
         
-        for idx, form in enumerate(self.forms, 1):
+        # Sort forms alphabetically by title for consistent menu ordering
+        sorted_forms = sorted(self.forms, key=lambda f: f.get('title', 'Untitled Form').lower())
+        
+        for idx, form in enumerate(sorted_forms, 1):
             print("{}. {}".format(idx, form.get('title', 'Untitled Form')))
             desc = form.get('description', '')
             if desc:
@@ -818,8 +821,10 @@ class FormsApp:
             
             try:
                 form_num = int(selection)
-                if 1 <= form_num <= len(self.forms):
-                    selected_form = self.forms[form_num - 1]
+                # Sort forms alphabetically for consistent menu ordering
+                sorted_forms = sorted(self.forms, key=lambda f: f.get('title', 'Untitled Form').lower())
+                if 1 <= form_num <= len(sorted_forms):
+                    selected_form = sorted_forms[form_num - 1]
                     
                     # Fill out the form
                     form_data = self.fill_form(selected_form)
