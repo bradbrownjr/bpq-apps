@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: October 2025
 """
 
