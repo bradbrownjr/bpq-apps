@@ -10,7 +10,7 @@ Features:
 - BPQ32 config integration
 
 Author: Brad Brown KC1JMH
-Version: 1.1
+Version: 1.2
 Date: October 2025
 """
 
@@ -114,7 +114,7 @@ except FileNotFoundError:
 # Get the gridpoint for the NWS office from the lattitude and longitude of the maidenhead gridsquare
 def get_gridpoint(latlon):
     lat, lon = latlon
-    response = requests.get(f"{url}/points/{lat},{lon}")
+    response = requests.get("{}/points/{},{}".format(url, lat, lon))
     data = response.json()
     gridpoint = data['properties']['forecastGridData']
     wfo = data['properties']['cwa']
@@ -132,12 +132,12 @@ def strip_html(text):
 
 # Get the gridpoint and WFO values for the local NWS office
 gridpoint, wfo = get_gridpoint(mh.to_location(gridsquare))
-print(f"Gridpoint URL: {gridpoint}")
-print(f"WFO: {wfo}")
+print("Gridpoint URL: {}".format(gridpoint))
+print("WFO: {}".format(wfo))
 
 # Get weather office headlines from "/offices/{officeId}/headlines"
 def get_headlines():
-    response = requests.get(f"{url}/offices/{wfo}/headlines")
+    response = requests.get("{}/offices/{}/headlines".format(url, wfo))
     data = response.json()
     headlines = []
     for item in data["@graph"]:
@@ -158,6 +158,6 @@ check_for_app_update("1.1", "wx.py")
 
 headlines = get_headlines()
 for headline in headlines:
-    print(f"Title: {headline['title']}")
-    print(f"Issuance Time: {headline['issuanceTime']}")
-    print(f"Content: {headline['content']}\n")
+    print("Title: {}".format(headline['title']))
+    print("Issuance Time: {}".format(headline['issuanceTime']))
+    print("Content: {}\n".format(headline['content']))
