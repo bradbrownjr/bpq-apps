@@ -13,8 +13,8 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.1
-Date: October 2025
+Version: 1.2
+Date: January 2026
 """
 
 import sys
@@ -115,7 +115,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rss-news.conf")
 PAGE_SIZE = 20  # Lines per page for pagination
 MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
 SOCKET_TIMEOUT = 30  # Timeout for requests in seconds
-LINE_WIDTH = 80  # Maximum line width for wrapping
+LINE_WIDTH = 40  # Maximum line width for wrapping
 MAX_ARTICLES = 15  # Maximum number of articles to display per feed
 
 
@@ -531,15 +531,8 @@ class RSSReader:
     
     def run(self):
         """Main program loop"""
-        print("")
-        print("  _____   _____  _____   _   _ ________          _______  ")
-        print(" |  __ \\ / ____|/ ____| | \\ | |  ____\\ \\        / / ____| ")
-        print(" | |__) | (___ | (___   |  \\| | |__   \\ \\  /\\  / / (___   ")
-        print(" |  _  / \\___ \\ \\___ \\  | . ` |  __|   \\ \\/  \\/ / \\___ \\  ")
-        print(" | | \\ \\ ____) ||___) | | |\\  | |____   \\  /\\  /  ____) | ")
-        print(" |_|  \\_\\_____/|_____/  |_| \\_|______|   \\/  \\/  |_____/  ")
-        print("")
-        print("A simple text-based RSS feed reader.")
+        print("RSS v1.2 - Feed Reader")
+        print("-" * 40)
                 
         state = 'categories'  # categories, feeds, articles, description
         
@@ -568,7 +561,7 @@ class RSSReader:
                 
                 # Quit - works from anywhere
                 if cmd_lower.startswith('q'):
-                    print("\nGoodbye! 73\n")
+                    print("\nExiting...")
                     break
                 
                 # Categories
@@ -735,7 +728,7 @@ class RSSReader:
 
 if __name__ == '__main__':
     # Check for app updates
-    check_for_app_update("1.1", "rss-news.py")
+    check_for_app_update("1.2", "rss-news.py")
     reader = RSSReader()
     try:
         reader.run()

@@ -20,7 +20,7 @@ The 'S' flag strips SSID from callsign for cleaner display.
 Remove 'S' to include SSID (e.g., KC1JMH-8).
 
 Author: Brad Brown KC1JMH
-Version: 1.1
+Version: 1.2
 Date: January 2026
 """
 
@@ -324,24 +324,23 @@ def show_stats(data):
             print("  {}. {} ({} messages)".format(i + 1, author, count))
 
 def main_loop(callsign):
-    """Main program loop with RSS News style interface"""
+    """Main program loop with standardized interface"""
     current_page = 0
     
-    # Show initial header and messages
-    print("\n" + "=" * 50)
-    print("Community Bulletin Board - {}".format(callsign))
-    print("=" * 50)
+    # Standardized header
+    print("BULLETIN v1.2 - Community Messages")
+    print("-" * 40)
     
     data = load_messages()
     display_messages(data, callsign, current_page)
     
     while True:
         try:
-            # Simple prompt like RSS News app
-            choice = input("\nP)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit :> ").strip().upper()
+            # Compressed prompt for bandwidth efficiency
+            choice = input("\nMenu: P)ost D)el N)ext Pr)ev S)tat Q :> ").strip().upper()
             
             if choice.startswith('Q'):
-                print("\n73!")
+                print("\nExiting...")
                 break
             elif choice.startswith('P'):
                 data = load_messages()
@@ -373,15 +372,15 @@ def main_loop(callsign):
                 print("Invalid choice. P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit")
                 
         except (EOFError, KeyboardInterrupt):
-            print("\n73!")
+            print("\nExiting...")
             break
 
 def main():
     """Main application entry point"""
     # Check for app updates
-    check_for_app_update("1.1", "bulletin.py")
+    check_for_app_update("1.2", "bulletin.py")
     
-    print("Community Bulletin Board v1.1")
+    print("Community Bulletin Board v1.2")
     print("=============================")
     
     # Get callsign from BPQ or user input

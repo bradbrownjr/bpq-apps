@@ -1,15 +1,29 @@
 #!/usr/bin/env python3
+"""
+Weather Reports for Southern Maine and New Hampshire  
+----------------------------------------------------
+Local weather reports from National Weather Service Gray Office.
+
+Author: Brad Brown KC1JMH
+Version: 1.2
+Date: January 2026
+"""
+
 import requests
+
+print("WX-ME v1.2 - Maine/NH Weather Reports")
+print("-" * 40)
+
 menu = """
-Weather reports from NWS Gray, ME
-------------------------------------------
+Main Menu:
+----------------------------------------
 1) Maine/New Hampshire Weather Summary
-2) Maine/New Hampshire Weather Roundup
+2) Maine/New Hampshire Weather Roundup  
 3) Western Maine/New Hampshire Forecast
 4) Northern and Eastern Maine Forecast
 5) Maine/New Hampshire Max/Min Temperature
    and Precipitation Table
-------------------------------------------"""
+----------------------------------------"""
 
 about = """
 Get text products right from the
@@ -28,7 +42,7 @@ def pullthis(url):
 
 print (menu)
 while True:
-        selected = str(input("#1-5), R)elist, A)bout, Q)uit :> "))
+        selected = str(input("Menu: [1-5] R)elist A)bout Q)uit :> "))
         if "1" in selected:
                 pullthis("https://tgftp.nws.noaa.gov/data/raw/aw/awus81.kgyx.rws.gyx.txt")
         elif "2" in selected:
@@ -44,5 +58,5 @@ while True:
         elif "r" in selected.lower():
                 print (menu)
         elif "q" in selected.lower():
-                print ("\nExiting...\n")
+                print("\nExiting...")
                 exit()

@@ -12,8 +12,8 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.1
-Date: October 2025
+Version: 1.2
+Date: January 2026
 """
 
 import sys
@@ -124,7 +124,7 @@ BOOKMARKS = [
 PAGE_SIZE = 20  # Lines per page for pagination
 MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
 SOCKET_TIMEOUT = 30  # Timeout for socket connections in seconds
-LINE_WIDTH = 80  # Maximum line width for wrapping
+LINE_WIDTH = 40  # Maximum line width for wrapping
 
 
 class GopherClient:
@@ -608,7 +608,7 @@ class GopherClient:
 
 if __name__ == '__main__':
     # Check for app updates
-    check_for_app_update("1.1", "gopher.py")
+    check_for_app_update("1.2", "gopher.py")
     client = GopherClient()
     try:
         client.run()

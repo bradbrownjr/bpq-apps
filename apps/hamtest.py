@@ -14,8 +14,8 @@ Features:
 - Link to ARRL test session locator for successful candidates
 
 Author: Brad Brown KC1JMH
-Version: 1.1
-Date: October 2025
+Version: 1.2
+Date: January 2026
 """
 
 import sys
@@ -121,7 +121,7 @@ import re
 # Configuration
 # -------------
 QUESTION_POOLS_DIR = os.path.join(os.path.dirname(__file__), "question_pools")
-LINE_WIDTH = 78  # Maximum line width for text wrapping
+LINE_WIDTH = 40  # Maximum line width for text wrapping
 ARRL_TEST_LOCATOR = "http://www.arrl.org/find-an-amateur-radio-license-exam-session"
 GITHUB_REPO_URL = "https://api.github.com/repos/russolsen/ham_radio_question_pool/contents"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/master"
@@ -294,9 +294,8 @@ class HamTestApp:
     
     def display_main_menu(self):
         """Display the main menu"""
-        print("\n" + "="*78)
-        print("AMATEUR RADIO LICENSE TEST PRACTICE")
-        print("="*78)
+        print("HAMTEST v1.2 - License Test Practice")
+        print("-" * 40)
         print()
         
         # Get current exam directory info for display
