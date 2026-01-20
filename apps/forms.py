@@ -361,18 +361,8 @@ class FormsApp:
         
         return form_data
     
-    def fill_strip_form(self, form):
-        """Handle strip-mode forms (slash-separated request/response)"""
-        self.clear_screen()
-        self.print_header()
-        print("Form: {}".format(form.get('title', 'Untitled')))
-        print()
-        print(self.wrap_text(form.get('description', '')))
-        print()
-        self.print_separator()
-        print()
-        
-        # Get the strip input - check field type from form definition
+    def get_strip_input_from_user(self, form):
+        """Get strip input from user (pasted text or multi-line entry)"""
         fields = form.get('fields', [])
         strip_field_type = 'textarea'  # default to textarea for backwards compatibility
         if fields and len(fields) > 0:
@@ -395,6 +385,48 @@ class FormsApp:
                 strip_lines.append(line)
             
             strip_input = ' '.join(strip_lines).strip()
+        
+        return strip_input
+    
+    def fill_strip_form(self, form):
+        """Handle strip-mode forms (slash-separated request/response)"""
+        self.clear_screen()
+        self.print_header()
+        print("Form: {}".format(form.get('title', 'Untitled')))
+        print()
+        print(self.wrap_text(form.get('description', '')))
+        print()
+        self.print_separator()
+        print()
+        
+        # Check if form has a built-in template
+        template = form.get('template', None)
+        strip_input = None
+        
+        if template:
+            # Offer choice between template and custom strip
+            print("This form has a standard template. Choose an option:")
+            print("  1. Use standard template")
+            print("  2. Paste custom strip")
+            print()
+            
+            choice = self.get_input("Enter choice (1 or 2): ").strip()
+            
+            if choice == '1':
+                # Use the template
+                strip_input = template
+            elif choice == '2':
+                # Get custom strip from user
+                strip_input = self.get_strip_input_from_user(form)
+            else:
+                print("Invalid choice. Please enter 1 or 2.")
+                return self.fill_strip_form(form)
+        else:
+            # No template, just get input from user
+            strip_input = self.get_strip_input_from_user(form)
+        
+        if not strip_input:
+            return None
         
         # Remove trailing // if present
         if strip_input.endswith('//'):
