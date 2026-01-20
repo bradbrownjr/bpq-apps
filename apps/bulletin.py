@@ -111,6 +111,11 @@ def get_callsign():
         # Try to read callsign from stdin (BPQ32 passes it)
         call = input().strip().upper()
         if is_valid_callsign(call):
+            # Reopen stdin for interactive use after piped input
+            try:
+                sys.stdin = open('/dev/tty', 'r')
+            except (OSError, IOError):
+                pass  # Continue with current stdin if /dev/tty unavailable
             return call
     except (EOFError, KeyboardInterrupt):
         pass
@@ -187,7 +192,7 @@ def display_messages(data, callsign, page=0, per_page=10):
         author = msg.get('callsign', 'Unknown')
         text = msg.get('message', '')
         
-        # Mark messages you can delete
+        # Mark messages you can delete (prefix for visibility)
         marker = '*' if author == callsign else ' '
         
         print("{}{}. [{}] {}: {}".format(marker, msg_num, timestamp, author, text))
