@@ -120,15 +120,21 @@ class FormsApp:
                     try:
                         # Get current file permissions
                         import stat
-                        current_mode = os.stat(script_path).st_mode
+                        current_stat = os.stat(script_path)
+                        current_mode = current_stat.st_mode
                         
                         # Write to temporary file first, then replace
                         temp_path = script_path + '.tmp'
                         with open(temp_path, 'wb') as f:
                             f.write(content.encode('utf-8'))
                         
-                        # Set permissions on temp file to match original
-                        os.chmod(temp_path, current_mode)
+                        # Preserve executable permission if original was executable
+                        if current_mode & stat.S_IXUSR:  # Owner executable
+                            # Make it executable by owner
+                            os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+                        else:
+                            # Just readable/writable by owner
+                            os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR)
                         
                         # Replace old file with new one
                         os.replace(temp_path, script_path)
