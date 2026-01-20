@@ -849,8 +849,6 @@ class FormsApp:
         self.clear_screen()
         self.print_header()
         
-        self.print_separator()
-        
         # Check for application updates
         self.check_for_app_update()
         

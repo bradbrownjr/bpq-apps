@@ -380,13 +380,13 @@ def main():
     # Check for app updates
     check_for_app_update("1.2", "bulletin.py")
     
-    print("Community Bulletin Board v1.2")
-    print("=============================")
+
+
     
     # Get callsign from BPQ or user input
     callsign = get_callsign()
     
-    print("\nWelcome, {}!".format(callsign))
+
     
     # Enter main program loop
     main_loop(callsign)

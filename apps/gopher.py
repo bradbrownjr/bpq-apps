@@ -494,7 +494,7 @@ class GopherClient:
         print(" | |  __| |  | | |__) | |__| | |__  | |__) |")
         print(" | | |_ | |  | |  ___/|  __  |  __| |  _  / ")
         print(" | |__| | |__| | |    | |  | | |____| | \\ \\ ")
-        print("  \\_____|\____/|_|    |_|  |_|______|_|  \\_\\")
+        print("  \\\\_____|\\\\____/|_|    |_|  |_|______|_|  \\\\_\\\\")
         print("")
         print("A simple text-based Gopher protocol client.")
         print("Designed for AX.25 packet radio terminals.")
