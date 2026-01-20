@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [bulletin 1.0] - 2026-01-20
+### Added
+- New community bulletin board application (bulletin.py)
+- Classic BBS-style one-liner message posting and viewing
+- JSON storage with callsign, timestamp, and message text
+- Automatic callsign detection from BPQ32 or manual entry
+- Message pagination (10 messages per page)
+- Delete your own messages functionality
+- Community statistics and top contributors
+- Menu-driven interface optimized for packet radio
+- 80-character message limit for bandwidth efficiency
+- Chronological display with newest messages first
+- Author indicators (*) for deletable messages
+
 ## [predict 1.3] - 2026-01-20
 ### Changed
 - Enable callsign lookup for user's own location (not just other stations)

@@ -4,6 +4,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 ## Table of Contents
 - [Features](#features)
 - [Applications](#applications)
+  - [bulletin.py](#bulletinpy)
   - [callout.py](#calloutpy)
   - [forms.py](#formspy)
   - [gopher.py](#gopherpy)
@@ -31,6 +32,56 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 - Fast startup and response times
 
 ## Applications
+
+bulletin.py
+-----------
+**Type**: Python  
+**Purpose**: Community bulletin board for posting and viewing one-liner messages  
+**Information source**: User submissions stored locally  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Classic BBS-style one-liner door application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
+
+**Download or update**:  
+```wget -O bulletin.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/bulletin.py && chmod +x bulletin.py```
+
+**Features**:
+- Post one-liner messages (up to 80 characters)
+- View recent messages with pagination (10 messages per page)
+- Delete your own messages
+- Message statistics and top contributors
+- Automatic callsign detection from BPQ32 or manual entry
+- JSON storage with callsign, timestamp, and message text
+- Chronological display (newest first)
+- Messages marked with '*' can be deleted by author
+
+**BPQ32 Configuration**:
+```
+APPLICATION 8,BULLETIN,C 9 HOST 8 S
+```
+The 'S' flag strips SSID from callsign for cleaner display. Remove 'S' to include SSID.
+
+**Usage**:
+- Menu-driven interface with numeric choices
+- Option 1: View messages (shows 10 per page)
+- Option 2: Post new message
+- Option 3: Delete your own messages
+- Option 4/5: Navigate pages (next/previous)
+- Option 6: View statistics
+- Q: Quit
+
+**Data Storage**:
+Messages are stored in `bulletin_board.json` in the same directory as the script:
+```json
+{
+  "messages": [
+    {
+      "callsign": "KC1JMH",
+      "message": "73 to everyone on the network!",
+      "timestamp": "2026-01-20T15:30:00Z"
+    }
+  ]
+}
+```
 
 callout.py
 ----------
@@ -103,6 +154,16 @@ predict.py
 - Callsign gridsquare lookup via HamDB API
 - BPQ LOCATOR config integration
 - Works offline with cached or user-supplied solar data
+
+**Solar Data & Geomagnetic Conditions**:
+Real-time solar indices from hamqsl.com determine band reliability:
+- **K-Index (Geomagnetic)**: 0-9 scale measuring magnetosphere disturbance
+  - K >= 7: SEVERE STORM (major HF degradation)
+  - K >= 5: STORM (poor HF conditions)
+  - K >= 4: UNSETTLED (degraded)
+  - K < 2: QUIET (excellent conditions)
+- **SSN (Sunspot Number)**: 0-300 scale, higher = better HF propagation
+- **SFI (Solar Flux Index)**: Radiation intensity; affects band openings
 
 **Usage**:
 - Select prediction type from menu (me to ham, me to place, place to place)
