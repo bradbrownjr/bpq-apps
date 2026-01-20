@@ -391,7 +391,7 @@ class FormsApp:
             'form_id': form.get('id', 'UNKNOWN'),
             'form_version': form.get('version', '1.0'),
             'submitted_by': self.user_call,
-            'submitted_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC'),
+            'submitted_date': datetime.now().strftime('%Y-%m-%d %H:%M UTC'),
             'fields': []
         }
         
@@ -548,7 +548,7 @@ class FormsApp:
             'form_id': form.get('id', 'UNKNOWN'),
             'form_version': form.get('version', '1.0'),
             'submitted_by': self.user_call,
-            'submitted_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC'),
+            'submitted_date': datetime.now().strftime('%Y-%m-%d %H:%M UTC'),
             'strip_title': strip_title,
             'strip_request': strip_input + '//',
             'strip_response': response_strip,
@@ -577,6 +577,7 @@ class FormsApp:
                 return ""
             elif not value and required:
                 print("This field is required. Please enter a value.")
+                print("(Or press Q to quit)")
                 continue
             elif len(value) > max_length:
                 print("Input too long. Maximum {} characters.".format(max_length))
