@@ -107,18 +107,20 @@ def is_valid_callsign(callsign):
 
 def get_callsign():
     """Get callsign from BPQ32 or prompt user"""
-    try:
-        # Try to read callsign from stdin (BPQ32 passes it)
-        call = input().strip().upper()
-        if is_valid_callsign(call):
-            # Reopen stdin for interactive use after piped input
-            try:
-                sys.stdin = open('/dev/tty', 'r')
-            except (OSError, IOError):
-                pass  # Continue with current stdin if /dev/tty unavailable
-            return call
-    except (EOFError, KeyboardInterrupt):
-        pass
+    # Only try piped input if stdin is not a terminal (i.e., piped from BPQ)
+    if not sys.stdin.isatty():
+        try:
+            # Try to read callsign from stdin (BPQ32 passes it)
+            call = input().strip().upper()
+            if is_valid_callsign(call):
+                # Reopen stdin for interactive use after piped input
+                try:
+                    sys.stdin = open('/dev/tty', 'r')
+                except (OSError, IOError):
+                    pass  # Continue with current stdin if /dev/tty unavailable
+                return call
+        except (EOFError, KeyboardInterrupt):
+            pass
     
     # No valid callsign from BPQ, prompt user
     while True:
