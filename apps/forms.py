@@ -450,7 +450,7 @@ class FormsApp:
         print("\nParsed {} fields from strip: {}".format(len(strip_fields), strip_title))
         print()
         print("Now enter your response for each field:")
-        print("(Leave blank if not applicable)")
+        print("(Leave blank if not applicable, type EXIT to cancel form)")
         print()
         self.print_separator()
         
@@ -459,6 +459,12 @@ class FormsApp:
         for idx, field_label in enumerate(strip_fields, 1):
             print("\n[{}/{}] {}".format(idx, len(strip_fields), field_label))
             response = self.get_input("> ").strip()
+            # Check for EXIT command
+            if response.upper() == 'EXIT':
+                print("\nForm cancelled.")
+                print("Press Enter to return to menu...")
+                self.get_input("")
+                return None
             # If empty, use three spaces as placeholder (MARS convention)
             if not response:
                 response = "   "
