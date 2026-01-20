@@ -27,6 +27,7 @@ These applications are custom-built for low bandwidth terminal access over packe
 * **gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. It's like the Internet, but for terminals!  
 * **hamqsl.py** - HF propagation reports from www.hamqsl.com.  
 * **hamtest.py** - Ham radio license test practice with automatic question pool updates.  
+* **predict.py** - HF propagation estimator using simplified ionospheric model. Predicts best bands and times for contacts between two locations. Resilient design works online, cached, or fully offline. Supports gridsquare, GPS, DMS, state, country, and callsign input with HamDB lookup integration.
 * **qrz3.py** - Look up name, city, state, country of an amateur radio operator with QRZ.com.  
 * **rss-news.py** - News feed reader with categorized feeds: News, Science, Technology, Weather, and of course, ham radio topics.  
 * **space.py** - NOAA Space Weather reports and solar activity data.  
