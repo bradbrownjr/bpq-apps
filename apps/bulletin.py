@@ -116,17 +116,18 @@ def get_callsign():
         pass
     
     # No valid callsign from BPQ, prompt user
+    print()  # Add space before prompting
     while True:
         try:
             call = input("Enter your callsign: ").strip().upper()
             if call.upper() == 'Q':
-                print("73!")
+                print("Exiting...")
                 sys.exit(0)
             if is_valid_callsign(call):
                 return call
             print("Invalid callsign format. Try again (Q to quit):")
         except (EOFError, KeyboardInterrupt):
-            print("\n73!")
+            print("\nExiting...")
             sys.exit(0)
 
 def load_messages():
@@ -327,7 +328,8 @@ def main_loop(callsign):
     """Main program loop with standardized interface"""
     current_page = 0
     
-    # Standardized header
+    # Standardized header with proper spacing
+    print()
     print("BULLETIN v1.2 - Community Messages")
     print("-" * 40)
     
