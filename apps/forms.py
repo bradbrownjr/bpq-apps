@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: October 2025
 """
 
@@ -128,13 +128,8 @@ class FormsApp:
                         with open(temp_path, 'wb') as f:
                             f.write(content.encode('utf-8'))
                         
-                        # Preserve executable permission if original was executable
-                        if current_mode & stat.S_IXUSR:  # Owner executable
-                            # Make it executable by owner
-                            os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-                        else:
-                            # Just readable/writable by owner
-                            os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR)
+                        # Ensure file is executable (Python script should be executable)
+                        os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                         
                         # Replace old file with new one
                         os.replace(temp_path, script_path)
