@@ -22,8 +22,8 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.5
-Date: October 2025
+Version: 1.6
+Date: January 2026
 """
 
 import sys
@@ -51,7 +51,7 @@ import urllib.error
 # -------------
 FORMS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "forms")
 EXPORT_FILE = "../linbpq/infile"  # Single file for all messages (BPQ import format)
-LINE_WIDTH = 80  # Maximum line width for display
+LINE_WIDTH = 40  # Maximum line width for display
 GITHUB_FORMS_URL = "https://api.github.com/repos/bradbrownjr/bpq-apps/contents/apps/forms"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms"
 
@@ -61,7 +61,7 @@ class FormsApp:
     def __init__(self):
         self.forms = []
         self.user_call = ""
-        self.version = "1.5"
+        self.version = "1.6"
         self.bpq_callsign = None  # Callsign passed from BPQ
         
     def clear_screen(self):
@@ -71,9 +71,8 @@ class FormsApp:
     
     def print_header(self):
         """Print application header"""
-        print("=" * LINE_WIDTH)
-        print("FILLABLE FORMS SYSTEM v{}".format(self.version).center(LINE_WIDTH))
-        print("=" * LINE_WIDTH)
+        print("FORMS v{} - Fillable Forms System".format(self.version))
+        print("-" * LINE_WIDTH)
         print()
     
     def print_separator(self):
@@ -850,13 +849,6 @@ class FormsApp:
         self.clear_screen()
         self.print_header()
         
-        print("Welcome to the Fillable Forms System!")
-        print()
-        print("This application allows you to fill out forms that will be")
-        print("automatically imported into the BPQ BBS for delivery.")
-        print()
-        print("Press Q at any time to quit.")
-        print()
         self.print_separator()
         
         # Check for application updates

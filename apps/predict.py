@@ -41,11 +41,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from predict import geo, solar, ionosphere
 
 # App version
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "predict.py"
 
 # Display width
-LINE_WIDTH = 60
+LINE_WIDTH = 40
 
 
 def check_for_app_update(current_version, script_name):
@@ -167,24 +167,20 @@ def lookup_callsign(callsign):
 
 def print_header():
     """Print app header."""
-    print("")
-    print("=" * LINE_WIDTH)
     print("PREDICT v{} - HF Propagation Estimator".format(VERSION))
-    print("=" * LINE_WIDTH)
+    print("-" * LINE_WIDTH)
 
 
 def print_menu():
     """Print main menu."""
-    print("")
-    print("Prediction Options:")
+    print("\nPrediction Options:")
     print("-" * LINE_WIDTH)
-    print("  1) From my location to another ham (by callsign)")
-    print("  2) From my location to a place")
-    print("  3) Between two places")
+    print("1) From me to another ham (by callsign)")
+    print("2) From me to a place")
+    print("3) Between two places")
     print("-" * LINE_WIDTH)
-    print("  A) About this app")
-    print("  Q) Quit")
-    print("")
+    print("A) About  Q) Quit")
+    print()
 
 
 def prompt_location(prompt_text, allow_callsign=False):
@@ -391,11 +387,11 @@ def main():
         try:
             choice = input(":> ").strip().upper()
         except (EOFError, KeyboardInterrupt):
-            print("\nQuitting...")
+            print("\nExiting...")
             break
         
         if choice == 'Q':
-            print("\nQuitting...")
+            print("\nExiting...")
             break
         
         elif choice == '1':

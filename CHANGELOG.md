@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Interface Standardization] - 2026-01-20
+### Changed
+- **MAJOR**: Standardized interface across all BPQ apps
+- Reduced line width from 60-80 to 40 characters for mobile/older terminals
+- Standardized headers: "APP NAME vX.Y - Brief Description" with single line separator
+- Removed welcome messages to save bandwidth - utilities are tools, not chatbots
+- Compressed prompts: "Menu: P)ost D)el N)ext Q :>" vs verbose alternatives
+- Consistent exit message: "Exiting..." for apps (reserve "73!" for node sign-off)
+- Updated copilot-instructions.md with comprehensive interface standards
+### Apps Updated
+- bulletin.py v1.1→1.2: Compressed prompt, removed welcome, 40-char width
+- forms.py v1.5→1.6: Minimal header, removed verbose intro, 40-char width  
+- space.py v1.1→1.2: Standardized header and menu format
+- predict.py v1.3→1.4: Minimal header, compressed menu, 40-char width
+
 ## [bulletin 1.1] - 2026-01-20
 ### Changed
 - Simplified interface to match RSS News app pattern

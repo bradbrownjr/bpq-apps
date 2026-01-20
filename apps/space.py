@@ -8,8 +8,8 @@ and more right from NOAA.
 This script pulls data from https://services.swpc.noaa.gov/text/.
 
 Author: Brad Brown KC1JMH
-Version: 1.1
-Date: October 2025
+Version: 1.2
+Date: January 2026
 """
 
 import requests
@@ -84,8 +84,8 @@ def compare_versions(version1, version2):
     except (ValueError, AttributeError):
         return 0
 menu = """
-Space Weather Reports
------------------------------------
+SPACE v1.2 - Space Weather Reports
+----------------------------------------
 1) Geophysical Alert Message
 2) Advisory Outlook
 3) Forecast Discussion
@@ -93,7 +93,7 @@ Space Weather Reports
 5) 3-Day Forecast
 6) 3-Day Geomagnetic Forecast
 7) 3-day Space Weather Predictions
------------------------------------"""
+----------------------------------------"""
 
 about = """
 Get information about solar storms,
@@ -112,11 +112,11 @@ def pullthis(url):
         print("\n{}\n".format(data))
 
 # Check for app updates
-check_for_app_update("1.1", "space.py")
+check_for_app_update("1.2", "space.py")
 
 print(menu)
 while True:
-        selected = str(input("#1-7), R)elist, A)bout, Q)uit :> "))
+        selected = str(input("Menu: [1-7] R)elist A)bout Q)uit :> "))
         if "1" in selected:
                 pullthis("https://services.swpc.noaa.gov/text/wwv.txt") #7
         elif "2" in selected:

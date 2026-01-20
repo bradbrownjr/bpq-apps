@@ -9,7 +9,8 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 - Minimal output (1200 baud - every byte counts)
 - Stdlib preferred (limited packages available)
 - Line-based input, synchronous I/O
-- Max 80 char width, no TUI libraries
+- 40-character width limit for mobile/older terminals
+- No TUI libraries
 
 ## Communication
 - Dry, factual, KISS principle
@@ -81,11 +82,37 @@ SEE ALSO
 - `-l` log, `-d` display, `-x` exclude
 - Use uppercase for specialized flags: `-H` HF, `-I` IP, `-C` cleanup, `-N` note, `-M` mode, `-D` debug
 
-## Patterns
-- Menu-driven (numeric choices)
-- Q&A format for interactive tools
-- Column-aligned tables, terse messages
-- No colors, progress bars, Unicode, chatty prompts
+## BPQ App Interface Standards
+**Bandwidth Efficiency**: Every character counts on 1200 baud packet radio
+- 40-character width limit for compatibility with mobile devices, older terminals
+- Minimal decorative elements (single line separators, not double)
+- No welcome messages - straight to functionality
+- Terse but clear prompts and navigation
+
+**Standard Interface Pattern**:
+```
+APP NAME v1.X - Brief Description
+----------------------------------------
+Main Menu:
+----------------------------------------
+1) Primary Function
+2) Secondary Function
+----------------------------------------
+A) About  Q) Quit
+
+Menu: Command1 Command2 Command3 Q :>
+```
+
+**Consistent Elements**:
+- Header: App name, version, brief description + single line
+- Menu: Numbered options, single line separators
+- Prompts: Context + compressed commands
+- Exit: "Exiting..." for apps, "73!" only for node sign-off
+- No social pleasantries - these are utilities, not chatbots
+
+**Prompt Optimization**: Compress commands to save bandwidth
+- `P)ost D)el N)ext Pr)ev S)tat Q` instead of `P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit`
+- Context-aware: `Menu: commands :>` or `Articles: commands :>`
 
 ## Amateur Radio Formats
 **Callsigns**: 1-2 prefix letters, digit, 1-3 suffix letters, optional -SSID (0-15)
