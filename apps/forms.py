@@ -96,6 +96,48 @@ class FormsApp:
             print("\n\nQuitting...")
             sys.exit(0)
     
+    def check_for_app_update(self):
+        """Check if forms.py has an update available on GitHub"""
+        try:
+            print("Checking for application updates...")
+            
+            # Get the version from GitHub's forms.py
+            github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms.py"
+            with urllib.request.urlopen(github_url, timeout=10) as response:
+                content = response.read().decode('utf-8')
+            
+            # Extract version from docstring
+            import re
+            version_match = re.search(r'Version:\s*([0-9.]+)', content)
+            if version_match:
+                github_version = version_match.group(1)
+                local_version = self.version
+                
+                if self.compare_versions(github_version, local_version) > 0:
+                    print("\nUpdate available: v{} -> v{}".format(local_version, github_version))
+                    print("Downloading new version...")
+                    
+                    # Download the new version
+                    script_path = os.path.abspath(__file__)
+                    with urllib.request.urlopen(github_url, timeout=30) as response:
+                        content = response.read()
+                    
+                    # Write to temporary file first, then replace
+                    temp_path = script_path + '.tmp'
+                    with open(temp_path, 'wb') as f:
+                        f.write(content)
+                    
+                    # Replace old file with new one
+                    os.replace(temp_path, script_path)
+                    
+                    print("\nUpdate installed successfully!")
+                    print("Please re-run this command to use the updated version.")
+                    print("\nQuitting...")
+                    sys.exit(0)
+        except Exception as e:
+            # Don't block startup if update check fails
+            pass
+    
     def load_forms(self):
         """Load form templates from forms directory, downloading from GitHub if needed"""
         # Create forms directory if it doesn't exist
@@ -812,6 +854,9 @@ class FormsApp:
         print("Press Q at any time to quit.")
         print()
         self.print_separator()
+        
+        # Check for application updates
+        self.check_for_app_update()
         
         # Load form templates
         print("\nLoading form templates...")
