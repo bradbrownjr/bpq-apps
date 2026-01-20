@@ -8,13 +8,13 @@ AX.25 packet radio via linbpq BBS software.
 Features:
 - Plain ASCII text interface (no control codes)
 - Practice tests for Technician, General, and Extra class licenses
-- Reali        if len(subelement_keys) != spec['subelements']:
-            print("Warning: Expected {} subelements, found {}".format(spec['subelements'], len(subelement_keys)))ic exam simulation with proper question distribution
+- Realistic exam simulation with proper question distribution
 - Scoring with pass/fail indication
 - ASCII art logo and simple menu navigation
 - Link to ARRL test session locator for successful candidates
 
 Author: Brad Brown KC1JMH
+Version: 1.1
 Date: October 2025
 """
 
@@ -38,6 +38,84 @@ import textwrap
 from collections import defaultdict
 import urllib.request
 import urllib.error
+
+def check_for_app_update(current_version, script_name):
+    """Check if app has an update available on GitHub"""
+    try:
+        import re
+        import stat
+        
+        # Get the version from GitHub (silent check with short timeout)
+        github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(script_name)
+        with urllib.request.urlopen(github_url, timeout=3) as response:
+            content = response.read().decode('utf-8')
+        
+        # Extract version from docstring
+        version_match = re.search(r'Version:\s*([0-9.]+)', content)
+        if version_match:
+            github_version = version_match.group(1)
+            
+            if compare_versions(github_version, current_version) > 0:
+                print("\nUpdate available: v{} -> v{}".format(current_version, github_version))
+                print("Downloading new version...")
+                
+                # Download the new version
+                script_path = os.path.abspath(__file__)
+                try:
+                    # Write to temporary file first, then replace
+                    temp_path = script_path + '.tmp'
+                    with open(temp_path, 'wb') as f:
+                        f.write(content.encode('utf-8'))
+                    
+                    # Ensure file is executable (Python script should be executable)
+                    os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                    
+                    # Replace old file with new one
+                    os.replace(temp_path, script_path)
+                    
+                    print("\nUpdate installed successfully!")
+                    print("Please re-run this command to use the updated version.")
+                    print("\nQuitting...")
+                    sys.exit(0)
+                except Exception as e:
+                    print("\nError installing update: {}".format(e))
+                    # Clean up temp file if it exists
+                    if os.path.exists(temp_path):
+                        try:
+                            os.remove(temp_path)
+                        except:
+                            pass
+    except Exception as e:
+        # Don't block startup if update check fails (no internet, etc.)
+        pass
+
+def compare_versions(version1, version2):
+    """
+    Compare two version strings (e.g., '1.0', '1.2', '2.0')
+    Returns: 
+        1 if version1 > version2
+        0 if version1 == version2
+       -1 if version1 < version2
+    """
+    try:
+        # Split versions into parts and convert to integers
+        parts1 = [int(x) for x in str(version1).split('.')]
+        parts2 = [int(x) for x in str(version2).split('.')]
+        
+        # Pad shorter version with zeros
+        max_len = max(len(parts1), len(parts2))
+        parts1.extend([0] * (max_len - len(parts1)))
+        parts2.extend([0] * (max_len - len(parts2)))
+        
+        # Compare each part
+        for p1, p2 in zip(parts1, parts2):
+            if p1 > p2:
+                return 1
+            elif p1 < p2:
+                return -1
+        return 0
+    except (ValueError, AttributeError):
+        return 0
 import re
 
 # Configuration
@@ -612,4 +690,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # Check for app updates
+    check_for_app_update("1.1", "hamtest.py")
     main()
