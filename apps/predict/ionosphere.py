@@ -429,7 +429,7 @@ def format_prediction_table_with_context(predictions, distance_km, bearing_deg,
     
     # Warnings
     if warnings:
-        lines.append("⚠ CONDITIONS ALERT:")
+        lines.append("[!] CONDITIONS ALERT:")
         for warning in warnings:
             lines.append("  - {}".format(warning))
         lines.append("")
