@@ -332,23 +332,109 @@ def predict_bands(distance_km, lat_mid, ssn, kindex=3, hour_utc=None, month=None
     return predictions
 
 
-def format_prediction_table(predictions, distance_km, bearing_deg, solar_status):
+def get_solar_context(ssn, sfi, kindex, aindex):
     """
-    Format predictions as ASCII table.
+    Generate human-readable solar conditions context.
+    
+    Args:
+        ssn: Sunspot number
+        sfi: Solar flux index
+        kindex: Geomagnetic K-index (0-9)
+        aindex: A-index
+        
+    Returns:
+        Tuple (conditions_str, warnings)
+    """
+    # Solar activity level based on SSN
+    if ssn >= 150:
+        solar_level = "HIGH (Solar max active)"
+    elif ssn >= 100:
+        solar_level = "MODERATE-HIGH"
+    elif ssn >= 50:
+        solar_level = "MODERATE"
+    elif ssn >= 25:
+        solar_level = "LOW-MODERATE"
+    else:
+        solar_level = "LOW (Solar min)"
+    
+    # Geomagnetic disturbance level
+    if kindex >= 7:
+        geo_level = "SEVERE STORM (K={})".format(kindex)
+        geo_warning = "MAJOR geomagnetic disturbance! HF severely degraded."
+    elif kindex >= 5:
+        geo_level = "STORM (K={})".format(kindex)
+        geo_warning = "Geomagnetic storm in progress. HF conditions poor."
+    elif kindex >= 4:
+        geo_level = "UNSETTLED (K={})".format(kindex)
+        geo_warning = "Unsettled conditions. HF degraded."
+    elif kindex >= 2:
+        geo_level = "QUIET (K={})".format(kindex)
+        geo_warning = None
+    else:
+        geo_level = "VERY QUIET (K={})".format(kindex)
+        geo_warning = None
+    
+    # Solar flux effect
+    if sfi >= 200:
+        sfi_note = "Very high solar activity"
+    elif sfi >= 150:
+        sfi_note = "High solar activity"
+    elif sfi >= 100:
+        sfi_note = "Moderate solar activity"
+    elif sfi >= 80:
+        sfi_note = "Low solar activity"
+    else:
+        sfi_note = "Very low solar activity"
+    
+    context = "Solar: {} (SSN {})\nGeomagnetic: {}\n{}".format(
+        solar_level, ssn, geo_level, sfi_note
+    )
+    
+    warnings = []
+    if geo_warning:
+        warnings.append(geo_warning)
+    
+    if ssn < 30:
+        warnings.append("WARNING: Low solar activity. Only 80m/40m typically open.")
+    
+    return (context, warnings)
+
+
+def format_prediction_table_with_context(predictions, distance_km, bearing_deg, 
+                                         ssn, sfi, kindex, aindex, solar_status):
+    """
+    Format predictions with solar context.
     
     Args:
         predictions: List from predict_bands()
         distance_km: Path distance
         bearing_deg: Path bearing
+        ssn, sfi, kindex, aindex: Solar parameters
         solar_status: Solar data status string
         
     Returns:
-        Formatted string
+        Formatted string with full context
     """
     lines = []
     
-    # Header
+    # Solar context
+    context_str, warnings = get_solar_context(ssn, sfi, kindex, aindex)
+    
     lines.append("")
+    lines.append("SOLAR CONDITIONS:")
+    lines.append("-" * 60)
+    for line in context_str.split('\n'):
+        lines.append(line)
+    lines.append("")
+    
+    # Warnings
+    if warnings:
+        lines.append("⚠ CONDITIONS ALERT:")
+        for warning in warnings:
+            lines.append("  - {}".format(warning))
+        lines.append("")
+    
+    # Band predictions
     lines.append("Band   MUF%   Reliability   Best Hours")
     lines.append("----   ----   -----------   ----------")
     
@@ -367,6 +453,7 @@ def format_prediction_table(predictions, distance_km, bearing_deg, solar_status)
     lines.append("")
     
     return "\n".join(lines)
+
 
 
 def get_recommendation(predictions):

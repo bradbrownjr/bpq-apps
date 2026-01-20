@@ -294,9 +294,11 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
     bearing_deg = geo.bearing(from_lat, from_lon, to_lat, to_lon)
     mid_lat, mid_lon = geo.midpoint(from_lat, from_lon, to_lat, to_lon)
     
-    # Get predictions
+    # Get solar parameters
     ssn = solar_data.get('ssn', 100)
+    sfi = solar_data.get('sfi', 130)
     kindex = solar_data.get('kindex', 3)
+    aindex = solar_data.get('aindex', 10)
     predictions = ionosphere.predict_bands(distance, mid_lat, ssn, kindex)
     
     # Display results
@@ -313,12 +315,9 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
     ))
     print(solar_status)
     
-    if solar_warning:
-        print("")
-        print(solar_warning)
-    
-    # Print prediction table
-    print(ionosphere.format_prediction_table(predictions, distance, bearing_deg, solar_status))
+    # Print prediction table with solar context
+    print(ionosphere.format_prediction_table_with_context(
+        predictions, distance, bearing_deg, ssn, sfi, kindex, aindex, solar_status))
     
     # Print recommendation
     print(ionosphere.get_recommendation(predictions))
@@ -328,6 +327,7 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
     print("-" * LINE_WIDTH)
     print("NOTE: Simplified model (~70-80% accuracy).")
     print("For precise predictions: voacap.com")
+
     print("-" * LINE_WIDTH)
 
 
