@@ -31,6 +31,39 @@ Communications log for documenting all radio traffic during an incident. Records
 ### USGS Did You Feel It? (DYFI) Report (`dyfi.frm`)
 Report earthquake experiences to the USGS Did You Feel It system. Helps create maps showing what people experienced and extent of damage. Data can be sent to USGS for earthquake intensity analysis. Includes location, GPS coordinates, situation, felt intensity, damage observations, and detailed effects.
 
+### GYX Weather Report (`gyx-weather.frm`)
+**Special Mode**: SKYWARN weather observation strip for the Gray, Maine (GYX) weather service. Report severe weather conditions including precipitation, wind, hail, and storm damage. Data submitted via this form can be compiled into NWS-compatible databases.
+
+**Strip Format:**
+```
+GYX WEATHER/DATE (MM-DD-YYYY)/TIME (HHMML OR HHMMZ)/CALL SIGN/SPOTTER ID (OR NA)/SOURCE (Amateur Radio, Trained Spotter, Media, Public Service Radio, Other 3rd Party, Direct Messaging)/LOCATION ROAD, TOWN)/STATE (AA)/CURRENT WEATHER (RELEVANT INFO, BE BRIEF)/SNOW, SLEET (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)/ICE ACCRETION (INCHES OR NA)/RAINFALL (INCHES OR NA, IF STORM TOTAL ADD * EG 2.6 or 3.5*)/HAIL SIZE (INCHES OR NA)/WIND DIRECTION & SPEED (AAA@MPH)/STORM DAMAGE (WIND, FLOODING, ICE JAMS, OTHER DETAILS)/MODE (Personal Observation, FM Repeater, Winlink, DMR, Direct Messaging. For Others Leave Blank)/NET (NAME OF RADIO NET OR OTHER EG EMAIL, SLACK)//
+```
+
+**Example Response:**
+```
+GYX WEATHER/01-02-2026/2220Z/WO1J/CU330/Amateur Radio/314 POPE RD, WINDHAM/ME/CLEAR & COLD/1.4*/NA/0.01*/NA/WNW @ 2/NONE/Personal Observation/REPEATER 147.045//
+```
+
+**How it works:**
+1. The form displays the GYX WEATHER strip template
+2. You paste the template and fill in your observations for each field
+3. The form creates a response strip formatted for NWS database import
+
+**Field Descriptions:**
+- **DATE**: Report date in MM-DD-YYYY format
+- **TIME**: Report time in HHMML (local) or HHMMZ (UTC) format
+- **CALL SIGN**: Your amateur radio callsign
+- **SPOTTER ID**: Optional spotter identification (use NA if none)
+- **SOURCE**: How the observation was made (Amateur Radio, Trained Spotter, Media, Public Service Radio, Other 3rd Party, Direct Messaging)
+- **LOCATION**: Road/landmark and town name
+- **STATE**: Two-letter state abbreviation (e.g., ME, MA)
+- **CURRENT WEATHER**: Brief description of current conditions
+- **PRECIPITATION**: Snow, sleet, rainfall (in inches; use * for storm totals, e.g., 2.6* means 2.6" storm total)
+- **WIND**: Wind direction (AAA) and speed in MPH (e.g., WNW @ 2)
+- **DAMAGE**: Description of any storm damage observed
+- **MODE**: How the report was sent (Personal Observation, FM Repeater, Winlink, DMR, Direct Messaging)
+- **NET**: Name of radio net or other delivery method (email, Slack, etc.)
+
 ### Information Strip Response Form (`strip.frm`)
 **Special Mode**: Parse and respond to slash-separated information request strips. Common in MARS and SHARES operations.
 
