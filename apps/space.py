@@ -92,17 +92,17 @@ menu = r"""
 \__ \ |_) | (_| | (_|  __/
 |___/ .__/ \__,_|\___\___|
     |_|                   
-SPACE v{{}} - Space Weather Reports
+SPACE v{} - Space Weather Reports
 ----------------------------------------
 1) Geophysical Alert Message
 2) Advisory Outlook
 3) Forecast Discussion
 4) Weekly Highlights and Forecasts
-""".format(VERSION)
 5) 3-Day Forecast
 6) 3-Day Geomagnetic Forecast
 7) 3-day Space Weather Predictions
-----------------------------------------"""
+----------------------------------------
+""".format(VERSION)
 
 about = """
 Get information about solar storms,
