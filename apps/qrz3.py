@@ -152,7 +152,7 @@ def print_header():
     print(r"    |_|         ")
     print()
     print("QRZ v1.0 - Callsign Lookup Tool")
-    print("-" * 40)
+    print("-" * 31)
     print("")
 
 def login(username, password):
