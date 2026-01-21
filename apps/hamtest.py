@@ -34,7 +34,6 @@ if sys.version_info < (3, 5):
 import os
 import json
 import random
-import textwrap
 from collections import defaultdict
 import urllib.request
 import urllib.error
@@ -118,10 +117,18 @@ def compare_versions(version1, version2):
         return 0
 import re
 
+# Dynamic terminal width
+def get_line_width():
+    """Get terminal width, fallback to 40 for piped input"""
+    try:
+        return os.get_terminal_size().columns
+    except (AttributeError, ValueError, OSError):
+        return 40  # Fallback for piped input or non-terminal
+
 # Configuration
 # -------------
 QUESTION_POOLS_DIR = os.path.join(os.path.dirname(__file__), "question_pools")
-LINE_WIDTH = 40  # Maximum line width for text wrapping
+LINE_WIDTH = get_line_width()  # Dynamic terminal width
 ARRL_TEST_LOCATOR = "http://www.arrl.org/find-an-amateur-radio-license-exam-session"
 GITHUB_REPO_URL = "https://api.github.com/repos/russolsen/ham_radio_question_pool/contents"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/master"
@@ -301,16 +308,7 @@ class HamTestApp:
         for i, exam_type in enumerate(EXAM_ORDER, 1):
             spec = EXAM_SPECS[exam_type]
             print("{}. {}".format(i, spec['name']))
-            
-            # Wrap the description text
-            wrapped_desc = textwrap.fill(
-                spec['description'], 
-                width=LINE_WIDTH-6, 
-                initial_indent="   ", 
-                subsequent_indent="   "
-            )
-            print(wrapped_desc)
-            
+            print("   {}".format(spec['description']))
             print("   {} questions, {} needed to pass (74%)".format(spec['questions'], spec['pass_score']))
             
             # Show exam validity period if available
@@ -374,11 +372,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
 
         # Wrap and display the text
         for line in about_text.split('\n'):
-            if line.strip():
-                wrapped = textwrap.fill(line, width=LINE_WIDTH)
-                print(wrapped)
-            else:
-                print()
+            print(line)
         
         print("\nPress Enter to return to main menu...")
         input()
@@ -496,26 +490,14 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         print("\nQuestion {} of {}".format(question_num, total_questions))
         print("="*50)
         
-        # Wrap question text
-        wrapped_question = textwrap.fill(
-            question['question'], 
-            width=LINE_WIDTH,
-            initial_indent="",
-            subsequent_indent=""
-        )
-        print(wrapped_question)
+        # Display question text
+        print(question['question'])
         print()
         
         # Display answer choices
         for i, answer in enumerate(question['answers']):
             letter = chr(ord('A') + i)
-            wrapped_answer = textwrap.fill(
-                answer,
-                width=LINE_WIDTH-4,
-                initial_indent="{}. ".format(letter),
-                subsequent_indent="   "
-            )
-            print(wrapped_answer)
+            print("{}. {}".format(letter, answer))
         print()
     
     def get_user_answer(self):
