@@ -34,6 +34,7 @@ if sys.version_info < (3, 5):
 import os
 import json
 import random
+import textwrap
 from collections import defaultdict
 import urllib.request
 import urllib.error
@@ -490,14 +491,17 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         print("\nQuestion {} of {}".format(question_num, total_questions))
         print("="*50)
         
-        # Display question text
-        print(question['question'])
+        # Display question text with intelligent word wrapping
+        wrapped_q = textwrap.fill(question['question'], width=LINE_WIDTH, break_long_words=False)
+        print(wrapped_q)
         print()
         
-        # Display answer choices
+        # Display answer choices with word wrapping
         for i, answer in enumerate(question['answers']):
             letter = chr(ord('A') + i)
-            print("{}. {}".format(letter, answer))
+            # Wrap answer text, keeping first line indent with letter
+            wrapped_a = textwrap.fill(answer, width=LINE_WIDTH - 3, initial_indent="", subsequent_indent="   ", break_long_words=False)
+            print("{}. {}".format(letter, wrapped_a) if wrapped_a else "{}. ".format(letter))
         print()
     
     def get_user_answer(self):
