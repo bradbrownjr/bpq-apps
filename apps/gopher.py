@@ -12,7 +12,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -262,7 +262,7 @@ class GopherClient:
     def display_menu(self, items):
         """Display a Gopher menu with numbered items"""
         self.last_menu = items
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         
         item_num = 1
         for item in items:
@@ -291,7 +291,7 @@ class GopherClient:
                     print("{:3}) [{}] {}".format(item_num, type_label, display))
                 item_num += 1
                 
-        print("=" * 40)
+        print("-" * 40)
     
     def get_article_size(self, host, port, selector):
         """Prefetch to determine article size in KB"""
@@ -343,13 +343,13 @@ class GopherClient:
     
     def show_bookmarks(self):
         """Display bookmarks menu"""
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         print("BOOKMARKS")
-        print("=" * 40)
+        print("-" * 40)
         for i, (name, url) in enumerate(BOOKMARKS, 1):
             print("{}) {}".format(i, name))
             print("   {}".format(url))
-        print("=" * 40)
+        print("-" * 40)
     
     def navigate_to(self, url):
         """Navigate to a Gopher URL"""
@@ -433,9 +433,9 @@ class GopherClient:
     
     def show_help(self):
         """Display help/commands menu"""
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         print("COMMANDS")
-        print("=" * 40)
+        print("-" * 40)
         print("  [number] - Select menu item by number")
         print("  H)ome    - Go to home page")
         print("  B)ack    - Go back to previous page")
@@ -445,13 +445,13 @@ class GopherClient:
         print("  ?)       - Show this help")
         print("  Q)uit    - Exit (works from any menu)")
         print("\nPrompts are context-aware and show available commands.")
-        print("=" * 40)
+        print("-" * 40)
     
     def show_about(self):
         """Display information about Gopher"""
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         print("ABOUT GOPHER")
-        print("=" * 40)
+        print("-" * 40)
         print("\nGopher is a protocol developed in 1991 at the University of")
         print("Minnesota (home of the Golden Gophers mascot). It predates the")
         print("World Wide Web and was designed for distributing documents over")
@@ -473,13 +473,13 @@ class GopherClient:
         print("- Still actively maintained by enthusiasts worldwide")
         print("\nGopher experienced a revival in recent years among users who")
         print("appreciate its simplicity and efficiency. Perfect for ham radio!")
-        print("=" * 40)
+        print("-" * 40)
     
     def show_startup_menu(self):
         """Display startup menu with command descriptions"""
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         print("GETTING STARTED")
-        print("=" * 40)
+        print("-" * 40)
         print("\nWelcome to Gopherspace! Here's how to explore:")
         print("")
         print("  H)ome - Connect to the default home gopher server")
@@ -492,7 +492,7 @@ class GopherClient:
         print("TIP: Start by typing 'H' to visit the home server, or 'M' to")
         print("     browse bookmarks. Once viewing a gopher menu, you can")
         print("     select items by number.")
-        print("=" * 40)
+        print("-" * 40)
     
     def run(self):
         """Main program loop"""
@@ -615,7 +615,7 @@ class GopherClient:
 
 if __name__ == '__main__':
     # Check for app updates
-    check_for_app_update("1.3", "gopher.py")
+    check_for_app_update("1.4", "gopher.py")
     client = GopherClient()
     try:
         client.run()

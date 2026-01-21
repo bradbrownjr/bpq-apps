@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -313,9 +313,9 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
     
     # Display results
     print("")
-    print("=" * 40)
+    print("-" * 40)
     print("HF Propagation Estimate")
-    print("=" * 40)
+    print("-" * 40)
     print("From: {}".format(from_desc))
     print("To:   {}".format(to_desc))
     print("")
@@ -344,9 +344,9 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
 def show_about():
     """Display about information."""
     print("")
-    print("=" * 40)
+    print("-" * 40)
     print("About PREDICT v{}".format(VERSION))
-    print("=" * 40)
+    print("-" * 40)
     print("")
     print("PREDICT estimates HF propagation conditions between")
     print("two locations using a simplified ionospheric model.")
@@ -373,7 +373,7 @@ def show_about():
     print("or install pythonprop/voacapl.")
     print("")
     print("Author: KC1JMH")
-    print("=" * 40)
+    print("-" * 40)
 
 
 def main():

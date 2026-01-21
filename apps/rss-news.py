@@ -358,17 +358,16 @@ class RSSReader:
     
     def display_categories(self):
         """Display available feed categories"""
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         print("RSS FEED CATEGORIES")
-        print("=" * 40)
+        print("-" * 40)
         
         categories = sorted(self.feeds.keys())
         for i, category in enumerate(categories, 1):
             count = len(self.feeds[category])
             print("{:3}) {} ({} feeds)".format(i, category, count))
             
-        print("=" * 40)
-        return categories
+        print("-" * 40)
     
     def display_feeds(self, category):
         """Display feeds in a category"""
@@ -376,7 +375,7 @@ class RSSReader:
             print("Error: Category not found")
             return
         
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         print("FEEDS: {}".format(category))
         print("-" * 40)
         
@@ -507,13 +506,13 @@ class RSSReader:
         print("\nPrompts are context-aware and show available commands.")
         print("\nNote: Only the {} most recent articles are shown per feed".format(MAX_ARTICLES))
         print("to optimize bandwidth usage over packet radio.")
-        print("=" * 40)
+        print("-" * 40)
     
     def show_about(self):
         """Display information about RSS"""
-        print("\n" + "=" * 40)
+        print("\n" + "-" * 40)
         print("ABOUT RSS FEEDS")
-        print("=" * 40)
+        print("-" * 40)
         print("\nRSS (Really Simple Syndication) is a web feed format used to")
         print("publish frequently updated content like news articles, blog posts,")
         print("and podcasts.")
