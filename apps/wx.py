@@ -154,16 +154,17 @@ def get_headlines():
     return headlines
 
 # Check for app updates
-check_for_app_update("1.1", "wx.py")
+check_for_app_update("1.2", "wx.py")
 
 # Print weather header
-print("")
-print(" o     o     o     o  ")
-print(" ~   ~       ~   ~   ")
-print("  ~   ~   ~   ~  ~   ")
-print("")
+print()
+print(r"__      ____  __")
+print(r"\ \ /\ / /\ \/")
+print(r" \ V  V /  >  < ")
+print(r"  \_/\_/  /_/\_\\")
+print()
 print("WX v1.2 - Maine/NH Weather Reports")
-print("")
+print()
 
 headlines = get_headlines()
 for headline in headlines:

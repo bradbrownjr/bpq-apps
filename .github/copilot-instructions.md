@@ -84,35 +84,46 @@ SEE ALSO
 
 ## BPQ App Interface Standards
 **Bandwidth Efficiency**: Every character counts on 1200 baud packet radio
-- 40-character width limit for compatibility with mobile devices, older terminals
-- Minimal decorative elements (single line separators, not double)
+- Dynamic terminal width with 40-character fallback for piped input: `os.get_terminal_size().columns` 
+- Fixed 40-character separator lines using dash character: `print("-" * 40)`
+- Minimal decorative elements (single line separators only, using `-` character)
+- ASCII-only decorative elements - NO Unicode, ANSI codes, or control characters
 - No welcome messages - straight to functionality
 - Terse but clear prompts and navigation
 
+**ASCII Art Logos**: All main user-facing apps include professional lowercase ASCII art logos
+- Generated from asciiart.eu text-to-ascii-art tool
+- Lowercase letter designs (modern, polished appearance)
+- Implemented using raw strings to handle backslash escaping: `r"ASCII art with \ backslashes"`
+- Standard 5-7 line height for consistency
+- Examples: feed.py, forms.py, gopher.py, hamtest.py, predict.py, qrz3.py, rss-news.py, space.py, wx-me.py, wx.py
+
 **Standard Interface Pattern**:
 ```
+app name (5-7 line ASCII art logo)
+
 APP NAME v1.X - Brief Description
-----------------------------------------
+
 Main Menu:
-----------------------------------------
 1) Primary Function
 2) Secondary Function
-----------------------------------------
-A) About  Q) Quit
+3) Tertiary Function
 
-Menu: Command1 Command2 Command3 Q :>
+A) About  Q) Quit
+Menu: [options] :>
 ```
 
 **Consistent Elements**:
-- Header: App name, version, brief description + single line
-- Menu: Numbered options, single line separators
+- Header: Lowercase ASCII art logo + app name, version, brief description
+- Menu: Numbered options with descriptions, no decorative separators between items
+- Separators: Fixed 40-char dash lines (`"-" * 40`) before/after menu sections
 - Prompts: Context + compressed commands
 - Exit: "Exiting..." for apps, "73!" only for node sign-off
 - No social pleasantries - these are utilities, not chatbots
 
 **Prompt Optimization**: Compress commands to save bandwidth
 - `P)ost D)el N)ext Pr)ev S)tat Q` instead of `P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit`
-- Context-aware: `Menu: commands :>` or `Articles: commands :>`
+- Context-aware: `Menu: [commands] :>` or `Articles: [commands] :>`
 
 ## Amateur Radio Formats
 **Callsigns**: 1-2 prefix letters, digit, 1-3 suffix letters, optional -SSID (0-15)
