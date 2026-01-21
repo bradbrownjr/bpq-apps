@@ -12,7 +12,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -615,7 +615,7 @@ class GopherClient:
 
 if __name__ == '__main__':
     # Check for app updates
-    check_for_app_update("1.2", "gopher.py")
+    check_for_app_update("1.3", "gopher.py")
     client = GopherClient()
     try:
         client.run()

@@ -14,7 +14,7 @@ Features:
 - Link to ARRL test session locator for successful candidates
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -673,5 +673,5 @@ def main():
 
 if __name__ == "__main__":
     # Check for app updates
-    check_for_app_update("1.2", "hamtest.py")
+    check_for_app_update("1.3", "hamtest.py")
     main()
