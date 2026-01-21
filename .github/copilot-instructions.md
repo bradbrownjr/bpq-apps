@@ -40,6 +40,70 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
   - **Apps with self-update:** Version bump triggers auto-download on user systems
 - Commit and push changes to GitHub after completing work
 
+## Resilience & Offline Operation
+**Design Philosophy**: Apps are internet-optional with graceful fallbacks. Packet radio nodes often have intermittent or no internet connectivity. Apps must never crash on network failure.
+
+**Auto-Update Behavior** (all apps):
+- Call `check_for_app_update(VERSION, "appname.py")` at startup
+- 3-second timeout for GitHub version check (fails silently if unreachable)
+- If update available, downloads in background (atomic operation)
+- If GitHub is down: app continues normally with existing code
+- **Never** blocks startup or crashes user session on network failure
+
+**Per-App Network Strategy**:
+
+*Apps with local caching (use cached data as fallback):*
+- `hamtest.py`: Caches question_pools/*.json locally (uses cached pools if offline)
+- `feed.py`: Caches feed_board.json with timestamps (shows cached articles if fetch fails)
+- `predict.py`: Caches solar_cache.json (uses cached data if NOAA unreachable, max 7 days stale)
+- `forms.py`: Caches forms/*.frm templates (displays cached forms if network down)
+
+*Apps with network detection (show user-friendly offline message):*
+- `rss-news.py`: Tests internet connectivity on feed fetch failure, displays "Internet appears to be unavailable. Try again later."
+- `hamqsl.py`: Shows offline message if hamqsl.com unreachable
+- `space.py`: Shows offline message if NOAA space weather feed fails
+- `wx.py`: Shows offline message if NWS headline fetch fails
+- `wx-me.py`: Shows offline message if weather API unreachable
+
+*Apps with graceful defaults (work offline with limited features):*
+- `gopher.py`: Caches gopher menu structure from previous session
+- `qrz3.py`: Uses cached callsign lookups from previous session
+- `callout.py`: Works offline for local station info (no internet required)
+- `wxnws-ftp.py`: Skips FTP upload if network down, continues with local file handling
+
+**Network Detection Implementation**:
+- Use `socket.create_connection('8.8.8.8', 53)` with 2-second timeout
+- Returns boolean: True if DNS port responds, False if unreachable
+- Example: `is_internet_available()` function in rss-news.py, hamqsl.py, space.py, wx.py, wx-me.py
+- Lightweight: DNS check is faster than HTTP and works on restricted networks
+
+**Error Handling Pattern** (all apps):
+```python
+try:
+    # main app execution
+except Exception as e:
+    if is_internet_available():
+        # Show actual error for debugging
+        print("Error: {}".format(str(e)))
+    else:
+        # Show user-friendly offline message
+        print("Internet appears to be unavailable.")
+        print("Try again later.")
+    # Continue execution, don't crash
+```
+
+**Configuration File Handling**:
+- All apps check for missing config files gracefully
+- Use sensible defaults instead of failing
+- Example: rss-news.py falls back to default feeds (ARRL, QRZ, BBC) if config missing
+- Log missing files but don't exit
+
+**Testing Offline Behavior**:
+- Simulate network down: `sudo iptables -I OUTPUT -d 8.8.8.8 -j DROP` (then restore)
+- Verify: Apps show offline message, not crash/error
+- Check cached data is used (hamtest, feed, predict, forms)
+- Confirm startup completes even if GitHub unreachable
+
 ## CLI Design Standards
 **All command-line options must have both long and short forms:**
 - Long form: `--option` (GNU style, descriptive)

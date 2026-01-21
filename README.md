@@ -13,10 +13,18 @@ Custom applications for a BPQ32 packet radio node
 
 **🔄 Automatic Updates**: All Python applications include built-in auto-update functionality that checks for new versions on GitHub at startup. Updates are downloaded and installed automatically with a 3-second timeout for reliable operation even when internet connectivity is limited.
 
-Here are some custom applications I am working on for my
-local packet radio node, which runs on a Raspberry Pi B+
-running John Wiseman's linbpq32 downloadable from:
-https://www.cantab.net/users/john.wiseman/Documents/Downloads.html
+**📡 Offline Capability**: All applications are designed to work reliably even when internet connectivity is unavailable. This is critical for packet radio nodes with intermittent or no internet access. Apps use local caching, graceful error handling, and user-friendly offline messages instead of crashing on network failures.
+
+**Offline Features by Application**:
+- **hamtest.py, feed.py, predict.py, forms.py**: Cache local data (questions, feeds, solar data, templates) for offline use
+- **rss-news.py, hamqsl.py, space.py, wx.py, wx-me.py**: Show friendly "Internet unavailable" messages instead of errors
+- **gopher.py, qrz3.py, callout.py, wxnws-ftp.py**: Work offline with graceful degradation of features
+
+All apps continue running even if:
+- GitHub is unreachable (auto-update fails silently)
+- External APIs are down (uses cached data or shows offline message)
+- Network connectivity is intermittent (retries without crashing)
+- Config files are missing (uses sensible defaults)
 
 ## Applications
 
