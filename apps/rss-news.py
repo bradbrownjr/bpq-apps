@@ -540,7 +540,7 @@ class RSSReader:
         print("| | | |  __/\\ V  V /\\__ \\")
         print(r"|_| |_|\___| \_/\_/ |___/")
         print()
-        print("RSS v1.2 - Feed Reader")
+        print("RSS v1.4 - Feed Reader")
                 
         state = 'categories'  # categories, feeds, articles, description
         
