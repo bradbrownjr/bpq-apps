@@ -156,6 +156,15 @@ def get_headlines():
 # Check for app updates
 check_for_app_update("1.1", "wx.py")
 
+# Print weather header
+print("")
+print(" o     o     o     o  ")
+print(" ~   ~       ~   ~   ")
+print("  ~   ~   ~   ~  ~   ")
+print("")
+print("WX v1.2 - Maine/NH Weather Reports")
+print("")
+
 headlines = get_headlines()
 for headline in headlines:
     print("Title: {}".format(headline['title']))

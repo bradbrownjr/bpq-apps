@@ -84,6 +84,9 @@ def compare_versions(version1, version2):
     except (ValueError, AttributeError):
         return 0
 menu = """
+  *   *    *    *   * 
+   * * *  * *  *   *  
+    * *  * * * * * *  
 SPACE v1.2 - Space Weather Reports
 ----------------------------------------
 1) Geophysical Alert Message

@@ -182,7 +182,13 @@ def display_messages(data, callsign, page=0, per_page=10):
         print("No more messages.")
         return
     
-    print("\n--- Community Bulletin Board ---")
+    print("")
+    print(" _____ _____ _____ _____ ")
+    print("|  |  |  |  |  |  |  |  |")
+    print("|  |  |  |  |  |  |  |  |")
+    print("|_____|_____|_____|_____|")
+    print("")
+    print("Community Bulletin Board")
     print("Messages {}-{} of {}".format(start_idx + 1, end_idx, total_messages))
     print()
     

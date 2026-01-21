@@ -66,9 +66,15 @@ def _error(msg, do_exit=False):
         sys.exit(1)
 
 def print_header():
-    print("QRZ v1.2 - Callsign Lookup Tool")
-    print("-" * 40)
-    print("Enter callsign or Q to quit.")
+    print("")
+    print("  ____  _____   ______")
+    print(r" / __ \|  __ \ |___  /")
+    print(r"| |  | | |__) |   / / ")
+    print(r"| |  | |  _  /   / /  ")
+    print(r"| |__| | | \ \  / /__ ")
+    print(r" \_____\_|  \_\/_____|")
+    print(r"     Lookup Tool")
+    print("")
 
 def login(username, password):
     # Login to QRZ - Must have access to XML API
