@@ -174,20 +174,20 @@ def lookup_callsign(callsign):
 
 def print_header():
     """Print app header."""
+    print()
+    print(" ____  ____  _____ ____ ___ ____ _____ ")
+    print(r"|  _ \|  _ \| ____|  _ \_ _/ ___|_   _|")
+    print(r"| |_) | |_) |  _| | | | | | |     | |  ")
+    print(r"|  __/|  _ <| |___| |_| | | |___  | |  ")
+    print(r"|_|   |_| \_\_____|____/___\____| |_|  ")
+    print()
     print("PREDICT v{} - HF Propagation Estimator".format(VERSION))
-    print("-" * LINE_WIDTH)
+    print()
 
 
 def print_menu():
     """Print main menu."""
-    print("\nPrediction Options:")
-    print("-" * LINE_WIDTH)
-    print("1) From me to another ham (by callsign)")
-    print("2) From me to a place")
-    print("3) Between two places")
-    print("-" * LINE_WIDTH)
-    print("A) About  Q) Quit")
-    print()
+    print("\n1) Call 2) Place 3) Path A) About Q) Quit")
 
 
 def prompt_location(prompt_text, allow_callsign=False):
