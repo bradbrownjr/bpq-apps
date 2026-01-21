@@ -281,16 +281,13 @@ class HamTestApp:
     
     def display_logo(self):
         """Display ASCII art logo"""
-        print("")
-        print("  _    _          __  __ _______ ______  _____ _______ ")
-        print(" | |  | |   /\\   |  \\/  |__   __|  ____|/ ____|__   __|")
-        print(" | |__| |  /  \\  | \\  / |  | |  | |__  | (___    | |   ")
-        print(" |  __  | / /\\ \\ | |\\/| |  | |  |  __|  \\___ \\   | |   ")
-        print(" | |  | |/ ____ \\| |  | |  | |  | |____ ____) |  | |   ")
-        print(" |_|  |_/_/    \\_\\_|  |_|  |_|  |______|_____/   |_|   ")
-        print("")
-        print(" Ham Radio License Test Practice")
-        print(" Technician, General, and Extra class exams")
+        print()
+        print(" _   _    _    __  __ _____ _____ ____ _____ ")
+        print(r"| | | |  / \  |  \/  |_   _| ____/ ___|_   _|")
+        print(r"| |_| | / _ \ | |\/| | | | |  _| \___ \ | |  ")
+        print(r"|  _  |/ ___ \| |  | | | | | |___ ___) || |  ")
+        print(r"|_| |_/_/   \_\_|  |_| |_| |_____|____/ |_|  ")
+        print()
     
     def display_main_menu(self):
         """Display the main menu"""
