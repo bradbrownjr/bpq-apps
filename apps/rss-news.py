@@ -451,12 +451,15 @@ class RSSReader:
     
     def display_text(self, text, paginate=True):
         """Display text content with optional pagination"""
+        # Get current terminal width
+        width = get_line_width()
+        
         # Split into lines and wrap long lines intelligently
         lines = []
         for line in text.split('\n'):
-            if len(line) > LINE_WIDTH:
+            if len(line) > width:
                 # Wrap at word boundaries without breaking long words
-                wrapped = textwrap.fill(line, width=LINE_WIDTH, break_long_words=False)
+                wrapped = textwrap.fill(line, width=width, break_long_words=False)
                 lines.extend(wrapped.split('\n'))
             else:
                 lines.append(line)
@@ -650,9 +653,10 @@ class RSSReader:
                             article = self.current_articles[item_num - 1]
                             
                             # Display article description
+                            width = get_line_width()
                             print("\n" + "-" * 40)
                             # Wrap title to fit width
-                            wrapped_title = textwrap.fill(article['title'], width=LINE_WIDTH, break_long_words=False)
+                            wrapped_title = textwrap.fill(article['title'], width=width, break_long_words=False)
                             print(wrapped_title)
                             print("-" * 40)
                             
