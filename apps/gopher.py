@@ -279,10 +279,10 @@ class GopherClient:
             elif item_type in ['2', '4', '5', '6', '8', '9', 'g', 'I', 's', 'T']:
                 print("    [{}] {} (not supported)".format(type_label, display))
             else:
-                # Wrap long lines
+                # Wrap long lines at word boundaries
                 if len(display) > LINE_WIDTH - 12:
                     wrapped = textwrap.fill(display, width=LINE_WIDTH - 12,
-                                          subsequent_indent=' ' * 12)
+                                          subsequent_indent=' ' * 12, break_long_words=False)
                     lines = wrapped.split('\n')
                     print("{:3}) [{}] {}".format(item_num, type_label, lines[0]))
                     for line in lines[1:]:
@@ -308,9 +308,9 @@ class GopherClient:
         
         if not paginate:
             for line in lines:
-                # Wrap long lines
+                # Wrap long lines at word boundaries
                 if len(line) > LINE_WIDTH:
-                    wrapped = textwrap.fill(line, width=LINE_WIDTH)
+                    wrapped = textwrap.fill(line, width=LINE_WIDTH, break_long_words=False)
                     print(wrapped)
                 else:
                     print(line)
@@ -329,7 +329,7 @@ class GopherClient:
             
             for line in chunk:
                 if len(line) > LINE_WIDTH:
-                    wrapped = textwrap.fill(line, width=LINE_WIDTH)
+                    wrapped = textwrap.fill(line, width=LINE_WIDTH, break_long_words=False)
                     print(wrapped)
                 else:
                     print(line)

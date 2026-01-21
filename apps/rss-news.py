@@ -452,8 +452,15 @@ class RSSReader:
     
     def display_text(self, text, paginate=True):
         """Display text content with optional pagination"""
-        # Split into lines without forced wrapping (let terminal handle it)
-        lines = text.split('\n')
+        # Split into lines and wrap long lines intelligently
+        lines = []
+        for line in text.split('\n'):
+            if len(line) > LINE_WIDTH:
+                # Wrap at word boundaries without breaking long words
+                wrapped = textwrap.fill(line, width=LINE_WIDTH, break_long_words=False)
+                lines.extend(wrapped.split('\n'))
+            else:
+                lines.append(line)
         
         if not paginate:
             for line in lines:
