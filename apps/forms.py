@@ -79,8 +79,14 @@ class FormsApp:
     
     def print_header(self):
         """Print application header"""
+        print()
+        print(" _____ ___  ____  __  __ ____  ")
+        print("|  ___/ _ \|  _ \|  \/  / ___| ")
+        print("| |_ | | | | |_) | |\/| \___ \\ ")
+        print("|  _|| |_| |  _ <| |  | |___) |")
+        print("|_|   \___/|_| \_\_|  |_|____/ ")
+        print()
         print("FORMS v{} - Fillable Forms System".format(self.version))
-        print("-" * LINE_WIDTH)
         print()
     
     def print_separator(self):
