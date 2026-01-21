@@ -73,6 +73,7 @@ def print_header():
     print(r" \__, |_|  /___|")
     print(r"    |_|         ")
     print()
+    print()
     print("Lookup Tool")
     print("")
 
