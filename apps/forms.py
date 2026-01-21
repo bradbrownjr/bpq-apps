@@ -58,11 +58,24 @@ GITHUB_FORMS_URL = "https://api.github.com/repos/bradbrownjr/bpq-apps/contents/a
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms"
 
 def get_line_width():
-    """Get terminal width, fallback to 40 for piped input"""
+    """Get terminal width, check COLUMNS env var, fallback to 80 for display"""
+    # First check COLUMNS environment variable (can be set by user)
+    try:
+        if 'COLUMNS' in os.environ:
+            width = int(os.environ['COLUMNS'])
+            if width > 0:
+                return width
+    except (ValueError, KeyError):
+        pass
+    
+    # Try to get actual terminal size
     try:
         return os.get_terminal_size().columns
     except (OSError, ValueError):
-        return 40  # Fallback for piped input or non-terminal
+        pass
+    
+    # Fallback: use 80 for reasonable default
+    return 80
 
 LINE_WIDTH = get_line_width()  # Dynamic terminal width
 

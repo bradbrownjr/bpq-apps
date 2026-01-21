@@ -120,11 +120,24 @@ MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
 SOCKET_TIMEOUT = 30  # Timeout for requests in seconds
 
 def get_line_width():
-    """Get terminal width, fallback to 40 for piped input"""
+    """Get terminal width, check COLUMNS env var, fallback to 80 for display"""
+    # First check COLUMNS environment variable (can be set by user)
+    try:
+        if 'COLUMNS' in os.environ:
+            width = int(os.environ['COLUMNS'])
+            if width > 0:
+                return width
+    except (ValueError, KeyError):
+        pass
+    
+    # Try to get actual terminal size
     try:
         return os.get_terminal_size().columns
     except (OSError, ValueError):
-        return 40  # Fallback for piped input or non-terminal
+        pass
+    
+    # Fallback: use 80 for reasonable default, or 40 for extremely narrow
+    return 80
 
 LINE_WIDTH = get_line_width()  # Dynamic terminal width
 MAX_ARTICLES = 15  # Maximum number of articles to display per feed
