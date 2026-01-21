@@ -182,14 +182,7 @@ def display_messages(data, callsign, page=0, per_page=10):
         print("No more messages.")
         return
     
-    print("")
-    print(" _____ _____ _____ _____ ")
-    print("|  |  |  |  |  |  |  |  |")
-    print("|  |  |  |  |  |  |  |  |")
-    print("|_____|_____|_____|_____|")
-    print("")
-    print("Community Bulletin Board")
-    print("Messages {}-{} of {}".format(start_idx + 1, end_idx, total_messages))
+    print("\nMessages {}-{} of {}".format(start_idx + 1, end_idx, total_messages))
     print()
     
     for i in range(start_idx, end_idx):
@@ -340,10 +333,14 @@ def main_loop(callsign):
     """Main program loop with standardized interface"""
     current_page = 0
     
-    # Standardized header with proper spacing
+    # Standardized header with ASCII logo
+    print()
+    print(" _____ _____ _____ _____ ")
+    print("|  |  |  |  |  |  |  |  |")
+    print("|  |  |  |  |  |  |  |  |")
+    print("|_____|_____|_____|_____|")
     print()
     print("BULLETIN v1.2 - Community Messages")
-    print("-" * 40)
     
     data = load_messages()
     display_messages(data, callsign, current_page)
