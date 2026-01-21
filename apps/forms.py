@@ -861,13 +861,12 @@ class FormsApp:
     def run(self):
         """Main application loop"""
         self.clear_screen()
-        self.print_header()
         
         # Check for application updates
         self.check_for_app_update()
         
         # Load form templates
-        print("\nLoading form templates...")
+        print("Loading form templates...")
         if not self.load_forms():
             print("\nNo forms available. Exiting.")
             return
