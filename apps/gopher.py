@@ -262,7 +262,7 @@ class GopherClient:
     def display_menu(self, items):
         """Display a Gopher menu with numbered items"""
         self.last_menu = items
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         
         item_num = 1
         for item in items:
@@ -291,7 +291,7 @@ class GopherClient:
                     print("{:3}) [{}] {}".format(item_num, type_label, display))
                 item_num += 1
                 
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
     
     def get_article_size(self, host, port, selector):
         """Prefetch to determine article size in KB"""
@@ -323,9 +323,9 @@ class GopherClient:
         for i in range(0, len(lines), PAGE_SIZE):
             chunk = lines[i:i + PAGE_SIZE]
             
-            print("\n" + "-" * LINE_WIDTH)
+            print("\n" + "-" * 40)
             print("Page {}/{}".format(page_num, total_pages))
-            print("-" * LINE_WIDTH)
+            print("-" * 40)
             
             for line in chunk:
                 if len(line) > LINE_WIDTH:
@@ -343,13 +343,13 @@ class GopherClient:
     
     def show_bookmarks(self):
         """Display bookmarks menu"""
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         print("BOOKMARKS")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
         for i, (name, url) in enumerate(BOOKMARKS, 1):
             print("{}) {}".format(i, name))
             print("   {}".format(url))
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
     
     def navigate_to(self, url):
         """Navigate to a Gopher URL"""
@@ -433,9 +433,9 @@ class GopherClient:
     
     def show_help(self):
         """Display help/commands menu"""
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         print("COMMANDS")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
         print("  [number] - Select menu item by number")
         print("  H)ome    - Go to home page")
         print("  B)ack    - Go back to previous page")
@@ -445,13 +445,13 @@ class GopherClient:
         print("  ?)       - Show this help")
         print("  Q)uit    - Exit (works from any menu)")
         print("\nPrompts are context-aware and show available commands.")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
     
     def show_about(self):
         """Display information about Gopher"""
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         print("ABOUT GOPHER")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
         print("\nGopher is a protocol developed in 1991 at the University of")
         print("Minnesota (home of the Golden Gophers mascot). It predates the")
         print("World Wide Web and was designed for distributing documents over")
@@ -473,13 +473,13 @@ class GopherClient:
         print("- Still actively maintained by enthusiasts worldwide")
         print("\nGopher experienced a revival in recent years among users who")
         print("appreciate its simplicity and efficiency. Perfect for ham radio!")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
     
     def show_startup_menu(self):
         """Display startup menu with command descriptions"""
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         print("GETTING STARTED")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
         print("\nWelcome to Gopherspace! Here's how to explore:")
         print("")
         print("  H)ome - Connect to the default home gopher server")
@@ -492,17 +492,17 @@ class GopherClient:
         print("TIP: Start by typing 'H' to visit the home server, or 'M' to")
         print("     browse bookmarks. Once viewing a gopher menu, you can")
         print("     select items by number.")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
     
     def run(self):
         """Main program loop"""
         print("")
-        print("   _____  ____  _____  _    _ ______ _____  ")
-        print("  / ____|/ __ \\|  __ \\| |  | |  ____|  __ \\ ")
-        print(" | |  __| |  | | |__) | |__| | |__  | |__) |")
-        print(" | | |_ | |  | |  ___/|  __  |  __| |  _  / ")
-        print(" | |__| | |__| | |    | |  | | |____| | \\ \\ ")
-        print(r" \_____|\_____/|_|    |_|  |_|______|_|  " + "\\_\\")
+        print(r"                   _               ")
+        print(r"  __ _  ___  _ __ | |__   ___ _ __ ")
+        print(r" / _` |/ _ \| '_ \| '_ \ / _ \ '__|")
+        print(r"| (_| | (_) | |_) | | | |  __/ |   ")
+        print(r" \__, |\___/| .__/|_| |_|\___|_|   ")
+        print(r" |___/      |_|                    ")
         print("")
         print("A simple text-based Gopher protocol client.")
         print("Designed for AX.25 packet radio terminals.")

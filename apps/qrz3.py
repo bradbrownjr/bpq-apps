@@ -67,13 +67,13 @@ def _error(msg, do_exit=False):
 
 def print_header():
     print("")
-    print("  ____  _____   ______")
-    print(r" / __ \|  __ \ |___  /")
-    print(r"| |  | | |__) |   / / ")
-    print(r"| |  | |  _  /   / /  ")
-    print(r"| |__| | | \ \  / /__ ")
-    print(r" \_____\_|  \_\/_____|")
-    print(r"     Lookup Tool")
+    print(r"  __ _ _ __ ____")
+    print(r" / _` | '__|_  /")
+    print(r"| (_| | |   / / ")
+    print(r" \__, |_|  /___|")
+    print(r"    |_|         ")
+    print()
+    print("Lookup Tool")
     print("")
 
 def login(username, password):

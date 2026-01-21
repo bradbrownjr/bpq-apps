@@ -358,16 +358,16 @@ class RSSReader:
     
     def display_categories(self):
         """Display available feed categories"""
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         print("RSS FEED CATEGORIES")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
         
         categories = sorted(self.feeds.keys())
         for i, category in enumerate(categories, 1):
             count = len(self.feeds[category])
             print("{:3}) {} ({} feeds)".format(i, category, count))
             
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
         return categories
     
     def display_feeds(self, category):
@@ -376,15 +376,15 @@ class RSSReader:
             print("Error: Category not found")
             return
         
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         print("FEEDS: {}".format(category))
-        print("=" * LINE_WIDTH)
+        print("-" * 40)
         
         feeds = self.feeds[category]
         for i, (name, url) in enumerate(feeds, 1):
             print("{:3}) {}".format(i, name))
             
-        print("=" * LINE_WIDTH)
+        print("-" * 40)
     
     def parse_date(self, date_string):
         """Extract just the date portion from RSS date strings"""
@@ -429,11 +429,11 @@ class RSSReader:
         total_articles = len(self.current_articles)
         articles_to_show = self.current_articles[:MAX_ARTICLES]
         
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "-" * 40)
         print("ARTICLES: {}".format(feed_name))
         if total_articles > MAX_ARTICLES:
             print("Showing {} of {} articles (most recent)".format(MAX_ARTICLES, total_articles))
-        print("=" * LINE_WIDTH)
+        print("-" * 40)
         
         for i, article in enumerate(articles_to_show, 1):
             title = article['title']
@@ -456,7 +456,7 @@ class RSSReader:
             else:
                 print("{:3}) {}".format(i, display_line))
         
-        print("=" * LINE_WIDTH)
+        print("-" * 40)
     
     def display_text(self, text, paginate=True):
         """Display text content with optional pagination"""
@@ -481,9 +481,9 @@ class RSSReader:
         for i in range(0, len(lines), PAGE_SIZE):
             chunk = lines[i:i + PAGE_SIZE]
             
-            print("\n" + "-" * LINE_WIDTH)
+            print("\n" + "-" * 40)
             print("Page {}/{}".format(page_num, total_pages))
-            print("-" * LINE_WIDTH)
+            print("-" * 40)
             
             for line in chunk:
                 print(line)
@@ -497,9 +497,9 @@ class RSSReader:
     
     def show_help(self):
         """Display help/commands menu"""
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "-" * 40)
         print("COMMANDS")
-        print("=" * LINE_WIDTH)
+        print("-" * 40)
         print("  [number] - Select item by number")
         print("  C)ategories - Show feed categories")
         print("  B)ack    - Go back to previous menu")
@@ -514,13 +514,13 @@ class RSSReader:
         print("\nPrompts are context-aware and show available commands.")
         print("\nNote: Only the {} most recent articles are shown per feed".format(MAX_ARTICLES))
         print("to optimize bandwidth usage over packet radio.")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
     
     def show_about(self):
         """Display information about RSS"""
-        print("\n" + "=" * LINE_WIDTH)
+        print("\n" + "=" * 40)
         print("ABOUT RSS FEEDS")
-        print("=" * LINE_WIDTH)
+        print("=" * 40)
         print("\nRSS (Really Simple Syndication) is a web feed format used to")
         print("publish frequently updated content like news articles, blog posts,")
         print("and podcasts.")
@@ -535,12 +535,17 @@ class RSSReader:
         print("- Clean text extraction from web pages")
         print("\nFeeds are organized by category for easy browsing.")
         print("You can add your own feeds by editing rss-news.conf")
-        print("=" * LINE_WIDTH)
+        print("-" * 40)
     
     def run(self):
         """Main program loop"""
+        print()
+        print(r" _ __   _____      ___ ")
+        print(r"| '_ \ / _ \ \ /\ / / __|")
+        print(r"| | | |  __/\ V  V /\__ \")
+        print(r"|_| |_|\___| \_/\_/ |___/")
+        print()
         print("RSS v1.2 - Feed Reader")
-        print("-" * 40)
                 
         state = 'categories'  # categories, feeds, articles, description
         
@@ -653,9 +658,9 @@ class RSSReader:
                             article = self.current_articles[item_num - 1]
                             
                             # Display article description
-                            print("\n" + "=" * LINE_WIDTH)
+                            print("\n" + "-" * 40)
                             print(article['title'])
-                            print("=" * LINE_WIDTH)
+                            print("-" * 40)
                             
                             if article['date']:
                                 print("Date: {}".format(article['date']))
@@ -684,9 +689,9 @@ class RSSReader:
                             
                             # Show link
                             if article['link']:
-                                print("\n" + "-" * LINE_WIDTH)
+                                print("\n" + "-" * 40)
                                 print("Source: {}".format(article['link']))
-                                print("-" * LINE_WIDTH)
+                                print("-" * 40)
                                 
                                 # Offer to fetch full article
                                 response = input("\nFetch full article? Y)es, N)o :> ").strip().lower()
@@ -711,9 +716,9 @@ class RSSReader:
                                         else:
                                             self.display_text(full_text, paginate=False)
                                         
-                                        print("\n" + "-" * LINE_WIDTH)
+                                        print("\n" + "-" * 40)
                                         print("End of article")
-                                        print("-" * LINE_WIDTH)
+                                        print("-" * 40)
                             
                             state = 'articles'
                         else:

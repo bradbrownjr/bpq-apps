@@ -11,6 +11,12 @@ Date: January 2026
 
 import requests
 
+print()
+print(r"__      ____  __")
+print(r"\ \ /\ / /\ \/")
+print(r" \ V  V /  >  < ")
+print(r"  \_/\_/  /_/\_\\")
+print()
 print("WX-ME v1.2 - Maine/NH Weather Reports")
 print("-" * 40)
 

@@ -79,18 +79,18 @@ class FormsApp:
     
     def print_header(self):
         """Print application header"""
-        print(" _____ ___  ____  __  __ ____  ")
-        print(r"|  ___/ _ \|  _ \|  \/  / ___| ")
-        print(r"| |_ | | | | |_) | |\/| \___ \ ")
-        print("|  _|| |_| |  _ <| |  | |___) |")
-        print(r"|_|   \___/|_| \_\_|  |_|____/ ")
+        print(r"  __                          ")
+        print(r" / _| ___  _ __ _ __ ___  ___ ")
+        print(r"| |_ / _ \| '__| '_ ` _ \/ __|")
+        print(r"|  _| (_) | |  | | | | | \__ \")
+        print(r"|_|  \___/|_|  |_| |_| |_|___/")
         print()
         print("FORMS v{} - Fillable Forms System".format(self.version))
         print()
     
     def print_separator(self):
         """Print a separator line"""
-        print("-" * LINE_WIDTH)
+        print("-" * 40)
     
     def wrap_text(self, text, width=LINE_WIDTH):
         """Wrap text to specified width"""

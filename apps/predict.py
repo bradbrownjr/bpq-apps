@@ -175,11 +175,12 @@ def lookup_callsign(callsign):
 def print_header():
     """Print app header."""
     print()
-    print(" ____  ____  _____ ____ ___ ____ _____ ")
-    print(r"|  _ \|  _ \| ____|  _ \_ _/ ___|_   _|")
-    print(r"| |_) | |_) |  _| | | | | | |     | |  ")
-    print(r"|  __/|  _ <| |___| |_| | | |___  | |  ")
-    print(r"|_|   |_| \_\_____|____/___\____| |_|  ")
+    print(r"                    _ _      _   ")
+    print(r" _ __  _ __ ___  __| (_) ___| |_ ")
+    print(r"| '_ \| '__/ _ \/ _` | |/ __| __|")
+    print(r"| |_) | | |  __/ (_| | | (__| |_ ")
+    print(r"| .__/|_|  \___|\_|_|_|\___|\___|")
+    print(r"|_|                              ")
     print()
     print("PREDICT v{} - HF Propagation Estimator".format(VERSION))
     print()
@@ -312,9 +313,9 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
     
     # Display results
     print("")
-    print("=" * LINE_WIDTH)
+    print("=" * 40)
     print("HF Propagation Estimate")
-    print("=" * LINE_WIDTH)
+    print("=" * 40)
     print("From: {}".format(from_desc))
     print("To:   {}".format(to_desc))
     print("")
@@ -333,19 +334,19 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
     
     # Print accuracy note
     print("")
-    print("-" * LINE_WIDTH)
+    print("-" * 40)
     print("NOTE: Simplified model (~70-80% accuracy).")
     print("For precise predictions: voacap.com")
 
-    print("-" * LINE_WIDTH)
+    print("-" * 40)
 
 
 def show_about():
     """Display about information."""
     print("")
-    print("=" * LINE_WIDTH)
+    print("=" * 40)
     print("About PREDICT v{}".format(VERSION))
-    print("=" * LINE_WIDTH)
+    print("=" * 40)
     print("")
     print("PREDICT estimates HF propagation conditions between")
     print("two locations using a simplified ionospheric model.")
@@ -372,7 +373,7 @@ def show_about():
     print("or install pythonprop/voacapl.")
     print("")
     print("Author: KC1JMH")
-    print("=" * LINE_WIDTH)
+    print("=" * 40)
 
 
 def main():
