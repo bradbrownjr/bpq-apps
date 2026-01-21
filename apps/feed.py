@@ -138,7 +138,7 @@ def get_callsign():
 
 def load_messages():
     """Load messages from JSON file"""
-    data_file = os.path.join(os.path.dirname(__file__), 'bulletin_board.json')
+    data_file = os.path.join(os.path.dirname(__file__), 'feed_board.json')
     try:
         with open(data_file, 'r') as f:
             return json.load(f)
@@ -147,7 +147,7 @@ def load_messages():
 
 def save_messages(data):
     """Save messages to JSON file"""
-    data_file = os.path.join(os.path.dirname(__file__), 'bulletin_board.json')
+    data_file = os.path.join(os.path.dirname(__file__), 'feed_board.json')
     try:
         with open(data_file, 'w') as f:
             json.dump(data, f, indent=2)
@@ -390,7 +390,7 @@ def main_loop(callsign):
 def main():
     """Main application entry point"""
     # Check for app updates
-    check_for_app_update("1.2", "bulletin.py")
+    check_for_app_update("1.2", "feed.py")
     
 
 

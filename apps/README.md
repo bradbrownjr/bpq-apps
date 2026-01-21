@@ -4,7 +4,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 ## Table of Contents
 - [Features](#features)
 - [Applications](#applications)
-  - [bulletin.py](#bulletinpy)
+  - [feed.py](#feedpy)
   - [callout.py](#calloutpy)
   - [forms.py](#formspy)
   - [gopher.py](#gopherpy)
@@ -33,16 +33,16 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 
 ## Applications
 
-bulletin.py
+feed.py
 -----------
 **Type**: Python  
-**Purpose**: Community bulletin board for posting and viewing one-liner messages  
+**Purpose**: Community message feed for posting and viewing one-liner messages  
 **Information source**: User submissions stored locally  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Classic BBS-style one-liner door application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
+**Notes**: Twitter-style message feed door application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
 
 **Download or update**:  
-```wget -O bulletin.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/bulletin.py && chmod +x bulletin.py```
+```wget -O feed.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/feed.py && chmod +x feed.py```
 
 **Features**:
 - Post one-liner messages (up to 80 characters)
@@ -57,7 +57,7 @@ bulletin.py
 
 **BPQ32 Configuration**:
 ```
-APPLICATION 8,BULLETIN,C 9 HOST 8 S
+APPLICATION 8,FEED,C 9 HOST 8 S
 ```
 The 'S' flag strips SSID from callsign for cleaner display. Remove 'S' to include SSID.
 
@@ -72,7 +72,7 @@ The 'S' flag strips SSID from callsign for cleaner display. Remove 'S' to includ
 - Q: Quit
 
 **Data Storage**:
-Messages are stored in `bulletin_board.json` in the same directory as the script:
+Messages are stored in `feed_board.json` in the same directory as the script:
 ```json
 {
   "messages": [
