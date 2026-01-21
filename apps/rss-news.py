@@ -739,7 +739,7 @@ class RSSReader:
 
 if __name__ == '__main__':
     # Check for app updates
-    check_for_app_update("1.3", "rss-news.py")
+    check_for_app_update("1.4", "rss-news.py")
     reader = RSSReader()
     try:
         reader.run()
