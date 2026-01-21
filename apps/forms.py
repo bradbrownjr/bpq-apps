@@ -82,7 +82,7 @@ class FormsApp:
         print(r"  __                          ")
         print(r" / _| ___  _ __ _ __ ___  ___ ")
         print(r"| |_ / _ \| '__| '_ ` _ \/ __|")
-        print(r"|  _| (_) | |  | | | | | \__ \")
+        print("|  _| (_) | |  | | | | | \\__ \\")
         print(r"|_|  \___/|_|  |_| |_| |_|___/")
         print()
         print("FORMS v{} - Fillable Forms System".format(self.version))

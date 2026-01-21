@@ -542,7 +542,7 @@ class RSSReader:
         print()
         print(r" _ __   _____      ___ ")
         print(r"| '_ \ / _ \ \ /\ / / __|")
-        print(r"| | | |  __/\ V  V /\__ \")
+        print("| | | |  __/\\ V  V /\\__ \\")
         print(r"|_| |_|\___| \_/\_/ |___/")
         print()
         print("RSS v1.2 - Feed Reader")
