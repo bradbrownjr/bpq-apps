@@ -111,7 +111,15 @@ def compare_versions(version1, version2):
 
 import socket
 import textwrap
+import os
 from urllib.parse import urlparse
+
+def get_line_width():
+    """Get terminal width, fallback to 40 for piped input"""
+    try:
+        return os.get_terminal_size().columns
+    except (OSError, ValueError):
+        return 40  # Fallback for piped input or non-terminal
 
 # Configuration
 # -------------
@@ -124,7 +132,7 @@ BOOKMARKS = [
 PAGE_SIZE = 20  # Lines per page for pagination
 MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
 SOCKET_TIMEOUT = 30  # Timeout for socket connections in seconds
-LINE_WIDTH = 40  # Maximum line width for wrapping
+LINE_WIDTH = get_line_width()  # Dynamic terminal width with 40-char fallback
 
 
 class GopherClient:
@@ -494,7 +502,7 @@ class GopherClient:
         print(" | |  __| |  | | |__) | |__| | |__  | |__) |")
         print(" | | |_ | |  | |  ___/|  __  |  __| |  _  / ")
         print(" | |__| | |__| | |    | |  | | |____| | \\ \\ ")
-        print("  \\\\_____|\\\\____/|_|    |_|  |_|______|_|  \\\\_\\\\")
+        print(r" \_____|\_____/|_|    |_|  |_|______|_|  " + "\\_\\")
         print("")
         print("A simple text-based Gopher protocol client.")
         print("Designed for AX.25 packet radio terminals.")
@@ -505,7 +513,6 @@ class GopherClient:
         print("  G)o URL  - Go to specific Gopher URL")
         print("  ?)       - Show help")
         print("  Q)uit    - Exit the client")
-        print("=" * LINE_WIDTH)
         
         # Main command loop
         while True:

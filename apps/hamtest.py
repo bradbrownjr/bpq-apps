@@ -690,5 +690,5 @@ def main():
 
 if __name__ == "__main__":
     # Check for app updates
-    check_for_app_update("1.1", "hamtest.py")
+    check_for_app_update("1.2", "hamtest.py")
     main()
