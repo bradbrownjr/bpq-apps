@@ -74,12 +74,11 @@ class FormsApp:
         
     def clear_screen(self):
         """Clear screen for better readability (optional, works in most terminals)"""
-        # For packet radio, we'll just print some newlines instead
-        print("\n" * 2)
+        # For packet radio, we'll just print a newline instead
+        print()
     
     def print_header(self):
         """Print application header"""
-        print()
         print(" _____ ___  ____  __  __ ____  ")
         print(r"|  ___/ _ \|  _ \|  \/  / ___| ")
         print(r"| |_ | | | | |_) | |\/| \___ \ ")
