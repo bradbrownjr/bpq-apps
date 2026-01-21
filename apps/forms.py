@@ -81,10 +81,10 @@ class FormsApp:
         """Print application header"""
         print()
         print(" _____ ___  ____  __  __ ____  ")
-        print("|  ___/ _ \|  _ \|  \/  / ___| ")
-        print("| |_ | | | | |_) | |\/| \___ \\ ")
+        print(r"|  ___/ _ \|  _ \|  \/  / ___| ")
+        print(r"| |_ | | | | |_) | |\/| \___ \ ")
         print("|  _|| |_| |  _ <| |  | |___) |")
-        print("|_|   \___/|_| \_\_|  |_|____/ ")
+        print(r"|_|   \___/|_| \_\_|  |_|____/ ")
         print()
         print("FORMS v{} - Fillable Forms System".format(self.version))
         print()
