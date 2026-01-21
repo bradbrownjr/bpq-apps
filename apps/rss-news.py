@@ -13,7 +13,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -651,7 +651,9 @@ class RSSReader:
                             
                             # Display article description
                             print("\n" + "-" * 40)
-                            print(article['title'])
+                            # Wrap title to fit width
+                            wrapped_title = textwrap.fill(article['title'], width=LINE_WIDTH, break_long_words=False)
+                            print(wrapped_title)
                             print("-" * 40)
                             
                             if article['date']:
