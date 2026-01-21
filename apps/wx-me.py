@@ -13,6 +13,9 @@ import requests
 import sys
 import os
 
+VERSION = "1.2"
+APP_NAME = "wx-me.py"
+
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
     try:
@@ -82,7 +85,7 @@ def compare_versions(version1, version2):
         return 0
 
 # Check for app updates
-check_for_app_update("1.2", "wx-me.py")
+check_for_app_update(VERSION, APP_NAME)
 
 print()
 print(r"__      ____  __")
@@ -90,7 +93,7 @@ print(r"\ \ /\ / /\ \/")
 print(r" \ V  V /  >  < ")
 print(r"  \_/\_/  /_/\_\\")
 print()
-print("WX-ME v1.2 - Maine/NH Weather Reports")
+print("WX-ME v{} - Maine/NH Weather Reports".format(VERSION))
 print("-" * 40)
 
 menu = """

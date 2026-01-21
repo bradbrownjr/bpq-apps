@@ -31,6 +31,9 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 hamtest.py")
     sys.exit(1)
 
+VERSION = "1.3"
+APP_NAME = "hamtest.py"
+
 import os
 import json
 import random
@@ -299,7 +302,7 @@ class HamTestApp:
     
     def display_main_menu(self):
         """Display the main menu"""
-        print("HAMTEST v1.2 - License Test Practice")
+        print("HAMTEST v{} - License Test Practice".format(VERSION))
         print("-" * 40)
         print()
         
@@ -673,5 +676,5 @@ def main():
 
 if __name__ == "__main__":
     # Check for app updates
-    check_for_app_update("1.3", "hamtest.py")
+    check_for_app_update(VERSION, APP_NAME)
     main()

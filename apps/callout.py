@@ -22,6 +22,9 @@ Date: October 2025
 import sys
 import os
 
+VERSION = "1.1"
+APP_NAME = "callout.py"
+
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
     try:
@@ -91,7 +94,7 @@ def compare_versions(version1, version2):
         return 0
 
 # Check for app updates
-check_for_app_update("1.1", "callout.py")
+check_for_app_update(VERSION, APP_NAME)
 
 # Capture BPQ callsign from stdin (first line)
 try:

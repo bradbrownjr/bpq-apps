@@ -18,6 +18,9 @@ Date: January 2026
 
 import sys
 
+VERSION = "1.4"
+APP_NAME = "gopher.py"
+
 # Check Python version
 if sys.version_info < (3, 5):
     print("Error: This script requires Python 3.5 or later.")
@@ -615,7 +618,7 @@ class GopherClient:
 
 if __name__ == '__main__':
     # Check for app updates
-    check_for_app_update("1.4", "gopher.py")
+    check_for_app_update(VERSION, APP_NAME)
     client = GopherClient()
     try:
         client.run()

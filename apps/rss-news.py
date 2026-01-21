@@ -43,6 +43,9 @@ from datetime import datetime
 import subprocess
 import tempfile
 
+VERSION = "1.4"
+APP_NAME = "rss-news.py"
+
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
     try:
@@ -540,7 +543,7 @@ class RSSReader:
         print("| | | |  __/\\ V  V /\\__ \\")
         print(r"|_| |_|\___| \_/\_/ |___/")
         print()
-        print("RSS v1.4 - Feed Reader")
+        print("RSS v{} - Feed Reader".format(VERSION))
                 
         state = 'categories'  # categories, feeds, articles, description
         
@@ -739,7 +742,7 @@ class RSSReader:
 
 if __name__ == '__main__':
     # Check for app updates
-    check_for_app_update("1.4", "rss-news.py")
+    check_for_app_update(VERSION, APP_NAME)
     reader = RSSReader()
     try:
         reader.run()

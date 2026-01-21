@@ -16,6 +16,9 @@ import requests
 import sys
 import os
 
+VERSION = "1.2"
+APP_NAME = "space.py"
+
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
     try:
@@ -89,12 +92,13 @@ menu = r"""
 \__ \ |_) | (_| | (_|  __/
 |___/ .__/ \__,_|\___\___|
     |_|                   
-SPACE v1.2 - Space Weather Reports
+SPACE v{{}} - Space Weather Reports
 ----------------------------------------
 1) Geophysical Alert Message
 2) Advisory Outlook
 3) Forecast Discussion
 4) Weekly Highlights and Forecasts
+""".format(VERSION)
 5) 3-Day Forecast
 6) 3-Day Geomagnetic Forecast
 7) 3-day Space Weather Predictions
@@ -117,7 +121,7 @@ def pullthis(url):
         print("\n{}\n".format(data))
 
 # Check for app updates
-check_for_app_update("1.2", "space.py")
+check_for_app_update(VERSION, APP_NAME)
 
 print(menu)
 while True:

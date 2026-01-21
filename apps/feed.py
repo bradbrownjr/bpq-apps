@@ -30,6 +30,9 @@ import json
 import re
 from datetime import datetime, timedelta
 
+VERSION = "1.2"
+APP_NAME = "feed.py"
+
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
     try:
@@ -390,7 +393,7 @@ def main_loop(callsign):
 def main():
     """Main application entry point"""
     # Check for app updates
-    check_for_app_update("1.2", "feed.py")
+    check_for_app_update(VERSION, APP_NAME)
     
 
 

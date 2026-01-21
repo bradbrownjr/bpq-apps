@@ -39,6 +39,9 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
+VERSION = "1.6"
+APP_NAME = "forms.py"
+
 import os
 import json
 from datetime import datetime
@@ -69,7 +72,7 @@ class FormsApp:
     def __init__(self):
         self.forms = []
         self.user_call = ""
-        self.version = "1.6"
+        self.version = VERSION
         self.bpq_callsign = None  # Callsign passed from BPQ
         
     def clear_screen(self):

@@ -21,6 +21,10 @@ import os # Import os module for file operations
 import sys # Import sys module for command-line arguments
 import re # Import re module for stripping HTML tags from text with regular expressions
 from datetime import datetime # Import datetime module for parsing ISO 8601 date strings into human-readable format
+
+VERSION = "1.2"
+APP_NAME = "wx.py"
+
 try:
     import maidenhead as mh # Import what's needed to get lattitude and longitude from gridsquare location
 except ImportError:
@@ -154,7 +158,7 @@ def get_headlines():
     return headlines
 
 # Check for app updates
-check_for_app_update("1.2", "wx.py")
+check_for_app_update(VERSION, APP_NAME)
 
 # Print weather header
 print()
@@ -163,7 +167,7 @@ print(r"\ \ /\ / /\ \/")
 print(r" \ V  V /  >  < ")
 print(r"  \_/\_/  /_/\_\\")
 print()
-print("WX v1.2 - Maine/NH Weather Reports")
+print("WX v{} - Maine/NH Weather Reports".format(VERSION))
 print()
 
 headlines = get_headlines()

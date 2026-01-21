@@ -6,6 +6,9 @@ Query QRZ XML API for amateur radio operator information.
 
 Version: 1.1
 """
+VERSION = "1.1"
+APP_NAME = "qrz3.py"
+
 # Original script acquired from https://github.com/hink/qrzpy/blob/master/qrz3.py
 # Script will try to install necessary module: beautifulsoup4 for XML parsing
 from getpass import getpass
@@ -102,7 +105,7 @@ def compare_versions(version1, version2):
         return 0
 
 # Check for app updates
-check_for_app_update("1.1", "qrz3.py")
+check_for_app_update(VERSION, APP_NAME)
 
 # User variables
 # --------------
@@ -151,7 +154,7 @@ def print_header():
     print(r" \__, |_|  /___|")
     print(r"    |_|         ")
     print()
-    print("QRZ v1.1 - Callsign Lookup Tool")
+    print("QRZ v{} - Callsign Lookup Tool".format(VERSION))
     print("-" * 31)
     print("")
 
