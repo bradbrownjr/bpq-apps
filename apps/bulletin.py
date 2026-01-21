@@ -335,11 +335,12 @@ def main_loop(callsign):
     
     # Standardized header with ASCII logo
     print()
-    print(" ___ ___ ___ ___ ")
-    print("|  |  |  |  |  |")
-    print("|__ |__ |__ |__|")
-    print("|_  |_  |_  |  |")
-    print("|__  |  |   |__|")
+    print(" _____ ______ ______ ______ ")
+    print("|  ___|  ____|  ____||  __  \\")
+    print("| |_   | |__  | |__  | |  | |")
+    print("|  _|  |  __| |  __| | |  | |")
+    print("| |    | |    | |    | |__| |")
+    print("|_|    |_|    |_|    |_____/ ")
     print()
     print("Community Message Feed")
     
