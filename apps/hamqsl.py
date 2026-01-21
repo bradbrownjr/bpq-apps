@@ -85,6 +85,20 @@ def compare_versions(version1, version2):
 # Check for app updates
 check_for_app_update("1.1", "hamqsl.py")
 
+# Print header with logo
+logo = r"""
+ _                               _ 
+| |__   __ _ _ __ ___   __ _ ___| |
+| '_ \ / _` | '_ ` _ \ / _` / __| |
+| | | | (_| | | | | | | (_| \__ \ |
+|_| |_|\__,_|_| |_| |_|\__, |___/_|
+                          |_|      
+"""
+
+print(logo)
+print("HAMQSL - Solar and Band Conditions")
+print("-" * 40)
+
 # Get XML file from web server
 url = "https://www.hamqsl.com/solarxml.php?nwra=north&muf=grnlnd"
 webxml = (requests.get(url)).content
@@ -134,22 +148,9 @@ for solardata in root.findall('solardata'):
     muffactor = solardata.find('muffactor').text
     fof2 = solardata.find('fof2').text
 
-logo = r"""
- _                               _ 
-| |__   __ _ _ __ ___   __ _ ___| |
-| '_ \ / _` | '_ ` _ \ / _` / __| |
-| | | | (_| | | | | | | (_| \__ \ |
-|_| |_|\__,_|_| |_| |_|\__, |___/_|
-                          |_|      
-"""
-
-print(logo)
-print("HAMQSL - Solar and Band Conditions")
-print("-" * 40)
-lr = "-" * 40
-print()
-print('From: ', source)
-print('Updated: ', updated)
+    lr = "-" * 40
+    print('From: ', source)
+    print('Updated: ', updated)
 
 print(lr)
 print("            Solar-Terrestrial Data")
