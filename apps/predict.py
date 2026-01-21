@@ -187,7 +187,13 @@ def print_header():
 
 def print_menu():
     """Print main menu."""
-    print("\n1) Call 2) Place 3) Path A) About Q) Quit")
+    print("\nPrediction Options:")
+    print("-" * get_line_width())
+    print("1) From me to another ham (by callsign)")
+    print("2) From me to a place")
+    print("3) Between two places")
+    print("-" * get_line_width())
+    print("A) About  Q) Quit")
 
 
 def prompt_location(prompt_text, allow_callsign=False):
