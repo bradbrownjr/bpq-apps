@@ -4,7 +4,7 @@ QRZ Callsign Lookup for Packet Radio
 ------------------------------------
 Query QRZ XML API for amateur radio operator information.
 
-Version: 1.0
+Version: 1.1
 """
 # Original script acquired from https://github.com/hink/qrzpy/blob/master/qrz3.py
 # Script will try to install necessary module: beautifulsoup4 for XML parsing
@@ -102,7 +102,7 @@ def compare_versions(version1, version2):
         return 0
 
 # Check for app updates
-check_for_app_update("1.0", "qrz3.py")
+check_for_app_update("1.1", "qrz3.py")
 
 # User variables
 # --------------
@@ -151,7 +151,7 @@ def print_header():
     print(r" \__, |_|  /___|")
     print(r"    |_|         ")
     print()
-    print("QRZ v1.0 - Callsign Lookup Tool")
+    print("QRZ v1.1 - Callsign Lookup Tool")
     print("-" * 31)
     print("")
 
