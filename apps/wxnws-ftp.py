@@ -84,6 +84,15 @@ def compare_versions(version1, version2):
 # Check for app updates
 check_for_app_update(VERSION, APP_NAME)
 
+print()
+print(r"__      ____  __")
+print(r"\ \ /\ / /\ \/ /")
+print(r" \ V  V /  >  < ")
+print("  \\_/\\_/  /_/\\_\\")
+print()
+print("WXNWS-FTP v{} - NWS FTP Product Downloader".format(VERSION))
+print()
+
 # Variables
 region = "gyx" # Lowercase region code for local NWS office
 
