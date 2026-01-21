@@ -102,7 +102,8 @@ print(logo)
 print("HAMQSL - Solar and Band Conditions")
 print("-" * 40)
 
-# Get XML file from web server
+try:
+    # Get XML file from web server
 url = "https://www.hamqsl.com/solarxml.php?nwra=north&muf=grnlnd"
 webxml = (requests.get(url)).content
 #print(webxml)
@@ -196,3 +197,9 @@ print('MUF Factor: ', muffactor)
 print('Crit foF2 Freq: ', fof2)
 
 print(lr)
+
+except KeyboardInterrupt:
+    print("\n\nExiting...")
+except Exception as e:
+    print("\nError: {}".format(str(e)))
+    print("Please report this issue if it persists.")

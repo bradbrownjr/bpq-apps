@@ -122,23 +122,30 @@ def pullthis(url):
         data = response.text
         print("\n{}\n".format(data))
 
-print (menu)
-while True:
-        selected = str(input("Menu: [1-5] R)elist A)bout Q)uit :> "))
-        if "1" in selected:
-                pullthis("https://tgftp.nws.noaa.gov/data/raw/aw/awus81.kgyx.rws.gyx.txt")
-        elif "2" in selected:
-                pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus41.kgyx.rwr.gyx.txt")
-        elif "3" in selected:
-                pullthis("https://tgftp.nws.noaa.gov/data/forecasts/state/nh/nhz010.txt")
-        elif "4" in selected:
-                pullthis("https://tgftp.nws.noaa.gov/data/raw/fp/fpus61.kcar.sft.car.txt")
-        elif "5" in selected:
-                pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus61.kgyx.rtp.gyx.txt")
-        elif "a" in selected.lower():
-                print (about)
-        elif "r" in selected.lower():
-                print (menu)
-        elif "q" in selected.lower():
-                print("\nExiting...")
-                exit()
+try:
+    print (menu)
+    while True:
+            selected = str(input("Menu: [1-5] R)elist A)bout Q)uit :> "))
+            if "1" in selected:
+                    pullthis("https://tgftp.nws.noaa.gov/data/raw/aw/awus81.kgyx.rws.gyx.txt")
+            elif "2" in selected:
+                    pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus41.kgyx.rwr.gyx.txt")
+            elif "3" in selected:
+                    pullthis("https://tgftp.nws.noaa.gov/data/forecasts/state/nh/nhz010.txt")
+            elif "4" in selected:
+                    pullthis("https://tgftp.nws.noaa.gov/data/raw/fp/fpus61.kcar.sft.car.txt")
+            elif "5" in selected:
+                    pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus61.kgyx.rtp.gyx.txt")
+            elif "a" in selected.lower():
+                    print (about)
+            elif "r" in selected.lower():
+                    print (menu)
+            elif "q" in selected.lower():
+                    print("\nExiting...")
+                    break
+
+except KeyboardInterrupt:
+    print("\n\nExiting...")
+except Exception as e:
+    print("\nError: {}".format(str(e)))
+    print("Please report this issue if it persists.")

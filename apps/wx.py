@@ -170,8 +170,15 @@ print()
 print("WX v{} - Maine/NH Weather Reports".format(VERSION))
 print()
 
-headlines = get_headlines()
-for headline in headlines:
-    print("Title: {}".format(headline['title']))
-    print("Issuance Time: {}".format(headline['issuanceTime']))
-    print("Content: {}\n".format(headline['content']))
+try:
+    headlines = get_headlines()
+    for headline in headlines:
+        print("Title: {}".format(headline['title']))
+        print("Issuance Time: {}".format(headline['issuanceTime']))
+        print("Content: {}\n".format(headline['content']))
+
+except KeyboardInterrupt:
+    print("\n\nExiting...")
+except Exception as e:
+    print("\nError: {}".format(str(e)))
+    print("Please report this issue if it persists.")

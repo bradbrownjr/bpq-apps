@@ -120,30 +120,38 @@ def pullthis(url):
         data = response.text
         print("\n{}\n".format(data))
 
-# Check for app updates
-check_for_app_update(VERSION, APP_NAME)
+# Main execution
+try:
+    # Check for app updates
+    check_for_app_update(VERSION, APP_NAME)
 
-print(menu)
-while True:
-        selected = str(input("Menu: [1-7] R)elist A)bout Q)uit :> "))
-        if "1" in selected:
-                pullthis("https://services.swpc.noaa.gov/text/wwv.txt") #7
-        elif "2" in selected:
-                pullthis("https://services.swpc.noaa.gov/text/advisory-outlook.txt") #5
-        elif "3" in selected:
-                pullthis("https://services.swpc.noaa.gov/text/discussion.txt") #1
-        elif "4" in selected:
-                pullthis("https://services.swpc.noaa.gov/text/weekly.txt") #6
-        elif "5" in selected:
-                pullthis("https://services.swpc.noaa.gov/text/3-day-forecast.txt") #2
-        elif "6" in selected:
-                pullthis("https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt") #3
-        elif "7" in selected:
-                pullthis("https://services.swpc.noaa.gov/text/3-day-solar-geomag-predictions.txt") #4
-        elif "a" in selected.lower():
-                print (about)
-        elif "r" in selected.lower():
-                print (menu)
-        elif "q" in selected.lower():
-                print ("\nExiting...\n")
-                exit()
+    print(menu)
+    while True:
+            selected = str(input("Menu: [1-7] R)elist A)bout Q)uit :> "))
+            if "1" in selected:
+                    pullthis("https://services.swpc.noaa.gov/text/wwv.txt") #7
+            elif "2" in selected:
+                    pullthis("https://services.swpc.noaa.gov/text/advisory-outlook.txt") #5
+            elif "3" in selected:
+                    pullthis("https://services.swpc.noaa.gov/text/discussion.txt") #1
+            elif "4" in selected:
+                    pullthis("https://services.swpc.noaa.gov/text/weekly.txt") #6
+            elif "5" in selected:
+                    pullthis("https://services.swpc.noaa.gov/text/3-day-forecast.txt") #2
+            elif "6" in selected:
+                    pullthis("https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt") #3
+            elif "7" in selected:
+                    pullthis("https://services.swpc.noaa.gov/text/3-day-solar-geomag-predictions.txt") #4
+            elif "a" in selected.lower():
+                    print (about)
+            elif "r" in selected.lower():
+                    print (menu)
+            elif "q" in selected.lower():
+                    print ("\nExiting...\n")
+                    break
+
+except KeyboardInterrupt:
+    print("\n\nExiting...")
+except Exception as e:
+    print("\nError: {}".format(str(e)))
+    print("Please report this issue if it persists.")

@@ -138,7 +138,7 @@ class Colors(object):
 
 def signal_handler(signal, frame):
     print('\n\nBye!\n')
-    sys.exit(0)
+    # Don't exit - let the app continue or the caller handle shutdown
 
 
 def _error(msg, do_exit=False):
@@ -301,9 +301,16 @@ def main():
         if "" == callsign or "?" == callsign or "h" == callsign.lower() or "help" == callsign.lower():
             print("Enter callsign or enter 'q' to quit")
         elif "q" == callsign.lower() or "quit" == callsign.lower() or "x" == callsign.lower():
-            exit()
+            print("\nBye!\n")
+            break
         else:
             lookup_callsign(callsign, session_key)
 
 if __name__ == "__main__":
-    exit (main())
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nExiting...")
+    except Exception as e:
+        print("\nError: {}".format(str(e)))
+        print("Please report this issue if it persists.")

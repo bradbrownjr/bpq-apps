@@ -161,11 +161,25 @@ class RSSReader:
         self.load_config()
         
     def load_config(self):
-        """Load RSS feeds from configuration file"""
+        """Load RSS feeds from configuration file, use defaults if missing"""
+        # Built-in default feeds
+        default_feeds = {
+            'Ham Radio': [
+                ('ARRL News', 'http://www.arrl.org/news/feed'),
+                ('QRZ News', 'https://www.qrz.com/news/feed'),
+            ],
+            'News': [
+                ('BBC News', 'http://feeds.bbc.co.uk/news/rss.xml'),
+            ]
+        }
+        
         if not os.path.exists(CONFIG_FILE):
-            print("Error: Configuration file not found: {}".format(CONFIG_FILE))
-            print("Please create rss-news.conf with your RSS feeds.")
-            sys.exit(1)
+            # Use default feeds instead of exiting
+            self.feeds = default_feeds
+            print("Config file not found. Using default feeds.")
+            print("Loaded {} categories with {} total feeds".format(
+                len(self.feeds), sum(len(feeds) for feeds in self.feeds.values())))
+            return
             
         try:
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
@@ -185,15 +199,16 @@ class RSSReader:
                         self.feeds[category].append((name, url))
                         
             if not self.feeds:
-                print("Error: No feeds found in configuration file")
-                sys.exit(1)
+                # Fall back to defaults if config is empty
+                self.feeds = default_feeds
                 
             print("Loaded {} categories with {} total feeds".format(
                 len(self.feeds), sum(len(feeds) for feeds in self.feeds.values())))
                 
         except Exception as e:
-            print("Error loading configuration: {}".format(str(e)))
-            sys.exit(1)
+            # Fall back to defaults if config loading fails
+            self.feeds = default_feeds
+            print("Error loading configuration. Using default feeds.")
     
     def strip_html(self, html_text):
         """Strip HTML tags from text, converting breaks and paragraphs to newlines"""
@@ -750,6 +765,8 @@ if __name__ == '__main__':
     reader = RSSReader()
     try:
         reader.run()
+    except KeyboardInterrupt:
+        print("\n\nExiting...")
     except Exception as e:
-        print("\nFatal error: {}".format(str(e)))
-        sys.exit(1)
+        print("\nError: {}".format(str(e)))
+        print("Please report this issue if it persists.")

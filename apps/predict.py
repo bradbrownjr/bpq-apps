@@ -457,4 +457,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nExiting...")
+    except Exception as e:
+        print("\nError: {}".format(str(e)))
+        print("Please report this issue if it persists.")

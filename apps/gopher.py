@@ -623,9 +623,11 @@ class GopherClient:
 if __name__ == '__main__':
     # Check for app updates
     check_for_app_update(VERSION, APP_NAME)
-    client = GopherClient()
     try:
+        client = GopherClient()
         client.run()
+    except KeyboardInterrupt:
+        print("\n\nExiting...")
     except Exception as e:
-        print("\nFatal error: {}".format(str(e)))
-        sys.exit(1)
+        print("\nError: {}".format(str(e)))
+        print("Please report this issue if it persists.")
