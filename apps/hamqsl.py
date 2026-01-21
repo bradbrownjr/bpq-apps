@@ -102,6 +102,15 @@ print(logo)
 print("HAMQSL - Solar and Band Conditions")
 print("-" * 40)
 
+def is_internet_available():
+    """Quick check if internet is available"""
+    try:
+        import socket
+        socket.create_connection(('8.8.8.8', 53), timeout=2)
+        return True
+    except (socket.timeout, socket.error, OSError):
+        return False
+
 try:
     # Get XML file from web server
 url = "https://www.hamqsl.com/solarxml.php?nwra=north&muf=grnlnd"
@@ -201,5 +210,13 @@ print(lr)
 except KeyboardInterrupt:
     print("\n\nExiting...")
 except Exception as e:
-    print("\nError: {}".format(str(e)))
-    print("Please report this issue if it persists.")
+    error_str = str(e)
+    if 'timeout' in error_str.lower() or 'connection' in error_str.lower():
+        if is_internet_available():
+            print("\nConnection Error: {}".format(error_str))
+        else:
+            print("\nInternet appears to be unavailable.")
+            print("Try again later or check your connection.")
+    else:
+        print("\nError: {}".format(error_str))
+        print("Please report this issue if it persists.")

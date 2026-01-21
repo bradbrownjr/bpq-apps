@@ -153,5 +153,12 @@ try:
 except KeyboardInterrupt:
     print("\n\nExiting...")
 except Exception as e:
-    print("\nError: {}".format(str(e)))
-    print("Please report this issue if it persists.")
+    error_str = str(e)
+    if 'timeout' in error_str.lower() or 'connection' in error_str.lower() or 'urlopen' in error_str.lower():
+        if is_internet_available():
+            print("\nConnection Error: {}".format(error_str))
+        else:
+            print("\nInternet appears to be unavailable.")
+            print("Try again later or check your connection.")
+    else:
+        print("\nError: {}".format(error_str))

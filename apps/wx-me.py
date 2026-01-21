@@ -147,5 +147,15 @@ try:
 except KeyboardInterrupt:
     print("\n\nExiting...")
 except Exception as e:
-    print("\nError: {}".format(str(e)))
+    error_str = str(e)
+    if 'timeout' in error_str.lower() or 'connection' in error_str.lower() or 'urlopen' in error_str.lower():
+        try:
+            import socket
+            socket.create_connection(('8.8.8.8', 53), timeout=2)
+            print("\nConnection Error: {}".format(error_str))
+        except (socket.timeout, socket.error, OSError):
+            print("\nInternet appears to be unavailable.")
+            print("Try again later or check your connection.")
+    else:
+        print("\nError: {}".format(error_str))
     print("Please report this issue if it persists.")

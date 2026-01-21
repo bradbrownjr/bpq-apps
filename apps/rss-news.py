@@ -11,9 +11,11 @@ Features:
 - Article size prefetch with pagination option
 - Clean text extraction from web articles
 - Simple command-based navigation
+- Offline detection with user-friendly messages
+- Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -43,7 +45,7 @@ from datetime import datetime
 import subprocess
 import tempfile
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "rss-news.py"
 
 def check_for_app_update(current_version, script_name):
@@ -118,6 +120,16 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rss-news.conf")
 PAGE_SIZE = 20  # Lines per page for pagination
 MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
 SOCKET_TIMEOUT = 30  # Timeout for requests in seconds
+
+def is_internet_available():
+    """Quick check if internet is available (tries to reach a reliable DNS)"""
+    try:
+        # Try to reach Google's public DNS (simple and fast)
+        import socket
+        socket.create_connection(('8.8.8.8', 53), timeout=2)
+        return True
+    except (socket.timeout, socket.error, OSError):
+        return False
 
 def get_line_width():
     """Get terminal width from COLUMNS env var, default to 80"""
@@ -325,13 +337,25 @@ class RSSReader:
             print("HTTP Error {}: {}".format(e.code, e.reason))
             return None
         except urllib.error.URLError as e:
-            print("URL Error: {}".format(str(e.reason)))
+            if is_internet_available():
+                print("Connection Error: {}".format(str(e.reason)))
+            else:
+                print("Internet appears to be unavailable.")
+                print("Try again later or check your connection.")
             return None
         except ET.ParseError:
             print("Error: Could not parse RSS feed (invalid XML)")
             return None
         except Exception as e:
-            print("Error fetching feed: {}".format(str(e)))
+            error_str = str(e)
+            if 'timeout' in error_str.lower() or 'connection' in error_str.lower():
+                if is_internet_available():
+                    print("Connection Error: {}".format(error_str))
+                else:
+                    print("Internet appears to be unavailable.")
+                    print("Try again later or check your connection.")
+            else:
+                print("Error fetching feed: {}".format(error_str))
             return None
     
     def fetch_article_text(self, url):
@@ -376,7 +400,14 @@ class RSSReader:
             return text
             
         except Exception as e:
-            return "Error fetching article: {}".format(str(e))
+            error_str = str(e)
+            if 'timeout' in error_str.lower() or 'connection' in error_str.lower():
+                if is_internet_available():
+                    return "Connection Error: {}".format(error_str)
+                else:
+                    return "Internet unavailable - unable to fetch full article"
+            else:
+                return "Error fetching article: {}".format(error_str)
     
     def display_categories(self):
         """Display available feed categories"""
