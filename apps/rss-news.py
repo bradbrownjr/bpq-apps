@@ -445,29 +445,15 @@ class RSSReader:
             else:
                 display_line = title
             
-            # Wrap long lines
-            if len(display_line) > LINE_WIDTH - 6:
-                wrapped = textwrap.fill(display_line, width=LINE_WIDTH - 6,
-                                      subsequent_indent='     ')
-                lines = wrapped.split('\n')
-                print("{:3}) {}".format(i, lines[0]))
-                for line in lines[1:]:
-                    print(line)
-            else:
-                print("{:3}) {}".format(i, display_line))
+            # Display with minimal formatting (let terminal handle width)
+            print("{:3}) {}".format(i, display_line))
         
         print("-" * 40)
     
     def display_text(self, text, paginate=True):
         """Display text content with optional pagination"""
-        # Wrap text to LINE_WIDTH
-        lines = []
-        for line in text.split('\n'):
-            if len(line) > LINE_WIDTH:
-                wrapped = textwrap.fill(line, width=LINE_WIDTH)
-                lines.extend(wrapped.split('\n'))
-            else:
-                lines.append(line)
+        # Split into lines without forced wrapping (let terminal handle it)
+        lines = text.split('\n')
         
         if not paginate:
             for line in lines:
