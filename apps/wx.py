@@ -1365,6 +1365,7 @@ def show_winter_weather(wfo):
 
 def show_current_observations(latlon):
     """Display current weather observations"""
+    print("Loading observations...")
     obs = get_current_observations(latlon)
     if not obs:
         print("No observations available.")
