@@ -217,7 +217,7 @@ FILE=/HTML/nodemap.html,nodemap.html
 
 ## wx-alert-update.sh - Weather Alert CTEXT Updater
 
-Updates local weather alert file for display on BPQ node connection banner. Run via cron to keep alert status current.
+Updates weather beacon text file for BPQ node. Includes alert count and SKYWARN spotter activation status. Run via cron to keep beacon current.
 
 ### Usage
 
@@ -226,80 +226,58 @@ Updates local weather alert file for display on BPQ node connection banner. Run 
 ```
 
 **Arguments:**
-- `output_file` - Path to output file (default: `~/linbpq/wx-alert.txt`)
+- `output_file` - Path to output file (default: `~/linbpq/beacontext.txt`)
 - `gridsquare` - Location to check (default: from bpq32.cfg LOCATOR)
 
 **Examples:**
 ```bash
-# Use defaults (local gridsquare, ~/linbpq/wx-alert.txt)
+# Use defaults (local gridsquare, ~/linbpq/beacontext.txt)
 ./wx-alert-update.sh
 
 # Custom location
-./wx-alert-update.sh /home/ect/linbpq/wx-alert.txt FN43hp
+./wx-alert-update.sh /home/ect/linbpq/beacontext.txt FN43hp
 
-# Run in cron (every 15 minutes)
+# Run in cron (every 15 minutes) - ALREADY INSTALLED
 */15 * * * * /home/ect/utilities/wx-alert-update.sh >/dev/null 2>&1
 ```
 
 ### Setup
 
-**1. Add to crontab:**
+**Cron job is already installed on WS1EC node.** To verify or modify:
+
 ```bash
-crontab -e
-```
-
-Add line:
-```
-*/15 * * * * /home/ect/utilities/wx-alert-update.sh >/dev/null 2>&1
-```
-
-**2. Update bpq32.cfg CTEXT:**
-```properties
-CTEXT:
-WS1EC-15 in Windham, ME
-@/home/ect/linbpq/wx-alert.txt
-Operated by WSSM Emergency Communications Team
-***
-```
-
-**3. Create initial file:**
-```bash
-echo "Local Weather: No active alerts" > ~/linbpq/wx-alert.txt
-```
-
-**4. Restart BPQ:**
-```bash
-sudo systemctl restart linbpq
+crontab -l | grep wx-alert
 ```
 
 ### Output Format
 
-One-line summary with alert count and severity breakdown:
+Compact beacon message with alert count and SKYWARN status:
 ```
-Local Weather: No active alerts
-Local Weather: 1 alert (1S)
-Local Weather: 3 alerts (1E 2S)
-Local Weather: 5 alerts (1E 2S 1M 1m)
+WS1EC-15: No active weather alerts. Connect to WX app for details.
+WS1EC-15: 1 WEATHER ALERT! Connect to WX app for details.
+WS1EC-15: 3 WEATHER ALERTS! SKYWARN SPOTTERS ACTIVATED. Connect to WX app for details.
 ```
 
-**Severity codes:**
-- `E` = Extreme
-- `S` = Severe
-- `M` = Moderate
-- `m` = Minor
+**Features:**
+- Uppercase "ALERT(S)" for severe/extreme alerts
+- Lowercase "alert(s)" for moderate/minor
+- **SKYWARN Detection**: Checks Hazardous Weather Outlook for spotter activation
+  - Searches for "Weather spotters are encouraged to report" phrase
+  - Based on code from [skywarn-activation-alerts](https://github.com/bradbrownjr/skywarn-activation-alerts)
+- Directs users to WX app for full details
 
 ### How It Works
 
-1. Calls `wx.py --alert-summary [GRIDSQUARE]`
+1. Calls `wx.py --beacon [GRIDSQUARE]`
 2. wx.py fetches NWS alerts for location via API
-3. Counts alerts by severity
-4. Outputs one-line summary
+3. wx.py checks HWO text file for SKYWARN activation phrase
+4. Outputs compact beacon message
 5. Script writes to file atomically (temp file + mv)
-6. BPQ includes file in CTEXT via `@` directive
+6. BPQ includes file in beacon text
 
 ### Requirements
 
-- `wx.py` version 4.1 or later
-- Internet connectivity (for NWS API access)
+- `wx.py` version 4.2 or later
+- Internet connectivity (for NWS API and HWO text access)
 - Writable `~/linbpq/` directory
 - cron daemon running

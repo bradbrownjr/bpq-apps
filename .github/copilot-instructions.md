@@ -413,6 +413,17 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 - Before requesting terminal input or SSH commands
 - When awaiting user decision or feedback
 
+## Weather Alert Beacon Integration
+
+**wx.py --beacon**: Generates compact beacon text with weather alerts and SKYWARN status
+- Outputs: "WS1EC-15: X WEATHER ALERT(S)! SKYWARN SPOTTERS ACTIVATED. Connect to WX app."
+- Uppercase for severe/extreme alerts, lowercase for moderate/minor
+- SKYWARN detection: Fetches HWO from NWS FTP, searches for "Weather spotters are encouraged to report"
+- Based on code from [skywarn-activation-alerts](https://github.com/bradbrownjr/skywarn-activation-alerts)
+- Run via cron: `*/15 * * * * /home/ect/utilities/wx-alert-update.sh >/dev/null 2>&1`
+- Writes to `~/linbpq/beacontext.txt` for BPQ beacon inclusion
+- Already installed and running on WS1EC node
+
 ## Common Pitfalls & Solutions
 
 **Python 3.5.3 Compatibility:**
