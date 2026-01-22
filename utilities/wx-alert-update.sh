@@ -3,11 +3,11 @@
 # wx-alert-update.sh - Update weather beacon text for BPQ node
 #
 # This script calls wx.py --beacon and saves the output to a beacon text file.
-# The beacon includes local weather alert count and directs users to connect
-# to the WX app for details. Run via cron every 15-30 minutes.
+# The beacon includes local weather alert count, SKYWARN spotter activation status,
+# and directs users to connect to the WX app for details. Run via cron every 15-30 minutes.
 #
-# Note: SKYWARN spotter activation monitoring is handled separately via
-#       https://github.com/bradbrownjr/skywarn-activation-alerts
+# SKYWARN activation detection based on code from:
+# https://github.com/bradbrownjr/skywarn-activation-alerts
 #
 # Usage:
 #   wx-alert-update.sh [output_file] [gridsquare]

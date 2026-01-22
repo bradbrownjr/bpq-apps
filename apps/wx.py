@@ -443,7 +443,7 @@ def get_local_alert_summary(gridsquare=None):
 
 
 def get_beacon_text(gridsquare=None):
-    """Get beacon text with alert status for BPQ beacon"""
+    """Get beacon text with alert status and SKYWARN activation for BPQ beacon"""
     try:
         if not gridsquare:
             gridsquare = get_bpq_locator()
@@ -454,9 +454,32 @@ def get_beacon_text(gridsquare=None):
         if not latlon:
             return "WS1EC-15: Weather info unavailable"
         
+        # Get WFO for SKYWARN check
+        gridpoint, wfo = get_gridpoint(latlon)
+        
         # Get alerts
         alerts = get_alerts(latlon)
         alert_count = len(alerts) if alerts else 0
+        
+        # Check SKYWARN activation via HWO (like skywarn-activation-alerts repo)
+        skywarn_active = False
+        if wfo:
+            try:
+                import urllib.request
+                # Construct HWO FTP URL from WFO code
+                # Pattern: https://tgftp.nws.noaa.gov/data/raw/fl/flus41.kgyx.hwo.gyx.txt
+                # Format: flus41.WFOID.hwo.WFO.txt (lowercase wfo in path, uppercase in filename)
+                hwo_url = "https://tgftp.nws.noaa.gov/data/raw/fl/flus41.k{}.hwo.{}.txt".format(
+                    wfo.lower(), wfo.lower()
+                )
+                with urllib.request.urlopen(hwo_url, timeout=5) as response:
+                    hwo_text = response.read().decode('utf-8', errors='ignore')
+                
+                # Search for spotter activation phrase (from skywarn-activation-alerts)
+                if "Weather spotters are encouraged to report" in hwo_text or "spotters are encouraged" in hwo_text.lower():
+                    skywarn_active = True
+            except Exception:
+                pass  # Fail silently, don't block beacon
         
         # Build beacon message
         if alert_count > 0:
@@ -477,6 +500,10 @@ def get_beacon_text(gridsquare=None):
                 )
         else:
             msg = "WS1EC-15: No active weather alerts. "
+        
+        # Add SKYWARN status if active
+        if skywarn_active:
+            msg += "SKYWARN SPOTTERS ACTIVATED. "
         
         # Add call to action
         msg += "Connect to WX app for details."

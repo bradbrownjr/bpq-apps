@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 4.2] - 2026-01-22
+### Added
+- **Beacon Text Generation**: New `--beacon` option for BPQ beacon integration
+  - Outputs compact weather alert status: "WS1EC-15: X WEATHER ALERT(S)!"
+  - Uppercase for severe/extreme alerts, lowercase for moderate/minor
+  - **SKYWARN Spotter Activation Detection**: Checks HWO for spotter requests
+    - Searches for "Weather spotters are encouraged to report" phrase
+    - Displays "SKYWARN SPOTTERS ACTIVATED" in beacon when active
+    - Based on code from skywarn-activation-alerts repository
+  - Directs users to connect to WX app for full details
+  - Run via wx-alert-update.sh cron job (updates every 15 minutes)
+  - Writes to ~/linbpq/beacontext.txt for BPQ beacon inclusion
+
+### Changed
+- **CTEXT Simplification**: Removed @ file directive (displayed literal path)
+  - CTEXT returns to simple logo + location + menu format
+  - Weather alerts now distributed via beacon instead of connection banner
+
 ## [wx.py 4.1] - 2026-01-22
 ### Added
 - **CTEXT Local Weather Alert Display**: Shows current alert status on node connection banner
