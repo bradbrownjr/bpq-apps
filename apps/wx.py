@@ -1139,23 +1139,28 @@ def print_reports_menu(location_desc, is_coastal):
     """Print reports menu for selected location"""
     print("\nREPORTS FOR: {}".format(location_desc))
     print("-" * 40)
-    print("1) 7-Day Forecast")
+    # Immediate conditions
+    print("1) Current Observations")
     print("2) Hourly Forecast (12hr)")
-    print("3) Current Observations")
-    print("4) Hazardous Weather Outlook")
-    print("5) Zone Forecast (Narrative)")
-    print("6) Fire Weather Outlook")
-    print("7) Winter Weather Warnings")
-    print("8) Heat/Cold Advisories")
-    print("9) River/Flood Stage")
+    print("3) 7-Day Forecast")
+    # Safety & alerts
+    print("4) Active Alerts")
+    print("5) Hazardous Weather Outlook")
+    # Detailed forecasts
+    print("6) Zone Forecast (Narrative)")
+    print("7) Area Forecast Discussion")
+    print("8) Probability of Precip")
+    # Seasonal/situational hazards
+    print("9) Winter Weather")
+    print("10) Heat/Cold Advisories")
+    print("11) Fire Weather Outlook")
+    print("12) River/Flood Stage")
     if is_coastal:
-        print("10) Coastal Flood Info")
-    print("11) Area Forecast Discussion")
-    print("12) Probability of Precip")
-    print("13) Daily Climate Report")
-    print("14) UV Index")
-    print("15) Dust/Haboob Alerts")
-    print("16) Active Alerts")
+        print("13) Coastal Flood Info")
+    print("14) Dust/Haboob Alerts")
+    # Reference
+    print("15) UV Index")
+    print("16) Daily Climate Report")
     print()
     print("1-16) B)ack Q)uit :>")
 
@@ -1844,54 +1849,59 @@ def main():
                 # Back to main menu
                 break
             
+            # Immediate conditions (1-3)
             elif choice == '1':
-                show_7day_forecast(selected_latlon)
+                show_current_observations(selected_latlon)
             
             elif choice == '2':
                 show_hourly_forecast(selected_latlon)
             
             elif choice == '3':
-                show_current_observations(selected_latlon)
+                show_7day_forecast(selected_latlon)
             
+            # Safety & alerts (4-5)
             elif choice == '4':
-                show_hazardous_weather_outlook(wfo) if wfo else print("No outlook available.")
+                show_alerts(alerts, skywarn_status, skywarn_active) if alerts else print("No active alerts.")
             
             elif choice == '5':
+                show_hazardous_weather_outlook(wfo) if wfo else print("No outlook available.")
+            
+            # Detailed forecasts (6-8)
+            elif choice == '6':
                 show_zone_forecast(wfo) if wfo else print("No zone forecast available.")
             
-            elif choice == '6':
-                show_fire_weather(wfo) if wfo else print("No forecast data available.")
-            
             elif choice == '7':
-                show_winter_weather(wfo) if wfo else print("No winter weather data.")
+                show_afd_report(wfo) if wfo else print("No discussion available.")
             
             elif choice == '8':
+                show_pop_report(selected_latlon)
+            
+            # Seasonal/situational hazards (9-14)
+            elif choice == '9':
+                show_winter_weather(wfo) if wfo else print("No winter weather data.")
+            
+            elif choice == '10':
                 show_heat_cold(alerts) if alerts else print("No advisories.")
             
-            elif choice == '9':
+            elif choice == '11':
+                show_fire_weather(wfo) if wfo else print("No forecast data available.")
+            
+            elif choice == '12':
                 show_river_flood(alerts) if alerts else print("No flood alerts.")
             
-            elif choice == '10' and is_coastal_area:
+            elif choice == '13' and is_coastal_area:
                 coastal_info = get_coastal_flood_info(selected_latlon)
                 show_coastal_flood_info(coastal_info)
             
-            elif choice == '11':
-                show_afd_report(wfo) if wfo else print("No discussion available.")
-            
-            elif choice == '12':
-                show_pop_report(selected_latlon)
-            
-            elif choice == '13':
-                show_climate_report(wfo) if wfo else print("No climate report available.")
-            
             elif choice == '14':
-                show_uv_report(selected_latlon)
-            
-            elif choice == '15':
                 show_dust_alerts(alerts) if alerts else print("No dust alerts.")
             
+            # Reference (15-16)
+            elif choice == '15':
+                show_uv_report(selected_latlon)
+            
             elif choice == '16':
-                show_alerts(alerts, skywarn_status, skywarn_active) if alerts else print("No active alerts.")
+                show_climate_report(wfo) if wfo else print("No climate report available.")
             
             else:
                 print("\nInvalid choice.")
