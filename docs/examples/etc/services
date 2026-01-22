@@ -1,12 +1,17 @@
-# Local services
-fortune         63000/tcp                       # BPQ demo app w/ fortune
-wx              63010/tcp                       # Weather app
-sysinfo         63020/tcp                       # System Information
-callout         63030/tcp                       # Test call output of bpq
-space           63040/tcp                       # Space weather reports
-bands           63050/tcp                       # Space weather reports
-qrz             63060/tcp                       # Space weather reports
-gopher-cli      63070/tcp                       # Gopher browser
-rss-news        63080/tcp                       # RSS News Feeds
-hamtest         63090/tcp                       # Ham radio license test practice
-forms           63100/tcp                       # Fillable forms app
+# Local services (alphabetized, matching bpq32.cfg HOST positions)
+fortune         63000/tcp                       # Random quotes (HOST 0)
+wx              63010/tcp                       # Weather app (HOST 1)
+sysinfo         63020/tcp                       # System information (HOST 2)
+callout         63030/tcp                       # Station info lookup (HOST 3)
+space           63040/tcp                       # Space weather reports (HOST 4)
+bands           63050/tcp                       # HF propagation & band conditions (HOST 5)
+qrz             63060/tcp                       # Callsign database lookup (HOST 6)
+gopher-cli      63070/tcp                       # Gopher browser (HOST 7)
+rss-news        63080/tcp                       # RSS news feed reader (HOST 8)
+hamtest         63090/tcp                       # Ham radio license test practice (HOST 9)
+forms           63100/tcp                       # ICS/ARRL message forms (HOST 10)
+calendar        63110/tcp                       # Club event calendar viewer (HOST 11)
+feed            63120/tcp                       # RSS bulletin board reader (HOST 12)
+hamqsl          63130/tcp                       # Callsign QSL card lookup (HOST 13)
+test            63140/tcp                       # Amateur exam practice (legacy, HOST 14)
+predict         63150/tcp                       # Solar/ionosphere forecasts (HOST 15)
