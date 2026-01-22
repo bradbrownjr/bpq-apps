@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.7] - 2026-01-22
+### Changed
+- **Converted weather display to imperial units**: All measurements now use US customary units for better readability
+  - Temperature: Celsius → Fahrenheit
+  - Wind speed: m/s → mph (miles per hour)
+  - Visibility: meters → miles
+  - Pressure: Pascals → inHg (inches of mercury, standard for weather)
+- **Wind direction now shows cardinal compass directions**: Instead of raw degree bearings (0-360), wind direction displays 16-point compass directions (N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW, NNW)
+- **Improved display format**: "Wind: 17 mph from S" is clearer than "Wind: 7.416 190"
+- Current observations and 7-day forecast both use new format
+
 ## [wx-me.py 1.3] - 2026-01-22
 ### Changed
 - **Updated logo to GYX**: Changed ASCII art logo from generic "wx" to GYX regional branding

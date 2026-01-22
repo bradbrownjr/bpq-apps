@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.6
+Version: 2.7
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.6"
+VERSION = "2.7"
 APP_NAME = "wx.py"
 
 
@@ -92,6 +92,68 @@ def compare_versions(version1, version2):
         return 0
     except (ValueError, AttributeError):
         return 0
+
+
+def celsius_to_fahrenheit(celsius):
+    """Convert Celsius to Fahrenheit"""
+    if celsius is None:
+        return None
+    try:
+        return int(round(float(celsius) * 9.0 / 5.0 + 32))
+    except (ValueError, TypeError):
+        return None
+
+
+def ms_to_mph(ms):
+    """Convert meters per second to miles per hour"""
+    if ms is None:
+        return None
+    try:
+        return int(round(float(ms) * 2.237))
+    except (ValueError, TypeError):
+        return None
+
+
+def meters_to_miles(meters):
+    """Convert meters to miles"""
+    if meters is None:
+        return None
+    try:
+        miles = float(meters) / 1609.34
+        return round(miles, 1)
+    except (ValueError, TypeError):
+        return None
+
+
+def pascals_to_inhg(pa):
+    """Convert Pascals to inches of mercury"""
+    if pa is None:
+        return None
+    try:
+        inhg = float(pa) / 3386.39
+        return round(inhg, 2)
+    except (ValueError, TypeError):
+        return None
+
+
+def degrees_to_cardinal(degrees):
+    """Convert wind direction degrees to cardinal direction"""
+    if degrees is None:
+        return "?"
+    try:
+        d = float(degrees)
+        # 16-point compass rose
+        directions = [
+            'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+            'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'
+        ]
+        # Normalize to 0-360
+        d = d % 360
+        # Each sector is 22.5 degrees (360/16)
+        index = int((d + 11.25) / 22.5) % 16
+        return directions[index]
+    except (ValueError, TypeError):
+        return "?"
 
 
 def get_bpq_locator():
@@ -816,9 +878,13 @@ def show_7day_forecast(latlon):
     print("7-DAY FORECAST")
     print("-" * 40)
     for f in forecast:
+        temp_f = celsius_to_fahrenheit(f.get('temp'))
+        wind_mph = ms_to_mph(f.get('wind'))
         print("\n{}".format(f['name']))
-        print("  Temp: {}".format(f['temp']))
-        print("  Wind: {}".format(f['wind']))
+        if temp_f is not None:
+            print("  Temp: {}F".format(temp_f))
+        if wind_mph is not None:
+            print("  Wind: {} mph".format(wind_mph))
         print("  {}".format(f['forecast'][:60]))
     print()
     print("-" * 40)
@@ -839,11 +905,39 @@ def show_current_observations(latlon):
     print("-" * 40)
     print("CURRENT CONDITIONS")
     print("-" * 40)
-    print("Temp: {}C".format(obs.get('temp')))
-    print("Wind: {} {}".format(obs.get('wind_speed'), obs.get('wind_dir')))
-    print("Conditions: {}".format(obs.get('weather')))
-    print("Visibility: {}".format(obs.get('visibility')))
-    print("Pressure: {}".format(obs.get('pressure')))
+    
+    # Convert units to imperial and readable formats
+    temp_f = celsius_to_fahrenheit(obs.get('temp'))
+    wind_mph = ms_to_mph(obs.get('wind_speed'))
+    wind_dir = obs.get('wind_dir')
+    wind_cardinal = degrees_to_cardinal(wind_dir)
+    visibility_miles = meters_to_miles(obs.get('visibility'))
+    pressure_inhg = pascals_to_inhg(obs.get('pressure'))
+    
+    if temp_f is not None:
+        print("Temp: {}F".format(temp_f))
+    else:
+        print("Temp: N/A")
+    
+    if wind_mph is not None and wind_cardinal != "?":
+        print("Wind: {} mph from {}".format(wind_mph, wind_cardinal))
+    elif wind_mph is not None:
+        print("Wind: {} mph".format(wind_mph))
+    else:
+        print("Wind: N/A")
+    
+    print("Conditions: {}".format(obs.get('weather', 'N/A')))
+    
+    if visibility_miles is not None:
+        print("Visibility: {} mi".format(visibility_miles))
+    else:
+        print("Visibility: N/A")
+    
+    if pressure_inhg is not None:
+        print("Pressure: {} inHg".format(pressure_inhg))
+    else:
+        print("Pressure: N/A")
+    
     print()
     print("-" * 40)
     try:
