@@ -481,7 +481,7 @@ def get_beacon_text(gridsquare=None):
             except Exception:
                 pass  # Fail silently, don't block beacon
         
-        # Build beacon message
+        # Build beacon message (two lines for better readability)
         if alert_count > 0:
             # Count severe/extreme alerts
             severe_count = 0
@@ -489,24 +489,21 @@ def get_beacon_text(gridsquare=None):
                 severe_count = sum(1 for a in alerts if a['severity'] in ['Extreme', 'Severe'])
             
             if severe_count > 0:
-                msg = "WS1EC-15: {} WEATHER ALERT{}! ".format(
+                msg = "WS1EC-15: {} WEATHER ALERT{}! Connect to WX app.".format(
                     alert_count,
                     "S" if alert_count > 1 else ""
                 )
             else:
-                msg = "WS1EC-15: {} weather alert{}. ".format(
+                msg = "WS1EC-15: {} weather alert{}. Connect to WX app.".format(
                     alert_count,
                     "s" if alert_count > 1 else ""
                 )
         else:
-            msg = "WS1EC-15: No active weather alerts. "
+            msg = "WS1EC-15: No active weather alerts."
         
-        # Add SKYWARN status if active
+        # Add SKYWARN status on second line if active
         if skywarn_active:
-            msg += "SKYWARN SPOTTERS ACTIVATED. "
-        
-        # Add call to action
-        msg += "Connect to WX app for details."
+            msg += "\nSKYWARN SPOTTERS ACTIVATED."
         
         return msg
     except Exception:
