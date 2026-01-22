@@ -611,30 +611,67 @@ def get_fire_weather_outlook(wfo):
 
 
 def get_hazardous_weather_outlook(wfo):
-    """Get hazardous weather outlook from NWS office"""
+    """Get hazardous weather outlook from NWS products API"""
     try:
         import urllib.request
         import json
         
-        url = "https://api.weather.gov/offices/{}/headlines".format(wfo)
+        # Get all HWO products
+        url = "https://api.weather.gov/products/types/HWO"
         with urllib.request.urlopen(url, timeout=3) as response:
             data = json.loads(response.read().decode('utf-8'))
         
-        features = data.get('features', [])
-        if not features:
+        graph = data.get('@graph', [])
+        if not graph:
             return None
         
-        # Look for HWO (Hazardous Weather Outlook) in headlines
-        for feature in features:
-            props = feature.get('properties', {})
-            headline = props.get('headline', '').lower()
-            if 'hazardous' in headline or 'outlook' in headline:
-                return {
-                    'title': props.get('headline', 'Hazardous Weather Outlook'),
-                    'content': props.get('content', '')[:300]
-                }
+        # Convert WFO code to ICAO format (e.g., GYX -> KGYX)
+        if not wfo.startswith('K'):
+            wfo_code = 'K' + wfo
+        else:
+            wfo_code = wfo
         
-        return None
+        # Filter for this WFO's most recent HWO
+        wfo_hwo = [item for item in graph if isinstance(item, dict) and item.get('issuingOffice') == wfo_code]
+        
+        if not wfo_hwo:
+            return None
+        
+        # Get the most recent one (first in list)
+        latest = wfo_hwo[0]
+        product_id = latest.get('@id')
+        
+        # Fetch full product details
+        with urllib.request.urlopen(product_id, timeout=3) as response:
+            product_data = json.loads(response.read().decode('utf-8'))
+        
+        product_text = product_data.get('productText', '')
+        
+        if not product_text:
+            return None
+        
+        # Extract headline and summary
+        lines = product_text.strip().split('\n')
+        
+        # Find "Hazardous Weather Outlook" line
+        title = 'Hazardous Weather Outlook'
+        for line in lines:
+            if 'Hazardous' in line and 'Outlook' in line:
+                title = line.strip()
+                break
+        
+        # Get content (first 300 chars after header)
+        content_lines = []
+        for line in lines[3:]:
+            if line.strip():
+                content_lines.append(line)
+        
+        content = '\n'.join(content_lines[:10])
+        
+        return {
+            'title': title,
+            'content': content[:400]
+        }
     except Exception:
         return None
 
