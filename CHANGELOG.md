@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.1] - 2026-01-22
+### Added
+- **Zipcode lookup**: Convert US zipcodes (5 digits) to lat/lon via USGS Geocoding API
+- **Case-insensitive gridsquare input**: Accept 'fn43sr', 'FN43SR', 'Fn43Sr', etc.
+- **Improved bpq32.cfg path resolution**: Priority order is ../linbpq/bpq32.cfg (relative path for apps adjacent to linbpq), then /home/pi/linbpq (RPi default user)
+### Fixed
+- Gridsquare validation now accepts lowercase input (e.g., 'fn43sr' no longer rejected)
+- Config file discovery now checks relative path first, then RPi default locations
+
 ## [wx.py 2.0] - 2026-01-22
 ### Added
 - **Two-menu interface**: Location selection (main menu) → 12-report submenu (reports menu)

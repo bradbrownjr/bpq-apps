@@ -14,11 +14,12 @@ Features:
 - SKYWARN activation status from HWO
 - Gridsquare-based location detection from bpq32.cfg
 - Callsign-based weather lookup via HamDB
-- Multiple location input formats: gridsquare, GPS, callsign
+- Multiple location input formats: gridsquare, GPS, callsign, zipcode
+- Case-insensitive gridsquare input
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.0
+Version: 2.1
 Date: January 2026
 """
 
@@ -28,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.0"
+VERSION = "2.1"
 APP_NAME = "wx.py"
 
 
