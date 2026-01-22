@@ -373,7 +373,20 @@ def get_forecast_7day(gridpoint):
         with urllib.request.urlopen(gridpoint, timeout=3) as response:
             data = json.loads(response.read().decode('utf-8'))
         
-        periods = data.get('properties', {}).get('periods', [])
+        # NWS forecast data structure - try to extract periods
+        if not data or not isinstance(data, dict):
+            return None
+        
+        # Check if we have properties
+        properties = data.get('properties')
+        if not properties or not isinstance(properties, dict):
+            return None
+        
+        # Get periods array - should be a list
+        periods = properties.get('periods')
+        if not periods or not isinstance(periods, list) or len(periods) == 0:
+            return None
+        
         forecast_list = []
         
         for period in periods[:7]:
@@ -382,12 +395,13 @@ def get_forecast_7day(gridpoint):
             temp = period.get('temperature', '')
             wind = period.get('windSpeed', '')
             
-            forecast_list.append({
-                'name': name,
-                'forecast': short_forecast,
-                'temp': temp,
-                'wind': wind
-            })
+            if name and short_forecast:
+                forecast_list.append({
+                    'name': name,
+                    'forecast': short_forecast,
+                    'temp': temp,
+                    'wind': wind
+                })
         
         return forecast_list if forecast_list else None
     except Exception:
