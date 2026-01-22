@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.5
+Version: 2.6
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.5"
+VERSION = "2.6"
 APP_NAME = "wx.py"
 
 
@@ -186,8 +186,8 @@ def is_callsign_format(text):
 
 def is_gridsquare_format(text):
     """Check if text looks like a gridsquare"""
-    pattern = r'^[A-Ra-r]{2}[0-9]{2}[a-xa-x]{0,2}$'
-    # Accept both uppercase and lowercase, validation pattern works on uppercase
+    pattern = r'^[A-R]{2}[0-9]{2}[A-X]{0,2}$'
+    # Accept both uppercase and lowercase
     text_upper = text.strip().upper()
     return bool(re.match(pattern, text_upper))
 
@@ -361,19 +361,31 @@ def get_coastal_flood_info(latlon):
         return None
 
 
-def get_forecast_7day(gridpoint):
-    """Get 7-day forecast from NWS gridpoint forecast URL"""
+def get_forecast_7day(latlon):
+    """Get 7-day forecast from NWS for lat/lon"""
     try:
         import urllib.request
         import json
         
-        if not gridpoint:
+        if not latlon:
             return None
         
-        with urllib.request.urlopen(gridpoint, timeout=3) as response:
+        # Get gridpoint first to find forecast URL
+        lat, lon = latlon
+        points_url = "https://api.weather.gov/points/{},{}".format(lat, lon)
+        with urllib.request.urlopen(points_url, timeout=3) as response:
+            points_data = json.loads(response.read().decode('utf-8'))
+        
+        # Get the forecast URL (12-hourly periods)
+        forecast_url = points_data.get('properties', {}).get('forecast')
+        if not forecast_url:
+            return None
+        
+        # Fetch the actual forecast
+        with urllib.request.urlopen(forecast_url, timeout=3) as response:
             data = json.loads(response.read().decode('utf-8'))
         
-        # NWS forecast data structure - try to extract periods
+        # Extract periods
         if not data or not isinstance(data, dict):
             return None
         
@@ -555,16 +567,28 @@ def get_afd(wfo):
         return None
 
 
-def get_pop(gridpoint):
+def get_pop(latlon):
     """Get probability of precipitation from forecast"""
     try:
         import urllib.request
         import json
         
-        if not gridpoint:
+        if not latlon:
             return None
         
-        with urllib.request.urlopen(gridpoint, timeout=3) as response:
+        # Get forecast URL from points endpoint
+        lat, lon = latlon
+        points_url = "https://api.weather.gov/points/{},{}".format(lat, lon)
+        with urllib.request.urlopen(points_url, timeout=3) as response:
+            points_data = json.loads(response.read().decode('utf-8'))
+        
+        # Get the forecast URL (12-hourly periods)
+        forecast_url = points_data.get('properties', {}).get('forecast')
+        if not forecast_url:
+            return None
+        
+        # Fetch the actual forecast
+        with urllib.request.urlopen(forecast_url, timeout=3) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         periods = data.get('properties', {}).get('periods', [])
@@ -780,9 +804,9 @@ def print_reports_menu(location_desc, is_coastal):
     print("1-12) B)ack Q)uit :>")
 
 
-def show_7day_forecast(gridpoint):
+def show_7day_forecast(latlon):
     """Display 7-day forecast"""
-    forecast = get_forecast_7day(gridpoint)
+    forecast = get_forecast_7day(latlon)
     if not forecast:
         print("No forecast available.")
         return
@@ -1267,7 +1291,7 @@ def main():
                 break
             
             elif choice == '1':
-                show_7day_forecast(gridpoint)
+                show_7day_forecast(selected_latlon)
             
             elif choice == '2':
                 show_current_observations(selected_latlon)
@@ -1289,7 +1313,7 @@ def main():
                 show_afd_report(wfo) if wfo else print("No discussion available.")
             
             elif choice == '8':
-                show_pop_report(gridpoint)
+                show_pop_report(selected_latlon)
             
             elif choice == '9':
                 show_uv_report(selected_latlon)

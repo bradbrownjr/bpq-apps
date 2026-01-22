@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.6] - 2026-01-22
+### Fixed
+- **Fixed gridsquare validation regex**: Was rejecting valid 6-character gridsquares (e.g., FN43po) due to incorrect case handling in pattern [a-xa-x]. Changed to [A-X] for uppercase matching. This fixed HamDB lookups failing with "Callsign not in database" message.
+- **Fixed NWS forecast endpoint**: `get_forecast_7day()` and `get_pop()` were using wrong endpoint URL (forecastGridData has no periods). Now correctly:
+  1. Query `/points/{lat},{lon}` to get forecast URL
+  2. Fetch `/gridpoints/{grid}/forecast` for actual periods with temperature/wind/conditions
+  3. This fixes "No forecast available" errors across all forecast reports (7-day, PoP)
+### Changed
+- Refactored forecast data retrieval to use correct NWS endpoint structure
+- Updated function signatures: `get_forecast_7day()` and `get_pop()` now take `latlon` instead of `gridpoint` URL
+- Both functions now correctly retrieve forecast periods
+
 ## [wx.py 2.5] - 2026-01-22
 ### Added
 - **Manual gridsquare entry for callsigns not in database**: If HamDB lookup fails, user can now enter gridsquare manually for that callsign
