@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.6
+Version: 3.7
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.6"
+VERSION = "3.7"
 APP_NAME = "wx.py"
 
 
@@ -864,6 +864,65 @@ def get_hazardous_weather_outlook(wfo):
         return None
 
 
+def get_regional_weather_summary(wfo):
+    """Get regional weather summary (RWS) from NWS products API"""
+    try:
+        import urllib.request
+        import json
+        
+        if not wfo.startswith('K'):
+            wfo_code = 'K' + wfo
+        else:
+            wfo_code = wfo
+        
+        url = "https://api.weather.gov/products/types/RWS"
+        req = urllib.request.Request(url, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        graph = data.get('@graph', [])
+        wfo_rws = [item for item in graph if item.get('issuingOffice') == wfo_code]
+        
+        if not wfo_rws:
+            return None
+        
+        latest = wfo_rws[0]
+        product_id = latest.get('@id')
+        
+        req = urllib.request.Request(product_id, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            product_data = json.loads(response.read().decode('utf-8'))
+        
+        product_text = product_data.get('productText', '')
+        if not product_text:
+            return None
+        
+        # Extract title and content
+        lines = product_text.strip().split('\n')
+        
+        title = 'Regional Weather Summary'
+        for line in lines:
+            if 'Weather Summary' in line or 'WEATHER SUMMARY' in line:
+                title = line.strip()
+                break
+        
+        # Get full content (skip first 2 header lines, preserve blank lines)
+        content_lines = []
+        for line in lines[2:]:
+            if line.startswith('$$'):
+                break
+            content_lines.append(line)
+        
+        content = '\n'.join(content_lines)
+        
+        return {
+            'title': title,
+            'content': content
+        }
+    except Exception:
+        return None
+
+
 def get_heat_cold_advisories(alerts):
     """Extract heat and cold advisories from alerts"""
     try:
@@ -1149,7 +1208,7 @@ def print_reports_menu(location_desc, is_coastal):
     print("5) Hazardous Weather Outlook")
     # Detailed forecasts
     print("6) Zone Forecast (Narrative)")
-    print("7) Area Forecast Discussion")
+    print("7) Regional Weather Summary")
     print("8) Probability of Precip")
     # Seasonal/situational hazards
     print("9) Winter Weather")
@@ -1493,6 +1552,49 @@ def show_hazardous_weather_outlook(wfo):
     
     # Display with pagination (20 lines at a time)
     lines = hwo['content'].split('\n')
+    line_count = 0
+    for line in lines:
+        print(line)
+        line_count += 1
+        if line_count >= 20:
+            print()
+            try:
+                response = input("Press ENTER to continue or Q to quit: ").strip().upper()
+                if response == 'Q':
+                    break
+            except (EOFError, KeyboardInterrupt):
+                break
+            line_count = 0
+    
+    print()
+    print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
+def show_regional_weather_summary(wfo):
+    """Display regional weather summary"""
+    print("Loading regional weather summary...", end="\r"); sys.stdout.flush()
+    rws = get_regional_weather_summary(wfo)
+    if not rws:
+        print("No regional weather summary available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
+        return
+    
+    print()
+    print("-" * 40)
+    print("REGIONAL WEATHER SUMMARY")
+    print("-" * 40)
+    print(rws['title'])
+    print()
+    
+    # Display with pagination (20 lines at a time)
+    lines = rws['content'].split('\n')
     line_count = 0
     for line in lines:
         print(line)
@@ -1961,7 +2063,7 @@ def main():
                 show_zone_forecast(wfo) if wfo else print("No zone forecast available.")
             
             elif choice == '7':
-                show_afd_report(wfo) if wfo else print("No discussion available.")
+                show_regional_weather_summary(wfo) if wfo else print("No weather summary available.")
             
             elif choice == '8':
                 show_pop_report(selected_latlon)

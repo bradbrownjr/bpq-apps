@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 3.7] - 2026-01-22
+### Added
+- **Regional Weather Summary (Option 7)**: Replaced Area Forecast Discussion with narrative weather overview
+  - Pulls from NWS `/products/types/RWS` endpoint
+  - Provides practical weather advice (preparation, safety, frostbite warnings, driving conditions)
+  - More user-friendly than technical AFD forecaster discussion
+  - 20-line pagination with Q to quit
+  - Preserves blank lines for readability
+  - Based on wx-me.py implementation feedback
+### Changed
+- Menu option 7: "Area Forecast Discussion" → "Regional Weather Summary"
+
 ## [calendar.py 1.0] - 2026-01-22
 ### Added
 - New application: Club calendar event viewer
