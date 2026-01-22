@@ -104,6 +104,30 @@ except Exception as e:
 - Check cached data is used (hamtest, feed, predict, forms)
 - Confirm startup completes even if GitHub unreachable
 
+## BPQ32 APPLICATION Command Format
+**APPLICATION line syntax:** `APPLICATION #,NAME,command,call,flags`
+
+**Command format for Python apps (C 9 HOST):**
+```
+APPLICATION 5,APPNAME,C 9 HOST # NOCALL S K,CALLSIGN,FLAGS
+                                 ↑    ↑  ↑ ↑ ↑
+                       Port 9 ---+    |  | | +-- Keep session alive
+                                      |  | +---- Send callsign via stdin
+                                      |  +------ Don't require auth
+                                      +--------- Host port position
+```
+
+**Callsign Handling:**
+- `S` flag sends the callsign to app via stdin (first line)
+- **Critical:** BPQ32 passes callsign WITH SSID (e.g., `KC1JMH-8`)
+- Apps must strip SSID using helper function if cleaner display needed:
+  ```python
+  def extract_base_call(callsign):
+      """Remove SSID from callsign"""
+      return callsign.split('-')[0] if callsign else ""
+  ```
+- Used by: feed.py (bulletin board authors), forms.py (form submitter)
+
 ## CLI Design Standards
 **All command-line options must have both long and short forms:**
 - Long form: `--option` (GNU style, descriptive)

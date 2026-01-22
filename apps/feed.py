@@ -16,8 +16,8 @@ Features:
 Usage in bpq32.cfg:
   APPLICATION X,BULLETIN,C 9 HOST X S
 
-The 'S' flag strips SSID from callsign for cleaner display.
-Remove 'S' to include SSID (e.g., KC1JMH-8).
+The 'S' flag passes the callsign to the app. The app must handle SSID stripping
+for cleaner display. This script automatically removes SSID (e.g., KC1JMH-8 -> KC1JMH).
 
 Author: Brad Brown KC1JMH
 Version: 1.2
@@ -100,6 +100,12 @@ def compare_versions(version1, version2):
     except (ValueError, AttributeError):
         return 0
 
+def extract_base_call(callsign):
+    """Remove SSID from callsign (e.g., KC1JMH-8 -> KC1JMH)"""
+    if not callsign:
+        return ""
+    return callsign.split('-')[0] if callsign else ""
+
 def is_valid_callsign(callsign):
     """Validate amateur radio callsign format"""
     if not callsign:
@@ -113,8 +119,10 @@ def get_callsign():
     # Only try piped input if stdin is not a terminal (i.e., piped from BPQ)
     if not sys.stdin.isatty():
         try:
-            # Try to read callsign from stdin (BPQ32 passes it)
+            # Try to read callsign from stdin (BPQ32 passes it, may include SSID)
             call = input().strip().upper()
+            # Strip SSID if present (e.g., KC1JMH-8 -> KC1JMH)
+            call = extract_base_call(call)
             if is_valid_callsign(call):
                 # Reopen stdin for interactive use after piped input
                 try:

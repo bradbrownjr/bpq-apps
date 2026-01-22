@@ -50,6 +50,12 @@ import select
 import urllib.request
 import urllib.error
 
+def extract_base_call(callsign):
+    """Remove SSID from callsign (e.g., KC1JMH-8 -> KC1JMH)"""
+    if not callsign:
+        return ""
+    return callsign.split('-')[0] if callsign else ""
+
 # Configuration
 # -------------
 FORMS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "forms")
@@ -362,7 +368,8 @@ class FormsApp:
         """Get user's callsign from BPQ or prompt if not available"""
         # Check if BPQ passed a callsign via stdin
         if self.bpq_callsign:
-            self.user_call = self.bpq_callsign
+            # BPQ may pass callsign with SSID, strip it for cleaner display
+            self.user_call = extract_base_call(self.bpq_callsign)
             print("\nCallsign from BPQ: {}".format(self.user_call))
             return self.user_call
         
@@ -972,10 +979,11 @@ def main():
     try:
         # Check if stdin has data available (non-blocking check)
         if not sys.stdin.isatty():
-            # Read first line which should contain the callsign
+            # Read first line which should contain the callsign (may include SSID)
             first_line = sys.stdin.readline().strip()
             if first_line:
                 app.bpq_callsign = first_line.upper()
+                # SSID will be stripped by extract_base_call() in get_user_callsign()
     except Exception:
         # If we can't read from stdin, that's okay - we'll prompt later
         pass
