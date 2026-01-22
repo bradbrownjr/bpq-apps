@@ -96,14 +96,28 @@ def compare_versions(version1, version2):
 def get_bpq_locator():
     """Read LOCATOR from BPQ32 config file"""
     try:
-        pwd = os.getcwd()
-        config_path = os.path.join(pwd, "linbpq", "bpq32.cfg")
-        with open(config_path, "r") as f:
-            for line in f:
-                if "LOCATOR" in line.upper():
-                    grid = line.split("=")[1].strip()
-                    return grid
-    except (IOError, OSError):
+        # Common BPQ paths
+        paths_to_try = [
+            os.path.join(os.getcwd(), "linbpq", "bpq32.cfg"),
+            os.path.join(os.getcwd(), "bpq32.cfg"),
+            "/root/linbpq/bpq32.cfg",
+            "/root/bpq32.cfg",
+            "/home/bpq/linbpq/bpq32.cfg",
+            "/home/bpq/bpq32.cfg",
+            "/opt/linbpq/bpq32.cfg"
+        ]
+        
+        for config_path in paths_to_try:
+            try:
+                with open(config_path, "r") as f:
+                    for line in f:
+                        if "LOCATOR" in line.upper():
+                            grid = line.split("=")[1].strip()
+                            if grid:
+                                return grid
+            except (IOError, OSError):
+                continue
+    except Exception:
         pass
     return None
 
@@ -1050,11 +1064,23 @@ def main():
         
         elif choice == '3':
             # Weather for callsign
-            print("")
-            try:
-                call = input("Enter callsign: ").strip().upper()
-            except (EOFError, KeyboardInterrupt):
-                continue
+            if my_callsign:
+                print("")
+                print("Callsign: {} (stdin) or enter different".format(my_callsign))
+                try:
+                    call = input(":> ").strip().upper()
+                except (EOFError, KeyboardInterrupt):
+                    continue
+                
+                if not call:
+                    # Use stdin callsign
+                    call = my_callsign
+            else:
+                print("")
+                try:
+                    call = input("Enter callsign: ").strip().upper()
+                except (EOFError, KeyboardInterrupt):
+                    continue
             
             if call:
                 grid = lookup_callsign(call)
