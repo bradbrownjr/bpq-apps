@@ -264,14 +264,30 @@ def is_callsign_format(text):
     return bool(re.match(pattern, text.strip()))
 
 
-def get_my_location():
+def get_my_location(cached_location=None):
     """
-    Get user's location (from BPQ config or prompt).
+    Get user's location (from callsign, BPQ config, or prompt).
+    
+    Args:
+        cached_location: Pre-looked-up gridsquare from user's callsign (or None)
     
     Returns:
         Tuple (lat, lon, description) or None if cancelled
     """
-    # Try BPQ config first
+    # Try cached location from BPQ callsign first
+    if cached_location:
+        coords = geo.grid_to_latlon(cached_location)
+        if coords:
+            print("\nYour location: {}".format(cached_location))
+            try:
+                confirm = input("Use this location? (Y/n) :> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                return None
+            
+            if confirm.upper() != 'N':
+                return (coords[0], coords[1], cached_location)
+    
+    # Try BPQ config
     bpq_grid = get_bpq_locator()
     
     if bpq_grid:
@@ -382,6 +398,33 @@ def show_about():
 
 def main():
     """Main program loop."""
+    # Ensure stdin is opened from terminal for interactive input
+    try:
+        sys.stdin = open('/dev/tty', 'r')
+    except (OSError, IOError):
+        # Continue if /dev/tty unavailable (running in non-terminal context)
+        pass
+    
+    # Try to read callsign from BPQ32 (if piped via S flag)
+    my_callsign = None
+    my_location = None
+    if not sys.stdin.isatty():
+        try:
+            line = sys.stdin.readline().strip().upper()
+            if line:
+                # Strip SSID if present (e.g., KC1JMH-8 -> KC1JMH)
+                my_callsign = line.split('-')[0] if line else None
+                # Try to get location from callsign
+                if my_callsign:
+                    my_location = lookup_callsign(my_callsign)
+                # Reopen stdin for interactive use after piped input
+                try:
+                    sys.stdin = open('/dev/tty', 'r')
+                except (OSError, IOError):
+                    pass
+        except (EOFError, KeyboardInterrupt):
+            pass
+    
     # Check for updates
     check_for_app_update(VERSION, APP_NAME)
     
@@ -412,7 +455,7 @@ def main():
         
         elif choice == '1':
             # From me to another ham
-            my_loc = get_my_location()
+            my_loc = get_my_location(cached_location=my_location)
             if not my_loc:
                 continue
             
@@ -427,7 +470,7 @@ def main():
         
         elif choice == '2':
             # From me to a place
-            my_loc = get_my_location()
+            my_loc = get_my_location(cached_location=my_location)
             if not my_loc:
                 continue
             
