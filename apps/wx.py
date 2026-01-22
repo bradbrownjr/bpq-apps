@@ -1166,7 +1166,7 @@ def print_reports_menu(location_desc, is_coastal):
 
 def show_7day_forecast(latlon):
     """Display 7-day forecast"""
-    print("Loading forecast...")
+    print("Loading forecast...", end="\r"); sys.stdout.flush()
     forecast = get_forecast_7day(latlon)
     if not forecast:
         print("No forecast available.")
@@ -1196,7 +1196,7 @@ def show_7day_forecast(latlon):
 
 def show_hourly_forecast(latlon):
     """Display hourly forecast for next 12 hours"""
-    print("Loading hourly forecast...")
+    print("Loading hourly forecast...", end="\r"); sys.stdout.flush()
     forecast = get_forecast_hourly(latlon, hours=12)
     if not forecast:
         print("No hourly forecast available.")
@@ -1233,7 +1233,7 @@ def show_hourly_forecast(latlon):
 
 def show_climate_report(wfo):
     """Display daily climate report"""
-    print("Loading climate report...")
+    print("Loading climate report...", end="\r"); sys.stdout.flush()
     report = get_climate_report(wfo)
     if not report:
         print("No climate report available.")
@@ -1274,7 +1274,7 @@ def show_climate_report(wfo):
 
 def show_zone_forecast(wfo):
     """Display zone forecast product"""
-    print("Loading zone forecast...")
+    print("Loading zone forecast...", end="\r"); sys.stdout.flush()
     report = get_zone_forecast(wfo)
     if not report:
         print("No zone forecast available.")
@@ -1314,7 +1314,7 @@ def show_zone_forecast(wfo):
 
 def show_winter_weather(wfo):
     """Display winter weather warnings"""
-    print("Loading winter weather...")
+    print("Loading winter weather...", end="\r"); sys.stdout.flush()
     report = get_winter_weather_warnings(wfo)
     if not report:
         print("No winter weather advisories.")
@@ -1365,7 +1365,7 @@ def show_winter_weather(wfo):
 
 def show_current_observations(latlon):
     """Display current weather observations"""
-    print("Loading observations...")
+    print("Loading observations...", end="\r"); sys.stdout.flush()
     obs = get_current_observations(latlon)
     if not obs:
         print("No observations available.")
@@ -1446,7 +1446,7 @@ def show_current_observations(latlon):
 
 def show_fire_weather(wfo):
     """Display fire weather outlook"""
-    print("Loading fire weather outlook...")
+    print("Loading fire weather outlook...", end="\r"); sys.stdout.flush()
     fire = get_fire_weather_outlook(wfo)
     if not fire:
         print("No fire weather outlook available.")
@@ -1473,7 +1473,7 @@ def show_fire_weather(wfo):
 
 def show_hazardous_weather_outlook(wfo):
     """Display hazardous weather outlook"""
-    print("Loading hazardous weather outlook...")
+    print("Loading hazardous weather outlook...", end="\r"); sys.stdout.flush()
     hwo = get_hazardous_weather_outlook(wfo)
     if not hwo:
         print("No hazardous weather outlook available.")
@@ -1554,7 +1554,7 @@ def show_river_flood(alerts):
 
 def show_afd_report(wfo):
     """Display Area Forecast Discussion"""
-    print("Loading discussion...")
+    print("Loading discussion...", end="\r"); sys.stdout.flush()
     afd = get_afd(wfo)
     if not afd:
         print("No discussion available.")
@@ -1581,7 +1581,7 @@ def show_afd_report(wfo):
 
 def show_pop_report(gridpoint):
     """Display probability of precipitation"""
-    print("Loading precipitation data...")
+    print("Loading precipitation data...", end="\r"); sys.stdout.flush()
     pop = get_pop(gridpoint)
     if not pop:
         print("No precipitation data available.")
@@ -1607,7 +1607,7 @@ def show_pop_report(gridpoint):
 
 def show_uv_report(latlon):
     """Display UV index"""
-    print("Loading UV index...")
+    print("Loading UV index...", end="\r"); sys.stdout.flush()
     uv = get_uv_index(latlon)
     if uv is None:
         print("No UV index available.")
@@ -1721,7 +1721,7 @@ def show_alerts(alerts, skywarn_status, skywarn_active):
 def show_coastal_flood_info(coastal_info):
     """Display coastal flood and marine forecast info"""
     if coastal_info is None:
-        print("Loading coastal forecast...")
+        print("Loading coastal forecast...", end="\r"); sys.stdout.flush()
     print()
     print("-" * 40)
     print("COASTAL/MARINE FORECAST")
