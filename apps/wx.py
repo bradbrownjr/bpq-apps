@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.1
+Version: 2.2
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.1"
+VERSION = "2.2"
 APP_NAME = "wx.py"
 
 
@@ -98,9 +98,13 @@ def get_bpq_locator():
     """Read LOCATOR from BPQ32 config file"""
     try:
         # BPQ apps run adjacent to linbpq folder, so ../linbpq/bpq32.cfg
+        # Use script's directory as base, not current working directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(script_dir)
+        
         paths_to_try = [
-            "../linbpq/bpq32.cfg",
-            os.path.join(os.path.dirname(os.getcwd()), "linbpq", "bpq32.cfg"),
+            os.path.join(parent_dir, "linbpq", "bpq32.cfg"),
+            os.path.join(script_dir, "..", "linbpq", "bpq32.cfg"),
             "/home/pi/linbpq/bpq32.cfg",
             "/root/linbpq/bpq32.cfg",
             "/home/bpq/linbpq/bpq32.cfg",

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.2] - 2026-01-22
+### Fixed
+- **get_bpq_locator() now uses script directory instead of cwd**: Uses `os.path.abspath(__file__)` to find script location, then looks for `../linbpq/bpq32.cfg` relative to script directory (not current working directory)
+- **Option 1 now correctly loads node's local gridsquare**: Previously fell back to user's callsign grid when path lookup failed
+### Changed
+- Paths to try now use parent directory of script location as base, ensuring reliable relative path resolution
+
 ## [wx.py 2.1] - 2026-01-22
 ### Added
 - **Zipcode lookup**: Convert US zipcodes (5 digits) to lat/lon via USGS Geocoding API
