@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.4
+Version: 3.5
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.4"
+VERSION = "3.5"
 APP_NAME = "wx.py"
 
 
@@ -52,7 +52,7 @@ def check_for_app_update(current_version, script_name):
         import stat
         
         github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(script_name)
-        with urllib.request.urlopen(github_url, timeout=3) as response:
+        with urllib.request.urlopen(github_url, timeout=10) as response:
             content = response.read().decode('utf-8')
         
         version_match = re.search(r'Version:\s*([0-9.]+)', content)
@@ -252,7 +252,7 @@ def lookup_callsign(callsign):
         url = "https://api.hamdb.org/v1/{}/json".format(callsign.upper())
         req = urllib.request.Request(url, headers={'User-Agent': 'WX-BPQ/1.0'})
         
-        with urllib.request.urlopen(req, timeout=3) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         hamdb = data.get('hamdb', {}).get('callsign', {})
@@ -317,7 +317,7 @@ def get_gridpoint(latlon):
         
         lat, lon = latlon
         url = "https://api.weather.gov/points/{},{}".format(lat, lon)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         gridpoint = data['properties']['forecastGridData']
@@ -334,7 +334,7 @@ def get_headlines(wfo):
         import json
         
         url = "https://api.weather.gov/offices/{}/headlines".format(wfo)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         headlines = []
@@ -371,7 +371,7 @@ def get_alerts(latlon):
         
         lat, lon = latlon
         url = "https://api.weather.gov/alerts/active?point={},{}".format(lat, lon)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         alerts = []
@@ -405,7 +405,7 @@ def get_hwo_skywarn_status(wfo):
         # For general pattern, we'll use a simplified approach
         hwo_url = "https://api.weather.gov/offices/{}/headlines".format(wfo)
         
-        with urllib.request.urlopen(hwo_url, timeout=3) as response:
+        with urllib.request.urlopen(hwo_url, timeout=10) as response:
             import json
             data = json.loads(response.read().decode('utf-8'))
         
@@ -428,7 +428,7 @@ def is_coastal(latlon):
         
         lat, lon = latlon
         url = "https://api.weather.gov/points/{},{}".format(lat, lon)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         # Check if marine zone is present (indicates coastal area)
@@ -446,7 +446,7 @@ def get_coastal_flood_info(latlon):
         
         lat, lon = latlon
         url = "https://api.weather.gov/points/{},{}".format(lat, lon)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         marine_zones = data.get('properties', {}).get('marineForecastZones', [])
@@ -457,7 +457,7 @@ def get_coastal_flood_info(latlon):
         coastal_info = []
         for marine_zone_url in marine_zones[:1]:
             try:
-                with urllib.request.urlopen(marine_zone_url, timeout=3) as response:
+                with urllib.request.urlopen(marine_zone_url, timeout=10) as response:
                     zone_data = json.loads(response.read().decode('utf-8'))
                 
                 zone_props = zone_data.get('properties', {})
@@ -490,7 +490,7 @@ def get_forecast_7day(latlon):
         # Get gridpoint first to find forecast URL
         lat, lon = latlon
         points_url = "https://api.weather.gov/points/{},{}".format(lat, lon)
-        with urllib.request.urlopen(points_url, timeout=3) as response:
+        with urllib.request.urlopen(points_url, timeout=10) as response:
             points_data = json.loads(response.read().decode('utf-8'))
         
         # Get the forecast URL (12-hourly periods)
@@ -499,7 +499,7 @@ def get_forecast_7day(latlon):
             return None
         
         # Fetch the actual forecast
-        with urllib.request.urlopen(forecast_url, timeout=3) as response:
+        with urllib.request.urlopen(forecast_url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         # Extract periods
@@ -549,7 +549,7 @@ def get_forecast_hourly(latlon, hours=12):
         lat, lon = latlon
         points_url = "https://api.weather.gov/points/{},{}".format(lat, lon)
         req = urllib.request.Request(points_url, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             points_data = json.loads(response.read().decode('utf-8'))
         
         hourly_url = points_data.get('properties', {}).get('forecastHourly')
@@ -557,7 +557,7 @@ def get_forecast_hourly(latlon, hours=12):
             return None
         
         req = urllib.request.Request(hourly_url, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         periods = data.get('properties', {}).get('periods', [])
@@ -599,7 +599,7 @@ def get_climate_report(wfo):
         
         url = "https://api.weather.gov/products/types/CLI"
         req = urllib.request.Request(url, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         graph = data.get('@graph', [])
@@ -612,7 +612,7 @@ def get_climate_report(wfo):
         product_id = latest.get('@id')
         
         req = urllib.request.Request(product_id, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             product_data = json.loads(response.read().decode('utf-8'))
         
         product_text = product_data.get('productText', '')
@@ -641,7 +641,7 @@ def get_zone_forecast(wfo):
         
         url = "https://api.weather.gov/products/types/ZFP"
         req = urllib.request.Request(url, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         graph = data.get('@graph', [])
@@ -654,7 +654,7 @@ def get_zone_forecast(wfo):
         product_id = latest.get('@id')
         
         req = urllib.request.Request(product_id, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             product_data = json.loads(response.read().decode('utf-8'))
         
         product_text = product_data.get('productText', '')
@@ -683,7 +683,7 @@ def get_winter_weather_warnings(wfo):
         
         url = "https://api.weather.gov/products/types/WSW"
         req = urllib.request.Request(url, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         graph = data.get('@graph', [])
@@ -696,7 +696,7 @@ def get_winter_weather_warnings(wfo):
         product_id = latest.get('@id')
         
         req = urllib.request.Request(product_id, headers={'User-Agent': 'wx.py packet radio app'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             product_data = json.loads(response.read().decode('utf-8'))
         
         product_text = product_data.get('productText', '')
@@ -721,7 +721,7 @@ def get_current_observations(latlon):
         lat, lon = latlon
         # Use grid points to find nearest observation station
         url = "https://api.weather.gov/points/{},{}".format(lat, lon)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         obs_stations = data.get('properties', {}).get('observationStations', '')
@@ -729,7 +729,7 @@ def get_current_observations(latlon):
             return None
         
         # Get latest observation from first station
-        with urllib.request.urlopen(obs_stations, timeout=3) as response:
+        with urllib.request.urlopen(obs_stations, timeout=10) as response:
             stations_data = json.loads(response.read().decode('utf-8'))
         
         features = stations_data.get('features', [])
@@ -737,7 +737,7 @@ def get_current_observations(latlon):
             return None
         
         station_url = features[0].get('id', '') + '/observations/latest'
-        with urllib.request.urlopen(station_url, timeout=3) as response:
+        with urllib.request.urlopen(station_url, timeout=10) as response:
             obs_data = json.loads(response.read().decode('utf-8'))
         
         props = obs_data.get('properties', {})
@@ -755,7 +755,7 @@ def get_current_observations(latlon):
         # Also get wind chill from gridpoint data (more reliable than station)
         gridpoint_url = data.get('properties', {}).get('forecastGridData')
         if gridpoint_url:
-            with urllib.request.urlopen(gridpoint_url, timeout=3) as response:
+            with urllib.request.urlopen(gridpoint_url, timeout=10) as response:
                 grid_data = json.loads(response.read().decode('utf-8'))
             grid_props = grid_data.get('properties', {})
             wind_chill = grid_props.get('windChill', {}).get('values', [{}])[0].get('value')
@@ -805,7 +805,7 @@ def get_hazardous_weather_outlook(wfo):
         
         # Get all HWO products
         url = "https://api.weather.gov/products/types/HWO"
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         graph = data.get('@graph', [])
@@ -958,7 +958,7 @@ def get_pop(latlon):
         # Get forecast URL from points endpoint
         lat, lon = latlon
         points_url = "https://api.weather.gov/points/{},{}".format(lat, lon)
-        with urllib.request.urlopen(points_url, timeout=3) as response:
+        with urllib.request.urlopen(points_url, timeout=10) as response:
             points_data = json.loads(response.read().decode('utf-8'))
         
         # Get the forecast URL (12-hourly periods)
@@ -967,7 +967,7 @@ def get_pop(latlon):
             return None
         
         # Fetch the actual forecast
-        with urllib.request.urlopen(forecast_url, timeout=3) as response:
+        with urllib.request.urlopen(forecast_url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         periods = data.get('properties', {}).get('periods', [])
@@ -996,14 +996,14 @@ def get_uv_index(latlon):
         
         lat, lon = latlon
         url = "https://api.weather.gov/points/{},{}".format(lat, lon)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         gridpoint = data.get('properties', {}).get('forecastGridData')
         if not gridpoint:
             return None
         
-        with urllib.request.urlopen(gridpoint, timeout=3) as response:
+        with urllib.request.urlopen(gridpoint, timeout=10) as response:
             forecast_data = json.loads(response.read().decode('utf-8'))
         
         uv_data = forecast_data.get('properties', {}).get('uvIndex', [])
@@ -1030,7 +1030,7 @@ def lookup_zipcode(zipcode):
         
         # Use USGS Geocoding API (free, no key required)
         url = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address={}&benchmark=Public_AR_Current&format=json".format(zipcode)
-        with urllib.request.urlopen(url, timeout=3) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
         
         if data.get('result', {}).get('addressMatches'):
@@ -1166,6 +1166,7 @@ def print_reports_menu(location_desc, is_coastal):
 
 def show_7day_forecast(latlon):
     """Display 7-day forecast"""
+    print("Loading forecast...")
     forecast = get_forecast_7day(latlon)
     if not forecast:
         print("No forecast available.")
@@ -1195,6 +1196,7 @@ def show_7day_forecast(latlon):
 
 def show_hourly_forecast(latlon):
     """Display hourly forecast for next 12 hours"""
+    print("Loading hourly forecast...")
     forecast = get_forecast_hourly(latlon, hours=12)
     if not forecast:
         print("No hourly forecast available.")
@@ -1231,6 +1233,7 @@ def show_hourly_forecast(latlon):
 
 def show_climate_report(wfo):
     """Display daily climate report"""
+    print("Loading climate report...")
     report = get_climate_report(wfo)
     if not report:
         print("No climate report available.")
@@ -1271,6 +1274,7 @@ def show_climate_report(wfo):
 
 def show_zone_forecast(wfo):
     """Display zone forecast product"""
+    print("Loading zone forecast...")
     report = get_zone_forecast(wfo)
     if not report:
         print("No zone forecast available.")
@@ -1310,6 +1314,7 @@ def show_zone_forecast(wfo):
 
 def show_winter_weather(wfo):
     """Display winter weather warnings"""
+    print("Loading winter weather...")
     report = get_winter_weather_warnings(wfo)
     if not report:
         print("No winter weather advisories.")
@@ -1440,6 +1445,7 @@ def show_current_observations(latlon):
 
 def show_fire_weather(wfo):
     """Display fire weather outlook"""
+    print("Loading fire weather outlook...")
     fire = get_fire_weather_outlook(wfo)
     if not fire:
         print("No fire weather outlook available.")
@@ -1466,6 +1472,7 @@ def show_fire_weather(wfo):
 
 def show_hazardous_weather_outlook(wfo):
     """Display hazardous weather outlook"""
+    print("Loading hazardous weather outlook...")
     hwo = get_hazardous_weather_outlook(wfo)
     if not hwo:
         print("No hazardous weather outlook available.")
@@ -1546,6 +1553,7 @@ def show_river_flood(alerts):
 
 def show_afd_report(wfo):
     """Display Area Forecast Discussion"""
+    print("Loading discussion...")
     afd = get_afd(wfo)
     if not afd:
         print("No discussion available.")
@@ -1572,6 +1580,7 @@ def show_afd_report(wfo):
 
 def show_pop_report(gridpoint):
     """Display probability of precipitation"""
+    print("Loading precipitation data...")
     pop = get_pop(gridpoint)
     if not pop:
         print("No precipitation data available.")
@@ -1597,6 +1606,7 @@ def show_pop_report(gridpoint):
 
 def show_uv_report(latlon):
     """Display UV index"""
+    print("Loading UV index...")
     uv = get_uv_index(latlon)
     if uv is None:
         print("No UV index available.")
@@ -1709,6 +1719,8 @@ def show_alerts(alerts, skywarn_status, skywarn_active):
 
 def show_coastal_flood_info(coastal_info):
     """Display coastal flood and marine forecast info"""
+    if coastal_info is None:
+        print("Loading coastal forecast...")
     print()
     print("-" * 40)
     print("COASTAL/MARINE FORECAST")

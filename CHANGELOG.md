@@ -22,6 +22,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - BPQ32 APPLICATION line compatible
 - Configuration stored in calendar.conf (JSON format)
 
+## [wx.py 3.5] - 2026-01-22
+### Changed
+- **API timeouts**: Increased all NWS API call timeouts from 3-5 seconds to 10 seconds
+  - Improves reliability on slow or congested network connections
+  - Reduces timeout errors on slower packet radio links
+  - Auto-update check remains at 3 seconds (fast GitHub CDN)
+- **User feedback**: Added "Loading..." messages to all report functions
+  - Shows "Loading forecast...", "Loading observations...", etc. before API calls
+  - Critical for 1200 baud packet radio where delays can seem like freezes
+  - Prevents users from thinking the system is unresponsive
+
 ## [wx.py 3.4] - 2026-01-22
 ### Fixed
 - **Menu choice 13 (Coastal Flood Info)**: Now works for all locations (not just coastal)
