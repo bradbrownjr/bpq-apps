@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.0
+Version: 3.1
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.0"
+VERSION = "3.1"
 APP_NAME = "wx.py"
 
 
@@ -162,6 +162,39 @@ def windchill_celsius_to_fahrenheit(celsius):
         return None
     try:
         return int(round(float(celsius) * 9.0 / 5.0 + 32))
+    except (ValueError, TypeError):
+        return None
+
+
+def mm_to_inches(mm):
+    """Convert millimeters to inches"""
+    if mm is None or mm == 0:
+        return None
+    try:
+        inches = float(mm) / 25.4
+        return round(inches, 2)
+    except (ValueError, TypeError):
+        return None
+
+
+def cm_to_inches(cm):
+    """Convert centimeters to inches"""
+    if cm is None or cm == 0:
+        return None
+    try:
+        inches = float(cm) / 2.54
+        return round(inches, 1)
+    except (ValueError, TypeError):
+        return None
+
+
+def meters_to_feet(meters):
+    """Convert meters to feet"""
+    if meters is None or meters == 0:
+        return None
+    try:
+        feet = float(meters) * 3.28084
+        return int(feet)
     except (ValueError, TypeError):
         return None
 
@@ -540,6 +573,16 @@ def get_current_observations(latlon):
             grid_props = grid_data.get('properties', {})
             wind_chill = grid_props.get('windChill', {}).get('values', [{}])[0].get('value')
             obs['wind_chill'] = wind_chill
+            
+            # Get precipitation, snowfall, ceiling
+            precip = grid_props.get('quantitativePrecipitation', {}).get('values', [{}])[0].get('value')
+            obs['precipitation'] = precip
+            
+            snowfall = grid_props.get('snowfallAmount', {}).get('values', [{}])[0].get('value')
+            obs['snowfall'] = snowfall
+            
+            ceiling = grid_props.get('ceilingHeight', {}).get('values', [{}])[0].get('value')
+            obs['ceiling'] = ceiling
         
         return obs
     except Exception:
@@ -910,6 +953,9 @@ def show_current_observations(latlon):
     pressure_inhg = pascals_to_inhg(obs.get('pressure'))
     humidity = obs.get('humidity')
     wind_chill_f = windchill_celsius_to_fahrenheit(obs.get('wind_chill'))
+    precip_inches = mm_to_inches(obs.get('precipitation'))
+    snowfall_inches = cm_to_inches(obs.get('snowfall'))
+    ceiling_feet = meters_to_feet(obs.get('ceiling'))
     
     if temp_f is not None:
         print("Temp: {}F".format(temp_f))
@@ -936,6 +982,15 @@ def show_current_observations(latlon):
         except (ValueError, TypeError):
             pass
     
+    if precip_inches is not None:
+        print("Precipitation: {} in".format(precip_inches))
+    
+    if snowfall_inches is not None:
+        print("Snowfall: {} in".format(snowfall_inches))
+    
+    if ceiling_feet is not None:
+        print("Ceiling: {} ft".format(ceiling_feet))
+    
     print("Conditions: {}".format(obs.get('weather', 'N/A')))
     
     if visibility_miles is not None:
@@ -946,7 +1001,7 @@ def show_current_observations(latlon):
     if pressure_inhg is not None:
         print("Pressure: {} inHg".format(pressure_inhg))
     else:
-        print("Pressure: N/A")
+        print("Pressure: N/A"))
     
     print()
     print("-" * 40)
@@ -970,6 +1025,28 @@ def show_fire_weather(wfo):
     print(fire['title'])
     print()
     print(fire['content'][:300])
+    print()
+    print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
+def show_hazardous_weather_outlook(wfo):
+    """Display hazardous weather outlook"""
+    hwo = get_hazardous_weather_outlook(wfo)
+    if not hwo:
+        print("No hazardous weather outlook available.")
+        return
+    
+    print()
+    print("-" * 40)
+    print("HAZARDOUS WEATHER OUTLOOK")
+    print("-" * 40)
+    print(hwo['title'])
+    print()
+    print(hwo['content'])
     print()
     print("-" * 40)
     try:
@@ -1384,28 +1461,31 @@ def main():
                 show_fire_weather(wfo) if wfo else print("No forecast data available.")
             
             elif choice == '4':
-                show_heat_cold(alerts) if alerts else print("No advisories.")
+                show_hazardous_weather_outlook(wfo) if wfo else print("No outlook available.")
             
             elif choice == '5':
+                show_heat_cold(alerts) if alerts else print("No advisories.")
+            
+            elif choice == '6':
                 show_river_flood(alerts) if alerts else print("No flood alerts.")
             
-            elif choice == '6' and is_coastal_area:
+            elif choice == '7' and is_coastal_area:
                 coastal_info = get_coastal_flood_info(selected_latlon)
                 show_coastal_flood_info(coastal_info)
             
-            elif choice == '7':
+            elif choice == '8':
                 show_afd_report(wfo) if wfo else print("No discussion available.")
             
-            elif choice == '8':
+            elif choice == '9':
                 show_pop_report(selected_latlon)
             
-            elif choice == '9':
+            elif choice == '10':
                 show_uv_report(selected_latlon)
             
-            elif choice == '10':
+            elif choice == '11':
                 show_dust_alerts(alerts) if alerts else print("No dust alerts.")
             
-            elif choice == '11':
+            elif choice == '12':
                 show_alerts(alerts, skywarn_status, skywarn_active) if alerts else print("No active alerts.")
             
             else:

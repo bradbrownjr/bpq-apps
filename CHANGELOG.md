@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 3.1] - 2026-01-22
+### Added
+- **Precipitation, snowfall, ceiling height**: Added three weather measurements to current observations (display only when non-zero)
+  - Quantitative Precipitation: millimeters converted to inches
+  - Snowfall Amount: centimeters converted to inches
+  - Ceiling Height: meters converted to feet (useful for VHF propagation planning)
+- **Hazardous Weather Outlook (HWO)**: New report (Option 4) pulling from NWS office headlines
+  - Provides early warnings for potential weather hazards
+  - Available when activated by forecast office
+  - Appears between Fire Weather Outlook and Heat/Cold Advisories
+### Changed
+- Menu expanded from 11 to 12 reports
+- Report numbering: Fire Weather (3), Hazardous Outlook (4), Heat/Cold (5), River/Flood (6), Coastal (7), AFD (8), PoP (9), UV (10), Dust (11), Alerts (12)
+- Conversion functions added: mm_to_inches(), cm_to_inches(), meters_to_feet()
+
 ## [wx.py 3.0] - 2026-01-22
 ### Added
 - **Wind gust speed**: Added peak wind speed to current observations (useful for radio antenna/tower safety planning)
