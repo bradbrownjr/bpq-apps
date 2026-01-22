@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.2
+Version: 3.3
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.2"
+VERSION = "3.3"
 APP_NAME = "wx.py"
 
 
@@ -847,17 +847,17 @@ def get_hazardous_weather_outlook(wfo):
                 title = line.strip()
                 break
         
-        # Get content (first 300 chars after header)
+        # Get full content (skip first 2 header lines)
         content_lines = []
-        for line in lines[3:]:
-            if line.strip():
+        for line in lines[2:]:
+            if line.strip() and not line.startswith('$$'):
                 content_lines.append(line)
         
-        content = '\n'.join(content_lines[:10])
+        content = '\n'.join(content_lines)
         
         return {
             'title': title,
-            'content': content[:400]
+            'content': content[:1000]
         }
     except Exception:
         return None
@@ -1155,8 +1155,7 @@ def print_reports_menu(location_desc, is_coastal):
     print("10) Heat/Cold Advisories")
     print("11) Fire Weather Outlook")
     print("12) River/Flood Stage")
-    if is_coastal:
-        print("13) Coastal Flood Info")
+    print("13) Coastal Flood Info{}".format("" if is_coastal else " (N/A)"))
     print("14) Dust/Haboob Alerts")
     # Reference
     print("15) UV Index")
@@ -1199,6 +1198,10 @@ def show_hourly_forecast(latlon):
     forecast = get_forecast_hourly(latlon, hours=12)
     if not forecast:
         print("No hourly forecast available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1231,6 +1234,10 @@ def show_climate_report(wfo):
     report = get_climate_report(wfo)
     if not report:
         print("No climate report available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1267,6 +1274,10 @@ def show_zone_forecast(wfo):
     report = get_zone_forecast(wfo)
     if not report:
         print("No zone forecast available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1301,7 +1312,11 @@ def show_winter_weather(wfo):
     """Display winter weather warnings"""
     report = get_winter_weather_warnings(wfo)
     if not report:
-        print("No winter weather warnings/watches/advisories.")
+        print("No winter weather advisories.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1312,13 +1327,27 @@ def show_winter_weather(wfo):
     content = report.get('content', '')
     lines = content.split('\n')
     
-    # Show key warning info
+    # Parse and display formatted sections
     line_count = 0
+    in_body = False
     for line in lines:
-        if line.strip() and not line.startswith('$$'):
+        stripped = line.strip()
+        
+        # Skip empty lines and footer
+        if not stripped or stripped.startswith('$$'):
+            continue
+        
+        # Start printing after header codes
+        if 'National Weather Service' in line:
+            in_body = True
+        
+        if in_body:
+            # Add spacing before section headers
+            if stripped.startswith('...'):
+                print()
             print(line)
             line_count += 1
-            if line_count > 25:
+            if line_count > 30:
                 break
     
     print()
@@ -1414,6 +1443,10 @@ def show_fire_weather(wfo):
     fire = get_fire_weather_outlook(wfo)
     if not fire:
         print("No fire weather outlook available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1436,6 +1469,10 @@ def show_hazardous_weather_outlook(wfo):
     hwo = get_hazardous_weather_outlook(wfo)
     if not hwo:
         print("No hazardous weather outlook available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1457,7 +1494,11 @@ def show_heat_cold(alerts):
     """Display heat/cold advisories"""
     adv = get_heat_cold_advisories(alerts)
     if not adv:
-        print("No heat/cold advisories.")
+        print("No advisories.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1480,7 +1521,11 @@ def show_river_flood(alerts):
     """Display river and flood alerts"""
     flood = get_river_flood_info(alerts)
     if not flood:
-        print("No river/flood alerts.")
+        print("No flood alerts.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1504,6 +1549,10 @@ def show_afd_report(wfo):
     afd = get_afd(wfo)
     if not afd:
         print("No discussion available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1526,6 +1575,10 @@ def show_pop_report(gridpoint):
     pop = get_pop(gridpoint)
     if not pop:
         print("No precipitation data available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1547,6 +1600,10 @@ def show_uv_report(latlon):
     uv = get_uv_index(latlon)
     if uv is None:
         print("No UV index available.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1573,7 +1630,11 @@ def show_dust_alerts(alerts):
     """Display dust and fire weather alerts"""
     dust = get_fire_weather_alerts(alerts)
     if not dust:
-        print("No dust/fire alerts.")
+        print("No dust alerts.")
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return
     
     print()
@@ -1626,12 +1687,11 @@ def show_alerts(alerts, skywarn_status, skywarn_active):
     print("-" * 40)
     print(skywarn_status)
     print("-" * 40)
-    print()
     
     if not alerts:
-        print("No active weather alerts.")
+        print("\nNo active alerts.")
     else:
-        print("Active Alerts: {}".format(len(alerts)))
+        print("\nActive Alerts: {}".format(len(alerts)))
         print("-" * 40)
         for i, alert in enumerate(alerts, 1):
             severity_marker = "*" if alert['severity'] in ['Extreme', 'Severe'] else " "

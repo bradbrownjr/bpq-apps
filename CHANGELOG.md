@@ -6,7 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 3.3] - 2026-01-22
+### Fixed
+- **Hourly forecast (Option 2)**: Added error handling and "Press enter" prompt when no data available
+- **Area Forecast Discussion (Option 7)**: Now uses NWS products API (/products/types/AFD) instead of headlines
+  - Headlines endpoint no longer returns AFD reliably
+  - Products API provides consistent access to latest AFD product
+- **Hazardous Weather Outlook (Option 5)**: Expanded content display from 400 to 1000 characters
+  - Shows full HWO text instead of truncated summary
+  - Better header parsing (skips first 2 lines instead of 3)
+- **Winter Weather (Option 9)**: Improved formatting with intelligent section parsing
+  - Skips header codes (000, WWUS41, etc.)
+  - Adds spacing before section markers (lines starting with "...")
+  - Displays up to 30 lines instead of 25
+- **Menu numbering**: Fixed missing Option 13 (Coastal Flood Info)
+  - Now always displays in menu with "(N/A)" indicator for non-coastal locations
+  - Prevents confusing gap in numbering (12→14)
+- **User experience**: Added "Press enter to continue..." prompt to all empty reports
+  - Affected: Active Alerts, Heat/Cold Advisories, River/Flood, Fire Weather, Dust, UV, AFD, PoP, Climate, Zone, HWO, Hourly
+  - Prevents rapid menu return that could confuse users into thinking report failed
+
 ## [wx.py 3.2] - 2026-01-22
+### Added
+Major expansion using NWS API capabilities discovered via official documentation:
+- **Hourly Forecast (12hr)**: Option 2 - Hour-by-hour forecast with temp, conditions, wind for next 12 hours
+- **Zone Forecast Product (ZFP)**: Option 6 - Detailed narrative forecast from NWS forecasters
+- **Winter Weather Warnings**: Option 9 - Winter storm warnings, watches, and advisories (WSW product)
+- **Daily Climate Report (CLI)**: Option 16 - Temperature records, normals, departures, precipitation data
+- Proper User-Agent headers for all NWS API requests (required per API guidelines)
+### Changed
+- Menu expanded from 11 to 16 reports with reorganized layout
+- Reorganized menu by priority: immediate conditions (1-3), safety/alerts (4-5), detailed forecasts (6-8), seasonal/situational (9-14), reference (15-16)
+- Updated docstring with comprehensive NWS API endpoint documentation
+- HWO now uses correct NWS products API endpoint (products/types/HWO)
+### Fixed
+- Hazardous Weather Outlook now properly fetches from NWS products API with ICAO WFO code conversion
+
+## [wx.py 3.1] - 2026-01-22
 ### Added
 Major expansion using NWS API capabilities discovered via official documentation:
 - **Hourly Forecast (12hr)**: Option 2 - Hour-by-hour forecast with temp, conditions, wind for next 12 hours
