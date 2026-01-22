@@ -300,6 +300,7 @@ bpq-apps/
 - BPQ config: `/home/ect/linbpq/bpq32.cfg`
 - Apps directory: `/home/ect/apps/`
 - System configs: `/etc/inetd.conf`, `/etc/services`
+- Service management: systemd (`sudo systemctl restart linbpq`, `sudo killall -HUP inetd`)
 
 ## Notification Webhook
 Before requesting user testing or executing commands requiring interaction, send notification:
