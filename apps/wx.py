@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.5
+Version: 3.6
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.5"
+VERSION = "3.6"
 APP_NAME = "wx.py"
 
 
@@ -847,17 +847,18 @@ def get_hazardous_weather_outlook(wfo):
                 title = line.strip()
                 break
         
-        # Get full content (skip first 2 header lines)
+        # Get full content (skip first 2 header lines, preserve blank lines)
         content_lines = []
         for line in lines[2:]:
-            if line.strip() and not line.startswith('$$'):
-                content_lines.append(line)
+            if line.startswith('$$'):
+                break
+            content_lines.append(line)
         
         content = '\n'.join(content_lines)
         
         return {
             'title': title,
-            'content': content[:1000]
+            'content': content
         }
     except Exception:
         return None
@@ -1489,7 +1490,23 @@ def show_hazardous_weather_outlook(wfo):
     print("-" * 40)
     print(hwo['title'])
     print()
-    print(hwo['content'])
+    
+    # Display with pagination (20 lines at a time)
+    lines = hwo['content'].split('\n')
+    line_count = 0
+    for line in lines:
+        print(line)
+        line_count += 1
+        if line_count >= 20:
+            print()
+            try:
+                response = input("Press ENTER to continue or Q to quit: ").strip().upper()
+                if response == 'Q':
+                    break
+            except (EOFError, KeyboardInterrupt):
+                break
+            line_count = 0
+    
     print()
     print("-" * 40)
     try:

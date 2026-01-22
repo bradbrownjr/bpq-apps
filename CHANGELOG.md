@@ -22,6 +22,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - BPQ32 APPLICATION line compatible
 - Configuration stored in calendar.conf (JSON format)
 
+## [wx.py 3.6] - 2026-01-22
+### Fixed
+- **Hazardous Weather Outlook (Option 5)**: Complete rewrite of display formatting
+  - Removed 1000 character limit - now displays full HWO product
+  - Preserves original blank lines between sections for readability
+  - Added pagination: displays 20 lines at a time with "Press ENTER to continue or Q to quit" prompt
+  - Matches formatting of raw NWS text products (FTP format)
+- **Loading messages**: Fixed buffered output causing delayed display
+  - Added `sys.stdout.flush()` to force immediate display before API calls
+  - Changed to carriage return (`\r`) so loading message is overwritten by report
+  - Critical for packet radio where users need immediate feedback
+
 ## [wx.py 3.5] - 2026-01-22
 ### Changed
 - **API timeouts**: Increased all NWS API call timeouts from 3-5 seconds to 10 seconds
