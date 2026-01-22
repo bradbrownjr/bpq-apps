@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 3.2] - 2026-01-22
+### Added
+Major expansion using NWS API capabilities discovered via official documentation:
+- **Hourly Forecast (12hr)**: Option 2 - Hour-by-hour forecast with temp, conditions, wind for next 12 hours
+- **Zone Forecast Product (ZFP)**: Option 5 - Detailed narrative forecast from NWS forecasters
+- **Winter Weather Warnings**: Option 7 - Winter storm warnings, watches, and advisories (WSW product)
+- **Daily Climate Report (CLI)**: Option 13 - Temperature records, normals, departures, precipitation data
+- Proper User-Agent headers for all NWS API requests (required per API guidelines)
+### Changed
+- Menu expanded from 11 to 16 reports with reorganized layout
+- Reorganized menu for logical grouping: forecasts (1-5), hazards (6-9), specialized (10-16)
+- Updated docstring with comprehensive NWS API endpoint documentation
+- HWO now uses correct NWS products API endpoint (products/types/HWO)
+### Fixed
+- Hazardous Weather Outlook now properly fetches from NWS products API with ICAO WFO code conversion
+
 ## [wx.py 3.1] - 2026-01-22
 ### Added
 - **Precipitation, snowfall, ceiling height**: Added three weather measurements to current observations (display only when non-zero)

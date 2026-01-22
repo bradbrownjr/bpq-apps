@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.1
+Version: 3.2
 Date: January 2026
 
 NWS API Documentation:
@@ -27,9 +27,10 @@ NWS API Documentation:
 - General FAQs: https://weather-gov.github.io/api/general-faqs
 - GitHub repository: https://github.com/weather-gov/api
 - API endpoints: https://api.weather.gov/ (root)
-- Products endpoint: https://api.weather.gov/products/types/HWO (Hazardous Weather Outlook)
+- Products endpoint: https://api.weather.gov/products/types/{TYPE} (HWO, CLI, ZFP, WSW, etc.)
 - Points endpoint: https://api.weather.gov/points/{lat},{lon} (location data)
 - Forecast: https://api.weather.gov/gridpoints/{wfo}/{x},{y}/forecast
+- Hourly: https://api.weather.gov/gridpoints/{wfo}/{x},{y}/forecast/hourly
 - Gridpoint data: https://api.weather.gov/gridpoints/{wfo}/{x},{y} (raw observations)
 - Alerts: https://api.weather.gov/alerts/active?point={lat},{lon}
 """
@@ -40,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.1"
+VERSION = "3.2"
 APP_NAME = "wx.py"
 
 
@@ -536,6 +537,181 @@ def get_forecast_7day(latlon):
         return None
 
 
+def get_forecast_hourly(latlon, hours=12):
+    """Get hourly forecast from NWS for lat/lon"""
+    try:
+        import urllib.request
+        import json
+        
+        if not latlon:
+            return None
+        
+        lat, lon = latlon
+        points_url = "https://api.weather.gov/points/{},{}".format(lat, lon)
+        req = urllib.request.Request(points_url, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            points_data = json.loads(response.read().decode('utf-8'))
+        
+        hourly_url = points_data.get('properties', {}).get('forecastHourly')
+        if not hourly_url:
+            return None
+        
+        req = urllib.request.Request(hourly_url, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        periods = data.get('properties', {}).get('periods', [])
+        if not periods:
+            return None
+        
+        forecast_list = []
+        for period in periods[:hours]:
+            start_time = period.get('startTime', '')[:16]
+            temp = period.get('temperature', '')
+            short_forecast = period.get('shortForecast', '')
+            wind_speed = period.get('windSpeed', '')
+            wind_dir = period.get('windDirection', '')
+            
+            forecast_list.append({
+                'time': start_time,
+                'temp': temp,
+                'forecast': short_forecast,
+                'wind_speed': wind_speed,
+                'wind_dir': wind_dir
+            })
+        
+        return forecast_list if forecast_list else None
+    except Exception:
+        return None
+
+
+def get_climate_report(wfo):
+    """Get daily climate report (CLI) from NWS products API"""
+    try:
+        import urllib.request
+        import json
+        
+        # Convert WFO to ICAO format
+        if not wfo.startswith('K'):
+            wfo_code = 'K' + wfo
+        else:
+            wfo_code = wfo
+        
+        url = "https://api.weather.gov/products/types/CLI"
+        req = urllib.request.Request(url, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        graph = data.get('@graph', [])
+        wfo_cli = [item for item in graph if item.get('issuingOffice') == wfo_code]
+        
+        if not wfo_cli:
+            return None
+        
+        latest = wfo_cli[0]
+        product_id = latest.get('@id')
+        
+        req = urllib.request.Request(product_id, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            product_data = json.loads(response.read().decode('utf-8'))
+        
+        product_text = product_data.get('productText', '')
+        if not product_text:
+            return None
+        
+        return {
+            'title': 'Daily Climate Report',
+            'issued': latest.get('issuanceTime', '')[:16],
+            'content': product_text
+        }
+    except Exception:
+        return None
+
+
+def get_zone_forecast(wfo):
+    """Get zone forecast product (ZFP) from NWS products API"""
+    try:
+        import urllib.request
+        import json
+        
+        if not wfo.startswith('K'):
+            wfo_code = 'K' + wfo
+        else:
+            wfo_code = wfo
+        
+        url = "https://api.weather.gov/products/types/ZFP"
+        req = urllib.request.Request(url, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        graph = data.get('@graph', [])
+        wfo_zfp = [item for item in graph if item.get('issuingOffice') == wfo_code]
+        
+        if not wfo_zfp:
+            return None
+        
+        latest = wfo_zfp[0]
+        product_id = latest.get('@id')
+        
+        req = urllib.request.Request(product_id, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            product_data = json.loads(response.read().decode('utf-8'))
+        
+        product_text = product_data.get('productText', '')
+        if not product_text:
+            return None
+        
+        return {
+            'title': 'Zone Forecast',
+            'issued': latest.get('issuanceTime', '')[:16],
+            'content': product_text
+        }
+    except Exception:
+        return None
+
+
+def get_winter_weather_warnings(wfo):
+    """Get winter weather warnings/watches/advisories (WSW) from NWS products API"""
+    try:
+        import urllib.request
+        import json
+        
+        if not wfo.startswith('K'):
+            wfo_code = 'K' + wfo
+        else:
+            wfo_code = wfo
+        
+        url = "https://api.weather.gov/products/types/WSW"
+        req = urllib.request.Request(url, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        graph = data.get('@graph', [])
+        wfo_wsw = [item for item in graph if item.get('issuingOffice') == wfo_code]
+        
+        if not wfo_wsw:
+            return None
+        
+        latest = wfo_wsw[0]
+        product_id = latest.get('@id')
+        
+        req = urllib.request.Request(product_id, headers={'User-Agent': 'wx.py packet radio app'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            product_data = json.loads(response.read().decode('utf-8'))
+        
+        product_text = product_data.get('productText', '')
+        if not product_text:
+            return None
+        
+        return {
+            'title': 'Winter Weather',
+            'issued': latest.get('issuanceTime', '')[:16],
+            'content': product_text
+        }
+    except Exception:
+        return None
+
+
 def get_current_observations(latlon):
     """Get current weather observations from NWS stations"""
     try:
@@ -964,19 +1140,24 @@ def print_reports_menu(location_desc, is_coastal):
     print("\nREPORTS FOR: {}".format(location_desc))
     print("-" * 40)
     print("1) 7-Day Forecast")
-    print("2) Current Observations")
-    print("3) Fire Weather Outlook")
-    print("4) Heat/Cold Advisories")
-    print("5) River/Flood Stage")
+    print("2) Hourly Forecast (12hr)")
+    print("3) Current Observations")
+    print("4) Hazardous Weather Outlook")
+    print("5) Zone Forecast (Narrative)")
+    print("6) Fire Weather Outlook")
+    print("7) Winter Weather Warnings")
+    print("8) Heat/Cold Advisories")
+    print("9) River/Flood Stage")
     if is_coastal:
-        print("6) Coastal flood info")
-    print("7) Area Forecast Discussion")
-    print("8) Probability of Precipitation")
-    print("9) UV Index")
-    print("10) Dust/Haboob Alerts")
-    print("11) Active Alerts")
+        print("10) Coastal Flood Info")
+    print("11) Area Forecast Discussion")
+    print("12) Probability of Precip")
+    print("13) Daily Climate Report")
+    print("14) UV Index")
+    print("15) Dust/Haboob Alerts")
+    print("16) Active Alerts")
     print()
-    print("1-11) B)ack Q)uit :>")
+    print("1-16) B)ack Q)uit :>")
 
 
 def show_7day_forecast(latlon):
@@ -1000,6 +1181,141 @@ def show_7day_forecast(latlon):
         if wind:
             print("  Wind: {}".format(wind))
         print("  {}".format(f['forecast'][:60]))
+    print()
+    print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
+def show_hourly_forecast(latlon):
+    """Display hourly forecast for next 12 hours"""
+    forecast = get_forecast_hourly(latlon, hours=12)
+    if not forecast:
+        print("No hourly forecast available.")
+        return
+    
+    print()
+    print("-" * 40)
+    print("12-HOUR FORECAST")
+    print("-" * 40)
+    
+    for f in forecast:
+        time_str = f.get('time', '')[11:16]  # Extract HH:MM
+        temp = f.get('temp', '?')
+        forecast_text = f.get('forecast', '')[:20]
+        wind_speed = f.get('wind_speed', '')
+        wind_dir = f.get('wind_dir', '')
+        
+        print("{}: {}F {} {}{}".format(
+            time_str, temp, forecast_text,
+            wind_speed, ' ' + wind_dir if wind_dir else ''
+        ))
+    
+    print()
+    print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
+def show_climate_report(wfo):
+    """Display daily climate report"""
+    report = get_climate_report(wfo)
+    if not report:
+        print("No climate report available.")
+        return
+    
+    print()
+    print("-" * 40)
+    print("DAILY CLIMATE REPORT")
+    print("-" * 40)
+    
+    # Parse out key data from the report
+    content = report.get('content', '')
+    lines = content.split('\n')
+    
+    # Show a condensed version (skip headers, show key data)
+    in_data = False
+    line_count = 0
+    for line in lines:
+        if 'TEMPERATURE' in line or 'PRECIPITATION' in line:
+            in_data = True
+        if in_data and line.strip():
+            print(line)
+            line_count += 1
+            if line_count > 15:  # Limit output for packet radio
+                break
+    
+    print()
+    print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
+def show_zone_forecast(wfo):
+    """Display zone forecast product"""
+    report = get_zone_forecast(wfo)
+    if not report:
+        print("No zone forecast available.")
+        return
+    
+    print()
+    print("-" * 40)
+    print("ZONE FORECAST")
+    print("-" * 40)
+    
+    content = report.get('content', '')
+    lines = content.split('\n')
+    
+    # Show first zone forecast (skip headers)
+    line_count = 0
+    started = False
+    for line in lines:
+        if '.TONIGHT' in line or '.TODAY' in line or '.THIS MORNING' in line:
+            started = True
+        if started and line.strip():
+            print(line)
+            line_count += 1
+            if line_count > 20:  # Limit for packet radio
+                break
+    
+    print()
+    print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
+def show_winter_weather(wfo):
+    """Display winter weather warnings"""
+    report = get_winter_weather_warnings(wfo)
+    if not report:
+        print("No winter weather warnings/watches/advisories.")
+        return
+    
+    print()
+    print("-" * 40)
+    print("WINTER WEATHER")
+    print("-" * 40)
+    
+    content = report.get('content', '')
+    lines = content.split('\n')
+    
+    # Show key warning info
+    line_count = 0
+    for line in lines:
+        if line.strip() and not line.startswith('$$'):
+            print(line)
+            line_count += 1
+            if line_count > 25:
+                break
+    
     print()
     print("-" * 40)
     try:
@@ -1532,37 +1848,49 @@ def main():
                 show_7day_forecast(selected_latlon)
             
             elif choice == '2':
-                show_current_observations(selected_latlon)
+                show_hourly_forecast(selected_latlon)
             
             elif choice == '3':
-                show_fire_weather(wfo) if wfo else print("No forecast data available.")
+                show_current_observations(selected_latlon)
             
             elif choice == '4':
                 show_hazardous_weather_outlook(wfo) if wfo else print("No outlook available.")
             
             elif choice == '5':
-                show_heat_cold(alerts) if alerts else print("No advisories.")
+                show_zone_forecast(wfo) if wfo else print("No zone forecast available.")
             
             elif choice == '6':
+                show_fire_weather(wfo) if wfo else print("No forecast data available.")
+            
+            elif choice == '7':
+                show_winter_weather(wfo) if wfo else print("No winter weather data.")
+            
+            elif choice == '8':
+                show_heat_cold(alerts) if alerts else print("No advisories.")
+            
+            elif choice == '9':
                 show_river_flood(alerts) if alerts else print("No flood alerts.")
             
-            elif choice == '7' and is_coastal_area:
+            elif choice == '10' and is_coastal_area:
                 coastal_info = get_coastal_flood_info(selected_latlon)
                 show_coastal_flood_info(coastal_info)
             
-            elif choice == '8':
+            elif choice == '11':
                 show_afd_report(wfo) if wfo else print("No discussion available.")
             
-            elif choice == '9':
+            elif choice == '12':
                 show_pop_report(selected_latlon)
             
-            elif choice == '10':
+            elif choice == '13':
+                show_climate_report(wfo) if wfo else print("No climate report available.")
+            
+            elif choice == '14':
                 show_uv_report(selected_latlon)
             
-            elif choice == '11':
+            elif choice == '15':
                 show_dust_alerts(alerts) if alerts else print("No dust alerts.")
             
-            elif choice == '12':
+            elif choice == '16':
                 show_alerts(alerts, skywarn_status, skywarn_active) if alerts else print("No active alerts.")
             
             else:
