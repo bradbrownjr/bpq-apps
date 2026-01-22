@@ -5,6 +5,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 - [Features](#features)
 - [Applications](#applications)
   - [feed.py](#feedpy)
+  - [calendar.py](#calendarpy)
   - [callout.py](#calloutpy)
   - [forms.py](#formspy)
   - [gopher.py](#gopherpy)
@@ -48,40 +49,48 @@ feed.py
 - Post one-liner messages (up to 80 characters)
 - View recent messages with pagination (10 messages per page)
 - Delete your own messages
-- Message statistics and top contributors
-- Automatic callsign detection from BPQ32 or manual entry
-- JSON storage with callsign, timestamp, and message text
-- Chronological display (newest first)
-- Messages marked with '*' can be deleted by author
-- Simple prompt-based interface like RSS News app
+
+calendar.py
+-----------
+**Type**: Python  
+**Purpose**: Display ham radio club events from iCalendar feeds  
+**Information source**: Online .ics files (iCalendar format)  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Fetches and displays upcoming club meetings, nets, and activities from iCalendar URLs. Internet-optional with graceful offline fallback.
+
+**Download or update**:  
+```wget -O calendar.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/calendar.py && chmod +x calendar.py```
+
+**Features**:
+- Prompts for iCal URL on first run, saves to calendar.conf
+- View upcoming events (next 90 days) or all events
+- Displays event date/time, location, and description
+- Handles multi-day and all-day events
+- Refresh calendar on demand
+- Text wrapping optimized for packet radio bandwidth (40-char terminal width)
+- Offline detection with user-friendly error messages
+- Automatic update functionality
 
 **BPQ32 Configuration**:
 ```
-APPLICATION 8,FEED,C 9 HOST 8 S
+APPLICATION 7,CALENDAR,C 9 HOST 7 K
 ```
-The 'S' flag strips SSID from callsign for cleaner display. Remove 'S' to include SSID.
 
 **Usage**:
-- Shows messages immediately on startup
-- Simple prompt: `P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit`
-- P: Post new message (80 characters max)
-- D: Delete your own messages
-- N: Next page of messages
-- Pr: Previous page of messages  
-- S: View statistics (total messages, recent activity, top contributors)
+- U: View upcoming events (next 90 days)
+- A: View all events in calendar
+- R: Refresh calendar from URL
+- C: Change calendar URL
 - Q: Quit
 
+**First Run**:
+App prompts for iCal URL and saves it to `calendar.conf` for future use.
+
 **Data Storage**:
-Messages are stored in `feed_board.json` in the same directory as the script:
+Configuration stored in `calendar.conf` in same directory as script:
 ```json
 {
-  "messages": [
-    {
-      "callsign": "KC1JMH",
-      "message": "73 to everyone on the network!",
-      "timestamp": "2026-01-20T15:30:00Z"
-    }
-  ]
+  "ical_url": "https://example.com/calendar.ics"
 }
 ```
 

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [calendar.py 1.0] - 2026-01-22
+### Added
+- New application: Club calendar event viewer
+- Fetches and displays events from iCalendar (.ics) URLs
+- First-run configuration prompt for iCal URL
+- View upcoming events (next 90 days) or all events
+- Displays event date/time, location, and full description
+- Handles multi-day events, all-day events, and timed events
+- Text wrapping adjusts to terminal width (40-char fallback)
+- Refresh calendar functionality
+- Internet availability detection with graceful offline handling
+- Automatic update functionality
+- ASCII-only output optimized for packet radio
+- BPQ32 APPLICATION line compatible
+- Configuration stored in calendar.conf (JSON format)
+
 ## [wx.py 3.3] - 2026-01-22
 ### Fixed
 - **Hourly forecast (Option 2)**: Added error handling and "Press enter" prompt when no data available
