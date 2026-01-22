@@ -22,6 +22,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - BPQ32 APPLICATION line compatible
 - Configuration stored in calendar.conf (JSON format)
 
+## [wx.py 3.4] - 2026-01-22
+### Fixed
+- **Menu choice 13 (Coastal Flood Info)**: Now works for all locations (not just coastal)
+  - Non-coastal locations show "No coastal forecast available" message
+  - Prevents "Invalid choice" error for inland users
+- **Hazardous Weather Outlook**: Fixed timeout issue preventing HWO display
+  - Increased product fetch timeout from 3 to 10 seconds
+  - NWS products API can be slow to respond for individual product fetches
+  - HWO now reliably displays when available
+
 ## [wx.py 3.3] - 2026-01-22
 ### Fixed
 - **Hourly forecast (Option 2)**: Added error handling and "Press enter" prompt when no data available

@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.3
+Version: 3.4
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.3"
+VERSION = "3.4"
 APP_NAME = "wx.py"
 
 
@@ -828,8 +828,8 @@ def get_hazardous_weather_outlook(wfo):
         latest = wfo_hwo[0]
         product_id = latest.get('@id')
         
-        # Fetch full product details
-        with urllib.request.urlopen(product_id, timeout=3) as response:
+        # Fetch full product details (increase timeout - products can be slow)
+        with urllib.request.urlopen(product_id, timeout=10) as response:
             product_data = json.loads(response.read().decode('utf-8'))
         
         product_text = product_data.get('productText', '')
@@ -1949,8 +1949,8 @@ def main():
             elif choice == '12':
                 show_river_flood(alerts) if alerts else print("No flood alerts.")
             
-            elif choice == '13' and is_coastal_area:
-                coastal_info = get_coastal_flood_info(selected_latlon)
+            elif choice == '13':
+                coastal_info = get_coastal_flood_info(selected_latlon) if is_coastal_area else None
                 show_coastal_flood_info(coastal_info)
             
             elif choice == '14':
