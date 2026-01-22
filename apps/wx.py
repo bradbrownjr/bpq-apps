@@ -96,14 +96,13 @@ def compare_versions(version1, version2):
 def get_bpq_locator():
     """Read LOCATOR from BPQ32 config file"""
     try:
-        # Common BPQ paths
+        # BPQ apps run adjacent to linbpq folder, so ../linbpq/bpq32.cfg
         paths_to_try = [
-            os.path.join(os.getcwd(), "linbpq", "bpq32.cfg"),
-            os.path.join(os.getcwd(), "bpq32.cfg"),
+            "../linbpq/bpq32.cfg",
+            os.path.join(os.path.dirname(os.getcwd()), "linbpq", "bpq32.cfg"),
+            "/home/pi/linbpq/bpq32.cfg",
             "/root/linbpq/bpq32.cfg",
-            "/root/bpq32.cfg",
             "/home/bpq/linbpq/bpq32.cfg",
-            "/home/bpq/bpq32.cfg",
             "/opt/linbpq/bpq32.cfg"
         ]
         
@@ -183,7 +182,9 @@ def is_callsign_format(text):
 def is_gridsquare_format(text):
     """Check if text looks like a gridsquare"""
     pattern = r'^[A-Ra-r]{2}[0-9]{2}[a-xa-x]{0,2}$'
-    return bool(re.match(pattern, text.strip().upper()))
+    # Accept both uppercase and lowercase, validation pattern works on uppercase
+    text_upper = text.strip().upper()
+    return bool(re.match(pattern, text_upper))
 
 
 def get_gridpoint(latlon):
@@ -626,12 +627,36 @@ def get_pollen_forecast(latlon):
         return None
 
 
+def lookup_zipcode(zipcode):
+    """Look up lat/lon from US zipcode"""
+    try:
+        import urllib.request
+        import json
+        
+        # Use USGS Geocoding API (free, no key required)
+        url = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address={}&benchmark=Public_AR_Current&format=json".format(zipcode)
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        if data.get('result', {}).get('addressMatches'):
+            match = data['result']['addressMatches'][0]
+            coords = match.get('coordinates', {})
+            lat = coords.get('y')
+            lon = coords.get('x')
+            if lat and lon:
+                return (lat, lon), "Zipcode {}".format(zipcode)
+    except Exception:
+        pass
+    
+    return None, None
+
+
 def prompt_location(prompt_text="Enter location"):
     """Prompt for location input"""
     print("")
     print(prompt_text)
-    print("  Enter: gridsquare, GPS coords (lat,lon),")
-    print("         state (Maine/ME), country, or callsign")
+    print("  Enter: gridsquare (FN43sr), GPS (lat,lon),")
+    print("         US zipcode, or callsign")
     print("  (Q to cancel)")
     print("")
     
@@ -658,12 +683,21 @@ def prompt_location(prompt_text="Enter location"):
             print("Not found. Try gridsquare or coordinates.")
             continue
         
-        # Try gridsquare
+        # Try gridsquare (case-insensitive)
         if is_gridsquare_format(response):
             latlon = grid_to_latlon(response.upper())
             if latlon:
                 return latlon, response.upper()
             print("Invalid gridsquare. Try again.")
+            continue
+        
+        # Try zipcode (5 digits)
+        if response.isdigit() and len(response) == 5:
+            print("Looking up zipcode {}...".format(response))
+            latlon, desc = lookup_zipcode(response)
+            if latlon:
+                return latlon, desc
+            print("Zipcode not found. Try another.")
             continue
         
         # Try lat,lon
@@ -678,9 +712,11 @@ def prompt_location(prompt_text="Enter location"):
             pass
         
         print("Could not parse. Try:")
-        print("  - Gridsquare: FN43hp")
+        print("  - Gridsquare: FN43sr")
+        print("  - Zipcode: 04123")
         print("  - GPS: 43.65, -70.25")
         print("  - Callsign: KC1JMH")
+
 
 
 def print_header():
