@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.9
+Version: 4.0
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.9"
+VERSION = "4.0"
 APP_NAME = "wx.py"
 
 
@@ -1392,9 +1392,10 @@ def show_winter_weather(wfo):
     content = report.get('content', '')
     lines = content.split('\n')
     
-    # Parse and display formatted sections
+    # Parse and display formatted sections with pagination
     line_count = 0
     in_body = False
+    user_quit = False
     for line in lines:
         stripped = line.strip()
         
@@ -1412,15 +1413,25 @@ def show_winter_weather(wfo):
                 print()
             print(line)
             line_count += 1
-            if line_count > 30:
-                break
+            if line_count >= 20:
+                print()
+                try:
+                    response = input("Press enter for more, Q to quit: ").strip().upper()
+                    if response == 'Q':
+                        user_quit = True
+                        break
+                except (EOFError, KeyboardInterrupt):
+                    user_quit = True
+                    break
+                line_count = 0
     
     print()
     print("-" * 40)
-    try:
-        input("\nPress enter to continue...")
-    except (EOFError, KeyboardInterrupt):
-        pass
+    if not user_quit:
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
 
 
 def show_current_observations(latlon):
