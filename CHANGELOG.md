@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.3] - 2026-01-22
+### Added
+- **Readability pause after each report**: "Press enter to continue..." prompt appears after displaying each weather report
+- Gives users time to read on low-baud packet radio connections
+
 ## [wx.py 2.2] - 2026-01-22
 ### Fixed
 - **get_bpq_locator() now uses script directory instead of cwd**: Uses `os.path.abspath(__file__)` to find script location, then looks for `../linbpq/bpq32.cfg` relative to script directory (not current working directory)

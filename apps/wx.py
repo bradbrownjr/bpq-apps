@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.2
+Version: 2.3
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.2"
+VERSION = "2.3"
 APP_NAME = "wx.py"
 
 
@@ -784,6 +784,10 @@ def show_7day_forecast(gridpoint):
         print("  {}".format(f['forecast'][:60]))
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_current_observations(latlon):
@@ -804,6 +808,10 @@ def show_current_observations(latlon):
     print("Pressure: {}".format(obs.get('pressure')))
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_fire_weather(wfo):
@@ -822,6 +830,10 @@ def show_fire_weather(wfo):
     print(fire['content'][:300])
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_heat_cold(alerts):
@@ -841,6 +853,10 @@ def show_heat_cold(alerts):
             print("  {}".format(a['headline'][:80]))
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_river_flood(alerts):
@@ -860,6 +876,10 @@ def show_river_flood(alerts):
             print("  {}".format(f['headline'][:80]))
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_afd_report(wfo):
@@ -878,6 +898,10 @@ def show_afd_report(wfo):
     print(afd['content'][:300])
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_pop_report(gridpoint):
@@ -895,6 +919,10 @@ def show_pop_report(gridpoint):
         print("{}: {}%".format(p['period'], p['probability']))
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_uv_report(latlon):
@@ -911,6 +939,10 @@ def show_uv_report(latlon):
     print("Current: {}".format(uv))
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_pollen_report(latlon):
@@ -934,6 +966,10 @@ def show_pollen_report(latlon):
         print("No major pollen triggers.")
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_dust_alerts(alerts):
@@ -953,6 +989,10 @@ def show_dust_alerts(alerts):
             print("  {}".format(d['headline'][:80]))
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_weather(latlon, desc):
@@ -1004,6 +1044,10 @@ def show_alerts(alerts, skywarn_status, skywarn_active):
     
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_coastal_flood_info(coastal_info):
@@ -1027,6 +1071,10 @@ def show_coastal_flood_info(coastal_info):
     
     print()
     print("-" * 40)
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def main():
