@@ -170,10 +170,19 @@ def save_messages(data):
 def format_timestamp(iso_string):
     """Format ISO timestamp for display"""
     try:
-        dt = datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
+        # Handle ISO format timestamps (Python 3.5 compatible)
+        # Remove 'Z' suffix and parse with strptime
+        ts = iso_string.rstrip('Z')
+        dt = datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
         return dt.strftime('%m/%d %H:%M')
     except:
-        return 'unknown'
+        try:
+            # Fallback for timestamps without microseconds
+            ts = iso_string.rstrip('Z')
+            dt = datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
+            return dt.strftime('%m/%d %H:%M')
+        except:
+            return '---'
 
 def display_messages(data, callsign, page=0, per_page=10):
     """Display paginated messages"""
