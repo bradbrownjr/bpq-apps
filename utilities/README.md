@@ -7,6 +7,7 @@ Sysop tools for network mapping and maintenance.
 - [Quick Start](#quick-start)
 - [nodemap.py - Network Topology Mapper](#nodemappy---network-topology-mapper)
 - [nodemap-html.py - Interactive Map Generator](#nodemap-htmlpy---interactive-map-generator)
+- [wx-alert-update.sh - Weather Alert CTEXT Updater](#wx-alert-updatesh---weather-alert-ctext-updater)
 
 ## Quick Start
 
@@ -211,3 +212,94 @@ Or in bpq32.cfg:
 ```
 FILE=/HTML/nodemap.html,nodemap.html
 ```
+
+---
+
+## wx-alert-update.sh - Weather Alert CTEXT Updater
+
+Updates local weather alert file for display on BPQ node connection banner. Run via cron to keep alert status current.
+
+### Usage
+
+```bash
+./wx-alert-update.sh [output_file] [gridsquare]
+```
+
+**Arguments:**
+- `output_file` - Path to output file (default: `~/linbpq/wx-alert.txt`)
+- `gridsquare` - Location to check (default: from bpq32.cfg LOCATOR)
+
+**Examples:**
+```bash
+# Use defaults (local gridsquare, ~/linbpq/wx-alert.txt)
+./wx-alert-update.sh
+
+# Custom location
+./wx-alert-update.sh /home/ect/linbpq/wx-alert.txt FN43hp
+
+# Run in cron (every 15 minutes)
+*/15 * * * * /home/ect/utilities/wx-alert-update.sh >/dev/null 2>&1
+```
+
+### Setup
+
+**1. Add to crontab:**
+```bash
+crontab -e
+```
+
+Add line:
+```
+*/15 * * * * /home/ect/utilities/wx-alert-update.sh >/dev/null 2>&1
+```
+
+**2. Update bpq32.cfg CTEXT:**
+```properties
+CTEXT:
+WS1EC-15 in Windham, ME
+@/home/ect/linbpq/wx-alert.txt
+Operated by WSSM Emergency Communications Team
+***
+```
+
+**3. Create initial file:**
+```bash
+echo "Local Weather: No active alerts" > ~/linbpq/wx-alert.txt
+```
+
+**4. Restart BPQ:**
+```bash
+sudo systemctl restart linbpq
+```
+
+### Output Format
+
+One-line summary with alert count and severity breakdown:
+```
+Local Weather: No active alerts
+Local Weather: 1 alert (1S)
+Local Weather: 3 alerts (1E 2S)
+Local Weather: 5 alerts (1E 2S 1M 1m)
+```
+
+**Severity codes:**
+- `E` = Extreme
+- `S` = Severe
+- `M` = Moderate
+- `m` = Minor
+
+### How It Works
+
+1. Calls `wx.py --alert-summary [GRIDSQUARE]`
+2. wx.py fetches NWS alerts for location via API
+3. Counts alerts by severity
+4. Outputs one-line summary
+5. Script writes to file atomically (temp file + mv)
+6. BPQ includes file in CTEXT via `@` directive
+
+### Requirements
+
+- `wx.py` version 4.1 or later
+- Internet connectivity (for NWS API access)
+- Writable `~/linbpq/` directory
+- cron daemon running

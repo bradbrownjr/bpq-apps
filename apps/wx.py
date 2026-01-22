@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.0
+Version: 4.1
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "4.0"
+VERSION = "4.1"
 APP_NAME = "wx.py"
 
 
@@ -392,6 +392,54 @@ def get_alerts(latlon):
         return alerts
     except Exception:
         return None
+
+
+def get_local_alert_summary(gridsquare=None):
+    """Get brief alert summary for CTEXT display (one line)"""
+    try:
+        if not gridsquare:
+            gridsquare = get_bpq_locator()
+        if not gridsquare:
+            gridsquare = "FN43hp"
+        
+        latlon = grid_to_latlon(gridsquare)
+        if not latlon:
+            return "Local Weather: No data"
+        
+        alerts = get_alerts(latlon)
+        if not alerts:
+            return "Local Weather: No active alerts"
+        
+        # Count by severity
+        extreme = sum(1 for a in alerts if a['severity'] == 'Extreme')
+        severe = sum(1 for a in alerts if a['severity'] == 'Severe')
+        moderate = sum(1 for a in alerts if a['severity'] == 'Moderate')
+        minor = sum(1 for a in alerts if a['severity'] == 'Minor')
+        
+        # Build compact summary
+        parts = []
+        if extreme:
+            parts.append("{}E".format(extreme))
+        if severe:
+            parts.append("{}S".format(severe))
+        if moderate:
+            parts.append("{}M".format(moderate))
+        if minor:
+            parts.append("{}m".format(minor))
+        
+        if parts:
+            return "Local Weather: {} alert{} ({})".format(
+                len(alerts),
+                "s" if len(alerts) > 1 else "",
+                " ".join(parts)
+            )
+        else:
+            return "Local Weather: {} alert{}".format(
+                len(alerts),
+                "s" if len(alerts) > 1 else ""
+            )
+    except Exception:
+        return "Local Weather: Status unavailable"
 
 
 def get_hwo_skywarn_status(wfo):
@@ -1204,23 +1252,24 @@ def print_reports_menu(location_desc, is_coastal):
     print("2) Hourly Forecast (12hr)")
     print("3) 7-Day Forecast")
     # Safety & alerts
-    print("4) Active Alerts")
-    print("5) Hazardous Weather Outlook")
+    print("4) Active Alerts*")
+    print("5) Hazardous Weather Outlook*")
     # Detailed forecasts
     print("6) Zone Forecast (Narrative)")
     print("7) Regional Weather Summary")
     print("8) Probability of Precip")
     # Seasonal/situational hazards
-    print("9) Winter Weather")
-    print("10) Heat/Cold Advisories")
-    print("11) Fire Weather Outlook")
-    print("12) River/Flood Stage")
+    print("9) Winter Weather*")
+    print("10) Heat/Cold Advisories*")
+    print("11) Fire Weather Outlook*")
+    print("12) River/Flood Stage*")
     print("13) Coastal Flood Info{}".format("" if is_coastal else " (N/A)"))
     print("14) Dust/Haboob Alerts")
     # Reference
     print("15) UV Index")
     print("16) Daily Climate Report")
     print()
+    print("* Alert details may be found here")
     print("1-16) B)ack Q)uit :>")
 
 
@@ -2118,6 +2167,36 @@ def main():
 
 if __name__ == "__main__":
     try:
+        # Check for CLI arguments
+        if len(sys.argv) > 1:
+            if sys.argv[1] in ['--alert-summary', '-a']:
+                # Output alert summary for CTEXT (no header, just the line)
+                gridsquare = sys.argv[2] if len(sys.argv) > 2 else None
+                print(get_local_alert_summary(gridsquare))
+                sys.exit(0)
+            elif sys.argv[1] in ['--help', '-h', '/?']:
+                print("wx.py v{} - Weather Reports for Packet Radio".format(VERSION))
+                print()
+                print("USAGE:")
+                print("  wx.py              - Interactive weather menu")
+                print("  wx.py --alert-summary [GRID]")
+                print("                     - Output alert summary line")
+                print("                       (for CTEXT display)")
+                print()
+                print("OPTIONS:")
+                print("  -a, --alert-summary [GRID]")
+                print("                     Output one-line alert summary")
+                print("                     Uses bpq32.cfg LOCATOR if GRID")
+                print("                     not provided.")
+                print("  -h, --help, /?     Show this help message")
+                print()
+                print("EXAMPLES:")
+                print("  wx.py --alert-summary")
+                print("  wx.py --alert-summary FN43hp")
+                print()
+                sys.exit(0)
+        
+        # Interactive mode
         main()
     except KeyboardInterrupt:
         print("\n\nExiting...")

@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 4.1] - 2026-01-22
+### Added
+- **CTEXT Local Weather Alert Display**: Shows current alert status on node connection banner
+  - New `--alert-summary` CLI option outputs one-line alert summary for CTEXT integration
+  - Displays alert count and severity breakdown (Extreme, Severe, Moderate, Minor)
+  - Example: "Local Weather: 2 alerts (1S 1M)"
+  - Run via cron with utilities/wx-alert-update.sh (every 15-30 minutes)
+  - BPQ32 CTEXT includes alert file via `@/home/ect/linbpq/wx-alert.txt`
+- **Alert Reference Markers**: Reports menu now shows asterisks (*) next to reports containing alert details
+  - Options 4, 5, 9, 10, 11, 12 marked with * (Active Alerts, HWO, Winter Weather, Heat/Cold, Fire Weather, River/Flood)
+  - Legend added to menu: "* Alert details may be found here"
+  - Helps users quickly find detailed information about active alerts
+
+### Fixed
+- **BPQ32 Configuration**: Removed NOCALL flag from WX and FORMS applications
+  - Both apps read callsigns via stdin (WX uses select(), FORMS reads directly)
+  - Without NOCALL, apps properly receive user callsigns for personalization
+  - TEST/hamtest.py correctly retains NOCALL (no callsign handling)
+
+## [wx.py 4.0] - 2026-01-22
+### Fixed
+- **Winter Weather Report**: Replaced 30-line truncation with 20-line pagination
+  - Displays full winter weather product without cutting off content
+  - Pagination prompt: "Press enter for more, Q to quit"
+  - User can quit early with Q or page through entire report
+- **FEED Application Authentication**: Removed NOCALL flag from FEED app configuration
+  - App now properly receives callsigns for bulletin board author tracking
+  - BPQ32 APPLICATION line changed from "NOCALL K S" to "K S" only
+
 ## [wx.py 3.8] - 2026-01-22
 ### Fixed
 - **Pagination UX**: When quitting from paginated reports (HWO, RWS) with Q, no longer prompts "Press enter to continue..."
