@@ -610,6 +610,35 @@ def get_fire_weather_outlook(wfo):
         return None
 
 
+def get_hazardous_weather_outlook(wfo):
+    """Get hazardous weather outlook from NWS office"""
+    try:
+        import urllib.request
+        import json
+        
+        url = "https://api.weather.gov/offices/{}/headlines".format(wfo)
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        features = data.get('features', [])
+        if not features:
+            return None
+        
+        # Look for HWO (Hazardous Weather Outlook) in headlines
+        for feature in features:
+            props = feature.get('properties', {})
+            headline = props.get('headline', '').lower()
+            if 'hazardous' in headline or 'outlook' in headline:
+                return {
+                    'title': props.get('headline', 'Hazardous Weather Outlook'),
+                    'content': props.get('content', '')[:300]
+                }
+        
+        return None
+    except Exception:
+        return None
+
+
 def get_heat_cold_advisories(alerts):
     """Extract heat and cold advisories from alerts"""
     try:
@@ -993,15 +1022,10 @@ def show_current_observations(latlon):
     
     print("Conditions: {}".format(obs.get('weather', 'N/A')))
     
-    if visibility_miles is not None:
-        print("Visibility: {} mi".format(visibility_miles))
-    else:
-        print("Visibility: N/A")
-    
     if pressure_inhg is not None:
         print("Pressure: {} inHg".format(pressure_inhg))
     else:
-        print("Pressure: N/A"))
+        print("Pressure: N/A")
     
     print()
     print("-" * 40)
