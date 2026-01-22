@@ -351,15 +351,27 @@ sysinfo.sh
 wx.py
 -----
 **Type**: Python  
-**Purpose**: Weather reports via NWS API  
+**Purpose**: Interactive weather reports with alert checking via NWS API  
 **Information source**: National Weather Service API  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Work in progress. Uses NWS API to pull weather for any location. Requires `maidenhead` module for grid square conversions. Not yet production-ready.
+**Notes**: Production-ready weather app. Uses NWS API to pull weather for any location with real-time alert detection. Requires `maidenhead` module for grid square conversions. Integrates with BPQ32 callsign passing (S flag).
 
 **Download or update**:  
 ```wget -O wx.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx.py && chmod +x wx.py```
 
-**Status**: Under development. For production use, see `wx-me.py` below.
+**Features**:
+- Interactive menu: Local weather, location lookup, callsign-based weather
+- Real-time NWS weather alerts (Tornado, Severe Thunderstorm, Winter Storm, Wildfire, etc.)
+- SKYWARN activation detection from Hazardous Weather Outlook (HWO)
+- Callsign gridsquare lookup via HamDB (with auto-update from GitHub)
+- Alert summary displayed in header on startup
+- Dedicated menu option to view full alert details when alerts are active
+- Supports user entry: gridsquare, GPS coordinates, or amateur radio callsign
+- BPQ32 integration: Optional callsign passing via S flag for automatic lookup
+- Offline fallback: Continues gracefully if internet unavailable
+- Bandwidth optimized: 40-char width, minimal formatting for 1200-baud packet radio
+
+**Status**: Production-ready (v1.4+)
 
 wx-me.py
 --------
