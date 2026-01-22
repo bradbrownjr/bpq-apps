@@ -230,54 +230,36 @@ Menu: [options] :>
 - Precision: 6-char (~5x2.5 mi), 4-char (~70x50 mi)
 
 ## Nodemap Crawler Constraints
-**Authentication**: Only localhost telnet requires auth (username/password)
-- Once connected to local node via telnet, all AX.25 NetRom connections inherit auth
 
-**Connection Methods** (in priority order):
+**Connection Methods** (priority order):
+1. First hop from localhost: `C PORT CALL-SSID` (using local ROUTES) or `C ALIAS` (NetRom)
+2. Subsequent hops: Direct port, NetRom alias, or FALLBACK to ROUTES query at current node
+3. **Key insight**: Each node's ROUTES table has `PORT CALL-SSID QUALITY` - port numbers work beyond first hop (contrary to BPQ docs)
 
-**Hop 1 (first hop from localhost):**
-1. Direct port: `C PORT CALL-SSID` (requires route_ports entry from local node's ROUTES)
-2. NetRom alias: `C ALIAS` (from `call_to_alias` mapping)
+**SSID Selection** (CRITICAL - do not deviate):
+1. CLI-forced SSIDs (`--force-ssid`) - highest priority
+2. **ROUTES consensus** - aggregate netrom_ssids from all crawled nodes (these are ACTUAL node SSIDs like KS1R-15, not service SSIDs like KS1R-2 BBS)
+3. ROUTES fallback at connection time
 
-**Hop 2+ (subsequent intermediate hops):**
-1. Direct port: `C PORT CALL-SSID` (query intermediate node's ROUTES for port number)
-2. NetRom alias: `C ALIAS` (from `call_to_alias` mapping)
-3. FALLBACK: Query ROUTES at current node to get port number, then use `C PORT CALL-SSID`
+**Prohibited SSID sources:**
+- ❌ `alias` field (comes from BPQ prompt - may be BBS/RMS/CHAT, not node)
+- ❌ `seen_aliases` (equal counts across services)
+- ❌ SSID number heuristics (NO standard: node could be -4, -10, -15, anything)
+- ✅ Only filter SSIDs outside valid range (0, >15) using `_is_likely_node_ssid()`
 
-**Key insights:**
-- Each node's ROUTES table contains everything needed to reach neighbors: `PORT CALL-SSID QUALITY`
-- ROUTES can be queried at ANY intermediate node to discover port numbers
-- Port numbers ARE valid beyond first hop (unlike what BPQ docs suggest)
-- Example at KX1EMA: ROUTES shows `1 WD1O-15 200` → can issue `C 1 WD1O-15`
-- NetRom aliases are nice-to-have but not strictly required if ROUTES port info is available
+**Reachability:**
+- Reachable: In ANY node's ROUTES table
+- Unreachable: ONLY in MHEARD (never ROUTES) - likely user station or offline
 
-**SSID Selection Standard** (CRITICAL - do not deviate):
-1. **CLI-forced SSIDs** (`--force-ssid BASE FULL`) - highest priority, user override
-2. **ROUTES consensus** - aggregate `netrom_ssids` from all crawled nodes
-   - Each node's ROUTES table shows the SSIDs it uses to reach its neighbors
-   - These are the ACTUAL node SSIDs (e.g., KS1R-15), not service SSIDs (KS1R-2 BBS)
-   - Consensus = SSID seen by most nodes for a given base callsign
-3. **Discovered at connection time** - ROUTES fallback queries intermediate node's ROUTES
-- The `alias` field is NOT reliable - it comes from BPQ prompt which may be BBS/RMS/CHAT
-- seen_aliases is NOT reliable - counts are equal across all services
-- NEVER use SSID number heuristics - there is NO standard for node vs service SSIDs
-- ONLY filter SSIDs outside valid range (0, >15) using _is_likely_node_ssid()
-
-**Node Routing Reachability**:
-- **Reachable**: Node appears in ANY node's ROUTES table (proof it exists and is routable)
-- **Unreachable**: Node ONLY in MHEARD (never in ROUTES) - likely user station or offline
-- **Bridging gap**: Even if node lacks NetRom alias, ROUTES fallback allows connection via port numbers
-
-**Path Building**: Uses successful_path from previous crawls
-- SSIDs determined from ROUTES consensus across all crawled nodes
-- Use NetRom aliases from NODES output when available (faster than ROUTES fallback)
-- Query ROUTES at each intermediate hop for port numbers when alias unavailable
-- route_ports from localhost's ROUTES only for first-hop direct connections
+**Path Building**: Uses `successful_path` from previous crawls; determines SSIDs from ROUTES consensus; NetRom aliases preferred when available (faster)
 
 ## Repository Structure
 ```
 bpq-apps/
 ├── apps/              # User-facing BPQ applications (Python/bash)
+│   ├── forms/         # .frm JSON form templates (bulletin, ICS-213, radiogram, etc.)
+│   ├── predict/       # Ionosphere prediction modules (geo.py, solar.py, regions.json)
+│   └── question_pools/  # Ham license test questions (technician, general, extra)
 ├── games/             # Interactive game servers (standalone TCP)
 ├── utilities/         # Sysop tools for BBS management (cron jobs, maintenance)
 ├── docs/
@@ -288,6 +270,117 @@ bpq-apps/
 │   └── images/              # Screenshots, example outputs
 └── .github/           # This file (copilot-instructions.md)
 ```
+
+## Architecture Overview
+
+**Application Types:**
+
+*1. BPQ Applications (apps/)*:
+- Invoked via BPQ32 APPLICATION commands
+- inetd pipes stdin/stdout to TCP socket
+- Single-instance per user (new process per connection)
+- Must handle BPQ callsign via stdin (when S flag set)
+- Examples: forms.py, hamtest.py, wx.py, feed.py
+
+*2. TCP Game Servers (games/)*:
+- Standalone servers (always-on daemons)
+- Multi-user with threading (shared game state)
+- Configured in /etc/services + inetd.conf
+- No BPQ integration - pure TCP sockets
+- Examples: battleship.py (port 23000)
+
+*3. Sysop Utilities (utilities/)*:
+- CLI tools (not BPQ applications)
+- Run via cron or manual execution
+- Export data files (JSON, HTML, SVG)
+- Examples: nodemap.py, nodemap-html.py
+
+**Data Flow (BPQ Applications):**
+```
+User @ RF → BPQ32 Node → Telnet Port 9 → inetd → TCP Socket → Python App
+                          (bpq32.cfg)     (services)  (inetd.conf)  (stdin/stdout)
+```
+
+**Key Integration Points:**
+- `/etc/services`: Maps service names to TCP ports (wx → 63010)
+- `/etc/inetd.conf`: Maps ports to executables + user accounts
+- `bpq32.cfg`: Maps BPQ commands to services via CMDPORT position numbers
+- BPQ S flag: Sends user callsign (WITH SSID) as first line to stdin
+
+## Forms System (.frm Templates)
+
+**Template Structure** (apps/forms/*.frm):
+```json
+{
+  "id": "BULLETIN",
+  "title": "Bulletin Message",
+  "version": "1.0",
+  "description": "Brief description shown in menu",
+  "fields": [
+    {
+      "name": "field_name",
+      "label": "Prompt shown to user",
+      "type": "text|textarea|yesno|choice|strip",
+      "required": true|false,
+      "max_length": 100,
+      "choices": ["Option 1", "Option 2"],
+      "description": "Help text shown during input"
+    }
+  ]
+}
+```
+
+**Field Types:**
+- `text`: Single-line input (press Enter to finish)
+- `textarea`: Multi-line input (type `/EX` on new line to finish)
+- `yesno`: Yes/No/NA response (validates Y/N/NA)
+- `choice`: Numbered list (validates numeric selection)
+- `strip`: Slash-separated format for MARS/SHARES reports
+
+**Form Lifecycle:**
+1. forms.py auto-discovers .frm files from GitHub or local cache
+2. User selects form from menu
+3. App prompts for each field sequentially
+4. Validates input (required fields, max length, format)
+5. Exports to BPQ message format (`../linbpq/infile`)
+6. BPQ auto-imports message to BBS
+
+**Version Bumping**: Increment `version` field in .frm when updating templates (triggers re-download)
+
+## Games Architecture
+
+**Standalone TCP Servers** (different pattern than apps):
+- Run as daemon with threading (`python3 battleship.py &`)
+- Maintain global game state (clients dict with locks)
+- Accept connections: `socket.accept()` in main loop
+- Each client gets dedicated thread: `threading.Thread(target=handle_client)`
+- Broadcast messages to all connected clients
+- Persist leaderboard data to JSON file
+
+**Example Pattern** (battleship.py):
+```python
+clients = {}  # Global state: {conn: {"name": "KC1JMH", "board": []}}
+clients_lock = threading.Lock()
+
+def handle_client(conn, addr):
+    with clients_lock:
+        clients[conn] = {"name": None, "board": None}
+    # Game loop...
+    with clients_lock:
+        del clients[conn]
+
+# Main loop
+while True:
+    conn, addr = server_socket.accept()
+    threading.Thread(target=handle_client, args=(conn, addr)).start()
+```
+
+**inetd.conf entry** (different from apps):
+```
+battleship  stream  tcp  nowait  ect  /usr/bin/python3  python3 /home/ect/games/battleship.py
+```
+
+**Testing**: `telnet localhost 23000` (port from /etc/services)
 
 ## Testing
 - SSH: ect@ws1ec.mainepacketradio.org -p 4722
@@ -319,3 +412,92 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 - After changes ready for testing on live node
 - Before requesting terminal input or SSH commands
 - When awaiting user decision or feedback
+
+## Common Pitfalls & Solutions
+
+**Python 3.5.3 Compatibility:**
+- ❌ `f"Hello {name}"` → ✅ `"Hello {}".format(name)`
+- ❌ `async def` / `await` → ✅ Synchronous I/O only
+- ❌ `typing.List[str]` → ✅ `# type: List[str]` (comment-style type hints)
+- ❌ `subprocess.run()` → ✅ `subprocess.Popen()` or `subprocess.check_output()`
+
+**Bandwidth Traps:**
+- ❌ Word wrapping at 80 chars → ✅ 40 chars for mobile/old terminals
+- ❌ Unicode box drawing → ✅ ASCII dashes/pipes only
+- ❌ ANSI color codes → ✅ Plain text (no escape sequences)
+- ❌ Verbose menus → ✅ Compressed: `P)ost D)el Q)uit` not `Post, Delete, Quit`
+
+**BPQ Integration Gotchas:**
+- SSID handling: BPQ passes `KC1JMH-8` (always strip with `split('-')[0]`)
+- CMDPORT positions: 0-indexed (first port is `HOST 0`, second is `HOST 1`)
+- inetd user: Must match BPQ user (usually `ect` or `pi`) for file access
+- Service restarts: `sudo killall -HUP inetd` after /etc/inetd.conf changes
+- Path resolution: Use absolute paths in inetd.conf (`/home/ect/apps/wx.py`)
+
+**Auto-Update Implementation:**
+- Must use atomic writes (write to temp, then rename)
+- Must preserve executable permissions: `os.chmod(script_path, current_mode)`
+- Must cleanup temp files on failure: `try/finally` with `os.remove(temp_path)`
+- Version comparison: Parse as tuples `(1, 2, 3)` for proper numeric comparison
+- Timeout: Hardcode to 3 seconds (never configurable - user frustration)
+
+**Network Resilience:**
+- Always wrap external API calls in `try/except` with timeout
+- Use `socket.create_connection('8.8.8.8', 53)` for internet check (not HTTP)
+- Cache data locally with timestamps (JSON files in app directory)
+- Show "Internet unavailable" not technical errors when offline
+- Never block startup on network checks (fail silently)
+
+## Development Workflows
+
+**Creating New App:**
+1. Copy template from existing app (e.g., space.py for simple, forms.py for complex)
+2. Update docstring: `Version: 1.0`, author, date, description
+3. Add `check_for_app_update()` and `compare_versions()` functions
+4. Design ASCII logo (lowercase, 5-7 lines, asciiart.eu)
+5. Implement menu structure with compressed prompts
+6. Add to `/etc/services` with new TCP port (63000+ range)
+7. Add to `/etc/inetd.conf` with executable path
+8. Add to `bpq32.cfg` APPLICATION line with CMDPORT position
+9. Test: `telnet localhost PORT` then live on RF
+10. Document in apps/README.md and CHANGELOG.md
+
+**Testing Checklist:**
+- [ ] Python 3.5.3 compatible (no f-strings, async/await)
+- [ ] ASCII-only output (no Unicode, ANSI codes)
+- [ ] 40-char terminal width handling
+- [ ] Offline operation (internet check + graceful fallback)
+- [ ] Auto-update functionality (3-second timeout)
+- [ ] BPQ callsign handling (strip SSID if needed)
+- [ ] Help text: `-h`, `--help`, `/?`
+- [ ] Version bumping in docstring
+- [ ] CHANGELOG.md entry
+- [ ] README.md documentation
+
+**Deploying to WS1EC:**
+```bash
+# SSH into node
+ssh ect@ws1ec.mainepacketradio.org -p 4722
+
+# Update app (auto-downloaded if version bumped)
+# Or manual deployment:
+cd ~/apps
+wget -O appname.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/appname.py
+chmod +x appname.py
+
+# Restart services (if inetd.conf changed)
+sudo killall -HUP inetd
+
+# Restart BPQ (if bpq32.cfg changed)
+sudo systemctl restart linbpq
+```
+
+**Git Workflow:**
+```bash
+# Make changes
+git add .
+git commit -m "feat(app): brief description"
+git push origin main
+
+# Version bump triggers auto-download on user systems within 24-48 hours
+```

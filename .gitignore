@@ -1,6 +1,7 @@
 **/__pycache__
 **/config.py
 *.swp
+*.bak
 apps/question_pools/extra.json
 .gitignore
 apps/question_pools/technician.json
@@ -22,3 +23,5 @@ utilities/test_nodemap.json
 .github/nodemap.json
 .github/ws1ec-bpq32.cfg
 apps/bulletin_board.json
+.github/bpq_research.txt
+.github/ws1ec-bpq32.cfg.old
