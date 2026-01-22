@@ -424,6 +424,20 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 - Writes to `~/linbpq/beacontext.txt` for BPQ beacon inclusion
 - Already installed and running on WS1EC node
 
+**Beacon Configuration:**
+- Configure via BPQ32 Window menu → Beacon Config, or Web interface → Port Config
+- Can also use BPQ REST API: https://wiki.oarc.uk/packet:bpq-api
+- Beacon text can include dynamic content from files
+- Update beacons programmatically via BPQ32 DLL Interface
+
+**BPQ32 Documentation References:**
+- Main documentation index: www.cantab.net/users/john.wiseman/Documents/index.html
+- Configuration file format: https://www.cantab.net/users/john.wiseman/Documents/BPQCFGFile.html
+- BPQ UI Utilities (built into BPQ32): http://www.cantab.net/users/john.wiseman/Documents/BPQUIUtil.htm
+- BPQ32 DLL Interface (beacon control): https://www.cantab.net/users/john.wiseman/Documents/BPQ32DLLInterface.htm
+- BPQ REST API documentation: https://wiki.oarc.uk/packet:bpq-api
+- Sample configs: https://github.com/pe1rrr/linbpq_rtg/blob/main/bpq32.cfg
+
 ## Common Pitfalls & Solutions
 
 **Python 3.5.3 Compatibility:**
