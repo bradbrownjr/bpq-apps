@@ -295,6 +295,12 @@ bpq-apps/
 - WSL terminals required (SSH keys configured, POSIX compatibility)
 - Never use PowerShell for SSH or remote commands
 
+**WS1EC Node Paths:**
+- User home: `/home/ect/` (~ expands to this)
+- BPQ config: `/home/ect/linbpq/bpq32.cfg`
+- Apps directory: `/home/ect/apps/`
+- System configs: `/etc/inetd.conf`, `/etc/services`
+
 ## Notification Webhook
 Before requesting user testing or executing commands requiring interaction, send notification:
 
