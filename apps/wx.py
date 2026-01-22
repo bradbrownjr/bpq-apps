@@ -1302,8 +1302,10 @@ def print_header():
     print()
 
 
-def print_main_menu():
+def print_main_menu(has_local_alert=False):
     """Print main location selection menu"""
+    if has_local_alert:
+        print("\n*** LOCAL WEATHER ALERT ***")
     print("\nSelect Location:")
     print("1) Local weather")
     print("2) Weather for a location")
@@ -2042,7 +2044,16 @@ def main():
     
     # Main menu loop
     while True:
-        print_main_menu()
+        # Check for local alerts to display on menu
+        has_local_alert = False
+        if local_latlon:
+            try:
+                local_alerts = get_alerts(local_latlon)
+                has_local_alert = bool(local_alerts and len(local_alerts) > 0)
+            except Exception:
+                pass
+        
+        print_main_menu(has_local_alert)
         
         try:
             choice = input(":> ").strip().upper()
