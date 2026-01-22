@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.3
+Version: 2.4
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.3"
+VERSION = "2.4"
 APP_NAME = "wx.py"
 
 
@@ -1169,7 +1169,7 @@ def main():
             # Weather for callsign
             if my_callsign:
                 print("")
-                print("Callsign: {} (stdin) or enter different".format(my_callsign))
+                print("Callsign: {} (press Enter) or different:".format(my_callsign))
                 try:
                     call = input(":> ").strip().upper()
                 except (EOFError, KeyboardInterrupt):

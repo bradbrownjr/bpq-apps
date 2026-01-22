@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.4] - 2026-01-22
+### Changed
+- **Clearer callsign prompt**: Replaced "(stdin)" jargon with plain language "(press Enter)"
+- Better UX for callsign selection in Option 3
+
 ## [wx.py 2.3] - 2026-01-22
 ### Added
 - **Readability pause after each report**: "Press enter to continue..." prompt appears after displaying each weather report
