@@ -6,6 +6,9 @@ apps/question_pools/extra.json
 apps/question_pools/technician.json
 apps/question_pools/general.json
 .github/ect-at-WS1EC ~.txt
+.github/ws1ec-bpq32.cfg
+.github/ws1ec-inetd.conf
+.github/ws1ec-services
 
 # Logs
 *.log
