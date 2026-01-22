@@ -1169,7 +1169,7 @@ def main():
             # Weather for callsign
             if my_callsign:
                 print("")
-                print("Callsign: {} (press Enter) or different:".format(my_callsign))
+                print("Input call sign or press enter for {}".format(my_callsign))
                 try:
                     call = input(":> ").strip().upper()
                 except (EOFError, KeyboardInterrupt):
@@ -1181,7 +1181,7 @@ def main():
             else:
                 print("")
                 try:
-                    call = input("Enter callsign: ").strip().upper()
+                    call = input("Enter call sign: ").strip().upper()
                 except (EOFError, KeyboardInterrupt):
                     continue
             
