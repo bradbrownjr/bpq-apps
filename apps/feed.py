@@ -361,7 +361,8 @@ def main_loop(callsign):
     print(r"|  _|  __/  __/ (_| |")
     print(r"|_|  \___|\___|\__,_|")
     print()
-    print("Community Message Feed")
+    print("Community Feed v{} - One-liner Message Board".format(VERSION))
+    print()
     
     data = load_messages()
     display_messages(data, callsign, current_page)
