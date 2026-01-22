@@ -1,15 +1,19 @@
 #!/bin/bash
 #
-# wx-alert-update.sh - Update local weather alert file for BPQ CTEXT
+# wx-alert-update.sh - Update weather beacon text for BPQ node
 #
-# This script calls wx.py --alert-summary and saves the output to a file
-# that BPQ32's CTEXT can display. Run via cron every 15-30 minutes.
+# This script calls wx.py --beacon and saves the output to a beacon text file.
+# The beacon includes local weather alert count and directs users to connect
+# to the WX app for details. Run via cron every 15-30 minutes.
+#
+# Note: SKYWARN spotter activation monitoring is handled separately via
+#       https://github.com/bradbrownjr/skywarn-activation-alerts
 #
 # Usage:
 #   wx-alert-update.sh [output_file] [gridsquare]
 #
 # Defaults:
-#   output_file: ~/linbpq/wx-alert.txt
+#   output_file: ~/linbpq/beacontext.txt
 #   gridsquare: From bpq32.cfg LOCATOR
 #
 # Cron example (every 15 minutes):
@@ -19,7 +23,7 @@
 # Date: January 2026
 
 # Configuration
-OUTPUT_FILE="${1:-$HOME/linbpq/wx-alert.txt}"
+OUTPUT_FILE="${1:-$HOME/linbpq/beacontext.txt}"
 GRIDSQUARE="${2:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WX_PY="$SCRIPT_DIR/../apps/wx.py"
@@ -30,22 +34,22 @@ if [[ ! -x "$WX_PY" ]]; then
     exit 1
 fi
 
-# Run wx.py to get alert summary
+# Run wx.py to get beacon text (includes alerts + SKYWARN status)
 if [[ -n "$GRIDSQUARE" ]]; then
-    ALERT_LINE=$("$WX_PY" --alert-summary "$GRIDSQUARE" 2>/dev/null)
+    BEACON_TEXT=$("$WX_PY" --beacon "$GRIDSQUARE" 2>/dev/null)
 else
-    ALERT_LINE=$("$WX_PY" --alert-summary 2>/dev/null)
+    BEACON_TEXT=$("$WX_PY" --beacon 2>/dev/null)
 fi
 
 # Check if we got output
-if [[ -z "$ALERT_LINE" ]]; then
+if [[ -z "$BEACON_TEXT" ]]; then
     # Fallback message if script fails
-    ALERT_LINE="Local Weather: Status unavailable"
+    BEACON_TEXT="WS1EC-15: Weather info unavailable"
 fi
 
 # Write to output file (atomic write with temp file)
 TEMP_FILE="${OUTPUT_FILE}.tmp"
-echo "$ALERT_LINE" > "$TEMP_FILE"
+echo "$BEACON_TEXT" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$OUTPUT_FILE"
 
 # Exit successfully

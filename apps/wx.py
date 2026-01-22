@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.1
+Version: 4.2
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "4.1"
+VERSION = "4.2"
 APP_NAME = "wx.py"
 
 
@@ -440,6 +440,50 @@ def get_local_alert_summary(gridsquare=None):
             )
     except Exception:
         return "Local Weather: Status unavailable"
+
+
+def get_beacon_text(gridsquare=None):
+    """Get beacon text with alert status for BPQ beacon"""
+    try:
+        if not gridsquare:
+            gridsquare = get_bpq_locator()
+        if not gridsquare:
+            gridsquare = "FN43hp"
+        
+        latlon = grid_to_latlon(gridsquare)
+        if not latlon:
+            return "WS1EC-15: Weather info unavailable"
+        
+        # Get alerts
+        alerts = get_alerts(latlon)
+        alert_count = len(alerts) if alerts else 0
+        
+        # Build beacon message
+        if alert_count > 0:
+            # Count severe/extreme alerts
+            severe_count = 0
+            if alerts:
+                severe_count = sum(1 for a in alerts if a['severity'] in ['Extreme', 'Severe'])
+            
+            if severe_count > 0:
+                msg = "WS1EC-15: {} WEATHER ALERT{}! ".format(
+                    alert_count,
+                    "S" if alert_count > 1 else ""
+                )
+            else:
+                msg = "WS1EC-15: {} weather alert{}. ".format(
+                    alert_count,
+                    "s" if alert_count > 1 else ""
+                )
+        else:
+            msg = "WS1EC-15: No active weather alerts. "
+        
+        # Add call to action
+        msg += "Connect to WX app for details."
+        
+        return msg
+    except Exception:
+        return "WS1EC-15: Weather info unavailable"
 
 
 def get_hwo_skywarn_status(wfo):
@@ -2174,6 +2218,11 @@ if __name__ == "__main__":
                 gridsquare = sys.argv[2] if len(sys.argv) > 2 else None
                 print(get_local_alert_summary(gridsquare))
                 sys.exit(0)
+            elif sys.argv[1] in ['--beacon', '-b']:
+                # Output beacon text with alerts and SKYWARN status
+                gridsquare = sys.argv[2] if len(sys.argv) > 2 else None
+                print(get_beacon_text(gridsquare))
+                sys.exit(0)
             elif sys.argv[1] in ['--help', '-h', '/?']:
                 print("wx.py v{} - Weather Reports for Packet Radio".format(VERSION))
                 print()
@@ -2182,17 +2231,24 @@ if __name__ == "__main__":
                 print("  wx.py --alert-summary [GRID]")
                 print("                     - Output alert summary line")
                 print("                       (for CTEXT display)")
+                print("  wx.py --beacon [GRID]")
+                print("                     - Output beacon text with")
+                print("                       alerts and SKYWARN status")
                 print()
                 print("OPTIONS:")
                 print("  -a, --alert-summary [GRID]")
                 print("                     Output one-line alert summary")
                 print("                     Uses bpq32.cfg LOCATOR if GRID")
                 print("                     not provided.")
+                print("  -b, --beacon [GRID]")
+                print("                     Output beacon text (alerts +")
+                print("                     SKYWARN status + call to action)")
                 print("  -h, --help, /?     Show this help message")
                 print()
                 print("EXAMPLES:")
                 print("  wx.py --alert-summary")
                 print("  wx.py --alert-summary FN43hp")
+                print("  wx.py --beacon")
                 print()
                 sys.exit(0)
         
