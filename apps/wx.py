@@ -1022,6 +1022,11 @@ def show_current_observations(latlon):
     
     print("Conditions: {}".format(obs.get('weather', 'N/A')))
     
+    if visibility_miles is not None:
+        print("Visibility: {} mi".format(visibility_miles))
+    else:
+        print("Visibility: N/A")
+    
     if pressure_inhg is not None:
         print("Pressure: {} inHg".format(pressure_inhg))
     else:
