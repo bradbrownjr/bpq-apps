@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx-me.py 1.3] - 2026-01-22
+### Changed
+- **Updated logo to GYX**: Changed ASCII art logo from generic "wx" to GYX regional branding
+- Version bump to trigger auto-update on deployed nodes
+
 ## [wx.py 2.6] - 2026-01-22
 ### Fixed
 - **Fixed gridsquare validation regex**: Was rejecting valid 6-character gridsquares (e.g., FN43po) due to incorrect case handling in pattern [a-xa-x]. Changed to [A-X] for uppercase matching. This fixed HamDB lookups failing with "Callsign not in database" message.

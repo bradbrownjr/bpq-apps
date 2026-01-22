@@ -5,7 +5,7 @@ Weather Reports for Southern Maine and New Hampshire
 Local weather reports from National Weather Service Gray Office.
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -13,7 +13,7 @@ import requests
 import sys
 import os
 
-VERSION = "1.2"
+VERSION = "1.3"
 APP_NAME = "wx-me.py"
 
 def check_for_app_update(current_version, script_name):
