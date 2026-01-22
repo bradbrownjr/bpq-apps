@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.9] - 2026-01-22
+### Removed
+- **Removed pollen forecast (Option 10)**: pollen.com API blocks requests with HTTP 405. Investigated alternatives:
+  - NWS weather.gov API does not provide pollen data
+  - Free pollen APIs either blocked or require API keys
+  - Decision: Remove broken feature rather than depend on external APIs
+- Pollen forecast function now returns None (gracefully disabled)
+- Menu reduced from 12 to 11 reports (pollen removed, other options unchanged)
+### Note
+- Packet radio users prioritize immediate weather conditions (7-day, observations, alerts) over pollen
+- Pollen data remains available through pollen.com website if needed
+
 ## [wx.py 2.8] - 2026-01-22
 ### Fixed
 - **Fixed 7-day forecast temperature display**: NWS forecast endpoint returns temperature already in Fahrenheit, not Celsius. Version 2.7 was incorrectly converting F→C→F, resulting in wrong temps (20F displayed as 68F). Now displays temperatures as-is from NWS.

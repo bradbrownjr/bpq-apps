@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.8
+Version: 2.9
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.8"
+VERSION = "2.9"
 APP_NAME = "wx.py"
 
 
@@ -701,35 +701,8 @@ def get_uv_index(latlon):
 
 
 def get_pollen_forecast(latlon):
-    """Get pollen forecast (simplified, from EPA/NWS integration)"""
-    try:
-        import urllib.request
-        import json
-        
-        lat, lon = latlon
-        # Try EPA pollen API
-        url = "https://www.pollen.com/api/forecast/current/pollen?location={},{}".format(lat, lon)
-        req = urllib.request.Request(url, headers={'User-Agent': 'WX-BPQ/1.5'})
-        
-        with urllib.request.urlopen(req, timeout=3) as response:
-            data = json.loads(response.read().decode('utf-8'))
-        
-        location = data.get('Location', {})
-        periods = location.get('periods', [])
-        
-        if periods:
-            today = periods[0]
-            triggers = today.get('Triggers', [])
-            
-            pollen_info = {
-                'date': today.get('Date'),
-                'triggers': [t.get('Name') for t in triggers[:5]]
-            }
-            return pollen_info
-        
-        return None
-    except Exception:
-        return None
+    """Pollen forecast no longer available (pollen.com API blocked)"""
+    return None
 
 
 def lookup_zipcode(zipcode):
@@ -859,11 +832,10 @@ def print_reports_menu(location_desc, is_coastal):
     print("7) Area Forecast Discussion")
     print("8) Probability of Precipitation")
     print("9) UV Index")
-    print("10) Pollen Forecast")
-    print("11) Dust/Haboob Alerts")
-    print("12) Active Alerts")
+    print("10) Dust/Haboob Alerts")
+    print("11) Active Alerts")
     print()
-    print("1-12) B)ack Q)uit :>")
+    print("1-11) B)ack Q)uit :>")
 
 
 def show_7day_forecast(latlon):
@@ -1079,30 +1051,10 @@ def show_uv_report(latlon):
 
 
 def show_pollen_report(latlon):
-    """Display pollen forecast"""
-    pollen = get_pollen_forecast(latlon)
-    if not pollen:
-        print("No pollen data available.")
-        return
-    
-    print()
-    print("-" * 40)
-    print("POLLEN FORECAST")
-    print("-" * 40)
-    print("Date: {}".format(pollen.get('date')))
-    triggers = pollen.get('triggers', [])
-    if triggers:
-        print("Triggers:")
-        for t in triggers:
-            print("  - {}".format(t))
-    else:
-        print("No major pollen triggers.")
-    print()
-    print("-" * 40)
-    try:
-        input("\nPress enter to continue...")
-    except (EOFError, KeyboardInterrupt):
-        pass
+    """Pollen forecast unavailable - pollen.com API blocked"""
+    print("Pollen data unavailable.")
+    print("(NWS API does not provide pollen data)")
+    return
 
 
 def show_dust_alerts(alerts):
@@ -1414,12 +1366,9 @@ def main():
                 show_uv_report(selected_latlon)
             
             elif choice == '10':
-                show_pollen_report(selected_latlon)
-            
-            elif choice == '11':
                 show_dust_alerts(alerts) if alerts else print("No dust alerts.")
             
-            elif choice == '12':
+            elif choice == '11':
                 show_alerts(alerts, skywarn_status, skywarn_active) if alerts else print("No active alerts.")
             
             else:
