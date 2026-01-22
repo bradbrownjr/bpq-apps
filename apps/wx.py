@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.9
+Version: 3.0
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.9"
+VERSION = "3.0"
 APP_NAME = "wx.py"
 
 
@@ -154,6 +154,16 @@ def degrees_to_cardinal(degrees):
         return directions[index]
     except (ValueError, TypeError):
         return "?"
+
+
+def windchill_celsius_to_fahrenheit(celsius):
+    """Convert wind chill Celsius to Fahrenheit"""
+    if celsius is None:
+        return None
+    try:
+        return int(round(float(celsius) * 9.0 / 5.0 + 32))
+    except (ValueError, TypeError):
+        return None
 
 
 def get_bpq_locator():
@@ -515,10 +525,21 @@ def get_current_observations(latlon):
             'temp': props.get('temperature', {}).get('value'),
             'wind_speed': props.get('windSpeed', {}).get('value'),
             'wind_dir': props.get('windDirection', {}).get('value'),
+            'wind_gust': props.get('windGust', {}).get('value'),
             'visibility': props.get('visibility', {}).get('value'),
             'weather': props.get('textDescription', ''),
-            'pressure': props.get('barometricPressure', {}).get('value')
+            'pressure': props.get('barometricPressure', {}).get('value'),
+            'humidity': props.get('relativeHumidity', {}).get('value')
         }
+        
+        # Also get wind chill from gridpoint data (more reliable than station)
+        gridpoint_url = data.get('properties', {}).get('forecastGridData')
+        if gridpoint_url:
+            with urllib.request.urlopen(gridpoint_url, timeout=3) as response:
+                grid_data = json.loads(response.read().decode('utf-8'))
+            grid_props = grid_data.get('properties', {})
+            wind_chill = grid_props.get('windChill', {}).get('values', [{}])[0].get('value')
+            obs['wind_chill'] = wind_chill
         
         return obs
     except Exception:
@@ -882,10 +903,13 @@ def show_current_observations(latlon):
     # Convert units to imperial and readable formats
     temp_f = celsius_to_fahrenheit(obs.get('temp'))
     wind_mph = ms_to_mph(obs.get('wind_speed'))
+    wind_gust_mph = ms_to_mph(obs.get('wind_gust'))
     wind_dir = obs.get('wind_dir')
     wind_cardinal = degrees_to_cardinal(wind_dir)
     visibility_miles = meters_to_miles(obs.get('visibility'))
     pressure_inhg = pascals_to_inhg(obs.get('pressure'))
+    humidity = obs.get('humidity')
+    wind_chill_f = windchill_celsius_to_fahrenheit(obs.get('wind_chill'))
     
     if temp_f is not None:
         print("Temp: {}F".format(temp_f))
@@ -893,11 +917,24 @@ def show_current_observations(latlon):
         print("Temp: N/A")
     
     if wind_mph is not None and wind_cardinal != "?":
-        print("Wind: {} mph from {}".format(wind_mph, wind_cardinal))
+        wind_line = "Wind: {} mph".format(wind_mph)
+        if wind_gust_mph is not None:
+            wind_line += " gust {} mph".format(wind_gust_mph)
+        wind_line += " from {}".format(wind_cardinal)
+        print(wind_line)
     elif wind_mph is not None:
         print("Wind: {} mph".format(wind_mph))
     else:
         print("Wind: N/A")
+    
+    if wind_chill_f is not None:
+        print("Wind Chill: {}F".format(wind_chill_f))
+    
+    if humidity is not None:
+        try:
+            print("Humidity: {}%".format(int(humidity)))
+        except (ValueError, TypeError):
+            pass
     
     print("Conditions: {}".format(obs.get('weather', 'N/A')))
     

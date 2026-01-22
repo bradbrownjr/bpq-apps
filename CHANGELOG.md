@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 3.0] - 2026-01-22
+### Added
+- **Wind gust speed**: Added peak wind speed to current observations (useful for radio antenna/tower safety planning)
+- **Wind chill**: Added computed wind chill temperature to current observations (important for winter field operations and emergency planning)
+- **Relative humidity**: Added humidity percentage to current observations (better indicator of comfort/conditions than dew point)
+### Changed
+- Current observations now extract wind gust and humidity from NWS station data
+- Wind chill extracted from NWS gridpoint data (more reliable than station-reported values)
+- Wind display format updated: "Wind: 12 mph gust 26 mph from W" (includes gust when available)
+
 ## [wx.py 2.9] - 2026-01-22
 ### Removed
 - **Removed pollen forecast (Option 10)**: pollen.com API blocks requests with HTTP 405. Investigated alternatives:
