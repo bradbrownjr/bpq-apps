@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx-beacon-daemon.py 1.0] - 2026-01-22
+### Added
+- **BPQ Beacon Transmitter Daemon**: Sends weather alert beacons via BPQ HOST interface
+  - Reads beacon text from ~/linbpq/beacontext.txt (updated by wx-alert-update.sh)
+  - Transmits as UI frames on VHF port every 15 minutes
+  - No bpq32.cfg modification needed - zero user disruption
+  - **Why**: BPQ has no native file inclusion mechanism for beacons
+  - Runs as systemd service (docs/examples/etc/wx-beacon.service)
+  - CLI options: port, interval, callsign, radio port, file path
+  - Python 3.5.3 compatible, stdlib only (no external dependencies)
+  - Uses BPQ HOST protocol: authenticate + send UI frame command
+  - Multi-line beacons sent as separate UI frames (1-second spacing)
+
+### Documentation
+- **BPQ Beacon Configuration References**: Added to copilot-instructions.md
+  - Main documentation index
+  - Configuration file format details
+  - BPQ UI Utilities (built into BPQ32)
+  - BPQ32 DLL Interface (programmatic control - Windows only)
+  - BPQ REST API (Linux-compatible, but no beacon endpoints found)
+  - Sample config repository
+  - Clarified: No native file inclusion directive exists in bpq32.cfg
+  - Web interface Port Config is primary method (cross-platform)
+  - Manual bpq32.cfg editing requires BPQ restart (disruptive)
+
 ## [wx.py 4.2] - 2026-01-22
 ### Added
 - **Beacon Text Generation**: New `--beacon` option for BPQ beacon integration
