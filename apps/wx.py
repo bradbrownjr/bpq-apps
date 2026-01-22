@@ -1,35 +1,30 @@
 #!/usr/bin/env python3
 """
-Weather Reports for Packet Radio
---------------------------------
-Pull weather data from the National Weather Service API.
+Weather for Packet Radio
+------------------------
+Local and regional weather from National Weather Service API.
 
 Features:
-- Current conditions and forecasts
-- Gridsquare-based location detection
-- BPQ32 config integration
+- Current conditions and forecasts from NWS
+- Gridsquare-based location detection from bpq32.cfg
+- Callsign-based weather lookup via HamDB
+- Multiple location input formats: gridsquare, GPS, state, country, callsign
+- Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 1.2
-Date: October 2025
+Version: 1.3
+Date: January 2026
 """
 
-# Import necessary modules
-import requests # Import requests module for making HTTP requests, for pulling data from the NWS API
-import json # Import json module for parsing JSON data
-import os # Import os module for file operations
-import sys # Import sys module for command-line arguments
-import re # Import re module for stripping HTML tags from text with regular expressions
-from datetime import datetime # Import datetime module for parsing ISO 8601 date strings into human-readable format
+from __future__ import print_function
+import sys
+import os
+import re
+from datetime import datetime
 
-VERSION = "1.2"
+VERSION = "1.3"
 APP_NAME = "wx.py"
 
-try:
-    import maidenhead as mh # Import what's needed to get lattitude and longitude from gridsquare location
-except ImportError:
-    os.system('python3 -m pip install maidenhead')
-    import maidenhead as mh
 
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
@@ -37,12 +32,10 @@ def check_for_app_update(current_version, script_name):
         import urllib.request
         import stat
         
-        # Get the version from GitHub (silent check with short timeout)
         github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(script_name)
         with urllib.request.urlopen(github_url, timeout=3) as response:
             content = response.read().decode('utf-8')
         
-        # Extract version from docstring
         version_match = re.search(r'Version:\s*([0-9.]+)', content)
         if version_match:
             github_version = version_match.group(1)
@@ -51,18 +44,14 @@ def check_for_app_update(current_version, script_name):
                 print("\nUpdate available: v{} -> v{}".format(current_version, github_version))
                 print("Downloading new version...")
                 
-                # Download the new version
                 script_path = os.path.abspath(__file__)
                 try:
-                    # Write to temporary file first, then replace
                     temp_path = script_path + '.tmp'
                     with open(temp_path, 'wb') as f:
                         f.write(content.encode('utf-8'))
                     
-                    # Ensure file is executable (Python script should be executable)
-                    os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-                    
-                    # Replace old file with new one
+                    os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+                             stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                     os.replace(temp_path, script_path)
                     
                     print("\nUpdate installed successfully!")
@@ -71,15 +60,14 @@ def check_for_app_update(current_version, script_name):
                     sys.exit(0)
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
-                    # Clean up temp file if it exists
                     if os.path.exists(temp_path):
                         try:
                             os.remove(temp_path)
                         except:
                             pass
-    except Exception as e:
-        # Don't block startup if update check fails (no internet, etc.)
+    except Exception:
         pass
+
 
 def compare_versions(version1, version2):
     """Compare two version strings"""
@@ -99,96 +87,342 @@ def compare_versions(version1, version2):
         return 0
 
 
-# User variables
-url="https://api.weather.gov"
-state="ME" # State abbreviation
+def get_bpq_locator():
+    """Read LOCATOR from BPQ32 config file"""
+    try:
+        pwd = os.getcwd()
+        config_path = os.path.join(pwd, "linbpq", "bpq32.cfg")
+        with open(config_path, "r") as f:
+            for line in f:
+                if "LOCATOR" in line.upper():
+                    grid = line.split("=")[1].strip()
+                    return grid
+    except (IOError, OSError):
+        pass
+    return None
 
-# Look for the LOCATOR variable in the BPQ32 config file ""../linbpq/bpq32.cfg", assuming the apps folder is adjacent
-pwd=os.getcwd() # Get the current working directory
-try:
-    config_path = os.path.join(pwd, "linbpq", "bpq32.cfg") # Path to the BPQ32 config file
-    with open(config_path, "r") as f:
-        for line in f:
-            if "LOCATOR" in line: # Look for the LOCATOR variable
-                gridsquare = line.split("=")[1].strip()
-except FileNotFoundError:
-    print("File not found. Using default gridsquare.")
-    gridsquare="FN43pp" # Default gridsquare is in Southern Maine, author's QTH
 
-# Get the gridpoint for the NWS office from the lattitude and longitude of the maidenhead gridsquare
-def get_gridpoint(latlon):
-    lat, lon = latlon
-    response = requests.get("{}/points/{},{}".format(url, lat, lon))
-    data = response.json()
-    gridpoint = data['properties']['forecastGridData']
-    wfo = data['properties']['cwa']
-    return gridpoint, wfo
+def lookup_callsign(callsign):
+    """Look up callsign gridsquare via HamDB"""
+    try:
+        import urllib.request
+        import json
+        
+        url = "https://api.hamdb.org/v1/{}/json".format(callsign.upper())
+        req = urllib.request.Request(url, headers={'User-Agent': 'WX-BPQ/1.0'})
+        
+        with urllib.request.urlopen(req, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        hamdb = data.get('hamdb', {}).get('callsign', {})
+        grid = hamdb.get('grid', '')
+        
+        if grid:
+            return grid.upper()
+    except Exception:
+        pass
+    
+    return None
 
-# Strip html and special characters from a value with the re module
+
+def is_internet_available():
+    """Check if internet is available"""
+    try:
+        import socket
+        socket.create_connection(('8.8.8.8', 53), timeout=2)
+        return True
+    except (socket.timeout, socket.error, OSError):
+        return False
+
+
 def strip_html(text):
-    # Remove HTML tags
+    """Remove HTML tags and special characters"""
     text = re.sub('<[^<]+?>', '', text)
-    # Remove special characters like &nbsp;
     text = re.sub('&[a-zA-Z]+;', ' ', text)
-    # Replace \r\n with a single carriage return
-    text = text.replace('\r\n', '\r')
+    text = text.replace('\r\n', '\n')
     return text
 
-# Get the gridpoint and WFO values for the local NWS office
-gridpoint, wfo = get_gridpoint(mh.to_location(gridsquare))
-print("Gridpoint URL: {}".format(gridpoint))
-print("WFO: {}".format(wfo))
 
-# Get weather office headlines from "/offices/{officeId}/headlines"
-def get_headlines():
-    response = requests.get("{}/offices/{}/headlines".format(url, wfo))
-    data = response.json()
-    headlines = []
-    for item in data["@graph"]:
-        title = item["title"]
-        # Parse the ISO 8601 date string and format the date into a more human-readable format
-        issuance_time_human_str = datetime.fromisoformat(item["issuanceTime"]).strftime("%Y-%m-%d %H:%M:%S")
-        content_html = item["content"]
-        content_text = strip_html(content_html)
-        headlines.append({
-            "title": title,
-            "issuanceTime": issuance_time_human_str,
-            "content": content_text
-        })
-    return headlines
+def grid_to_latlon(gridsquare):
+    """Convert gridsquare to lat/lon"""
+    try:
+        import maidenhead as mh
+        return mh.to_location(gridsquare)
+    except ImportError:
+        return None
+    except Exception:
+        return None
 
-# Check for app updates
-check_for_app_update(VERSION, APP_NAME)
 
-# Print weather header
-print()
-print(r"__      ____  __")
-print(r"\ \ /\ / /\ \/ /")
-print(r" \ V  V /  >  < ")
-print("  \\_/\\_/  /_/\\_\\")
-print()
-print("WX v{} - Maine/NH Weather Reports".format(VERSION))
-print()
+def is_callsign_format(text):
+    """Check if text looks like a callsign"""
+    pattern = r'^[A-Za-z]{1,2}\d[A-Za-z]{1,3}(-\d{1,2})?$'
+    return bool(re.match(pattern, text.strip()))
 
-try:
-    headlines = get_headlines()
-    for headline in headlines:
-        print("Title: {}".format(headline['title']))
-        print("Issuance Time: {}".format(headline['issuanceTime']))
-        print("Content: {}\n".format(headline['content']))
 
-except KeyboardInterrupt:
-    print("\n\nExiting...")
-except Exception as e:
-    error_str = str(e)
-    if 'timeout' in error_str.lower() or 'connection' in error_str.lower() or 'urlopen' in error_str.lower():
+def is_gridsquare_format(text):
+    """Check if text looks like a gridsquare"""
+    pattern = r'^[A-Ra-r]{2}[0-9]{2}[a-xa-x]{0,2}$'
+    return bool(re.match(pattern, text.strip().upper()))
+
+
+def get_gridpoint(latlon):
+    """Get NWS gridpoint and WFO from lat/lon"""
+    try:
+        import urllib.request
+        import json
+        
+        lat, lon = latlon
+        url = "https://api.weather.gov/points/{},{}".format(lat, lon)
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        gridpoint = data['properties']['forecastGridData']
+        wfo = data['properties']['cwa']
+        return gridpoint, wfo
+    except Exception:
+        return None, None
+
+
+def get_headlines(wfo):
+    """Get weather headlines from NWS office"""
+    try:
+        import urllib.request
+        import json
+        
+        url = "https://api.weather.gov/offices/{}/headlines".format(wfo)
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        headlines = []
+        for item in data.get("@graph", []):
+            title = item.get("title", "")
+            issue_time = item.get("issuanceTime", "")
+            content_html = item.get("content", "")
+            content_text = strip_html(content_html)
+            
+            try:
+                time_str = datetime.fromisoformat(issue_time.replace('Z', '+00:00')).strftime('%m/%d %H:%M')
+            except:
+                try:
+                    time_str = datetime.strptime(issue_time.rstrip('Z'), '%Y-%m-%dT%H:%M:%S').strftime('%m/%d %H:%M')
+                except:
+                    time_str = "---"
+            
+            headlines.append({
+                "title": title,
+                "time": time_str,
+                "content": content_text
+            })
+        
+        return headlines
+    except Exception:
+        return None
+
+
+def prompt_location(prompt_text="Enter location"):
+    """Prompt for location input"""
+    print("")
+    print(prompt_text)
+    print("  Enter: gridsquare, GPS coords (lat,lon),")
+    print("         state (Maine/ME), country, or callsign")
+    print("  (Q to cancel)")
+    print("")
+    
+    while True:
         try:
-            import socket
-            socket.create_connection(('8.8.8.8', 53), timeout=2)
-            print("\nConnection Error: {}".format(error_str))
-        except (socket.timeout, socket.error, OSError):
-            print("\nInternet appears to be unavailable.")
-            print("Try again later or check your connection.")
-    else:
-        print("\nError: {}".format(error_str))
-        print("Please report this issue if it persists.")
+            response = input(":> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return None
+        
+        if not response:
+            continue
+        
+        if response.upper() == 'Q':
+            return None
+        
+        # Try callsign first
+        if is_callsign_format(response):
+            print("Looking up {}...".format(response.upper()))
+            grid = lookup_callsign(response)
+            if grid and is_gridsquare_format(grid):
+                latlon = grid_to_latlon(grid)
+                if latlon:
+                    return latlon, "{} ({})".format(response.upper(), grid)
+            print("Not found. Try gridsquare or coordinates.")
+            continue
+        
+        # Try gridsquare
+        if is_gridsquare_format(response):
+            latlon = grid_to_latlon(response.upper())
+            if latlon:
+                return latlon, response.upper()
+            print("Invalid gridsquare. Try again.")
+            continue
+        
+        # Try lat,lon
+        try:
+            parts = response.replace(',', ' ').split()
+            if len(parts) == 2:
+                lat = float(parts[0])
+                lon = float(parts[1])
+                if -90 <= lat <= 90 and -180 <= lon <= 180:
+                    return (lat, lon), "{:.2f},{:.2f}".format(lat, lon)
+        except (ValueError, IndexError):
+            pass
+        
+        print("Could not parse. Try:")
+        print("  - Gridsquare: FN43hp")
+        print("  - GPS: 43.65, -70.25")
+        print("  - Callsign: KC1JMH")
+
+
+def print_header():
+    """Print app header"""
+    print()
+    print(r"__      ____  __")
+    print(r"\ \ /\ / /\ \/ /")
+    print(r" \ V  V /  >  < ")
+    print(r"  \_/\_/  /_/\_\\")
+    print()
+    print("WX v{} - Weather Reports".format(VERSION))
+    print()
+
+
+def print_menu():
+    """Print main menu"""
+    print("\nOptions:")
+    print("1) Local weather (from bpq32.cfg)")
+    print("2) Weather for a location")
+    print("3) Weather for a callsign")
+    print("\nQ) Quit")
+
+
+def show_weather(latlon, desc):
+    """Fetch and display weather for location"""
+    if not latlon:
+        return
+    
+    print("\nGetting weather for {}...".format(desc))
+    
+    gridpoint, wfo = get_gridpoint(latlon)
+    if not gridpoint or not wfo:
+        if is_internet_available():
+            print("Error: Could not get weather data.")
+        else:
+            print("Internet appears to be unavailable.")
+            print("Try again later.")
+        return
+    
+    headlines = get_headlines(wfo)
+    if not headlines:
+        print("No headlines available.")
+        return
+    
+    print("-" * 40)
+    for hl in headlines[:3]:
+        print("\n[{}] {}".format(hl['time'], hl['title']))
+        print(hl['content'][:200])
+    print("-" * 40)
+
+
+def main():
+    """Main program loop"""
+    # Ensure stdin is opened from terminal
+    try:
+        sys.stdin = open('/dev/tty', 'r')
+    except (OSError, IOError):
+        pass
+    
+    # Try to read callsign from BPQ32 (if piped via S flag)
+    my_callsign = None
+    my_grid = None
+    if not sys.stdin.isatty():
+        try:
+            line = sys.stdin.readline().strip().upper()
+            if line:
+                my_callsign = line.split('-')[0] if line else None
+                if my_callsign:
+                    my_grid = lookup_callsign(my_callsign)
+                try:
+                    sys.stdin = open('/dev/tty', 'r')
+                except (OSError, IOError):
+                    pass
+        except (EOFError, KeyboardInterrupt):
+            pass
+    
+    # Check for updates
+    check_for_app_update(VERSION, APP_NAME)
+    
+    # Print header
+    print_header()
+    
+    # Get local gridsquare
+    local_grid = get_bpq_locator()
+    if not local_grid and my_grid:
+        local_grid = my_grid
+    if not local_grid:
+        local_grid = "FN43hp"
+    
+    local_latlon = grid_to_latlon(local_grid)
+    
+    # Main loop
+    while True:
+        print_menu()
+        
+        try:
+            choice = input(":> ").strip().upper()
+        except (EOFError, KeyboardInterrupt):
+            print("\nExiting...")
+            break
+        
+        if choice == 'Q':
+            print("\nExiting...")
+            break
+        
+        elif choice == '1':
+            # Local weather
+            if local_latlon:
+                show_weather(local_latlon, "Local ({})".format(local_grid))
+            else:
+                print("Could not determine local location.")
+        
+        elif choice == '2':
+            # Weather for location
+            result = prompt_location("Enter location for weather:")
+            if result:
+                latlon, desc = result
+                show_weather(latlon, desc)
+        
+        elif choice == '3':
+            # Weather for callsign
+            print("")
+            try:
+                call = input("Enter callsign: ").strip().upper()
+            except (EOFError, KeyboardInterrupt):
+                continue
+            
+            if call:
+                grid = lookup_callsign(call)
+                if grid and is_gridsquare_format(grid):
+                    latlon = grid_to_latlon(grid)
+                    if latlon:
+                        show_weather(latlon, "{} ({})".format(call, grid))
+                    else:
+                        print("Could not convert grid to coordinates.")
+                else:
+                    print("Callsign not found or no grid.")
+        
+        else:
+            print("\nInvalid choice.")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nExiting...")
+    except Exception as e:
+        print("\nError: {}".format(str(e)))
+        if not is_internet_available():
+            print("Internet may be unavailable.")
