@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.0] - 2026-01-22
+### Added
+- **Two-menu interface**: Location selection (main menu) → 12-report submenu (reports menu)
+- **12 comprehensive weather reports** per selected location:
+  1. 7-Day Forecast (temp, wind, conditions)
+  2. Current Observations (temp, wind direction/speed, visibility, pressure, conditions)
+  3. Fire Weather Outlook (from headlines)
+  4. Heat/Cold Advisories (auto-extracted from active alerts)
+  5. River/Flood Stage (auto-extracted from active alerts)
+  6. Coastal Flood Info (conditional for coastal areas)
+  7. Area Forecast Discussion (AFD from headlines)
+  8. Probability of Precipitation (PoP 5-day outlook)
+  9. UV Index (current level)
+  10. Pollen Forecast (daily triggers from EPA)
+  11. Dust/Haboob/Fire Alerts (auto-extracted from active alerts)
+  12. Active Alerts (full SKYWARN status + alert details)
+- **Refined UX**: User selects location once, then browses all 14 reports without re-entering
+- **Prompt format**: "1-12) B)ack Q)uit :>" with space separation
+- **Location header**: "REPORTS FOR: [location]" shows current context throughout submenu
+### Changed
+- **Main loop restructured**: Location selection loop → reports submenu loop
+- **Menu functions**: Separate print_main_menu() and print_reports_menu()
+- **Display functions**: Dedicated show_*_report() for each report type
+- **Data fetching**: Fetch all data once per location, pass to submenu
+- **Back button**: B)ack returns to location selection (can choose different area)
+- **Coastal conditional**: Report 6 only shows for coastal areas (auto-detected)
+### Technical
+- Fetch operations use 3-second timeout, offline resilience maintained
+- Bandwidth optimized: Report text truncated for 1200 baud compatibility
+- Python 3.5.3 compatible throughout
+- All functions handle missing/incomplete data gracefully
+
 ## [wx.py 1.5] - 2026-01-22
 ### Added
 - **Coastal flood detection**: Automatically detects if location is in coastal area via NWS API
