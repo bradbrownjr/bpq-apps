@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.5] - 2026-01-22
+### Added
+- **Manual gridsquare entry for callsigns not in database**: If HamDB lookup fails, user can now enter gridsquare manually for that callsign
+- Graceful fallback for users not found in database
+
 ## [wx.py 2.4] - 2026-01-22
 ### Changed
 - **Clearer callsign prompt**: Replaced "(stdin)" jargon with plain language "(press Enter)"

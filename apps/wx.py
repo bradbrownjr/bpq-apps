@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.4
+Version: 2.5
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.4"
+VERSION = "2.5"
 APP_NAME = "wx.py"
 
 
@@ -1195,8 +1195,26 @@ def main():
                         print("Could not convert grid to coordinates.")
                         continue
                 else:
-                    print("Callsign not found or no grid.")
-                    continue
+                    print("Call sign not in database.")
+                    print("Enter gridsquare for {} (or Q to cancel):".format(call))
+                    try:
+                        manual_grid = input(":> ").strip().upper()
+                    except (EOFError, KeyboardInterrupt):
+                        continue
+                    
+                    if manual_grid.upper() == 'Q':
+                        continue
+                    
+                    if is_gridsquare_format(manual_grid):
+                        selected_latlon = grid_to_latlon(manual_grid)
+                        selected_desc = "{} ({})".format(call, manual_grid)
+                        selected_grid = manual_grid
+                        if not selected_latlon:
+                            print("Could not convert grid to coordinates.")
+                            continue
+                    else:
+                        print("Invalid gridsquare format.")
+                        continue
             else:
                 continue
         
