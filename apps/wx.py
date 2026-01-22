@@ -21,6 +21,17 @@ Features:
 Author: Brad Brown KC1JMH
 Version: 3.1
 Date: January 2026
+
+NWS API Documentation:
+- Service overview: https://www.weather.gov/documentation/services-web-api
+- General FAQs: https://weather-gov.github.io/api/general-faqs
+- GitHub repository: https://github.com/weather-gov/api
+- API endpoints: https://api.weather.gov/ (root)
+- Products endpoint: https://api.weather.gov/products/types/HWO (Hazardous Weather Outlook)
+- Points endpoint: https://api.weather.gov/points/{lat},{lon} (location data)
+- Forecast: https://api.weather.gov/gridpoints/{wfo}/{x},{y}/forecast
+- Gridpoint data: https://api.weather.gov/gridpoints/{wfo}/{x},{y} (raw observations)
+- Alerts: https://api.weather.gov/alerts/active?point={lat},{lon}
 """
 
 from __future__ import print_function
