@@ -8,13 +8,14 @@ Features:
 - Current conditions and forecasts from NWS
 - Active weather alerts for location
 - SKYWARN activation status from HWO
+- Coastal flood alerts and marine forecasts for coastal areas
 - Gridsquare-based location detection from bpq32.cfg
 - Callsign-based weather lookup via HamDB
 - Multiple location input formats: gridsquare, GPS, state, country, callsign
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -24,7 +25,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "wx.py"
 
 
@@ -279,6 +280,64 @@ def get_hwo_skywarn_status(wfo):
         return "SKYWARN Status Unknown", None
 
 
+def is_coastal(latlon):
+    """Check if location is in coastal area"""
+    try:
+        import urllib.request
+        import json
+        
+        lat, lon = latlon
+        url = "https://api.weather.gov/points/{},{}".format(lat, lon)
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        # Check if marine zone is present (indicates coastal area)
+        marine_zone = data.get('properties', {}).get('marineForecastZones')
+        return bool(marine_zone)
+    except Exception:
+        return False
+
+
+def get_coastal_flood_info(latlon):
+    """Get coastal flood and marine forecast info"""
+    try:
+        import urllib.request
+        import json
+        
+        lat, lon = latlon
+        url = "https://api.weather.gov/points/{},{}".format(lat, lon)
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        marine_zones = data.get('properties', {}).get('marineForecastZones', [])
+        if not marine_zones:
+            return None
+        
+        # Get first marine zone forecast
+        coastal_info = []
+        for marine_zone_url in marine_zones[:1]:
+            try:
+                with urllib.request.urlopen(marine_zone_url, timeout=3) as response:
+                    zone_data = json.loads(response.read().decode('utf-8'))
+                
+                zone_props = zone_data.get('properties', {})
+                zone_name = zone_props.get('name', 'Marine Zone')
+                forecast = zone_props.get('forecast', '')
+                
+                if forecast:
+                    forecast_text = strip_html(forecast)
+                    coastal_info.append({
+                        'zone': zone_name,
+                        'forecast': forecast_text
+                    })
+            except Exception:
+                continue
+        
+        return coastal_info if coastal_info else None
+    except Exception:
+        return None
+
+
 def prompt_location(prompt_text="Enter location"):
     """Prompt for location input"""
     print("")
@@ -348,14 +407,19 @@ def print_header():
     print()
 
 
-def print_menu(has_alerts=False):
+def print_menu(has_alerts=False, is_coastal_area=False):
     """Print main menu"""
     print("\nOptions:")
-    print("1) Local weather (from bpq32.cfg)")
+    print("1) Local weather")
     print("2) Weather for a location")
     print("3) Weather for a callsign")
+    if is_coastal_area:
+        print("4) Coastal flood info")
+        alert_opt = "5"
+    else:
+        alert_opt = "4"
     if has_alerts:
-        print("4) View active alerts")
+        print("{}) View active alerts".format(alert_opt))
     print("\nQ) Quit")
 
 
@@ -410,6 +474,29 @@ def show_alerts(alerts, skywarn_status, skywarn_active):
     print("-" * 40)
 
 
+def show_coastal_flood_info(coastal_info):
+    """Display coastal flood and marine forecast info"""
+    print()
+    print("-" * 40)
+    print("COASTAL/MARINE FORECAST")
+    print("-" * 40)
+    print()
+    
+    if not coastal_info:
+        print("No coastal forecast available.")
+    else:
+        for item in coastal_info:
+            print("Zone: {}".format(item['zone']))
+            print()
+            forecast_text = item['forecast'][:300]
+            print(forecast_text)
+            if len(item['forecast']) > 300:
+                print("...")
+    
+    print()
+    print("-" * 40)
+
+
 def main():
     """Main program loop"""
     # Ensure stdin is opened from terminal
@@ -456,6 +543,8 @@ def main():
     skywarn_active = None
     local_gridpoint = None
     local_wfo = None
+    local_coastal = False
+    local_coastal_info = None
     
     if local_latlon:
         print("\nChecking for local alerts...")
@@ -463,6 +552,11 @@ def main():
         if local_wfo:
             local_alerts = get_alerts(local_latlon)
             skywarn_status, skywarn_active = get_hwo_skywarn_status(local_wfo)
+        
+        # Check if coastal area and fetch marine forecast
+        local_coastal = is_coastal(local_latlon)
+        if local_coastal:
+            local_coastal_info = get_coastal_flood_info(local_latlon)
     
     # Display alert summary in header
     if local_alerts and len(local_alerts) > 0:
@@ -482,7 +576,7 @@ def main():
     
     # Main loop
     while True:
-        print_menu(has_alerts=(local_alerts and len(local_alerts) > 0))
+        print_menu(has_alerts=(local_alerts and len(local_alerts) > 0), is_coastal_area=local_coastal)
         
         try:
             choice = input(":> ").strip().upper()
@@ -527,7 +621,13 @@ def main():
                 else:
                     print("Callsign not found or no grid.")
         
-        elif choice == '4' and local_alerts and len(local_alerts) > 0:
+        elif choice == '4' and local_coastal:
+            # Show coastal flood info
+            coastal_info = get_coastal_flood_info(local_latlon)
+            show_coastal_flood_info(coastal_info)
+        
+        elif (choice == '4' and not local_coastal and local_alerts and len(local_alerts) > 0) or \
+             (choice == '5' and local_coastal and local_alerts and len(local_alerts) > 0):
             # Show alerts
             show_alerts(local_alerts, skywarn_status, skywarn_active)
         

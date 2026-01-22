@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 1.5] - 2026-01-22
+### Added
+- **Coastal flood detection**: Automatically detects if location is in coastal area via NWS API
+- **Marine forecast info**: Fetch and display coastal/marine zone forecasts with water level and wave info
+- **Conditional menu option**: "Coastal flood info" appears in menu only for coastal locations
+- Dynamic menu numbering: Alert option shifts to 5 when coastal option is available
+### Changed
+- **is_coastal() function**: Check for marine forecast zones to identify coastal areas
+- **get_coastal_flood_info() function**: Pull first marine zone forecast with bandwidth optimization (300-char limit)
+- **show_coastal_flood_info() function**: Display marine forecast with zone name and truncated content
+- **Menu integration**: Menu parameter now includes is_coastal_area flag
+
 ## [wx.py 1.4] - 2026-01-21
 ### Added
 - **Weather alerts**: Fetch active NWS alerts for local location and display alert summary in header
@@ -18,8 +30,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Menu system**: Conditional "4) View alerts" option appears only when alerts are active
 - Header format: Display "!!! WEATHER ALERT !!!" with count and severity indicators
 - Local weather now includes alert awareness (check displayed before menu loop)
-
-## [Unreleased]
 
 ## [Interface Standardization] - 2026-01-20
 ### Changed

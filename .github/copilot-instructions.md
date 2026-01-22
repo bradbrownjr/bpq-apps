@@ -172,9 +172,10 @@ SEE ALSO
 
 ## BPQ App Interface Standards
 **Bandwidth Efficiency**: Every character counts on 1200 baud packet radio
-- Dynamic terminal width with 40-character fallback for piped input: `os.get_terminal_size().columns` 
-- Fixed 40-character separator lines using dash character: `print("-" * 40)`
-- Minimal decorative elements (single line separators only, using `-` character)
+- Terminal width handling:
+  - Separator lines: Fixed 40-character width using dash character: `print("-" * 40)`
+  - Longform text (descriptions, content): Adjust dynamically to terminal width with word wrapping
+  - Fallback: 40-character width for piped/non-TTY input: `os.get_terminal_size(fallback=(80, 24)).columns`
 - ASCII-only decorative elements - NO Unicode, ANSI codes, or control characters
 - No welcome messages - straight to functionality
 - Terse but clear prompts and navigation
