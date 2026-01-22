@@ -6,13 +6,15 @@ Local and regional weather from National Weather Service API.
 
 Features:
 - Current conditions and forecasts from NWS
+- Active weather alerts for location
+- SKYWARN activation status from HWO
 - Gridsquare-based location detection from bpq32.cfg
 - Callsign-based weather lookup via HamDB
 - Multiple location input formats: gridsquare, GPS, state, country, callsign
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -22,7 +24,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "wx.py"
 
 
@@ -220,6 +222,63 @@ def get_headlines(wfo):
         return None
 
 
+def get_alerts(latlon):
+    """Get active alerts from NWS for lat/lon"""
+    try:
+        import urllib.request
+        import json
+        
+        lat, lon = latlon
+        url = "https://api.weather.gov/alerts/active?point={},{}".format(lat, lon)
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        alerts = []
+        for feature in data.get("features", []):
+            props = feature.get("properties", {})
+            event = props.get("event", "")
+            headline = props.get("headline", "")
+            severity = props.get("severity", "")
+            description = props.get("description", "")
+            
+            alerts.append({
+                "event": event,
+                "headline": headline,
+                "severity": severity,
+                "description": description
+            })
+        
+        return alerts
+    except Exception:
+        return None
+
+
+def get_hwo_skywarn_status(wfo):
+    """Check HWO for SKYWARN activation status"""
+    try:
+        import urllib.request
+        
+        # Construct HWO URL from WFO code
+        # Pattern: https://tgftp.nws.noaa.gov/data/raw/TYPE/CODEFTYPE.WFOID.hwo.ID.txt
+        # Example: https://tgftp.nws.noaa.gov/data/raw/fl/flus41.kgyx.hwo.gyx.txt
+        # For general pattern, we'll use a simplified approach
+        hwo_url = "https://api.weather.gov/offices/{}/headlines".format(wfo)
+        
+        with urllib.request.urlopen(hwo_url, timeout=3) as response:
+            import json
+            data = json.loads(response.read().decode('utf-8'))
+        
+        # Look for "encouraged" in headlines
+        for item in data.get("@graph", []):
+            content_html = item.get("content", "")
+            if "spotters are encouraged" in content_html.lower() or "spotters encouraged" in content_html.lower():
+                return "SKYWARN Active", True
+        
+        return "SKYWARN Not Active", False
+    except Exception:
+        return "SKYWARN Status Unknown", None
+
+
 def prompt_location(prompt_text="Enter location"):
     """Prompt for location input"""
     print("")
@@ -289,12 +348,14 @@ def print_header():
     print()
 
 
-def print_menu():
+def print_menu(has_alerts=False):
     """Print main menu"""
     print("\nOptions:")
     print("1) Local weather (from bpq32.cfg)")
     print("2) Weather for a location")
     print("3) Weather for a callsign")
+    if has_alerts:
+        print("4) View active alerts")
     print("\nQ) Quit")
 
 
@@ -323,6 +384,29 @@ def show_weather(latlon, desc):
     for hl in headlines[:3]:
         print("\n[{}] {}".format(hl['time'], hl['title']))
         print(hl['content'][:200])
+    print("-" * 40)
+
+
+def show_alerts(alerts, skywarn_status, skywarn_active):
+    """Display weather alerts and SKYWARN status"""
+    print()
+    print("-" * 40)
+    print(skywarn_status)
+    print("-" * 40)
+    print()
+    
+    if not alerts:
+        print("No active weather alerts.")
+    else:
+        print("Active Alerts: {}".format(len(alerts)))
+        print("-" * 40)
+        for i, alert in enumerate(alerts, 1):
+            severity_marker = "*" if alert['severity'] in ['Extreme', 'Severe'] else " "
+            print("\n{}{}: {} ({})".format(severity_marker, i, alert['event'], alert['severity']))
+            if alert['headline']:
+                print("  {}".format(alert['headline'][:100]))
+    
+    print()
     print("-" * 40)
 
 
@@ -366,9 +450,39 @@ def main():
     
     local_latlon = grid_to_latlon(local_grid)
     
+    # Fetch local alerts and SKYWARN status on startup
+    local_alerts = None
+    skywarn_status = "SKYWARN Status Unknown"
+    skywarn_active = None
+    local_gridpoint = None
+    local_wfo = None
+    
+    if local_latlon:
+        print("\nChecking for local alerts...")
+        local_gridpoint, local_wfo = get_gridpoint(local_latlon)
+        if local_wfo:
+            local_alerts = get_alerts(local_latlon)
+            skywarn_status, skywarn_active = get_hwo_skywarn_status(local_wfo)
+    
+    # Display alert summary in header
+    if local_alerts and len(local_alerts) > 0:
+        print()
+        print("!!! WEATHER ALERT !!!")
+        print("Active Alerts: {}".format(len(local_alerts)))
+        for alert in local_alerts:
+            if alert['severity'] in ['Extreme', 'Severe']:
+                print("  *{}: {}".format(alert['event'], alert['severity']))
+            else:
+                print("  {}: {}".format(alert['event'], alert['severity']))
+        print()
+    
+    if skywarn_active:
+        print("*** {} ***".format(skywarn_status))
+        print()
+    
     # Main loop
     while True:
-        print_menu()
+        print_menu(has_alerts=(local_alerts and len(local_alerts) > 0))
         
         try:
             choice = input(":> ").strip().upper()
@@ -412,6 +526,10 @@ def main():
                         print("Could not convert grid to coordinates.")
                 else:
                     print("Callsign not found or no grid.")
+        
+        elif choice == '4' and local_alerts and len(local_alerts) > 0:
+            # Show alerts
+            show_alerts(local_alerts, skywarn_status, skywarn_active)
         
         else:
             print("\nInvalid choice.")

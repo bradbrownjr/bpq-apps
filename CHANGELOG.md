@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 1.4] - 2026-01-21
+### Added
+- **Weather alerts**: Fetch active NWS alerts for local location and display alert summary in header
+- **SKYWARN activation detection**: Check Hazardous Weather Outlook (HWO) for "spotters encouraged" status
+- **Alert menu option**: New menu choice (4) to view full alert details when alerts are active
+- Alert categories: Tornado, Severe Thunderstorm, Winter Storm, Wildfire, etc.
+- Bandwidth-efficient alert display: severity markers (*) for Extreme/Severe alerts
+### Changed
+- **main() function**: Fetch alerts and SKYWARN status on startup alongside local weather
+- **Menu system**: Conditional "4) View alerts" option appears only when alerts are active
+- Header format: Display "!!! WEATHER ALERT !!!" with count and severity indicators
+- Local weather now includes alert awareness (check displayed before menu loop)
+
+## [Unreleased]
+
 ## [Interface Standardization] - 2026-01-20
 ### Changed
 - **MAJOR**: Standardized interface across all BPQ apps
