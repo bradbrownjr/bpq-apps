@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 2.8] - 2026-01-22
+### Fixed
+- **Fixed 7-day forecast temperature display**: NWS forecast endpoint returns temperature already in Fahrenheit, not Celsius. Version 2.7 was incorrectly converting F→C→F, resulting in wrong temps (20F displayed as 68F). Now displays temperatures as-is from NWS.
+- Wind data in 7-day forecast also already formatted (e.g., "5 mph", "S") - no conversion needed
+
 ## [wx.py 2.7] - 2026-01-22
 ### Changed
 - **Converted weather display to imperial units**: All measurements now use US customary units for better readability

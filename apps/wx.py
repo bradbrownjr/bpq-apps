@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 2.7
+Version: 2.8
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "2.7"
+VERSION = "2.8"
 APP_NAME = "wx.py"
 
 
@@ -878,13 +878,14 @@ def show_7day_forecast(latlon):
     print("7-DAY FORECAST")
     print("-" * 40)
     for f in forecast:
-        temp_f = celsius_to_fahrenheit(f.get('temp'))
-        wind_mph = ms_to_mph(f.get('wind'))
+        # Note: NWS forecast endpoint returns temp already in F, wind already in mph
+        temp = f.get('temp')
+        wind = f.get('wind')
         print("\n{}".format(f['name']))
-        if temp_f is not None:
-            print("  Temp: {}F".format(temp_f))
-        if wind_mph is not None:
-            print("  Wind: {} mph".format(wind_mph))
+        if temp is not None:
+            print("  Temp: {}F".format(temp))
+        if wind:
+            print("  Wind: {}".format(wind))
         print("  {}".format(f['forecast'][:60]))
     print()
     print("-" * 40)
