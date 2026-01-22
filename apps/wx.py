@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.7
+Version: 3.8
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.7"
+VERSION = "3.8"
 APP_NAME = "wx.py"
 
 
@@ -1553,6 +1553,7 @@ def show_hazardous_weather_outlook(wfo):
     # Display with pagination (20 lines at a time)
     lines = hwo['content'].split('\n')
     line_count = 0
+    user_quit = False
     for line in lines:
         print(line)
         line_count += 1
@@ -1561,17 +1562,20 @@ def show_hazardous_weather_outlook(wfo):
             try:
                 response = input("Press ENTER to continue or Q to quit: ").strip().upper()
                 if response == 'Q':
+                    user_quit = True
                     break
             except (EOFError, KeyboardInterrupt):
+                user_quit = True
                 break
             line_count = 0
     
     print()
     print("-" * 40)
-    try:
-        input("\nPress enter to continue...")
-    except (EOFError, KeyboardInterrupt):
-        pass
+    if not user_quit:
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
 
 
 def show_regional_weather_summary(wfo):
@@ -1596,6 +1600,7 @@ def show_regional_weather_summary(wfo):
     # Display with pagination (20 lines at a time)
     lines = rws['content'].split('\n')
     line_count = 0
+    user_quit = False
     for line in lines:
         print(line)
         line_count += 1
@@ -1604,17 +1609,20 @@ def show_regional_weather_summary(wfo):
             try:
                 response = input("Press ENTER to continue or Q to quit: ").strip().upper()
                 if response == 'Q':
+                    user_quit = True
                     break
             except (EOFError, KeyboardInterrupt):
+                user_quit = True
                 break
             line_count = 0
     
     print()
     print("-" * 40)
-    try:
-        input("\nPress enter to continue...")
-    except (EOFError, KeyboardInterrupt):
-        pass
+    if not user_quit:
+        try:
+            input("\nPress enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
 
 
 def show_heat_cold(alerts):

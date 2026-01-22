@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wx.py 3.8] - 2026-01-22
+### Fixed
+- **Pagination UX**: When quitting from paginated reports (HWO, RWS) with Q, no longer prompts "Press enter to continue..."
+  - User already indicated they're done by pressing Q - extra prompt was redundant
+  - Applies to Hazardous Weather Outlook and Regional Weather Summary
+  - Returns directly to menu after Q without additional interaction
+
 ## [wx.py 3.7] - 2026-01-22
 ### Added
 - **Regional Weather Summary (Option 7)**: Replaced Area Forecast Discussion with narrative weather overview
