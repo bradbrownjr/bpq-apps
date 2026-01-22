@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 3.8
+Version: 3.9
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "3.8"
+VERSION = "3.9"
 APP_NAME = "wx.py"
 
 
@@ -52,7 +52,7 @@ def check_for_app_update(current_version, script_name):
         import stat
         
         github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(script_name)
-        with urllib.request.urlopen(github_url, timeout=10) as response:
+        with urllib.request.urlopen(github_url, timeout=3) as response:
             content = response.read().decode('utf-8')
         
         version_match = re.search(r'Version:\s*([0-9.]+)', content)
@@ -1876,34 +1876,32 @@ def show_coastal_flood_info(coastal_info):
 
 def main():
     """Main program loop"""
-    # Ensure stdin is opened from terminal
-    try:
-        sys.stdin = open('/dev/tty', 'r')
-    except (OSError, IOError):
-        pass
-    
     # Try to read callsign from BPQ32 (if piped via S flag)
     my_callsign = None
     my_grid = None
     if not sys.stdin.isatty():
         try:
-            line = sys.stdin.readline().strip().upper()
-            if line:
-                my_callsign = line.split('-')[0] if line else None
-                if my_callsign:
-                    my_grid = lookup_callsign(my_callsign)
-                try:
-                    sys.stdin = open('/dev/tty', 'r')
-                except (OSError, IOError):
-                    pass
-        except (EOFError, KeyboardInterrupt):
+            # Use select for non-blocking read with 0.5s timeout
+            import select
+            if select.select([sys.stdin], [], [], 0.5)[0]:
+                line = sys.stdin.readline().strip().upper()
+                if line:
+                    my_callsign = line.split('-')[0] if line else None
+                    if my_callsign:
+                        my_grid = lookup_callsign(my_callsign)
+            # Reopen stdin from terminal for interactive use
+            try:
+                sys.stdin = open('/dev/tty', 'r')
+            except (OSError, IOError):
+                pass
+        except (EOFError, KeyboardInterrupt, ImportError):
             pass
     
-    # Check for updates
-    check_for_app_update(VERSION, APP_NAME)
-    
-    # Print header
+    # Print header first so user sees output immediately
     print_header()
+    
+    # Check for updates (non-blocking)
+    check_for_app_update(VERSION, APP_NAME)
     
     # Get local gridsquare
     local_grid = get_bpq_locator()
