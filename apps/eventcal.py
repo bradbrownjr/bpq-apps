@@ -28,7 +28,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "1.9"
+VERSION = "2.0"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 
 
@@ -208,6 +208,114 @@ def parse_ical_date(date_str):
     return (None, None)
 
 
+def expand_rrule(event, rrule_str, until_date):
+    """Expand a recurring event based on RRULE.
+    Returns list of expanded events up to until_date.
+    Supports: FREQ=MONTHLY;BYDAY=nTH (nth weekday of month)
+    """
+    expanded = []
+    dtstart = event.get('dtstart')
+    dtend = event.get('dtend')
+    duration = (dtend - dtstart) if dtend else timedelta(hours=2)
+    
+    # Parse RRULE components
+    parts = {}
+    for part in rrule_str.split(';'):
+        if '=' in part:
+            k, v = part.split('=', 1)
+            parts[k] = v
+    
+    freq = parts.get('FREQ', '')
+    byday = parts.get('BYDAY', '')
+    until_str = parts.get('UNTIL', '')
+    
+    # Parse UNTIL date if present
+    rrule_until = None
+    if until_str:
+        try:
+            if 'T' in until_str:
+                rrule_until = datetime.strptime(until_str[:15], '%Y%m%dT%H%M%S')
+            else:
+                rrule_until = datetime.strptime(until_str[:8], '%Y%m%d')
+        except ValueError:
+            pass
+    
+    # Only expand MONTHLY with BYDAY (e.g., "2TH" = 2nd Thursday)
+    if freq != 'MONTHLY' or not byday:
+        return [event]  # Can't expand, return original
+    
+    # Parse BYDAY: "2TH" -> week_num=2, day="TH"
+    import re as re_module
+    match = re_module.match(r'(-?\d)?(MO|TU|WE|TH|FR|SA|SU)', byday)
+    if not match:
+        return [event]
+    
+    week_num = int(match.group(1)) if match.group(1) else 1
+    day_abbr = match.group(2)
+    day_map = {'MO': 0, 'TU': 1, 'WE': 2, 'TH': 3, 'FR': 4, 'SA': 5, 'SU': 6}
+    target_weekday = day_map.get(day_abbr, 0)
+    
+    # Start from event's original date and generate instances
+    current_date = dtstart
+    
+    # Generate for 2 years back and 1 year forward from today
+    today = datetime.now()
+    start_window = today - timedelta(days=730)  # 2 years back
+    end_window = min(until_date, today + timedelta(days=365))  # 1 year forward
+    if rrule_until and rrule_until < end_window:
+        end_window = rrule_until
+    
+    # Start from beginning of start_window month
+    current_month = datetime(start_window.year, start_window.month, 1, 
+                             dtstart.hour, dtstart.minute, dtstart.second)
+    
+    while current_month <= end_window:
+        # Find the nth weekday of current month
+        if week_num > 0:
+            # Positive: count from start of month
+            first_of_month = datetime(current_month.year, current_month.month, 1,
+                                     dtstart.hour, dtstart.minute, dtstart.second)
+            # Find first target weekday
+            days_until = (target_weekday - first_of_month.weekday()) % 7
+            first_target = first_of_month + timedelta(days=days_until)
+            # Add weeks to get to nth occurrence
+            target_date = first_target + timedelta(weeks=week_num - 1)
+        else:
+            # Negative: count from end of month (e.g., -1 = last)
+            # Find last day of month
+            if current_month.month == 12:
+                next_month = datetime(current_month.year + 1, 1, 1)
+            else:
+                next_month = datetime(current_month.year, current_month.month + 1, 1)
+            last_of_month = next_month - timedelta(days=1)
+            # Find last target weekday
+            days_back = (last_of_month.weekday() - target_weekday) % 7
+            last_target = last_of_month - timedelta(days=days_back)
+            # Subtract weeks for earlier occurrences
+            target_date = last_target + timedelta(weeks=week_num + 1)
+            target_date = target_date.replace(hour=dtstart.hour, minute=dtstart.minute,
+                                              second=dtstart.second)
+        
+        # Check if this instance is within our window
+        if start_window <= target_date <= end_window:
+            new_event = event.copy()
+            new_event['dtstart'] = target_date
+            if dtend:
+                new_event['dtend'] = target_date + duration
+            new_event['is_recurring'] = True
+            expanded.append(new_event)
+        
+        # Move to next month
+        if current_month.month == 12:
+            current_month = datetime(current_month.year + 1, 1, 1,
+                                    dtstart.hour, dtstart.minute, dtstart.second)
+        else:
+            current_month = datetime(current_month.year, current_month.month + 1, 1,
+                                    dtstart.hour, dtstart.minute, dtstart.second)
+    
+    return expanded if expanded else [event]
+
+
 def parse_ical(ical_data):
     """Parse iCalendar data and extract events"""
     events = []
@@ -225,6 +333,9 @@ def parse_ical(ical_data):
         else:
             lines.append(raw_line)
     
+    # Expansion window: 2 years back to 1 year forward
+    until_date = datetime.now() + timedelta(days=365)
+    
     for line in lines:
         line = line.strip()
         
@@ -233,7 +344,12 @@ def parse_ical(ical_data):
             current_event = {}
         elif line == 'END:VEVENT':
             if current_event.get('dtstart') and current_event.get('summary'):
-                events.append(current_event)
+                # Check for RRULE and expand recurring events
+                if current_event.get('rrule'):
+                    expanded = expand_rrule(current_event, current_event['rrule'], until_date)
+                    events.extend(expanded)
+                else:
+                    events.append(current_event)
             in_event = False
             current_event = {}
         elif in_event and ':' in line:
@@ -241,15 +357,17 @@ def parse_ical(ical_data):
             key_base = key.split(';')[0]  # Remove parameters
             
             if key_base == 'DTSTART':
-                dt, tz = parse_ical_date(value)
+                dt, tz = parse_ical_date(line)  # Pass full line for timezone parsing
                 if dt:
                     current_event['dtstart'] = dt
                     if tz:
                         current_event['timezone'] = tz
             elif key_base == 'DTEND':
-                dt, tz = parse_ical_date(value)
+                dt, tz = parse_ical_date(line)
                 if dt:
                     current_event['dtend'] = dt
+            elif key_base == 'RRULE':
+                current_event['rrule'] = value
             elif key_base == 'SUMMARY':
                 current_event['summary'] = value.replace('\\,', ',').replace('\\n', ' ')
             elif key_base == 'DESCRIPTION':
@@ -391,14 +509,26 @@ def display_events(events, show_all=False, page=0, page_size=5, start_at_today=F
     
     print("-" * 40)
     
+    # Find the index of the next upcoming event (for marker)
+    next_event_idx = None
+    for i, e in enumerate(display_list):
+        event_date = e.get('dtstart')
+        if event_date and event_date.date() >= today:
+            next_event_idx = i
+            break
+    
     for idx, event in enumerate(page_events, start_idx + 1):
         dt = event.get('dtstart')
         summary = event.get('summary', 'Untitled Event')
         location = event.get('location', '')
         timezone = event.get('timezone', '')
         
+        # Add marker for next upcoming event
+        actual_idx = start_idx + (idx - start_idx - 1)
+        marker = " <" if show_all and actual_idx == next_event_idx else ""
+        
         # Display title first
-        print("\n{}. {}".format(idx, summary))
+        print("\n{}. {}{}".format(idx, summary, marker))
         
         # Display location if present
         if location:

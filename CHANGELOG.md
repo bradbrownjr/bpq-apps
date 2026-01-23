@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [eventcal.py 2.0] - 2026-01-23
+### Added
+- **Recurring Event Support**: Parses RRULE and expands monthly recurring events
+  - Supports `FREQ=MONTHLY;BYDAY=nTH` format (nth weekday of month)
+  - Expands events 2 years back and 1 year forward
+  - Shows all three monthly meetings: Business (2nd Thu), On-Air (3rd Thu), ECT (4th Thu)
+- **Next Event Marker**: Shows `<` indicator on the next upcoming event in All Events view
+
+### Fixed
+- **iCal Line Continuations**: Properly handles multi-line iCal fields (v1.9)
+- **Page Navigation**: All Events starts at today's page, allows P)rev to browse history
+
 ## [eventcal.py 1.8] - 2025-01-28
 ### Fixed
 - **Main Menu Detail Selection**: Pressing event number now correctly shows event details
