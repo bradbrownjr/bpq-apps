@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [eventcal.py 2.0.1] - 2026-01-23
+### Fixed
+- **DTSTART Parsing Bug**: Fixed date parsing for DTSTART without TZID parameter
+  - Resolves missing Winter Field Day 2026-01-24 event
+  - Now correctly handles `DTSTART:20260124T150000Z` format (Z suffix without TZID)
+  - Parse now handles all three formats: Z suffix, DATE-only, and TZID
+- **Deleted Conflicting calendar.py**: Old file caused import conflict with Python stdlib
+- **Event Count**: Increased from 141 to 224 with proper parsing of all events
+
 ## [eventcal.py 2.0] - 2026-01-23
 ### Added
 - **Recurring Event Support**: Parses RRULE and expands monthly recurring events
