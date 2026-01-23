@@ -175,9 +175,12 @@ def parse_ical_date(date_str):
     tz = None
     
     # Extract TZID parameter if present (e.g., TZID=America/New_York:20260123)
-    if ';' in date_str and ':' in date_str:
-        params_part = date_str.split(':', 1)[0]
-        if 'TZID=' in params_part:
+    if ':' in date_str:
+        parts = date_str.split(':', 1)
+        params_part = parts[0]
+        date_value = parts[1]
+        
+        if ';' in params_part and 'TZID=' in params_part:
             tz = params_part.split('TZID=')[1].split(';')[0]
             # Shorten common US timezones
             tz_map = {
@@ -190,9 +193,8 @@ def parse_ical_date(date_str):
                 'Pacific/Honolulu': 'HST'
             }
             tz = tz_map.get(tz, tz.split('/')[-1])
-        date_str = date_str.split(':', 1)[1]
-    elif ':' in date_str and '=' in date_str.split(':', 1)[0]:
-        date_str = date_str.split(':', 1)[1]
+        
+        date_str = date_value
     
     # Try parsing as datetime with time
     for fmt in ['%Y%m%dT%H%M%S', '%Y%m%dT%H%M%SZ', '%Y%m%d']:
