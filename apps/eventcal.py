@@ -28,7 +28,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "1.8"
+VERSION = "1.9"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 
 
@@ -214,7 +214,18 @@ def parse_ical(ical_data):
     current_event = {}
     in_event = False
     
-    for line in ical_data.split('\n'):
+    # Handle iCal line continuations (lines starting with space/tab)
+    raw_lines = ical_data.split('\n')
+    lines = []
+    for raw_line in raw_lines:
+        # Line continuation: starts with space or tab
+        if raw_line.startswith(' ') or raw_line.startswith('\t'):
+            if lines:
+                lines[-1] += raw_line[1:]  # Append without the leading whitespace
+        else:
+            lines.append(raw_line)
+    
+    for line in lines:
         line = line.strip()
         
         if line == 'BEGIN:VEVENT':
@@ -334,9 +345,9 @@ def strip_html(text):
     return text.strip()
 
 
-def display_events(events, show_all=False, page=0, page_size=5):
+def display_events(events, show_all=False, page=0, page_size=5, start_at_today=False):
     """Display events in formatted list with pagination
-    Returns: (action, event_num, event_list)
+    Returns: (action, event_num, event_list, actual_page)
     """
     width = get_terminal_width()
     now = datetime.now()
@@ -347,6 +358,15 @@ def display_events(events, show_all=False, page=0, page_size=5):
     if show_all:
         # Show ALL events (no date filter) - sorted by date
         display_list = events
+        
+        # Find the page containing today's date if starting fresh
+        if start_at_today and page == 0:
+            for idx, e in enumerate(display_list):
+                event_date = e.get('dtstart')
+                if event_date and event_date.date() >= today:
+                    page = idx // page_size
+                    break
+        
         print("\nAll Events:")
     else:
         # Filter to upcoming events (today through next 90 days)
@@ -362,7 +382,7 @@ def display_events(events, show_all=False, page=0, page_size=5):
     
     if not display_list:
         print("No events found.")
-        return (None, None, None)
+        return (None, None, None, page)
     
     # Calculate page bounds
     start_idx = page * page_size
@@ -448,32 +468,32 @@ def display_events(events, show_all=False, page=0, page_size=5):
         try:
             response = input("{} :> ".format(" ".join(prompt_parts))).strip().upper()
             if response.isdigit():
-                return ('detail', int(response), display_list)
+                return ('detail', int(response), display_list, page)
             elif response == 'N' and has_next:
-                return ('next', None, None)
+                return ('next', None, None, page)
             elif response == 'P' and has_prev:
-                return ('prev', None, None)
+                return ('prev', None, None, page)
             elif response == 'B':
-                return ('back', None, None)
+                return ('back', None, None, page)
         except (EOFError, KeyboardInterrupt):
-            return ('back', None, None)
+            return ('back', None, None, page)
     else:
         # Main upcoming view - allow event selection
         print("")
         try:
             response = input("#)Detail M)ore A)bout Q)uit :> ").strip().upper()
             if response.isdigit():
-                return ('detail', int(response), display_list)
+                return ('detail', int(response), display_list, page)
             elif response == 'M':
-                return ('more', None, None)
+                return ('more', None, None, page)
             elif response == 'A':
-                return ('about', None, None)
+                return ('about', None, None, page)
             elif response == 'Q':
-                return ('quit', None, None)
+                return ('quit', None, None, page)
         except (EOFError, KeyboardInterrupt):
-            return ('quit', None, None)
+            return ('quit', None, None, page)
     
-    return (None, None, None)
+    return (None, None, None, page)
 
 
 def show_about():
@@ -586,23 +606,26 @@ def main_menu(events):
     
     while True:
         # Display upcoming events by default
-        action, event_num, event_list = display_events(events, show_all=False, page=0)
+        action, event_num, event_list, _ = display_events(events, show_all=False, page=0)
         
         if action == 'detail' and event_num is not None and event_list:
             if 1 <= event_num <= len(event_list):
                 show_event_detail(event_list[event_num - 1])
-            else:
-                print("Invalid event number.")
-            continue
+            # After showing detail, loop back to show upcoming events again
         elif action == 'more':
-            # Navigate through all events
+            # Navigate through all events, starting at today
             page = 0
+            first_view = True
             while True:
-                action2, event_num2, event_list2 = display_events(events, show_all=True, page=page)
+                action2, event_num2, event_list2, actual_page = display_events(
+                    events, show_all=True, page=page, start_at_today=first_view
+                )
+                page = actual_page  # Track actual page (may have jumped to today)
+                first_view = False
                 if action2 == 'next':
                     page += 1
                 elif action2 == 'prev':
-                    page -= 1
+                    page = max(0, page - 1)
                 elif action2 == 'detail' and event_num2 is not None and event_list2:
                     if 1 <= event_num2 <= len(event_list2):
                         show_event_detail(event_list2[event_num2 - 1])
