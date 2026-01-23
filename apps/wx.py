@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.4
+Version: 4.5
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "4.4"
+VERSION = "4.5"
 APP_NAME = "wx.py"
 
 
@@ -1313,7 +1313,7 @@ def print_main_menu(has_local_alert=False):
     print("\nQ) Quit")
 
 
-def print_reports_menu(location_desc, is_coastal):
+def print_reports_menu(location_desc, is_coastal, alerts=None, has_winter=False, has_heat_cold=False, has_fire=False, has_flood=False):
     """Print reports menu for selected location"""
     print("\nREPORTS FOR: {}".format(location_desc))
     print("-" * 40)
@@ -1322,24 +1322,25 @@ def print_reports_menu(location_desc, is_coastal):
     print("2) Hourly Forecast (12hr)")
     print("3) 7-Day Forecast")
     # Safety & alerts
-    print("4) Active Alerts*")
+    print("4) Active Alerts{}".format("*" if alerts and len(alerts) > 0 else ""))
     print("5) Hazardous Weather Outlook*")
     # Detailed forecasts
     print("6) Zone Forecast (Narrative)")
     print("7) Regional Weather Summary")
     print("8) Probability of Precip")
     # Seasonal/situational hazards
-    print("9) Winter Weather*")
-    print("10) Heat/Cold Advisories*")
-    print("11) Fire Weather Outlook*")
-    print("12) River/Flood Stage*")
+    print("9) Winter Weather{}".format("*" if has_winter else ""))
+    print("10) Heat/Cold Advisories{}".format("*" if has_heat_cold else ""))
+    print("11) Fire Weather Outlook{}".format("*" if has_fire else ""))
+    print("12) River/Flood Stage{}".format("*" if has_flood else ""))
     print("13) Coastal Flood Info{}".format("" if is_coastal else " (N/A)"))
     print("14) Dust/Haboob Alerts")
     # Reference
     print("15) UV Index")
     print("16) Daily Climate Report")
     print()
-    print("* Alert details may be found here")
+    if alerts and len(alerts) > 0:
+        print("* Alert details may be found here")
     print("1-16) B)ack Q)uit :>")
 
 
@@ -2173,9 +2174,22 @@ def main():
             print("*** {} ***".format(skywarn_status))
             print()
         
+        # Check which alert types are present
+        has_winter = any('WINTER' in alert.get('event', '').upper() or 'SNOW' in alert.get('event', '').upper() 
+                        for alert in alerts) if alerts else False
+        has_heat_cold = any(term in alert.get('event', '').upper() 
+                           for alert in alerts 
+                           for term in ['HEAT', 'COLD', 'FREEZE', 'FROST', 'CHILL']) if alerts else False
+        has_fire = any(term in alert.get('event', '').upper() 
+                      for alert in alerts 
+                      for term in ['FIRE', 'RED FLAG']) if alerts else False
+        has_flood = any(term in alert.get('event', '').upper() 
+                       for alert in alerts 
+                       for term in ['FLOOD', 'RIVER']) if alerts else False
+        
         # Reports submenu loop for this location
         while True:
-            print_reports_menu(selected_desc, is_coastal_area)
+            print_reports_menu(selected_desc, is_coastal_area, alerts, has_winter, has_heat_cold, has_fire, has_flood)
             
             try:
                 choice = input(":> ").strip().upper()
