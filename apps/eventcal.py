@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 2.2
+Version: 2.3
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
@@ -28,7 +28,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.2"
+VERSION = "2.3"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 
 
@@ -101,21 +101,24 @@ def check_for_app_update(current_version, script_name):
         if version_match:
             remote_version = version_match.group(1)
             if compare_versions(remote_version, current_version) > 0:
-                # Atomic update with temp file
-                temp_file = script_name + ".tmp"
+                # Use actual script location, not relative name
+                script_path = os.path.abspath(__file__)
+                temp_path = script_path + ".tmp"
                 try:
-                    with open(temp_file, 'w') as f:
+                    with open(temp_path, 'w') as f:
                         f.write(remote_content)
                     
                     # Preserve executable permission
-                    if os.path.exists(script_name):
-                        os.chmod(temp_file, os.stat(script_name).st_mode)
+                    if os.path.exists(script_path):
+                        os.chmod(temp_path, os.stat(script_path).st_mode)
                     
-                    os.replace(temp_file, script_name)
+                    os.replace(temp_path, script_path)
                     print("Updated to version {}".format(remote_version))
+                    print("Please restart the app.")
+                    sys.exit(0)
                 except Exception:
-                    if os.path.exists(temp_file):
-                        os.remove(temp_file)
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
     except Exception:
         pass  # Silent failure on network issues
 

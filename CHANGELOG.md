@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [eventcal.py 2.3] - 2026-01-23
+### Fixed
+- **Auto-Update Path Bug**: Update wrote to current directory instead of script location
+  - Used relative `script_name` instead of `os.path.abspath(__file__)`
+  - Update would silently fail when running from different directory
+  - Now correctly updates the actual script file and exits for restart
+
 ## [eventcal.py 2.2] - 2026-01-23
 ### Fixed
 - **Double-Entry Bug**: Every input required entering twice before being acted upon
