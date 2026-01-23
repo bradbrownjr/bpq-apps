@@ -8,9 +8,9 @@ Designed for BPQ32 packet radio networks with ASCII-only output.
 Internet-optional with graceful offline fallback.
 
 Usage:
-    calendar.py                    # Interactive menu
-    calendar.py --help             # Show help
-    calendar.py --config <path>    # Use custom config file
+    clubcal.py                    # Interactive menu
+    clubcal.py --help             # Show help
+    clubcal.py --config <path>    # Use custom config file
 
 BPQ32 APPLICATION line:
     APPLICATION 6,CALENDAR,C 9 HOST # NOCALL K,CALLSIGN,FLAGS
@@ -27,7 +27,7 @@ import re
 
 
 VERSION = "1.0"
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "calendar.conf")
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), "clubcal.conf")
 
 
 def show_logo():
@@ -389,7 +389,7 @@ def main():
             config_path = sys.argv[2]
     
     # Check for updates
-    check_for_app_update(VERSION, "calendar.py")
+    check_for_app_update(VERSION, "clubcal.py")
     
     # Display logo and header
     show_logo()
