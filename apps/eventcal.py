@@ -594,6 +594,7 @@ def display_events(events, show_all=False, page=0, page_size=5, start_at_today=F
         if has_next:
             prompt_parts.append("N)ext")
         prompt_parts.append("B)ack")
+        prompt_parts.append("Q)uit")
         
         try:
             response = input("{} :> ".format(" ".join(prompt_parts))).strip().upper()
@@ -605,6 +606,8 @@ def display_events(events, show_all=False, page=0, page_size=5, start_at_today=F
                 return ('prev', None, None, page)
             elif response == 'B':
                 return ('back', None, None, page)
+            elif response == 'Q':
+                return ('quit', None, None, page)
         except (EOFError, KeyboardInterrupt):
             return ('back', None, None, page)
     else:
@@ -761,8 +764,11 @@ def main_menu(events):
                         show_event_detail(event_list2[event_num2 - 1])
                     else:
                         print("Invalid event number.")
-                elif action2 == 'back' or action2 is None:
+                elif action2 == 'back':
                     break
+                elif action2 == 'quit':
+                    print("Exiting...")
+                    sys.exit(0)
         elif action == 'about':
             show_about()
         elif action == 'quit':
