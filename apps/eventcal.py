@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 1.0
+Version: 2.1
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
@@ -28,7 +28,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.0"
+VERSION = "2.1"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 
 
@@ -325,7 +325,8 @@ def parse_ical(ical_data):
     in_event = False
     
     # Handle iCal line continuations (lines starting with space/tab)
-    raw_lines = ical_data.split('\n')
+    # iCal uses CRLF line endings - strip \r before processing
+    raw_lines = ical_data.replace('\r', '').split('\n')
     lines = []
     for raw_line in raw_lines:
         # Line continuation: starts with space or tab
@@ -373,8 +374,8 @@ def parse_ical(ical_data):
             elif key_base == 'SUMMARY':
                 current_event['summary'] = value.replace('\\,', ',').replace('\\n', ' ')
             elif key_base == 'DESCRIPTION':
-                # Preserve newlines in description
-                current_event['description'] = value.replace('\\,', ',')
+                # Convert escaped newlines to real newlines, unescape commas
+                current_event['description'] = value.replace('\\n', '\n').replace('\\,', ',')
             elif key_base == 'LOCATION':
                 current_event['location'] = value.replace('\\,', ',').replace('\\n', ' ')
     

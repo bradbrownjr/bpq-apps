@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [eventcal.py 2.1] - 2026-01-23
+### Fixed
+- **Location Display Corruption**: Fixed "04\r062" showing as split lines
+  - Root cause: iCal CRLF line endings left `\r` in parsed data
+  - Solution: Strip all `\r` before processing line continuations
+- **Description Display Corruption**: Fixed "visi t", "o perator", "gaps\ ," artifacts
+  - Root cause: Same CRLF issue affecting multi-line description fields
+  - Now properly joins line continuations without embedded carriage returns
+- **iCal Escaped Newlines**: Converted `\n` literals to actual newlines in descriptions
+
 ## [eventcal.py 2.0.1] - 2026-01-23
 ### Fixed
 - **DTSTART Parsing Bug**: Fixed date parsing for DTSTART without TZID parameter
