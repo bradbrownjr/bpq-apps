@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.6
+Version: 1.7
 Date: January 2026
 """
 
@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from predict import geo, solar, ionosphere
 
 # App version
-VERSION = "1.6"
+VERSION = "1.7"
 APP_NAME = "predict.py"
 
 # Display width
@@ -410,21 +410,29 @@ def main():
     my_location = None
     if not sys.stdin.isatty():
         try:
-            line = sys.stdin.readline().strip().upper()
+            # Use select for non-blocking read with timeout
+            import select
+            if select.select([sys.stdin], [], [], 0.5)[0]:
+                line = sys.stdin.readline().strip().upper()
+                if line:
+                    # Strip SSID if present (e.g., KC1JMH-8 -> KC1JMH)
+                    my_callsign = line.split('-')[0] if line else None
+            
             # Reopen stdin for interactive use immediately
             try:
                 sys.stdin = open('/dev/tty', 'r')
             except (OSError, IOError):
                 pass
             
-            if line:
-                # Strip SSID if present (e.g., KC1JMH-8 -> KC1JMH)
-                my_callsign = line.split('-')[0] if line else None
-                # Try to get location from callsign (this may take a moment)
-                if my_callsign:
-                    my_location = lookup_callsign(my_callsign)
-        except (EOFError, KeyboardInterrupt):
-            pass
+            # Try to get location from callsign (after stdin reopened)
+            if my_callsign:
+                my_location = lookup_callsign(my_callsign)
+        except (EOFError, KeyboardInterrupt, ImportError):
+            # ImportError if select not available, continue without callsign
+            try:
+                sys.stdin = open('/dev/tty', 'r')
+            except (OSError, IOError):
+                pass
     
     # Check for updates
     check_for_app_update(VERSION, APP_NAME)
