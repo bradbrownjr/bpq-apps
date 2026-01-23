@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 2.1
+Version: 2.2
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
@@ -28,7 +28,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.1"
+VERSION = "2.2"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 
 
@@ -858,10 +858,7 @@ def main():
     
     print("Loaded {} event(s).".format(len(events)))
     
-    # Display upcoming events by default
-    display_events(events, show_all=False)
-    
-    # Then show menu
+    # Show main menu (which displays events and handles input)
     main_menu(events)
 
 

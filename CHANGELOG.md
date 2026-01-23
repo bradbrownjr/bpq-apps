@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [eventcal.py 2.2] - 2026-01-23
+### Fixed
+- **Double-Entry Bug**: Every input required entering twice before being acted upon
+  - Root cause: `main()` called `display_events()` then immediately called `main_menu()`
+    which called `display_events()` again, discarding the first user input
+  - User would type "1", menu would reprint, user had to type "1" again
+  - On 1200 baud, this wasted 2-3 seconds of bandwidth per interaction
+
 ## [eventcal.py 2.1] - 2026-01-23
 ### Fixed
 - **Location Display Corruption**: Fixed "04\r062" showing as split lines
