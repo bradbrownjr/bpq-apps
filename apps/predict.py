@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.5
+Version: 1.6
 Date: January 2026
 """
 
@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from predict import geo, solar, ionosphere
 
 # App version
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "predict.py"
 
 # Display width
@@ -411,17 +411,18 @@ def main():
     if not sys.stdin.isatty():
         try:
             line = sys.stdin.readline().strip().upper()
+            # Reopen stdin for interactive use immediately
+            try:
+                sys.stdin = open('/dev/tty', 'r')
+            except (OSError, IOError):
+                pass
+            
             if line:
                 # Strip SSID if present (e.g., KC1JMH-8 -> KC1JMH)
                 my_callsign = line.split('-')[0] if line else None
-                # Try to get location from callsign
+                # Try to get location from callsign (this may take a moment)
                 if my_callsign:
                     my_location = lookup_callsign(my_callsign)
-                # Reopen stdin for interactive use after piped input
-                try:
-                    sys.stdin = open('/dev/tty', 'r')
-                except (OSError, IOError):
-                    pass
         except (EOFError, KeyboardInterrupt):
             pass
     
@@ -433,8 +434,10 @@ def main():
     
     # Get solar data once at startup
     print("\nLoading solar data...")
+    sys.stdout.flush()
     solar_data, solar_status, solar_warning = solar.get_solar_data(interactive=True)
     print(solar_status)
+    sys.stdout.flush()
     
     if solar_warning:
         print(solar_warning)

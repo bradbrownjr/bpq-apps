@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.2
+Version: 4.3
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "4.2"
+VERSION = "4.3"
 APP_NAME = "wx.py"
 
 
@@ -2049,8 +2049,10 @@ def main():
         if local_latlon:
             try:
                 local_alerts = get_alerts(local_latlon)
-                has_local_alert = bool(local_alerts and len(local_alerts) > 0)
-            except Exception:
+                if local_alerts and len(local_alerts) > 0:
+                    has_local_alert = True
+            except Exception as e:
+                # Silently fail - don't disrupt user experience
                 pass
         
         print_main_menu(has_local_alert)
