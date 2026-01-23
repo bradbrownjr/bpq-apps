@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.3
+Version: 4.4
 Date: January 2026
 
 NWS API Documentation:
@@ -41,7 +41,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION = "4.3"
+VERSION = "4.4"
 APP_NAME = "wx.py"
 
 
@@ -1638,8 +1638,10 @@ def show_fire_weather(wfo):
     """Display fire weather outlook"""
     print("Loading fire weather outlook...", end="\r"); sys.stdout.flush()
     fire = get_fire_weather_outlook(wfo)
+    print(" " * 40, end="\r")  # Clear loading message
     if not fire:
-        print("No fire weather outlook available.")
+        print("\nNo fire weather outlook available.")
+        print("(No active fire weather concerns)")
         try:
             input("\nPress enter to continue...")
         except (EOFError, KeyboardInterrupt):
@@ -1786,7 +1788,8 @@ def show_river_flood(alerts):
     """Display river and flood alerts"""
     flood = get_river_flood_info(alerts)
     if not flood:
-        print("No flood alerts.")
+        print("\nNo river or flood alerts.")
+        print("(No active flood warnings)")
         try:
             input("\nPress enter to continue...")
         except (EOFError, KeyboardInterrupt):
