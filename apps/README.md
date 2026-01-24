@@ -7,6 +7,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [feed.py](#feedpy)
   - [calendar.py](#calendarpy)
   - [callout.py](#calloutpy)
+  - [dict.py](#dictpy)
   - [forms.py](#formspy)
   - [gopher.py](#gopherpy)
   - [hamqsl.py](#hamqslpy)
@@ -96,7 +97,48 @@ Configuration stored in `calendar.conf` in same directory as script:
 
 callout.py
 ----------
----------
+**Type**: Python  
+**Purpose**: Display ham radio station information via call lookup  
+**Information source**: QRZ.com callsign database  
+**Developer**: Brad Brown KC1JMH
+
+**Download or update**:  
+```wget -O callout.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/callout.py && chmod +x callout.py```
+
+dict.py
+-------
+**Type**: Python  
+**Purpose**: Dictionary word lookup using dictd  
+**Information source**: Local dictd server  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Requires 'dict' command-line tool installed on system. Provides simple interface for looking up word definitions.
+
+**Download or update**:  
+```wget -O dict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/dict.py && chmod +x dict.py```
+
+**Features**:
+- Simple word lookup interface
+- Uses standard Linux 'dict' command
+- ASCII art interface optimized for packet radio
+- Automatic update functionality
+- Graceful handling if dict command not installed
+- 40-character terminal width support
+
+**Requirements**:
+```bash
+sudo apt-get install dictd dict
+```
+
+**Usage**:
+- Enter word to look up definition
+- Press 'Q' to quit
+
+**BPQ32 Configuration**:
+```
+APPLICATION X,DICT,C 9 HOST 16 NOCALL K S
+```
+
+forms.py
 **Type**: Python  
 **Purpose**: Gopher protocol client for accessing gopherspace  
 **Information source**: Gopher servers worldwide  

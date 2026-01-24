@@ -31,6 +31,7 @@ All apps continue running even if:
 These applications are custom-built for low bandwidth terminal access over packet radio:
 
 * **callout.py** - Test application demonstrating BPQ callsign capture for other apps.
+* **dict.py** - Dictionary lookup using dictd server. Simple word definition searches.
 * **forms.py** - Fillable forms system for creating formatted messages (ICS-213, radiograms, weather reports, etc.)
 * **gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. It's like the Internet, but for terminals!  
 * **hamqsl.py** - HF propagation reports from www.hamqsl.com.  

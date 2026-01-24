@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.0] - 2026-01-24
+### Added
+- **New Application**: Dictionary lookup using Linux 'dict' command
+  - Simple word definition searches via dictd server
+  - ASCII art logo optimized for packet radio
+  - NOCALL flag (no callsign authentication required)
+  - Graceful handling if dict command not installed
+  - Auto-update functionality with 3-second GitHub timeout
+  - 40-character terminal width support
+  - BPQ32 configuration: `APPLICATION X,DICT,C 9 HOST 16 NOCALL K S`
+  - Requires: `sudo apt-get install dictd dict`
+
 ## [eventcal.py 2.3] - 2026-01-23
 ### Fixed
 - **Auto-Update Path Bug**: Update wrote to current directory instead of script location

@@ -1,0 +1,50 @@
+GYX Weather Report|SKYWARN
+
+. Version 01/23/2026
+# SKYWARN Weather Spotter Form - Gray, Maine (GYX)
+
+! SKYWARN Weather Observation
+
+. Report severe weather observations including precipitation, wind, hail, and storm damage.
+. Data submitted can be compiled into NWS-compatible databases.
+.
+
+!!! Location:
+[LO] Location (Road, Town):
+[ST] State (2-letter code):
+[GR] Maidenhead Grid Square, or leave blank if not applicable:
+
+!!! Date and Time:
+[DA] Date (MM-DD-YYYY):
+[TI] Time (HHMML or HHMMZ):
+
+!!! Observer Information:
+[CS] Call Sign:
+[SP] Spotter ID (or NA):
+
+? Source:
+@0 Amateur Radio
+@1 Trained Spotter
+@2 Media
+@3 Public Service Radio
+@4 Other 3rd Party
+@5 Direct Messaging
+
+!!! Observations:
+[CW] Current Weather (Relevant Info, Be Brief):
+[SN] Snow, Sleet (Inches or NA, storm total add * eg 2.6 or 3.5*):
+[IC] Ice Accretion (Inches or NA):
+[RA] Rainfall (Inches or NA, storm total add * eg 2.6 or 3.5*):
+[HA] Hail Size (Inches or NA):
+[WD] Wind Direction & Speed (AAA@MPH):
+[SD] Storm Damage (Wind, Flooding, Ice Jams, Other Details):
+
+? Observation Mode:
+@0 Personal Observation
+@1 FM Repeater
+@2 Winlink
+@3 DMR
+@4 Direct Messaging
+
+[NT] Net (Name of Radio Net or Other eg EMAIL, SLACK):
+[AI] Additional Information:

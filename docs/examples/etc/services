@@ -15,3 +15,4 @@ feed            63120/tcp                       # RSS bulletin board reader (HOS
 hamqsl          63130/tcp                       # Callsign QSL card lookup (HOST 13)
 test            63140/tcp                       # Amateur exam practice (legacy, HOST 14)
 predict         63150/tcp                       # Solar/ionosphere forecasts (HOST 15)
+dict            63160/tcp                       # Dictionary lookup (HOST 16)
