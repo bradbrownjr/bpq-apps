@@ -1,10 +1,11 @@
 # BPQ Utilities
 
-Sysop tools for network mapping and maintenance.
+Sysop tools for network mapping, maintenance, and service installation.
 
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [install-dxspider.sh - DX Spider Cluster Installer](#install-dxspidersh---dx-spider-cluster-installer)
 - [nodemap.py - Network Topology Mapper](#nodemappy---network-topology-mapper)
 - [nodemap-html.py - Interactive Map Generator](#nodemap-htmlpy---interactive-map-generator)
 
@@ -29,6 +30,86 @@ chmod +x nodemap.py nodemap-html.py
 ```
 
 **Full installation guide**: See [docs/INSTALLATION.md#utilities-installation](../docs/INSTALLATION.md#utilities-installation)
+
+---
+
+## install-dxspider.sh - DX Spider Cluster Installer
+
+Automated DX Spider cluster installation script for LinBPQ nodes. Installs DX Spider as an isolated Perl service with dedicated `sysop` user, integrating with linbpq via telnet.
+
+### Features
+
+- Validates root/sudo before proceeding
+- Installs Perl dependencies via apt (no CPAN)
+- Creates isolated `sysop` user and `spider` group
+- Configures upstream cluster connectivity for spot sharing
+- Creates systemd service for auto-start
+- Appends to /etc/services and /etc/inetd.conf automatically
+- Outputs BPQ32 configuration snippet for manual merge
+
+### Usage
+
+```bash
+sudo ./install-dxspider.sh
+```
+
+### Configuration
+
+Edit variables at top of script before running:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLUSTER_CALL` | WS1EC-6 | Cluster callsign (choose available SSID) |
+| `SYSOP_CALL` | KC1JMH | Primary sysop callsign |
+| `SYSOP_NAME` | Brad | Sysop first name |
+| `LOCATOR` | FN43SR | Maidenhead grid square |
+| `QTH` | Windham, ME | Location description |
+| `UPSTREAM_1` | dxc.nc7j.com | Primary upstream cluster |
+| `UPSTREAM_2` | w3lpl.net | Backup upstream cluster |
+| `SPIDER_PORT` | 7300 | DX Spider telnet port |
+
+### Post-Installation
+
+Add to `bpq32.cfg`:
+
+```
+; Update CMDPORT line (add 7300 at position 16)
+CMDPORT 63000 63010 63020 63030 63040 63050 63060 63070 63080 63090 63100 63110 63120 63130 63140 63160 7300
+
+; Add APPLICATION line
+APPLICATION 20,DX,C 9 HOST 16 S,WS1EC-6,CCEDX,255
+
+; Update INFOMSG Applications section to include:
+; DX      DX Cluster (WS1EC-6)
+```
+
+Then restart linbpq:
+```bash
+sudo systemctl restart linbpq
+```
+
+### Common Spider Commands
+
+| Command | Description |
+|---------|-------------|
+| `sh/dx` | Show recent DX spots |
+| `sh/dx/20` | Show last 20 spots |
+| `sh/dx on 20m` | Show 20m band spots |
+| `sh/links` | Show upstream connections |
+| `connect NODE` | Connect to upstream cluster |
+| `set/filter` | Configure spot filters |
+| `bye` | Disconnect |
+
+### Service Management
+
+```bash
+sudo systemctl status dxspider    # Check status
+sudo systemctl restart dxspider   # Restart service
+journalctl -u dxspider -f         # View logs
+su - sysop -c '/spider/perl/console.pl'  # Spider console
+```
+
+---
 
 ## nodemap.py - Network Topology Mapper
 

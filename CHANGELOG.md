@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [install-dxspider.sh 1.0] - 2026-01-24
+### Added
+- **DX Spider Cluster Installer**: Automated installation script for LinBPQ nodes
+  - Validates root/sudo early and exits with clear error if not elevated
+  - Installs Perl dependencies via apt (no CPAN, compatible with Raspbian 9)
+  - Creates isolated `sysop` user and `spider` group for process separation
+  - Clones DX Spider from official git repository
+  - Configures DXVars.pm, Listeners.pm, and upstream connection scripts
+  - Sets up dual upstream clusters (dxc.nc7j.com, w3lpl.net) for spot sharing
+  - Creates systemd service with auto-restart on failure
+  - Appends to /etc/services and /etc/inetd.conf automatically
+  - Reloads inetd after configuration
+  - Outputs BPQ32 configuration snippet for manual merge
+  - Configurable via variables at top of script (callsign, location, upstreams)
+
 ## [dict.py 1.6] - 2026-01-24
 ### Fixed
 - **Python 3.5.3 Compatibility**: `os.get_terminal_size()` doesn't accept `fallback` parameter
