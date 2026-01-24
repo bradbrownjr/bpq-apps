@@ -68,6 +68,19 @@ fi
 # Install dependencies
 #------------------------------------------------------------------------------
 echo "[1/8] Installing Perl dependencies..."
+
+# Fix Raspbian stretch (Debian 9) EOL repository issue
+if grep -q "stretch" /etc/os-release 2>/dev/null; then
+    if grep -qE "raspbian\.raspberrypi\.org|archive\.raspbian\.org" /etc/apt/sources.list 2>/dev/null; then
+        echo "    Detected Raspbian Stretch with EOL repositories."
+        echo "    Switching to legacy.raspbian.org..."
+        cp /etc/apt/sources.list /etc/apt/sources.list.bak
+        sed -i 's|raspbian.raspberrypi.org|legacy.raspbian.org|g' /etc/apt/sources.list
+        sed -i 's|archive.raspbian.org|legacy.raspbian.org|g' /etc/apt/sources.list
+        echo "    Backup saved to /etc/apt/sources.list.bak"
+    fi
+fi
+
 apt-get update -qq
 apt-get install -y -qq \
     perl \
