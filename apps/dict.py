@@ -5,7 +5,7 @@ Dictionary Lookup Application for BPQ32 Packet Radio
 Uses the Linux 'dict' command to query dictd servers for word definitions.
 Provides simple interface for amateur radio operators to look up word meanings.
 
-Version: 1.5
+Version: 1.6
 Author: Brad Brown, KC1JMH
 Date: January 24, 2026
 """
@@ -16,7 +16,7 @@ import os
 import tempfile
 import stat
 
-VERSION = "1.5"
+VERSION = "1.6"
 
 # ASCII Art Logo (lowercase "dict" from asciiart.eu)
 LOGO = r"""
@@ -211,8 +211,13 @@ def main():
     # Check for updates
     check_for_app_update(VERSION, "dict.py")
     
-    # Get terminal width (fallback to 80 for piped/non-TTY)
-    width = os.get_terminal_size(fallback=(80, 24)).columns
+    # Get terminal width (Python 3.5.3 compatible)
+    # get_terminal_size() doesn't accept fallback parameter in 3.5.3
+    try:
+        width = os.get_terminal_size().columns
+    except (OSError, AttributeError):
+        # No TTY or method doesn't exist - use 80 for inetd/telnet
+        width = 80
     
     # Ensure minimum 40-char width for packet radio
     if width < 40:

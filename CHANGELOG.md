@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.6] - 2026-01-24
+### Fixed
+- **Python 3.5.3 Compatibility**: `os.get_terminal_size()` doesn't accept `fallback` parameter
+  - Wrapped in try/except to catch OSError when no TTY (inetd/telnet)
+  - Falls back to 80-char width for non-TTY connections
+  - App was crashing immediately on startup via BPQ
+
 ## [dict.py 1.5] - 2026-01-24
 ### Fixed
 - **Terminal Width Detection**: Removed exception handler that forced 40-char width
