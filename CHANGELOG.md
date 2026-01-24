@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.2] - 2026-01-24
+### Fixed
+- **Output Buffering**: Added `sys.stdout.flush()` after all print statements
+  - Python buffers stdout when running via inetd TCP sockets
+  - App would connect but display nothing until user disconnected
+  - Now flushes output immediately for real-time display
+
 ## [dict.py 1.1] - 2026-01-24
 ### Fixed
 - **Python 3.5.3 Compatibility**: Replaced `subprocess.check_output(timeout=X)` with `Popen().communicate()`

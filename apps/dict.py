@@ -5,7 +5,7 @@ Dictionary Lookup Application for BPQ32 Packet Radio
 Uses the Linux 'dict' command to query dictd servers for word definitions.
 Provides simple interface for amateur radio operators to look up word meanings.
 
-Version: 1.1
+Version: 1.2
 Author: Brad Brown, KC1JMH
 Date: January 24, 2026
 """
@@ -16,7 +16,7 @@ import os
 import tempfile
 import stat
 
-VERSION = "1.1"
+VERSION = "1.2"
 
 # ASCII Art Logo (lowercase "dict" from asciiart.eu)
 LOGO = r"""
@@ -202,6 +202,7 @@ def main():
     print("DICT v{} - Dictionary Lookup".format(VERSION))
     print("-" * 40)
     print()
+    sys.stdout.flush()
     
     # Check if dict command is installed
     if not check_dict_installed():
@@ -211,12 +212,14 @@ def main():
         print("  sudo apt-get install dictd dict")
         print()
         print("Exiting...")
+        sys.stdout.flush()
         return 1
     
     # Main loop
     while True:
         try:
             print()
+            sys.stdout.flush()
             word = raw_input("Word (or Q to quit) :> ").strip()
             
             if not word:
@@ -238,22 +241,26 @@ def main():
             print(formatted)
             
             print("-" * 40)
+            sys.stdout.flush()
         
         except KeyboardInterrupt:
             print()
             print()
             print("Exiting...")
+            sys.stdout.flush()
             break
         except EOFError:
             print()
             print()
             print("Exiting...")
+            sys.stdout.flush()
             break
         except Exception as e:
             print()
             print("Error: {}".format(str(e)))
             print()
             print("Exiting...")
+            sys.stdout.flush()
             break
     
     return 0
