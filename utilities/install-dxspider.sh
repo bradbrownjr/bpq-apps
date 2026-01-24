@@ -17,13 +17,13 @@
 set -e
 
 #------------------------------------------------------------------------------
-# Configuration - Edit these values for your station
+# Configuration - Defaults (will be auto-detected if possible)
 #------------------------------------------------------------------------------
-CLUSTER_CALL="WS1EC-6"          # Cluster callsign (SSID -6 available)
+CLUSTER_CALL=""                 # Cluster callsign (auto-detected)
 SYSOP_CALL="KC1JMH"             # Primary sysop callsign
 SYSOP_NAME="Brad"               # Sysop first name
 SYSOP_EMAIL="kc1jmh@arrl.net"   # Sysop email (escape @ with \@)
-LOCATOR="FN43SR"                # Maidenhead grid square
+LOCATOR=""                      # Maidenhead grid square (auto-detected)
 QTH="Windham, ME"               # QTH description
 
 # Upstream clusters for spot sharing
@@ -35,6 +35,62 @@ UPSTREAM_2_PORT="7373"
 # Local ports
 SPIDER_PORT="7300"              # DX Spider telnet port
 BPQ_USER="ect"                  # Existing BPQ user (for group membership)
+BPQ_CFG=""                      # Path to bpq32.cfg (auto-detected)
+
+#------------------------------------------------------------------------------
+# Auto-detect configuration from bpq32.cfg
+#------------------------------------------------------------------------------
+detect_bpq_config() {
+    # Find bpq32.cfg
+    for cfg in ~/linbpq/bpq32.cfg /home/*/linbpq/bpq32.cfg /etc/bpq32.cfg; do
+        if [ -f "$cfg" ]; then
+            BPQ_CFG="$cfg"
+            break
+        fi
+    done
+
+    if [ -z "$BPQ_CFG" ]; then
+        echo "    WARNING: Could not find bpq32.cfg"
+        return 1
+    fi
+
+    echo "    Found: $BPQ_CFG"
+
+    # Extract NODECALL (e.g., WS1EC-15 -> WS1EC)
+    local nodecall=$(grep -i "^NODECALL=" "$BPQ_CFG" 2>/dev/null | head -1 | cut -d= -f2 | tr -d ' \r')
+    local basecall=$(echo "$nodecall" | cut -d- -f1)
+
+    if [ -n "$basecall" ]; then
+        echo "    Detected base callsign: $basecall"
+
+        # Find used SSIDs from APPLICATION lines
+        local used_ssids=$(grep -oE "$basecall-[0-9]+" "$BPQ_CFG" 2>/dev/null | cut -d- -f2 | sort -n | uniq)
+        echo "    SSIDs in use: $(echo $used_ssids | tr '\n' ' ')"
+
+        # Find first available SSID (skip 0, prefer 6 for cluster, then 1-15)
+        local available_ssid=""
+        for ssid in 6 7 8 9 11 12 13 14 1; do
+            if ! echo "$used_ssids" | grep -qw "$ssid"; then
+                available_ssid="$ssid"
+                break
+            fi
+        done
+
+        if [ -n "$available_ssid" ]; then
+            CLUSTER_CALL="$basecall-$available_ssid"
+            echo "    Suggested cluster call: $CLUSTER_CALL"
+        fi
+    fi
+
+    # Extract LOCATOR
+    local locator=$(grep -i "^LOCATOR=" "$BPQ_CFG" 2>/dev/null | head -1 | cut -d= -f2 | tr -d ' \r')
+    if [ -n "$locator" ]; then
+        LOCATOR="$locator"
+        echo "    Detected grid square: $LOCATOR"
+    fi
+
+    return 0
+}
 
 #------------------------------------------------------------------------------
 # Validate root
@@ -47,9 +103,57 @@ fi
 
 echo "========================================"
 echo "DX Spider Installation for LinBPQ"
-echo "Cluster: $CLUSTER_CALL"
-echo "Location: $QTH ($LOCATOR)"
 echo "========================================"
+echo ""
+
+#------------------------------------------------------------------------------
+# Auto-detect and confirm configuration
+#------------------------------------------------------------------------------
+echo "Detecting configuration from bpq32.cfg..."
+detect_bpq_config
+
+# Prompt for cluster callsign
+echo ""
+if [ -n "$CLUSTER_CALL" ]; then
+    read -p "Cluster callsign [$CLUSTER_CALL]: " input
+    [ -n "$input" ] && CLUSTER_CALL="$input"
+else
+    read -p "Cluster callsign (e.g., WS1EC-6): " CLUSTER_CALL
+    if [ -z "$CLUSTER_CALL" ]; then
+        echo "ERROR: Cluster callsign is required."
+        exit 1
+    fi
+fi
+
+# Prompt for grid square
+if [ -n "$LOCATOR" ]; then
+    read -p "Grid square [$LOCATOR]: " input
+    [ -n "$input" ] && LOCATOR="$input"
+else
+    read -p "Grid square (e.g., FN43SR): " LOCATOR
+    if [ -z "$LOCATOR" ]; then
+        echo "ERROR: Grid square is required."
+        exit 1
+    fi
+fi
+
+# Prompt for QTH
+read -p "QTH/Location [$QTH]: " input
+[ -n "$input" ] && QTH="$input"
+
+echo ""
+echo "========================================"
+echo "Configuration:"
+echo "  Cluster:  $CLUSTER_CALL"
+echo "  Grid:     $LOCATOR"
+echo "  Location: $QTH"
+echo "========================================"
+echo ""
+read -p "Continue with installation? (Y/n): " confirm
+if [ "$confirm" = "n" ] || [ "$confirm" = "N" ]; then
+    echo "Aborted."
+    exit 0
+fi
 echo ""
 
 #------------------------------------------------------------------------------
