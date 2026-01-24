@@ -140,14 +140,22 @@ rm -f /spider 2>/dev/null || true
 # Clone repository - try GitHub mirror first (official server often down)
 cd /home/sysop
 SPIDER_REPO="https://github.com/dad98253/spider.git"
-SPIDER_REPO_ALT="git://scm.dxcluster.org/scm/spider"
+SPIDER_REPO_ALT="https://github.com/latchdevel/DXspider.git"
 
-echo "    Trying GitHub mirror..."
-if ! sudo -u sysop git clone --quiet "$SPIDER_REPO" spider 2>/dev/null; then
-    echo "    GitHub mirror failed, trying official server..."
-    if ! sudo -u sysop git clone --quiet "$SPIDER_REPO_ALT" spider 2>/dev/null; then
+echo "    Trying GitHub mirror (dad98253)..."
+if sudo -u sysop git clone --quiet "$SPIDER_REPO" spider 2>&1; then
+    echo "    Download successful."
+else
+    echo "    First mirror failed, trying alternate (latchdevel)..."
+    if sudo -u sysop git clone --quiet "$SPIDER_REPO_ALT" spider 2>&1; then
+        echo "    Download successful."
+    else
+        echo ""
         echo "ERROR: Could not clone DX Spider from any source."
-        echo "Try manually: git clone $SPIDER_REPO /home/sysop/spider"
+        echo "Manual install required:"
+        echo "  sudo -u sysop git clone $SPIDER_REPO /home/sysop/spider"
+        echo ""
+        echo "Or download manually from: https://github.com/dad98253/spider"
         exit 1
     fi
 fi
