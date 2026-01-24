@@ -1,14 +1,21 @@
 #!/bin/bash
 # install-dxspider.sh - DX Spider Cluster Installation for LinBPQ
-# Version: 1.0
+# Version: 1.1
 # Author: KC1JMH
 # Date: 2026-01-24
 #
 # Installs DX Spider as an isolated Perl service with dedicated user (sysop),
-# integrating with linbpq via telnet port 7300. Configures upstream cluster
-# connectivity for spot sharing.
+# integrating with linbpq via telnet port 7300.
 #
 # Usage: sudo ./install-dxspider.sh
+#
+# IMPORTANT: After installation, you must contact an upstream DX Spider node
+# sysop to request node peering. Without peering approval, your cluster can
+# receive spots but cannot relay local spots to the network.
+#
+# Find peering partners at:
+#   https://www.dxcluster.info/telnet/index.php
+#   Filter by "DX Spider" software and contact sysops in your region.
 #
 # References:
 #   https://github.com/glaukos78/dxspider_installation_v2
@@ -20,21 +27,15 @@ set -e
 # Configuration - Defaults (will be auto-detected if possible)
 #------------------------------------------------------------------------------
 CLUSTER_CALL=""                 # Cluster callsign (auto-detected)
-SYSOP_CALL="KC1JMH"             # Primary sysop callsign
-SYSOP_NAME="Brad"               # Sysop first name
-SYSOP_EMAIL="kc1jmh@arrl.net"   # Sysop email (escape @ with \@)
+SYSOP_CALL=""                   # Primary sysop callsign (auto-detected)
+SYSOP_NAME=""                   # Sysop first name
+SYSOP_EMAIL=""                  # Sysop email
 LOCATOR=""                      # Maidenhead grid square (auto-detected)
-QTH="Windham, ME"               # QTH description
-
-# Upstream clusters for spot sharing
-UPSTREAM_1="dxc.nc7j.com"
-UPSTREAM_1_PORT="7373"
-UPSTREAM_2="w3lpl.net"
-UPSTREAM_2_PORT="7373"
+QTH=""                          # QTH description
 
 # Local ports
 SPIDER_PORT="7300"              # DX Spider telnet port
-BPQ_USER="ect"                  # Existing BPQ user (for group membership)
+BPQ_USER=""                     # Existing BPQ user (auto-detected)
 BPQ_CFG=""                      # Path to bpq32.cfg (auto-detected)
 
 #------------------------------------------------------------------------------
@@ -62,6 +63,7 @@ detect_bpq_config() {
 
     if [ -n "$basecall" ]; then
         echo "    Detected base callsign: $basecall"
+        SYSOP_CALL="$basecall"
 
         # Find used SSIDs from APPLICATION lines
         local used_ssids=$(grep -oE "$basecall-[0-9]+" "$BPQ_CFG" 2>/dev/null | cut -d- -f2 | sort -n | uniq)
@@ -87,6 +89,13 @@ detect_bpq_config() {
     if [ -n "$locator" ]; then
         LOCATOR="$locator"
         echo "    Detected grid square: $LOCATOR"
+    fi
+
+    # Detect BPQ user from config file ownership
+    local cfg_owner=$(stat -c '%U' "$BPQ_CFG" 2>/dev/null)
+    if [ -n "$cfg_owner" ] && [ "$cfg_owner" != "root" ]; then
+        BPQ_USER="$cfg_owner"
+        echo "    Detected BPQ user: $BPQ_USER"
     fi
 
     return 0
@@ -138,8 +147,32 @@ else
 fi
 
 # Prompt for QTH
-read -p "QTH/Location [$QTH]: " input
+read -p "QTH/Location (e.g., Windham, ME) [$QTH]: " input
 [ -n "$input" ] && QTH="$input"
+if [ -z "$QTH" ]; then
+    read -p "QTH/Location (e.g., Windham, ME): " QTH
+fi
+
+# Prompt for sysop callsign
+if [ -n "$SYSOP_CALL" ]; then
+    read -p "Sysop callsign [$SYSOP_CALL]: " input
+    [ -n "$input" ] && SYSOP_CALL="$input"
+else
+    read -p "Sysop callsign: " SYSOP_CALL
+    if [ -z "$SYSOP_CALL" ]; then
+        echo "ERROR: Sysop callsign is required."
+        exit 1
+    fi
+fi
+
+# Prompt for sysop name
+read -p "Sysop first name: " SYSOP_NAME
+if [ -z "$SYSOP_NAME" ]; then
+    SYSOP_NAME="Sysop"
+fi
+
+# Prompt for sysop email
+read -p "Sysop email (optional): " SYSOP_EMAIL
 
 echo ""
 echo "========================================"
@@ -147,6 +180,7 @@ echo "Configuration:"
 echo "  Cluster:  $CLUSTER_CALL"
 echo "  Grid:     $LOCATOR"
 echo "  Location: $QTH"
+echo "  Sysop:    $SYSOP_CALL ($SYSOP_NAME)"
 echo "========================================"
 echo ""
 read -p "Continue with installation? (Y/n): " confirm
@@ -250,10 +284,17 @@ SPIDER_REPO_ALT="https://github.com/latchdevel/DXspider.git"
 echo "    Trying GitHub mirror (dad98253)..."
 if sudo -u sysop git clone --quiet "$SPIDER_REPO" spider 2>&1; then
     echo "    Download successful."
+    # Switch to master branch (avoid MOJO branch which requires Mojolicious)
+    cd spider
+    sudo -u sysop git checkout master 2>/dev/null || sudo -u sysop git checkout main 2>/dev/null || true
+    cd ..
 else
     echo "    First mirror failed, trying alternate (latchdevel)..."
     if sudo -u sysop git clone --quiet "$SPIDER_REPO_ALT" spider 2>&1; then
         echo "    Download successful."
+        cd spider
+        sudo -u sysop git checkout master 2>/dev/null || sudo -u sysop git checkout main 2>/dev/null || true
+        cd ..
     else
         echo ""
         echo "ERROR: Could not clone DX Spider from any source."
@@ -282,6 +323,11 @@ find /spider -type f -exec chmod 775 {} \;
 
 # Create local directories
 sudo -u sysop mkdir -p /spider/local /spider/local_cmd /spider/connect
+sudo -u sysop mkdir -p /spider/data /spider/data/debug
+
+# Ensure data directory is writable
+chown -R sysop:spider /spider/data
+chmod -R 2775 /spider/data
 
 echo "    Permissions configured."
 
@@ -291,34 +337,53 @@ echo "    Permissions configured."
 echo "[5/8] Configuring DX Spider..."
 
 # Create DXVars.pm configuration
+# Escape @ in email for Perl
+ESCAPED_EMAIL=$(echo "$SYSOP_EMAIL" | sed 's/@/\\@/g')
+
 cat > /spider/local/DXVars.pm << DXVARS_EOF
 # DXVars.pm - Local configuration for $CLUSTER_CALL
 # Generated by install-dxspider.sh on $(date)
 
 package main;
 
-# Cluster identification
+# Cluster identification (CAPITAL LETTERS)
 \$mycall = "$CLUSTER_CALL";
 \$myalias = "$SYSOP_CALL";
 \$myname = "$SYSOP_NAME";
-\$myemail = "$SYSOP_EMAIL";
+\$myemail = "$ESCAPED_EMAIL";
 \$mylocator = "$LOCATOR";
 \$myqth = "$QTH";
+\$mybbsaddr = "$SYSOP_CALL\@$CLUSTER_CALL.#$(echo $QTH | cut -d, -f2 | tr -d ' ' | cut -c1-2 | tr 'a-z' 'A-Z').USA.NOAM";
 
-# Latitude/Longitude (derived from grid square - approximate)
-# FN43SR = ~43.77N, 70.45W
-\$mylatitude = 43.77;
-\$mylongitude = -70.45;
+# Coordinates (approximate - derived from grid square)
+\$mylatitude = 0;
+\$mylongitude = 0;
 
-# Allow telnet connections
-\$allow_resolve = 1;
+# Language
+\$lang = 'en';
+
+# System paths (required)
+\$data = "\$root/data";
+\$system = "\$root/sys";
+\$cmd = "\$root/cmd";
+\$localcmd = "\$root/local_cmd";
+\$userfn = "\$data/users";
+\$motd = "\$data/motd";
+
+# Network
+\$clusteraddr = "localhost";
+\$clusterport = 27754;
+
+# User interface
+\$yes = 'Yes';
+\$no = 'No';
+\$user_interval = 11*60;
+
+# Debug (comment out for production)
+@debug = qw(chan);
 
 # Sysop privileges
 @main::sysop = qw($SYSOP_CALL);
-
-# Cluster settings
-\$pinginterval = 300;          # Ping upstream every 5 minutes
-\$obscount = 5;                # Observation count before timeout
 
 1;
 DXVARS_EOF
@@ -337,37 +402,12 @@ package main;
 1;
 LISTENERS_EOF
 
-# Create upstream connection file for primary cluster
-cat > /spider/connect/$UPSTREAM_1 << UPSTREAM1_EOF
-# Connection script for $UPSTREAM_1
-# This connects to the upstream DX cluster network
-
-timeout 60
-abort (Busy|Sorry|Fail)
-connect telnet $UPSTREAM_1 $UPSTREAM_1_PORT
-client $UPSTREAM_1 telnet
-UPSTREAM1_EOF
-
-# Create upstream connection file for backup cluster
-cat > /spider/connect/$UPSTREAM_2 << UPSTREAM2_EOF
-# Connection script for $UPSTREAM_2
-# Backup upstream DX cluster
-
-timeout 60
-abort (Busy|Sorry|Fail)
-connect telnet $UPSTREAM_2 $UPSTREAM_2_PORT
-client $UPSTREAM_2 telnet
-UPSTREAM2_EOF
-
 chown -R sysop:spider /spider/local /spider/connect
 chmod 644 /spider/local/*.pm
-chmod 644 /spider/connect/*
 
 echo "    Configuration files created:"
 echo "      /spider/local/DXVars.pm"
 echo "      /spider/local/Listeners.pm"
-echo "      /spider/connect/$UPSTREAM_1"
-echo "      /spider/connect/$UPSTREAM_2"
 
 #------------------------------------------------------------------------------
 # Initialize sysop user in Spider
@@ -375,7 +415,11 @@ echo "      /spider/connect/$UPSTREAM_2"
 echo "[6/8] Initializing sysop user database..."
 
 cd /spider/perl
-sudo -u sysop perl create_sysop.pl "$SYSOP_CALL" "$SYSOP_NAME" "$LOCATOR" 2>/dev/null || true
+
+# Create sysop user - requires interactive responses:
+# "Want to add a user? (n/y)" -> y
+# Then it creates the user from DXVars.pm settings
+echo "y" | sudo -u sysop perl create_sysop.pl 2>/dev/null || true
 
 echo "    Sysop user initialized."
 
@@ -410,11 +454,11 @@ systemctl enable dxspider
 echo "    Systemd service created and enabled."
 
 #------------------------------------------------------------------------------
-# Configure inetd and services
+# Add to /etc/services (informational only)
 #------------------------------------------------------------------------------
 echo "[8/8] Configuring network services..."
 
-# Add to /etc/services if not present
+# Add to /etc/services if not present (informational only, systemd handles the port)
 if ! grep -q "^dxspider" /etc/services 2>/dev/null; then
     echo "" >> /etc/services
     echo "# DX Spider Cluster" >> /etc/services
@@ -424,23 +468,8 @@ else
     echo "    dxspider already in /etc/services"
 fi
 
-# Add to /etc/inetd.conf if not present (for BPQ integration)
-if ! grep -q "^dxspider" /etc/inetd.conf 2>/dev/null; then
-    echo "" >> /etc/inetd.conf
-    echo "# DX Spider Cluster for BPQ access" >> /etc/inetd.conf
-    echo "dxspider        stream  tcp     nowait  sysop   /spider/perl/client.pl client.pl sysop localhost" >> /etc/inetd.conf
-    echo "    Added dxspider to /etc/inetd.conf"
-else
-    echo "    dxspider already in /etc/inetd.conf"
-fi
-
-# Reload inetd
-if pgrep -x inetd >/dev/null 2>&1; then
-    killall -HUP inetd
-    echo "    Reloaded inetd"
-else
-    echo "    WARNING: inetd not running - start manually if needed"
-fi
+# NOTE: We do NOT add to inetd.conf - systemd runs the daemon directly
+# inetd would conflict with the systemd service on the same port
 
 #------------------------------------------------------------------------------
 # Start DX Spider
@@ -472,9 +501,33 @@ echo ""
 echo "Test locally:"
 echo "  telnet localhost $SPIDER_PORT"
 echo ""
-echo "Connect to upstream clusters (from Spider console):"
-echo "  connect $UPSTREAM_1"
-echo "  connect $UPSTREAM_2"
+echo "----------------------------------------"
+echo "IMPORTANT: UPSTREAM NODE PEERING"
+echo "----------------------------------------"
+echo "Your cluster is running but NOT connected to the DX network."
+echo "To relay spots bidirectionally, you need peering approval."
+echo ""
+echo "1. Find DX Spider nodes at:"
+echo "   https://www.dxcluster.info/telnet/index.php"
+echo "   Filter by 'DX Spider' and choose nodes in your region."
+echo ""
+echo "2. Contact the sysop and request node peering:"
+echo "   'Hi, I'm $SYSOP_CALL running $CLUSTER_CALL in $QTH ($LOCATOR)."
+echo "   Would you add us as a peering node? Running DX Spider on packet radio.'"
+echo ""
+echo "3. Once approved, create connect script:"
+echo "   /spider/connect/<nodecall>"
+echo ""
+echo "Example connect script for AE3N-2:"
+echo "   timeout 60"
+echo "   abort (Busy|Sorry|Fail)"
+echo "   connect telnet dxc.ae3n.us 7300"
+echo "   'ogin:' '$CLUSTER_CALL'"
+echo "   client ae3n-2 spider"
+echo ""
+echo "4. Define and connect from Spider console:"
+echo "   set/node <nodecall>"
+echo "   connect <nodecall>"
 echo ""
 echo "----------------------------------------"
 echo "BPQ32 CONFIGURATION REQUIRED"
@@ -507,9 +560,10 @@ echo "  su - sysop -c '/spider/perl/console.pl'"
 echo ""
 echo "Common Spider commands:"
 echo "  sh/dx          - Show recent DX spots"
-echo "  sh/links       - Show upstream connections"
+echo "  sh/c           - Show connected nodes/users"
+echo "  set/node CALL  - Define remote node"
 echo "  connect NODE   - Connect to upstream cluster"
-echo "  set/filter     - Configure spot filters"
+echo "  dx FREQ CALL   - Announce a DX spot"
 echo "  bye            - Disconnect"
 echo ""
 echo "73 de $SYSOP_CALL"
