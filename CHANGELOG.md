@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.3] - 2026-01-24
+### Fixed
+- **Display Issues via Telnet/BPQ**: Fixed `()` appearing instead of blank lines
+  - Replaced `print()` with `print("")` to avoid repr display
+  - Changed from `raw_input()` to explicit `sys.stdout.write()` + `sys.stdin.readline()`
+  - Ensures prompt displays immediately before reading input
+  - All output now properly formatted for telnet/BPQ connections
+
 ## [dict.py 1.2] - 2026-01-24
 ### Fixed
 - **Output Buffering**: Added `sys.stdout.flush()` after all print statements

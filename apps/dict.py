@@ -5,7 +5,7 @@ Dictionary Lookup Application for BPQ32 Packet Radio
 Uses the Linux 'dict' command to query dictd servers for word definitions.
 Provides simple interface for amateur radio operators to look up word meanings.
 
-Version: 1.2
+Version: 1.3
 Author: Brad Brown, KC1JMH
 Date: January 24, 2026
 """
@@ -16,7 +16,7 @@ import os
 import tempfile
 import stat
 
-VERSION = "1.2"
+VERSION = "1.3"
 
 # ASCII Art Logo (lowercase "dict" from asciiart.eu)
 LOGO = r"""
@@ -198,19 +198,19 @@ def main():
     
     # Display header
     print(LOGO)
-    print()
+    print("")
     print("DICT v{} - Dictionary Lookup".format(VERSION))
     print("-" * 40)
-    print()
+    print("")
     sys.stdout.flush()
     
     # Check if dict command is installed
     if not check_dict_installed():
         print("Error: 'dict' command not found.")
-        print()
+        print("")
         print("Sysop: Install with:")
         print("  sudo apt-get install dictd dict")
-        print()
+        print("")
         print("Exiting...")
         sys.stdout.flush()
         return 1
@@ -218,19 +218,21 @@ def main():
     # Main loop
     while True:
         try:
-            print()
+            print("")
+            sys.stdout.write("Word (or Q to quit) :> ")
             sys.stdout.flush()
-            word = raw_input("Word (or Q to quit) :> ").strip()
+            word = sys.stdin.readline().strip()
             
             if not word:
                 continue
             
             if word.upper() == 'Q':
-                print()
+                print("")
                 print("Exiting...")
+                sys.stdout.flush()
                 break
             
-            print()
+            print("")
             print("-" * 40)
             
             # Look up word
@@ -244,21 +246,21 @@ def main():
             sys.stdout.flush()
         
         except KeyboardInterrupt:
-            print()
-            print()
+            print("")
+            print("")
             print("Exiting...")
             sys.stdout.flush()
             break
         except EOFError:
-            print()
-            print()
+            print("")
+            print("")
             print("Exiting...")
             sys.stdout.flush()
             break
         except Exception as e:
-            print()
+            print("")
             print("Error: {}".format(str(e)))
-            print()
+            print("")
             print("Exiting...")
             sys.stdout.flush()
             break
