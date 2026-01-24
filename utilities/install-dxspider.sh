@@ -71,7 +71,8 @@ echo "[1/8] Installing Perl dependencies..."
 
 # Fix Raspbian stretch (Debian 9) EOL repository issue
 if grep -q "stretch" /etc/os-release 2>/dev/null; then
-    if grep -qE "raspbian\.raspberrypi\.org|archive\.raspbian\.org" /etc/apt/sources.list 2>/dev/null; then
+    # Only match uncommented lines pointing to EOL repos
+    if grep -v "^#" /etc/apt/sources.list 2>/dev/null | grep -qE "raspbian\.raspberrypi\.org|archive\.raspbian\.org"; then
         echo "    Detected Raspbian Stretch with EOL repositories."
         echo "    Switching to legacy.raspbian.org..."
         cp /etc/apt/sources.list /etc/apt/sources.list.bak
