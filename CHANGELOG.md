@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `check_output` timeout parameter not available in Python 3.5.3
   - Removed `subprocess.TimeoutExpired` exception (doesn't exist in 3.5.3)
   - Now uses Popen with communicate() for proper compatibility
+- **BPQ Configuration**: Removed `S` flag from APPLICATION line (conflicts with NOCALL)
+  - Correct: `APPLICATION X,DICT,C 9 HOST 15 NOCALL K`
+  - App was blocking on stdin waiting for callsign that never arrived
+- **Service Name Conflict**: Must use unique service name in /etc/services
+  - Standard dictd uses `dict` on port 2628
+  - BPQ app should use `bpqdict` on port 63160 to avoid collision
 
 ## [dict.py 1.0] - 2026-01-24
 ### Added

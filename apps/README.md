@@ -135,7 +135,7 @@ sudo apt-get install dictd dict
 
 **BPQ32 Configuration**:
 ```
-APPLICATION X,DICT,C 9 HOST 16 NOCALL K S
+APPLICATION X,DICT,C 9 HOST 16 NOCALL K
 ```
 
 forms.py
