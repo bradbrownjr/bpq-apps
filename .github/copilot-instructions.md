@@ -459,6 +459,7 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 - inetd user: Must match BPQ user (usually `ect` or `pi`) for file access
 - Service restarts: `sudo killall -HUP inetd` after /etc/inetd.conf changes
 - Path resolution: Use absolute paths in inetd.conf (`/home/ect/apps/wx.py`)
+- **Service naming collision:** Don't name app "dict" (conflicts with standard port 2628). Use "dictionary" or other name in `/etc/services` and inetd.conf. BPQ APPLICATION name can still be DICT, but system service name must differ to avoid port resolution conflicts.
 
 **Auto-Update Implementation:**
 - Must use atomic writes (write to temp, then rename)

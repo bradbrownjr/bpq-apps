@@ -108,35 +108,96 @@ callout.py
 dict.py
 -------
 **Type**: Python  
-**Purpose**: Dictionary word lookup using dictd  
-**Information source**: Local dictd server  
+**Purpose**: Dictionary word lookup using the Linux `dict` command (dictd client)  
+**Information source**: Local dictd server or online via dictd protocol  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Requires 'dict' command-line tool installed on system. Provides simple interface for looking up word definitions.
+**Version**: 1.6
+
+**What It Is**:
+An interactive dictionary lookup application for packet radio that queries word definitions via the standard Linux `dict` command-line tool. Provides a simple interface for radio operators to look up words with definitions displayed at 80-column terminal width with automatic pagination.
+
+**Prerequisites**:
+1. Linux `dict` package (dictd client) must be installed
+2. At least one dictionary database available (online or local)
+3. Network connectivity to dictd server (typically online)
+
+```bash
+sudo apt-get install dictd dict
+```
+
+**Important Naming Constraint**:
+⚠️ **CRITICAL: Cannot be named "dict" in system configuration**
+- The Linux package `dict` is registered on standard port 2628 in `/etc/services`
+- BPQ32 will fail to resolve port conflicts if this app is named "dict" in `/etc/services`
+- **Solution: Name the BPQ service "dictionary" instead**
+  - In `/etc/services`: `dictionary    63160/tcp`
+  - In `/etc/inetd.conf`: `dictionary    stream  tcp  nowait  ect  /home/ect/apps/dict.py`
+  - In `bpq32.cfg`: `APPLICATION X,DICT,C 9 HOST Y NOCALL K`
+  - The BPQ APPLICATION name can still be "DICT"; only the system service name must be different
+
+**How It Works**:
+1. User connects to app and enters a word at the prompt
+2. App calls `dict <word>` subprocess to look up definition
+3. Output is word-wrapped to terminal width (80 chars default for inetd)
+4. Results paginated at 20-line intervals with user quit option
+5. User can press Enter to continue or 'Q' to quit
 
 **Download or update**:  
 ```wget -O dict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/dict.py && chmod +x dict.py```
 
 **Features**:
 - Simple word lookup interface
-- Uses standard Linux 'dict' command
-- ASCII art interface optimized for packet radio
-- Automatic update functionality
-- Graceful handling if dict command not installed
-- 40-character terminal width support
-
-**Requirements**:
-```bash
-sudo apt-get install dictd dict
-```
+- Queries local or online dictd servers
+- ASCII art logo for packet radio
+- Dynamic terminal width handling (80-char fallback for inetd)
+- Pagination every 20 lines with graceful quit option
+- Word wrapping for long definitions
+- Automatic update functionality (3-second GitHub timeout)
+- Graceful error handling if `dict` command not installed
+- Python 3.5.3 compatible (Raspbian 9, RPi 3B)
+- No authentication required (NOCALL flag)
 
 **Usage**:
-- Enter word to look up definition
-- Press 'Q' to quit
+```
+(app banner and ASCII logo)
+dict v1.X - Dictionary Lookup
 
-**BPQ32 Configuration**:
+Enter word (Q to quit): aircraft
+(definitions displayed with pagination)
+(press Enter, Q to quit)
 ```
-APPLICATION X,DICT,C 9 HOST 16 NOCALL K
+
+**BPQ32 Configuration** (WS1EC example):
 ```
+# Port 9 CMDPORT list position (HOST 15)
+CMDPORT 63000 63010 63020 63030 63040 63050 63060 63070 63080 63090 63100 63110 63120 63130 63140 63160
+
+# /etc/services entry
+dictionary      63160/tcp               # Dictionary lookup (HOST 15)
+
+# /etc/inetd.conf entry
+dictionary      stream  tcp     nowait  ect     /home/ect/apps/dict.py
+
+# BPQ32 APPLICATION line
+APPLICATION 6,DICT,C 9 HOST 15 NOCALL K
+```
+
+**Data Flow**:
+```
+User telnet → Port 63160 → inetd → dict.py stdin/stdout → subprocess dict → dictd server
+```
+
+**Offline Behavior**:
+- If dictd server unavailable: Shows "Dict lookup failed" error
+- App continues running; user can try different word
+- Does not block or crash on network failure
+
+**Auto-Update Protocol**:
+- Checks GitHub for newer version on startup (3-second timeout)
+- If update available, downloads atomically to temp file, renames to replace current
+- Preserves executable permissions
+- Cleans up temp files on failure
+- Version stored in script docstring (e.g., `Version: 1.6`)
 
 forms.py
 **Type**: Python  
