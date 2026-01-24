@@ -5,7 +5,7 @@ Dictionary Lookup Application for BPQ32 Packet Radio
 Uses the Linux 'dict' command to query dictd servers for word definitions.
 Provides simple interface for amateur radio operators to look up word meanings.
 
-Version: 1.3
+Version: 1.4
 Author: Brad Brown, KC1JMH
 Date: January 24, 2026
 """
@@ -16,7 +16,7 @@ import os
 import tempfile
 import stat
 
-VERSION = "1.3"
+VERSION = "1.4"
 
 # ASCII Art Logo (lowercase "dict" from asciiart.eu)
 LOGO = r"""
@@ -155,15 +155,16 @@ def lookup_word(word):
 
 def format_output(text, width):
     """
-    Format text output to fit within specified width.
-    Preserves existing line breaks.
+    Format text output to fit within specified width with word wrapping.
+    Adds pagination for long output (20 lines per page).
+    Returns tuple: (formatted_lines, user_quit)
     """
     lines = []
     for line in text.split('\n'):
         if len(line) <= width:
             lines.append(line)
         else:
-            # Simple word wrap
+            # Word wrap at terminal width
             words = line.split()
             current_line = ""
             for word in words:
@@ -178,7 +179,31 @@ def format_output(text, width):
                     current_line = word
             if current_line:
                 lines.append(current_line)
-    return '\n'.join(lines)
+    return lines
+
+
+def paginate_output(lines):
+    """
+    Display lines with pagination (20 lines per page).
+    Returns True if user quit, False if completed normally.
+    """
+    line_count = 0
+    for line in lines:
+        print(line)
+        sys.stdout.flush()
+        line_count += 1
+        
+        # Paginate every 20 lines
+        if line_count % 20 == 0 and line_count < len(lines):
+            try:
+                sys.stdout.write("(press Enter, Q to quit) ")
+                sys.stdout.flush()
+                response = sys.stdin.readline().strip().upper()
+                if response == 'Q':
+                    return True
+            except (EOFError, KeyboardInterrupt):
+                return True
+    return False
 
 
 def main():
@@ -238,12 +263,18 @@ def main():
             # Look up word
             success, output = lookup_word(word)
             
-            # Format and display output
-            formatted = format_output(output, width)
-            print(formatted)
+            # Format and display output with pagination
+            lines = format_output(output, width)
+            user_quit = paginate_output(lines)
             
             print("-" * 40)
             sys.stdout.flush()
+            
+            if user_quit:
+                print("")
+                print("Exiting...")
+                sys.stdout.flush()
+                break
         
         except KeyboardInterrupt:
             print("")

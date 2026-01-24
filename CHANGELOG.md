@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.4] - 2026-01-24
+### Changed
+- **Dynamic Terminal Width**: Output now wraps at detected terminal width instead of fixed 40 chars
+  - Word wrapping respects terminal boundaries (80+ columns on desktop, 40 on mobile)
+  - Fallback to 80 chars for piped/non-TTY input
+- **Pagination Added**: Long definitions now paginate every 20 lines
+  - Prompt: "(press Enter, Q to quit)" between pages
+  - Prevents flooding terminal with long dictionary entries
+  - User can quit mid-definition to return to word prompt
+
 ## [dict.py 1.3] - 2026-01-24
 ### Fixed
 - **Display Issues via Telnet/BPQ**: Fixed `()` appearing instead of blank lines
