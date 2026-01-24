@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.1] - 2026-01-24
+### Fixed
+- **Python 3.5.3 Compatibility**: Replaced `subprocess.check_output(timeout=X)` with `Popen().communicate()`
+  - `check_output` timeout parameter not available in Python 3.5.3
+  - Removed `subprocess.TimeoutExpired` exception (doesn't exist in 3.5.3)
+  - Now uses Popen with communicate() for proper compatibility
+
 ## [dict.py 1.0] - 2026-01-24
 ### Added
 - **New Application**: Dictionary lookup using Linux 'dict' command
