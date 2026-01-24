@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.5] - 2026-01-24
+### Fixed
+- **Terminal Width Detection**: Removed exception handler that forced 40-char width
+  - Now properly uses 80-char fallback when running via inetd/telnet
+  - Exception handler was catching failures and overriding fallback parameter
+  - Dictionary definitions now display at full width instead of squished 40 chars
+
 ## [dict.py 1.4] - 2026-01-24
 ### Changed
 - **Dynamic Terminal Width**: Output now wraps at detected terminal width instead of fixed 40 chars
