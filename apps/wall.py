@@ -355,11 +355,11 @@ def main_loop(callsign):
     
     # Standardized header with ASCII logo
     print()
-    print(r"  __               _ ")
-    print(r" / _| ___  ___  __| |")
-    print(r"| |_ / _ \/ _ \/ _` |")
-    print(r"|  _|  __/  __/ (_| |")
-    print(r"|_|  \___|\___|\__,_|")
+    print(r"               _ _ ")
+    print(r"__      ____ _| | |")
+    print(r"\ \ /\ / / _` | | |")
+    print(r" \ V  V / (_| | | |")
+    print(r"  \_/\_/ \__,_|_|_|")
     print()
     print("Community Wall v{} - One-liner Message Board".format(VERSION))
     print()
