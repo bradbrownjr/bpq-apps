@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Changed
+- **Rebranded Feed to Wall**: `feed.py` renamed to `wall.py` for better description of community message wall functionality
+  - Updated all configuration examples (bpq32.cfg, /etc/services)
+  - Renamed data file from `feed_board.json` to `wall_board.json`
+  - Updated documentation and examples throughout repository
+  - Application name in BPQ changed from FEED to WALL
 
 ## [install-dxspider.sh 1.0] - 2026-01-24
 ### Added

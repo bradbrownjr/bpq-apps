@@ -16,7 +16,7 @@ Custom applications for a BPQ32 packet radio node
 **📡 Offline Capability**: All applications are designed to work reliably even when internet connectivity is unavailable. This is critical for packet radio nodes with intermittent or no internet access. Apps use local caching, graceful error handling, and user-friendly offline messages instead of crashing on network failures.
 
 **Offline Features by Application**:
-- **hamtest.py, feed.py, predict.py, forms.py**: Cache local data (questions, feeds, solar data, templates) for offline use
+- **hamtest.py, wall.py, predict.py, forms.py**: Cache local data (questions, messages, solar data, templates) for offline use
 - **rss-news.py, hamqsl.py, space.py, wx.py, wx-me.py**: Show friendly "Internet unavailable" messages instead of errors
 - **gopher.py, qrz3.py, callout.py, wxnws-ftp.py**: Work offline with graceful degradation of features
 
@@ -39,6 +39,7 @@ These applications are custom-built for low bandwidth terminal access over packe
 * **predict.py** - HF propagation estimator using simplified ionospheric model. Predicts best bands and times for contacts between two locations. Resilient design works online, cached, or fully offline. Supports gridsquare, GPS, DMS, state, country, and callsign input with HamDB lookup integration.
 * **qrz3.py** - Look up name, city, state, country of an amateur radio operator with QRZ.com.  
 * **rss-news.py** - News feed reader with categorized feeds: News, Science, Technology, Weather, and of course, ham radio topics.  
+* **wall.py** - Community bulletin board for one-liner messages. Users can post, view, and delete their own messages.
 * **space.py** - NOAA Space Weather reports and solar activity data.  
 * **sysinfo.sh** - Node system information and BBS service status checker.  
 * **wx.py** - Weather reports using National Weather Service API.

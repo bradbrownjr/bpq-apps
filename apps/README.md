@@ -4,7 +4,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 ## Table of Contents
 - [Features](#features)
 - [Applications](#applications)
-  - [feed.py](#feedpy)
+  - [wall.py](#wallpy)
   - [calendar.py](#calendarpy)
   - [callout.py](#calloutpy)
   - [dict.py](#dictpy)
@@ -35,16 +35,16 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 
 ## Applications
 
-feed.py
+wall.py
 -----------
 **Type**: Python  
-**Purpose**: Community message feed for posting and viewing one-liner messages  
+**Purpose**: Community bulletin board for posting and viewing one-liner messages  
 **Information source**: User submissions stored locally  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Twitter-style message feed door application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
+**Notes**: Community message wall application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
 
 **Download or update**:  
-```wget -O feed.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/feed.py && chmod +x feed.py```
+```wget -O wall.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wall.py && chmod +x wall.py```
 
 **Features**:
 - Post one-liner messages (up to 80 characters)
