@@ -54,7 +54,7 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
 
 *Apps with local caching (use cached data as fallback):*
 - `hamtest.py`: Caches question_pools/*.json locally (uses cached pools if offline)
-- `feed.py`: Caches feed_board.json with timestamps (shows cached articles if fetch fails)
+- `wall.py`: Caches wall_board.json with timestamps (shows cached messages if fetch fails)
 - `predict.py`: Caches solar_cache.json (uses cached data if NOAA unreachable, max 7 days stale)
 - `forms.py`: Caches forms/*.frm templates (displays cached forms if network down)
 
@@ -126,7 +126,7 @@ APPLICATION 5,APPNAME,C 9 HOST # NOCALL S K,CALLSIGN,FLAGS
       """Remove SSID from callsign"""
       return callsign.split('-')[0] if callsign else ""
   ```
-- Used by: feed.py (bulletin board authors), forms.py (form submitter)
+- Used by: wall.py (bulletin board authors), forms.py (form submitter)
 
 ## CLI Design Standards
 **All command-line options must have both long and short forms:**
@@ -186,7 +186,7 @@ SEE ALSO
 - Lowercase letter designs (modern, polished appearance)
 - Implemented using raw strings to handle backslash escaping: `r"ASCII art with \ backslashes"`
 - Standard 5-7 line height for consistency
-- Examples: feed.py, forms.py, gopher.py, hamtest.py, predict.py, qrz3.py, rss-news.py, space.py, wx-me.py, wx.py
+- Examples: wall.py, forms.py, gopher.py, hamtest.py, predict.py, qrz3.py, rss-news.py, space.py, wx-me.py, wx.py
 
 **Standard Interface Pattern**:
 ```
@@ -281,7 +281,7 @@ bpq-apps/
 - inetd pipes stdin/stdout to TCP socket
 - Single-instance per user (new process per connection)
 - Must handle BPQ callsign via stdin (when S flag set)
-- Examples: forms.py, hamtest.py, wx.py, feed.py
+- Examples: forms.py, hamtest.py, wx.py, wall.py
 
 *2. TCP Game Servers (games/)*:
 - Standalone servers (always-on daemons)
