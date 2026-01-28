@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -240,7 +240,11 @@ class WikiClient:
         # Import requests library
         try:
             import requests
-            self.requests = requests
+            # Use session with proper User-Agent (required by Wikipedia)
+            self.session = requests.Session()
+            self.session.headers.update({
+                'User-Agent': 'WikiPacketRadio/{} (https://github.com/bradbrownjr/bpq-apps; packet radio terminal)'.format(VERSION)
+            })
         except ImportError:
             print("Error: requests library not found.")
             print("Install with: pip3 install requests")
@@ -248,14 +252,15 @@ class WikiClient:
     
     def _make_request(self, url, params, timeout=10):
         """Make HTTP request with timeout and error handling"""
+        import requests
         try:
-            response = self.requests.get(url, params=params, timeout=timeout)
+            response = self.session.get(url, params=params, timeout=timeout)
             response.raise_for_status()
             return response.json()
-        except self.requests.exceptions.Timeout:
+        except requests.exceptions.Timeout:
             print("\nRequest timed out. Try again later.")
             return None
-        except self.requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException as e:
             if not is_internet_available():
                 print("\nInternet appears to be unavailable.")
                 print("Try again later.")
@@ -316,7 +321,7 @@ class WikiClient:
         )
         
         try:
-            response = self.requests.get(url, timeout=10)
+            response = self.session.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
             

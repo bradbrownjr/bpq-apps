@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.4] - 2026-01-28
+### Fixed
+- **403 Forbidden error**: Wikipedia API now requires proper User-Agent header
+  - Added User-Agent header to all HTTP requests via requests.Session
+  - Format: `WikiPacketRadio/1.4 (https://github.com/bradbrownjr/bpq-apps; packet radio terminal)`
+  - Searches and article fetches now work correctly
+
 ## [dict.py 1.9] - 2026-01-28
 ### Fixed
 - **Silent auto-update**: Added update messages and proper exit after update
