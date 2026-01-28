@@ -1,5 +1,16 @@
 # YAPP Protocol Technical Documentation
 
+> ⚠️ **DEAD END FOR PACKET RADIO - JANUARY 2026**
+>
+> This protocol is **NOT VIABLE** for BPQ32 packet radio applications due to architectural
+> limitations. Control characters required by YAPP are always filtered by BPQ32's terminal
+> emulation layer, and packet radio users have no way to bypass this filtering.
+>
+> **Retained as reference documentation** in case G8BPQ adds binary mode support to BPQ32.
+>
+> For current packet radio file serving needs, use **text-based approaches** (forms.py,
+> gopher.py text viewing). See "YAPP Over BPQ32 stdio - Technical Limitations" section below.
+
 ## Overview
 
 **YAPP** (Yet Another Packet Protocol) is a file transfer protocol designed for amateur packet radio BBS systems. It was created by **Jeff Jacobsen, WA7MBL** (author of the original W0RLI/WA7MBL BBS software) as a simple, reliable method to transfer binary files over AX.25 packet radio links.

@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [YAPP Dead End - Cleanup] - 2026-01-28
+### Removed
+- **yapp-demo-server.py**: Deleted proof-of-concept socket server
+  - Proved protocol works via direct sockets
+  - But packet radio users have no way to access socket servers
+  - Cannot bypass BPQ32 stdio filtering (no outbound TELNET command)
+  - Socket approach only works for internet users, not RF users
+
+### Changed
+- **yapp.py**: Updated header to "DEAD END - NOT VIABLE"
+  - Clarified that packet radio users CANNOT bypass control byte filtering
+  - Only access path is via APPLICATION (stdio) which strips < 0x20
+  - Code retained as reference for unlikely case G8BPQ adds binary mode
+- **YAPP-PROTOCOL.md**: Added prominent warning at top
+  - Documents architectural impossibility for packet radio
+  - Recommends text-based file serving instead (forms.py, gopher.py)
+  - Research preserved for historical reference
+
 ## [YAPP Demo Server Created] - 2026-01-28
 ### Added
 - **yapp-demo-server.py v1.0**: Proof-of-concept YAPP socket server

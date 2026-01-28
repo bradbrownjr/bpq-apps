@@ -3,16 +3,24 @@
 """
 YAPP Protocol Implementation for BPQ Packet Radio Apps
 
-STATUS: EXPERIMENTAL - NOT FUNCTIONAL
-    This implementation is incomplete. YAPP requires sending raw binary
-    control bytes (0x01-0x06, etc.) which are stripped/filtered by the
-    BPQ32 -> inetd -> stdio pipeline. The terminal emulation layer
-    filters control bytes < 0x20, causing YAPP frames to be corrupted.
-    
-    Possible solutions (not yet implemented):
-    1. Dedicated YAPP socket server (bypasses stdio filtering)
-    2. ASCII-safe encoding (incompatible with standard YAPP clients)
-    3. Direct BPQ32 integration via DLL interface
+⚠️  STATUS: DEAD END - NOT VIABLE FOR PACKET RADIO
+
+PROBLEM: Control characters (< 0x20) required by YAPP are ALWAYS stripped by
+BPQ32's terminal emulation layer. Packet radio users have NO way to bypass
+this filtering - they can only access services via APPLICATION commands which
+go through the stdio/inetd pipeline.
+
+ROOT CAUSES (per BPQ32 source code analysis Jan 2026):
+    1. Terminal emulation filters < 0x20 (TelnetV6.c:861-897)
+    2. Node explicitly rejects YAPP frames (Cmd.c:4972-5007)
+    3. No telnet binary mode support (only echo/suppressgoahead)
+    4. Packet radio users cannot make outbound TCP connections
+
+This code is REFERENCE ONLY for the unlikely case G8BPQ adds binary mode
+support to BPQ32. For current packet radio file serving, use text-based
+approaches (forms.py, gopher.py text viewing).
+
+See docs/YAPP-PROTOCOL.md for complete technical analysis and research.
 
 A Python 3.5.3 compatible implementation of the YAPP (Yet Another Packet
 Protocol) file transfer protocol for packet radio networks.
