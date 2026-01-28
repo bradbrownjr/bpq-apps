@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.6
+Version: 1.7
 Date: January 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.6"
+VERSION = "1.7"
 APP_NAME = "forms.py"
 
 import os
@@ -876,11 +876,14 @@ class FormsApp:
         """Main application loop"""
         self.clear_screen()
         
+        # Show loading message immediately
+        print("Loading form templates...")
+        sys.stdout.flush()
+        
         # Check for application updates
         self.check_for_app_update()
         
         # Load form templates
-        print("Loading form templates...")
         if not self.load_forms():
             print("\nNo forms available. Exiting.")
             return
