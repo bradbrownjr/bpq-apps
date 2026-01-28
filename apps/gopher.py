@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.24
+Version: 1.25
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.24"
+VERSION = "1.25"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -360,8 +360,8 @@ class GopherClient:
                     # On last page, empty means done viewing
                     break
             elif response.startswith('b'):
-                # Back to menu
-                break
+                # Back - navigate to previous page in history
+                return 'back'
             elif response.startswith('p'):
                 # Previous page
                 if current_page > 0:
@@ -524,6 +524,15 @@ class GopherClient:
                     else:
                         print("Invalid bookmark number")
                 return True
+            elif result == 'back':
+                # Navigate back in history
+                if self.history:
+                    prev_url = self.history.pop()
+                    self.current_url = prev_url
+                    self.navigate_to(prev_url)
+                else:
+                    print("No previous page in history")
+                return True
             elif isinstance(result, int):
                 # User selected item by number
                 selectable = [item for item in items if item['type'] != 'i']
@@ -625,6 +634,15 @@ class GopherClient:
                             self.navigate_to(BOOKMARKS[idx][1])
                         else:
                             print("Invalid bookmark number")
+                    return True
+                elif result == 'back':
+                    # Navigate back in history
+                    if self.history:
+                        prev_url = self.history.pop()
+                        self.current_url = prev_url
+                        self.navigate_to(prev_url)
+                    else:
+                        print("No previous page in history")
                     return True
                 elif isinstance(result, int):
                     # User selected item by number
