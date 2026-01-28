@@ -12,13 +12,13 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.5
+Version: 1.6
 Date: January 2026
 """
 
 import sys
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -621,12 +621,14 @@ class GopherClient:
 
 
 if __name__ == '__main__':
-    # Check for app updates
-    check_for_app_update(VERSION, APP_NAME)
     try:
+        # Check for app updates
+        check_for_app_update(VERSION, APP_NAME)
         client = GopherClient()
         client.run()
     except KeyboardInterrupt:
+        print("\n\nExiting...")
+    except EOFError:
         print("\n\nExiting...")
     except Exception as e:
         print("\nError: {}".format(str(e)))
