@@ -409,20 +409,200 @@ An FTP client app that bridges FTP servers to packet radio users:
 - Caching frequently accessed files
 - Internet connectivity detection
 
+---
+
+## YAPP Over BPQ32 stdio - Technical Limitations
+
+### The Core Problem
+
+BPQ32 APPLICATIONs invoked via `C 9 HOST #` connect to inetd, which pipes stdin/stdout to TCP sockets. This pipeline includes **terminal emulation layers that filter ASCII control characters < 0x20**, breaking YAPP protocol frames.
+
+**Evidence from BPQ32 source code** (Cmd.c:4972-5007):
+```c
+// Check for sending YAPP to Node
+if (len == 2 && ptr1[0] == 5 && ptr1[1] == 1)
+{
+    ptr1[0] = 0x15;  // NAK
+    ptr1[1] = sprintf(&ptr1[2], "Node doesn't support YAPP Transfers");
+    // ... send response
+}
+```
+
+BPQ32 explicitly rejects YAPP at the node command level. Even if this check were bypassed, the stdio pipeline strips control bytes:
+
+- **SOH (0x01)**, **STX (0x02)**, **ETX (0x03)** - frame delimiters
+- **EOT (0x04)**, **ENQ (0x05)**, **ACK (0x06)** - handshaking
+- **DLE (0x10)**, **NAK (0x15)**, **CAN (0x18)** - control flow
+- **Length bytes 0x00-0x1F** - critical for frame parsing
+
+### Why Control Bytes Are Stripped
+
+From LinBPQ source analysis (TelnetV6.c, telnetserver.h):
+
+1. **Telnet protocol handling**: IAC (0xFF), control character negotiation
+2. **Terminal emulation**: VT100/ANSI escape sequence processing
+3. **Flow control**: XON/XOFF (0x11/0x13) for serial compatibility
+4. **Line discipline**: CR/LF normalization, backspace handling
+
+The stdio pipeline was designed for **text-mode terminal emulation**, not raw binary transfer protocols.
+
+### Alternative Approaches Research
+
+#### 1. Dedicated TCP Socket Server (RECOMMENDED)
+
+**Concept**: Run YAPP as a standalone TCP server, bypassing stdio entirely.
+
+**Implementation**:
+```python
+# yapp_server.py - standalone daemon
+import socket
+import threading
+from yapp import YAPPProtocol
+
+def handle_yapp_session(conn, addr):
+    yapp = YAPPProtocol(conn)  # Direct socket I/O
+    yapp.receive_file()  # No stdio filtering
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(('0.0.0.0', 63020))  # Dedicated YAPP port
+server.listen(5)
+
+while True:
+    conn, addr = server.accept()
+    threading.Thread(target=handle_yapp_session, args=(conn, addr)).start()
+```
+
+**BPQ32 Configuration**:
+```
+; /etc/services
+yapp-files    63020/tcp    # YAPP File Transfer Server
+
+; /etc/inetd.conf  
+yapp-files stream tcp nowait ect /usr/bin/python3 python3 /home/ect/apps/yapp_server.py
+
+; bpq32.cfg
+APPLICATION 7,YAPP,C 9 HOST 7 NOCALL S K,NOCALL,SK
+```
+
+**Advantages**:
+- No stdio filtering - raw binary I/O via socket
+- Full YAPP protocol compatibility
+- Multi-user support with threading
+- Can implement YAPPC (resume) easily
+
+**Disadvantages**:
+- Requires additional port configuration
+- User must explicitly connect to YAPP port (not transparent)
+- Cannot integrate seamlessly into existing apps (e.g., gopher.py)
+
+#### 2. ASCII-Safe Encoding Wrapper
+
+**Concept**: Encode YAPP frames to avoid control characters < 0x20.
+
+**Base64 Approach**:
+```python
+import base64
+
+def send_yapp_frame_safe(sock, control, data):
+    # Build YAPP frame
+    frame = bytes([control, len(data)]) + data
+    
+    # Encode to ASCII-safe Base64
+    encoded = base64.b64encode(frame)
+    
+    # Wrap in printable delimiters
+    sock.send(b"<YAPP>" + encoded + b"</YAPP>\r\n")
+```
+
+**Advantages**:
+- Works over stdio without modification
+- Can be integrated into existing APPLICATIONs
+- No additional ports required
+
+**Disadvantages**:
+- **Not YAPP-compatible** - breaks protocol standard
+- 33% size overhead (Base64 encoding)
+- Requires both ends to implement custom encoding
+- Defeats the purpose of using YAPP (existing terminal software won't work)
+
+#### 3. BPQ32 DLL Integration (Windows Only)
+
+**Concept**: Use BPQ32's DLL interface to bypass stdio and write directly to AX.25 frames.
+
+**Research from BPQ32 documentation**:
+- `BPQDLLInterface.h` provides `SendRaw()` function
+- Direct access to L2 (AX.25) layer
+- No terminal emulation filtering
+
+**Advantages**:
+- True binary transparency
+- Full YAPP compatibility
+- Can implement within BPQ32 as native feature
+
+**Disadvantages**:
+- **Windows-only** (DLL not available on Linux/Raspberry Pi)
+- Requires C/C++ development (not Python)
+- Tight coupling to BPQ32 internals
+- Not portable to LinBPQ installations
+
+#### 4. Custom Telnet Binary Mode
+
+**Concept**: Negotiate Telnet BINARY mode (RFC856) to disable control character processing.
+
+**Telnet Option Negotiation**:
+```python
+# IAC WILL BINARY (0xFF 0xFB 0x00)
+# IAC DO BINARY (0xFF 0xFD 0x00)
+sock.send(b"\xFF\xFB\x00")  # Request binary send
+sock.send(b"\xFF\xFD\x00")  # Request binary receive
+```
+
+**Research findings** (TelnetV6.c:5424-5453):
+```c
+BOOL ProcessTelnetCommand(struct ConnectionInfo * sockptr, byte * Msg, int * Len)
+{
+    // Telnet IAC processing
+    if (cmd == DOx || cmd == DONT || cmd == WILL || cmd == WONT)
+    {
+        // Option negotiation
+    }
+}
+```
+
+**Advantages**:
+- Standard Telnet protocol extension
+- Should disable control character filtering
+- No code changes to BPQ32 needed
+
+**Disadvantages**:
+- **Requires terminal/client support** for binary mode
+- May not work with all BPQ32 versions (depends on telnet implementation)
+- Still goes through terminal emulation layer (may not fully disable filtering)
+- Untested - no evidence this works in practice
+
+### Conclusion
+
+**YAPP over stdio is fundamentally broken** in BPQ32/inetd architecture. The recommended approach is:
+
+1. **Short-term**: Disable YAPP in gopher.py (already done in v1.17)
+2. **Long-term**: Implement dedicated YAPP socket server (yapp_server.py) as standalone daemon
+3. **Future**: Investigate Telnet binary mode as potential transparent solution
+
 ### Implementation Notes
 
 Since BPQ32 node rejects YAPP at the command level, all YAPP transfers
 must occur within applications that:
 
-1. Run as BPQ APPLICATIONs connected to HOST port
-2. Handle raw binary I/O via stdin/stdout
-3. Detect YAPP initiation from user terminal
+1. Run as BPQ APPLICATIONs connected to HOST port (if using stdio)
+2. **OR** run as standalone TCP servers (recommended for YAPP)
+3. Handle raw binary I/O via sockets (not stdio)
 4. Implement full YAPP state machine
 
-The apps/yapp.py module provides the protocol implementation. Applications
-import and use the YAPPProtocol class.
+The apps/yapp.py module provides the protocol implementation, but is currently
+marked as **EXPERIMENTAL** due to stdio limitations. See yapp.py header for details.
 
 ---
 
 *Document compiled from BPQ32/LinBPQ source code analysis and packet radio protocol documentation.*
 *Last updated: 2026-01-28*
+*Research contributors: BPQ32 source code (Cmd.c, TelnetV6.c, telnetserver.h), RFC856 (Telnet Binary Transmission)*
