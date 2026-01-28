@@ -16,7 +16,7 @@ Usage:
     filename, data, error = yapp.receive_file()
 
 Author: Brad KC1JMH
-Version: 1.0
+Version: 1.1
 Date: 2026-01-28
 License: MIT
 
@@ -260,6 +260,10 @@ class YAPPProtocol(object):
         # Add timestamp for YAPPC if available
         if timestamp and self.yappc_supported:
             header += b'\x00' + str(int(timestamp)).encode('ascii')
+        
+        # YAPP frames limited to 256 bytes max - validate header fits
+        if len(header) > 256:
+            return (False, "Header too long ({} bytes, max 256). Use shorter filename.".format(len(header)))
         
         self._send_frame(SOH, header)
         self.state = YAPP_WAIT_HEADER_ACK

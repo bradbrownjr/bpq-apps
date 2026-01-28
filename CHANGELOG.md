@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [YAPP Header Validation] - 2026-01-28
+### Fixed
+- **yapp.py v1.1**: Added header length validation
+  - Headers limited to 256 bytes per YAPP protocol
+  - Returns clear error if filename + filesize exceeds limit
+  - Prevents silent truncation of headers > 256 bytes
+  - Improves compatibility with EasyTerm and other YAPP clients
+
 ## [Gopher Update Exit Fix] - 2026-01-28
 ### Fixed
 - **gopher.py v1.12**: App now exits properly after installing update
