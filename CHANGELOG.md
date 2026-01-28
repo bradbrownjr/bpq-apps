@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.8] - 2026-01-28
+### Changed
+- **Contextual links**: Links now filtered to only those appearing in displayed text
+  - Summary shows links found in summary (e.g., "NFL", "Gillette Stadium")
+  - Full article shows links found in full text
+  - Links sorted by order of appearance, not alphabetically
+  - No more irrelevant "1960 Boston Patriots season" links in summary view
+
 ## [wiki.py 1.7] - 2026-01-28
 ### Added
 - **Link preview**: Shows first 5 related links after article summary

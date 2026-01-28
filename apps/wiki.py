@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.7
+Version: 1.8
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.7"
+VERSION = "1.8"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -376,6 +376,23 @@ class WikiClient:
                 return [link['title'] for link in pages[page_id]['links']]
         return []
     
+    def filter_links_in_text(self, all_links, text):
+        """Filter links to only those whose titles appear in the text"""
+        text_lower = text.lower()
+        found_links = []
+        seen = set()
+        
+        for link in all_links:
+            link_lower = link.lower()
+            # Check if link title appears in text (as whole word or phrase)
+            if link_lower in text_lower and link_lower not in seen:
+                found_links.append(link)
+                seen.add(link_lower)
+        
+        # Sort by order of appearance in text
+        found_links.sort(key=lambda x: text_lower.find(x.lower()))
+        return found_links
+    
     def wrap_text(self, text, width=None, add_paragraph_spacing=False):
         """Wrap text to terminal width with proper word wrapping"""
         if width is None:
@@ -551,15 +568,18 @@ class WikiClient:
         print("\n" + "=" * min(40, width))
         print(summary_data['title'])
         print("=" * min(40, width))
-        print(self.wrap_text(summary_data['extract']))
+        summary_text = summary_data['extract']
+        print(self.wrap_text(summary_text))
         
-        # Get links for navigation
-        self.current_links = self.get_links(title)
+        # Get links that appear in the summary text
+        all_links = self.get_links(title)
+        self.current_links = self.filter_links_in_text(all_links, summary_text)
+        self.all_article_links = all_links  # Keep all links for full article
         
         # Show link preview if available
         if self.current_links:
             print("\n" + "-" * min(40, width))
-            print("Related Links ({} total):".format(len(self.current_links)))
+            print("Links in summary ({}):".format(len(self.current_links)))
             # Show first 5 links as preview
             for i, link in enumerate(self.current_links[:5], 1):
                 print("  {}. {}".format(i, link))
@@ -583,6 +603,8 @@ class WikiClient:
                 print("\nFetching full article...")
                 full_text = self.get_full_text(title)
                 if full_text:
+                    # Update links to those found in full article
+                    self.current_links = self.filter_links_in_text(self.all_article_links, full_text)
                     result = self.display_article(full_text, title, paginate=True, add_paragraph_spacing=True)
                     # Handle link navigation during pagination
                     if isinstance(result, tuple) and result[0] == 'link':
