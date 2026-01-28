@@ -5,7 +5,7 @@ Dictionary Lookup Application for BPQ32 Packet Radio
 Uses the Linux 'dict' command to query dictd servers for word definitions.
 Provides simple interface for amateur radio operators to look up word meanings.
 
-Version: 1.8
+Version: 1.9
 Author: Brad Brown, KC1JMH
 Date: January 24, 2026
 """
@@ -16,7 +16,7 @@ import os
 import tempfile
 import stat
 
-VERSION = "1.8"
+VERSION = "1.9"
 
 # ASCII Art Logo (lowercase "dict" from asciiart.eu)
 LOGO = r"""
@@ -75,6 +75,9 @@ def check_for_app_update(current_version, script_name):
                 break
         
         if remote_version and compare_versions(current_version, remote_version) < 0:
+            print("\nUpdate available: v{} -> v{}".format(current_version, remote_version))
+            print("Downloading new version...")
+            
             # Download update
             script_path = os.path.abspath(__file__)
             temp_fd, temp_path = tempfile.mkstemp(suffix='.py', dir=os.path.dirname(script_path))
@@ -90,6 +93,11 @@ def check_for_app_update(current_version, script_name):
                 
                 # Atomic replace
                 os.rename(temp_path, script_path)
+                
+                print("\nUpdate installed successfully!")
+                print("Please re-run this command to use the updated version.")
+                print("\nQuitting...")
+                return True  # Signal that update was installed
             except Exception:
                 # Cleanup on failure
                 try:
@@ -103,6 +111,8 @@ def check_for_app_update(current_version, script_name):
     except Exception:
         # Silent failure - continue with existing version
         pass
+    
+    return False  # No update installed
 
 
 def check_dict_installed():
@@ -209,7 +219,9 @@ def paginate_output(lines):
 def main():
     """Main application loop"""
     # Check for updates
-    check_for_app_update(VERSION, "dict.py")
+    if check_for_app_update(VERSION, "dict.py"):
+        # Update was installed, exit to let user re-run
+        return
     
     # Get terminal width (Python 3.5.3 compatible)
     # get_terminal_size() doesn't accept fallback parameter in 3.5.3

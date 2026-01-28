@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.9] - 2026-01-28
+### Fixed
+- **Silent auto-update**: Added update messages and proper exit after update
+  - Now prints "Update available" and "Update installed successfully" messages
+  - Returns from main() after successful update (prompts user to re-run)
+  - Matches auto-update behavior of other apps (wiki, gopher, etc.)
+
 ## [dict.py 1.8] - 2026-01-28
 ### Fixed
 - **Connection drop on quit**: Removed all return values from main()
