@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher YAPP Integration] - 2026-01-28
+### Changed
+- **gopher.py v1.8**: Added YAPP file download support
+  - Text files (type 0): V)iew or D)ownload options
+  - Binary files (types 4, 5, 6, 9, g, I, s): D)ownload option
+  - Filenames extracted from selector path (last component after '/')
+  - Graceful fallback if yapp.py unavailable
+  - All file types now displayed in menus (not filtered)
+  - Item selection filter only excludes 'i' (info lines)
+  - YAPP status indicator on startup banner
+  - Updated help text to mention download capability
+
 ## [YAPP Protocol Documentation] - 2026-01-28
 ### Added
 - **YAPP Protocol Documentation** (`docs/YAPP-PROTOCOL.md`): Comprehensive technical documentation
