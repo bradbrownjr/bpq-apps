@@ -15,10 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Removed yapp.py dependency auto-update logic
   - Simplified startup banner (no YAPP status line)
   - See docs/YAPP-PROTOCOL.md for protocol details and future solutions
+
+## [YAPP Status: Experimental] - 2026-01-28
+### Changed
 - **yapp.py v1.4**: Added STATUS: EXPERIMENTAL header
-  - Documents control byte stripping issue
+  - Documents control byte stripping issue by BPQ32/inetd/stdio pipeline
   - Lists potential solutions for future implementation
   - Protocol implementation complete but not functional over stdio
+  - Retained as reference for future socket-based approach
 
 ## [Gopher Pagination Adjustment] - 2026-01-28
 ### Changed
