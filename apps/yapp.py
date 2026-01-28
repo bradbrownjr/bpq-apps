@@ -29,6 +29,8 @@ import sys
 import time
 import os
 
+__version__ = "1.2"
+
 # YAPP Control Characters
 SOH = 0x01  # Start of Header (file header frame)
 STX = 0x02  # Start of Text (data block)

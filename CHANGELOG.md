@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher YAPP Version Display] - 2026-01-28
+### Changed
+- **gopher.py v1.13**: Startup banner now shows YAPP module version
+  - Imports `__version__` from yapp.py module
+  - Displays "YAPP file download support: Enabled (yapp.py vX.Y)"
+  - Helps verify correct yapp.py version is loaded
+- **yapp.py v1.2**: Added `__version__ = "1.2"` constant for version detection
+
 ## [YAPP Binary Mode Fix] - 2026-01-28
 ### Fixed
 - **yapp.py v1.2**: Force binary mode for stdin/stdout in create_stdio_yapp()

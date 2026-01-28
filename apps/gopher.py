@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.12
+Version: 1.13
 Date: January 2026
 """
 
@@ -23,12 +23,13 @@ import os
 
 # Import YAPP for file downloads
 try:
-    from yapp import create_stdio_yapp
+    from yapp import create_stdio_yapp, __version__ as YAPP_VERSION
     YAPP_AVAILABLE = True
 except ImportError:
     YAPP_AVAILABLE = False
+    YAPP_VERSION = None
 
-VERSION = "1.12"
+VERSION = "1.13"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -130,10 +131,10 @@ def check_for_app_update(current_version, script_name):
 
 def reimport_yapp():
     """Try to import yapp.py after dependency update (if initially failed)"""
-    global YAPP_AVAILABLE, create_stdio_yapp
+    global YAPP_AVAILABLE, create_stdio_yapp, YAPP_VERSION
     if not YAPP_AVAILABLE:
         try:
-            from yapp import create_stdio_yapp
+            from yapp import create_stdio_yapp, __version__ as YAPP_VERSION
             YAPP_AVAILABLE = True
         except ImportError:
             pass
@@ -667,7 +668,7 @@ class GopherClient:
         print("GOPHER v{} - Gopher Protocol Client".format(VERSION))
         print("Designed for AX.25 packet radio terminals.")
         if YAPP_AVAILABLE:
-            print("YAPP file download support: Enabled")
+            print("YAPP file download support: Enabled (yapp.py v{})".format(YAPP_VERSION))
         else:
             print("YAPP file download support: Disabled (yapp.py not found)")
         print("\nCommands:")
