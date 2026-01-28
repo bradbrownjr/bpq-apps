@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+## [wiki.py 1.1] - 2026-01-28
+### Fixed
+- **Menu duplication**: Fixed double menu display caused by BPQ callsign input
+  - App now consumes callsign line from stdin before showing menu
+  - Same fix pattern used in other BPQ apps (wall.py, forms.py, etc.)
+
+## [wiki.py 1.0] - 2026-01-28
 ### Added
 - **wiki.py 1.0**: Wikipedia and sister wiki browser for packet radio
   - Search Wikipedia, Simple Wikipedia, Wiktionary, Wikiquote, Wikinews, Wikivoyage

@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.0
+Version: 1.1
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.0"
+VERSION = "1.1"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -668,6 +668,14 @@ GitHub: bradbrownjr/bpq-apps
 
 def main():
     """Main entry point"""
+    # Consume callsign from BPQ if present (S flag in APPLICATION line)
+    # BPQ sends callsign as first line when 'S' flag is set
+    try:
+        # Read and discard the callsign line
+        sys.stdin.readline()
+    except Exception:
+        pass
+    
     # Check for updates
     check_for_app_update(VERSION, APP_NAME)
     
