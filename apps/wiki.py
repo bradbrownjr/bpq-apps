@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.5
+Version: 1.6
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -122,9 +122,8 @@ def is_internet_available():
         return False
 
 def get_line_width():
-    """Get terminal width, defaulting to dynamic sizing"""
+    """Get current terminal width dynamically"""
     try:
-        # Python 3.5 doesn't support fallback parameter
         columns = os.get_terminal_size().columns
         return columns if columns > 0 else 80
     except (ValueError, OSError, AttributeError):
@@ -136,7 +135,6 @@ MAX_LINKS = 50  # Max links to show initially
 CACHE_FILE = "wiki_cache.json"
 CACHE_MAX_ENTRIES = 10
 CACHE_EXPIRY_HOURS = 24
-LINE_WIDTH = get_line_width()
 
 # Wiki project configurations
 WIKI_PROJECTS = {
@@ -378,33 +376,40 @@ class WikiClient:
                 return [link['title'] for link in pages[page_id]['links']]
         return []
     
-    def wrap_text(self, text, width=None):
+    def wrap_text(self, text, width=None, add_paragraph_spacing=False):
         """Wrap text to terminal width with proper word wrapping"""
         if width is None:
-            width = LINE_WIDTH
+            width = get_line_width()
         
         wrapped_lines = []
-        for line in text.split('\n'):
-            if not line.strip():
+        paragraphs = text.split('\n')
+        
+        for i, para in enumerate(paragraphs):
+            if not para.strip():
                 wrapped_lines.append('')
-            elif len(line) <= width:
-                wrapped_lines.append(line)
+            elif len(para) <= width:
+                wrapped_lines.append(para)
             else:
-                wrapped = textwrap.fill(line, width=width, 
+                wrapped = textwrap.fill(para, width=width, 
                                       break_long_words=False,
                                       break_on_hyphens=False)
                 wrapped_lines.append(wrapped)
+            
+            # Add blank line between paragraphs for readability
+            if add_paragraph_spacing and para.strip() and i < len(paragraphs) - 1:
+                wrapped_lines.append('')
         
         return '\n'.join(wrapped_lines)
     
-    def display_article(self, content, title=None, paginate=True):
+    def display_article(self, content, title=None, paginate=True, add_paragraph_spacing=False):
         """Display article with optional pagination"""
+        width = get_line_width()
         if title:
-            print("\n" + "=" * min(40, LINE_WIDTH))
+            print("\n" + "=" * min(40, width))
             print(title)
-            print("=" * min(40, LINE_WIDTH))
+            print("=" * min(40, width))
         
-        wrapped = self.wrap_text(content)
+        wrapped = self.wrap_text(content, add_paragraph_spacing=add_paragraph_spacing)
         lines = wrapped.split('\n')
         
         if not paginate or len(lines) <= PAGE_SIZE:
@@ -419,9 +424,9 @@ class WikiClient:
             chunk = lines[i:i + PAGE_SIZE]
             
             if i > 0:  # Not first page
-                print("\n" + "-" * min(40, LINE_WIDTH))
+                print("\n" + "-" * min(40, get_line_width()))
                 print("Page {}/{}".format(page_num, total_pages))
-                print("-" * min(40, LINE_WIDTH))
+                print("-" * min(40, get_line_width()))
             
             print('\n'.join(chunk))
             
@@ -455,14 +460,15 @@ class WikiClient:
         display_links = links[:max_display]
         has_more = len(links) > max_display
         
-        print("\n" + "-" * min(40, LINE_WIDTH))
+        print("\n" + "-" * min(40, get_line_width()))
         print("Article Links ({} total)".format(len(links)))
-        print("-" * min(40, LINE_WIDTH))
+        print("-" * min(40, get_line_width()))
         
+        width = get_line_width()
         for i, link in enumerate(display_links, 1):
             # Wrap long link titles
-            if len(link) > LINE_WIDTH - 6:
-                wrapped = textwrap.fill(link, width=LINE_WIDTH - 6,
+            if len(link) > width - 6:
+                wrapped = textwrap.fill(link, width=width - 6,
                                       initial_indent="{}. ".format(i),
                                       subsequent_indent="   ")
                 print(wrapped)
@@ -486,9 +492,10 @@ class WikiClient:
             end = min(start + page_size, total)
             page_results = results[start:end]
             
-            print("\n" + "-" * min(40, LINE_WIDTH))
+            width = get_line_width()
+            print("\n" + "-" * min(40, width))
             print("Search Results ({}-{} of {})".format(start + 1, end, total))
-            print("-" * min(40, LINE_WIDTH))
+            print("-" * min(40, width))
             
             for i, result in enumerate(page_results, start + 1):
                 title = result['title']
@@ -498,7 +505,7 @@ class WikiClient:
                 print("\n{}. {}".format(i, title))
                 # Wrap snippet
                 if snippet:
-                    wrapped = textwrap.fill(snippet, width=LINE_WIDTH - 3,
+                    wrapped = textwrap.fill(snippet, width=width - 3,
                                           initial_indent="   ",
                                           subsequent_indent="   ")
                     print(wrapped)
@@ -540,9 +547,10 @@ class WikiClient:
             return
         
         # Display summary
-        print("\n" + "=" * min(40, LINE_WIDTH))
+        width = get_line_width()
+        print("\n" + "=" * min(40, width))
         print(summary_data['title'])
-        print("=" * min(40, LINE_WIDTH))
+        print("=" * min(40, width))
         print(self.wrap_text(summary_data['extract']))
         
         # Get links for navigation
@@ -550,7 +558,7 @@ class WikiClient:
         
         # Article menu loop
         while True:
-            print("\n" + "-" * min(40, LINE_WIDTH))
+            print("\n" + "-" * min(40, width))
             if self.current_links:
                 prompt = "[F]ull [L]inks [#]=Link Q)uit :> "
             else:
@@ -565,7 +573,7 @@ class WikiClient:
                 print("\nFetching full article...")
                 full_text = self.get_full_text(title)
                 if full_text:
-                    result = self.display_article(full_text, title, paginate=True)
+                    result = self.display_article(full_text, title, paginate=True, add_paragraph_spacing=True)
                     # Handle link navigation during pagination
                     if isinstance(result, tuple) and result[0] == 'link':
                         link_title = self.current_links[result[1]]
@@ -626,7 +634,7 @@ __      _(_) | _(_)
 """
         print(logo)
         print("WIKI v{} - Wikipedia for Packet Radio".format(VERSION))
-        print("-" * min(40, LINE_WIDTH))
+        print("-" * min(40, get_line_width()))
         print("1) Search Wikipedia")
         print("2) Simple Wikipedia (easier reading)")
         print("3) Random Article")

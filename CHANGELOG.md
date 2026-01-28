@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.6] - 2026-01-28
+### Changed
+- **Dynamic terminal width**: Text now wraps to actual terminal width instead of fixed value
+- **Paragraph spacing**: Full articles display with blank lines between paragraphs for easier reading
+- Width is queried dynamically at each display, adapting to terminal resizes
+
 ## [wiki.py 1.5] - 2026-01-28
 ### Changed
 - **Paginated search results**: Display 5 results at a time instead of 10
