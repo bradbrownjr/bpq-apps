@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.20
+Version: 1.21
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.20"
+VERSION = "1.21"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -328,26 +328,26 @@ class GopherClient:
                 # More pages available
                 if selectable_count > 0:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next P)rev [1-{}] or [Enter] to continue :> ".format(selectable_count)
+                        prompt = "\n[Enter]=Next P)rev [1-{}] B)ack :> ".format(selectable_count)
                     else:
-                        prompt = "\n[Enter]=Next [1-{}] or [Enter] to continue :> ".format(selectable_count)
+                        prompt = "\n[Enter]=Next [1-{}] B)ack :> ".format(selectable_count)
                 else:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next P)rev or [Enter] to continue :> "
+                        prompt = "\n[Enter]=Next P)rev B)ack :> "
                     else:
-                        prompt = "\n[Enter]=Next or [Enter] to continue :> "
+                        prompt = "\n[Enter]=Next B)ack :> "
             else:
                 # Last page
                 if selectable_count > 0:
                     if current_page > 0:
-                        prompt = "\nP)rev [1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\nP)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                     else:
-                        prompt = "\n[1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\n[1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                 else:
                     if current_page > 0:
-                        prompt = "\nP)rev H)ome M)arks Q)uit :> "
+                        prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
                     else:
-                        prompt = "\nH)ome M)arks Q)uit :> "
+                        prompt = "\nB)ack H)ome M)arks Q)uit :> "
             
             response = input(prompt).strip().lower()
             
@@ -359,6 +359,9 @@ class GopherClient:
                 else:
                     # On last page, empty means done viewing
                     break
+            elif response.startswith('b'):
+                # Back to menu
+                break
             elif response.startswith('p'):
                 # Previous page
                 if current_page > 0:
