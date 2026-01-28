@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.8
+Version: 1.9
 Date: January 2026
 """
 
@@ -28,7 +28,7 @@ try:
 except ImportError:
     YAPP_AVAILABLE = False
 
-VERSION = "1.8"
+VERSION = "1.9"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -42,6 +42,37 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 gopher.py")
     sys.exit(1)
 
+def update_dependency(dependency_name):
+    """Download/update a dependency module from GitHub (silently)"""
+    try:
+        import urllib.request
+        import os
+        import stat
+        
+        # Get the dependency script directory (same as this script)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        dependency_path = os.path.join(script_dir, dependency_name)
+        
+        # Download from GitHub (silent with short timeout)
+        github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(dependency_name)
+        with urllib.request.urlopen(github_url, timeout=3) as response:
+            content = response.read()
+        
+        # Write to temporary file first, then replace
+        temp_path = dependency_path + '.tmp'
+        with open(temp_path, 'wb') as f:
+            f.write(content)
+        
+        # Ensure file is executable
+        os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        
+        # Replace old file with new one
+        os.replace(temp_path, dependency_path)
+        
+    except Exception:
+        # Silently fail - don't block startup if dependency update fails
+        pass
+
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
     try:
@@ -49,6 +80,9 @@ def check_for_app_update(current_version, script_name):
         import re
         import os
         import stat
+        
+        # First, ensure yapp.py dependency is present/updated (silently)
+        update_dependency('yapp.py')
         
         # Get the version from GitHub (silent check with short timeout)
         github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(script_name)

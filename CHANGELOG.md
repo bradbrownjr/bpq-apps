@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher Dependency Auto-Update] - 2026-01-28
+### Changed
+- **gopher.py v1.9**: Auto-update now includes yapp.py dependency
+  - `update_dependency()` function silently downloads/updates yapp.py from GitHub
+  - Called during app startup update check (3-second timeout)
+  - Ensures YAPP protocol module is always present and current
+  - Graceful fallback if GitHub unreachable
+
 ## [Gopher YAPP Integration] - 2026-01-28
 ### Changed
 - **gopher.py v1.8**: Added YAPP file download support
