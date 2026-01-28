@@ -8,26 +8,17 @@ AX.25 packet radio via linbpq BBS software.
 Features:
 - Plain ASCII text interface (no control codes)
 - Article size prefetch with pagination option
-- Download text and binary files via YAPP protocol
-- View or download options for all file types
+- View text files with configurable pagination
 - Configurable home page and bookmarks
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.16
+Version: 1.17
 Date: January 2026
 """
 
 import sys
 import os
-
-# Import YAPP for file downloads
-try:
-    from yapp import create_stdio_yapp, __version__ as YAPP_VERSION
-    YAPP_AVAILABLE = True
-except ImportError:
-    YAPP_AVAILABLE = False
-    YAPP_VERSION = None
 
 VERSION = "1.16"
 APP_NAME = "gopher.py"
@@ -402,42 +393,11 @@ class GopherClient:
             size_kb, content = result
             print("\nArticle size: {:.1f} KB".format(size_kb))
             
-            # Offer view or download options
-            if YAPP_AVAILABLE:
-                response = input("V)iew, D)ownload, C)ancel :> ").strip().lower()
-                
-                if response.startswith('d'):
-                    # Download via YAPP
-                    filename = selector.split('/')[-1] if '/' in selector else 'gopher.txt'
-                    if not filename or filename == '':
-                        filename = 'gopher.txt'
-                    
-                    print("\nDownloading: {}".format(filename))
-                    print("Initiating YAPP transfer...")
-                    
-                    try:
-                        yapp = create_stdio_yapp(debug=False)
-                        filedata = content.encode('utf-8')
-                        success, msg = yapp.send_file(filename, filedata)
-                        
-                        if success:
-                            print("\nTransfer complete: {}".format(msg))
-                        else:
-                            print("\nTransfer failed: {}".format(msg))
-                    except Exception as e:
-                        print("\nYAPP error: {}".format(str(e)))
-                    
-                    self.current_state = 'menu'
-                    return True
-                    
-                elif response.startswith('c'):
-                    self.current_state = 'menu'
-                    return True
-            else:
-                response = input("Display: A)ll at once, P)aginated, C)ancel :> ").strip().lower()
-                if response.startswith('c'):
-                    self.current_state = 'menu'
-                    return True
+            # Offer view options
+            response = input("Display: A)ll at once, P)aginated, C)ancel :> ").strip().lower()
+            if response.startswith('c'):
+                self.current_state = 'menu'
+                return True
             
             # View the content
             if size_kb > MAX_ARTICLE_SIZE_KB:
@@ -476,64 +436,12 @@ class GopherClient:
             self.current_state = 'menu'
             return True
         
-        # Binary files and other types - offer download
+        # Binary files and other types - not supported without downloads
         elif item_type in ['4', '5', '6', '9', 'g', 'I', 'p', 's']:
-            if not YAPP_AVAILABLE:
-                print("\nBinary file type '{}' requires YAPP for download.".format(item_type))
-                print("YAPP module not available.")
-                return False
-            
-            # Fetch the binary content
-            print("\nFetching binary file...")
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(SOCKET_TIMEOUT)
-                sock.connect((host, int(port)))
-                
-                request = selector + '\r\n'
-                sock.sendall(request.encode('utf-8'))
-                
-                # Receive binary data
-                filedata = b''
-                while True:
-                    chunk = sock.recv(4096)
-                    if not chunk:
-                        break
-                    filedata += chunk
-                
-                sock.close()
-                
-                size_kb = len(filedata) / 1024
-                print("File size: {:.1f} KB".format(size_kb))
-                
-                # Extract filename from selector
-                filename = selector.split('/')[-1] if '/' in selector else 'download.bin'
-                if not filename or filename == '':
-                    filename = 'download.bin'
-                
-                response = input("D)ownload or C)ancel :> ").strip().lower()
-                
-                if response.startswith('d'):
-                    print("\nDownloading: {}".format(filename))
-                    print("Initiating YAPP transfer...")
-                    
-                    try:
-                        yapp = create_stdio_yapp(debug=False)
-                        success, msg = yapp.send_file(filename, filedata)
-                        
-                        if success:
-                            print("\nTransfer complete: {}".format(msg))
-                        else:
-                            print("\nTransfer failed: {}".format(msg))
-                    except Exception as e:
-                        print("\nYAPP error: {}".format(str(e)))
-                
-                self.current_state = 'menu'
-                return True
-                
-            except Exception as e:
-                print("Error fetching binary: {}".format(str(e)))
-                return False
+            print("\nBinary file type '{}' not supported.".format(item_type))
+            print("(Binary downloads not available - YAPP protocol disabled)")
+            return False
+
         
         # Unsupported types
         elif item_type in ['2', '8', 'T']:
@@ -559,8 +467,6 @@ class GopherClient:
         print("  Q)uit    - Exit (works from any menu)")
         print("\nWhen viewing files:")
         print("  V)iew    - Display text in terminal")
-        if YAPP_AVAILABLE:
-            print("  D)ownload - Transfer file via YAPP protocol")
         print("\nPrompts are context-aware and show available commands.")
         print("-" * 40)
     
@@ -623,10 +529,6 @@ class GopherClient:
         print("")
         print("GOPHER v{} - Gopher Protocol Client".format(VERSION))
         print("Designed for AX.25 packet radio terminals.")
-        if YAPP_AVAILABLE:
-            print("YAPP file download support: Enabled (yapp.py v{})".format(YAPP_VERSION))
-        else:
-            print("YAPP file download support: Disabled (yapp.py not found)")
         print("\nCommands:")
         print("  H)ome    - Go to home page")
         print("  M)arks   - Show bookmarks")
