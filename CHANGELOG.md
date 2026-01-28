@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher YAPP Disabled] - 2026-01-28
+### Changed
+- **gopher.py v1.16**: Disabled YAPP download functionality
+  - YAPP control bytes (0x01-0x06) are stripped by BPQ32/inetd pipeline
+  - Text files: V)iew only (removed D)ownload option)
+  - Binary files: Display info only with explanation
+  - Removed yapp.py dependency auto-update logic
+  - Simplified startup banner (no YAPP status line)
+  - See docs/YAPP-PROTOCOL.md for protocol details and future solutions
+- **yapp.py v1.4**: Added STATUS: EXPERIMENTAL header
+  - Documents control byte stripping issue
+  - Lists potential solutions for future implementation
+  - Protocol implementation complete but not functional over stdio
+
 ## [Gopher Pagination Adjustment] - 2026-01-28
 ### Changed
 - **gopher.py v1.15**: Increased page size from 20 to 24 lines

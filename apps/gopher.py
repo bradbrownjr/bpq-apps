@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.15
+Version: 1.16
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     YAPP_AVAILABLE = False
     YAPP_VERSION = None
 
-VERSION = "1.15"
+VERSION = "1.16"
 APP_NAME = "gopher.py"
 
 # Check Python version
