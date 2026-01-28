@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -268,7 +268,7 @@ class WikiClient:
                 print("\nError fetching data: {}".format(str(e)))
             return None
     
-    def search_wiki(self, query, limit=10):
+    def search_wiki(self, query, limit=20):
         """Search wiki for articles matching query"""
         cache_key = "search:{}:{}".format(self.current_project, query)
         cached = self.cache.get(cache_key)
@@ -472,30 +472,58 @@ class WikiClient:
         if has_more:
             print("\n[M]ore links available ({} more)".format(len(links) - max_display))
     
-    def display_search_results(self, results):
-        """Display numbered search results"""
+    def display_search_results(self, results, page_size=5):
+        """Display paginated search results, return selected article or None"""
         if not results:
             print("\nNo results found.")
-            return False
+            return None
         
-        print("\n" + "-" * min(40, LINE_WIDTH))
-        print("Search Results")
-        print("-" * min(40, LINE_WIDTH))
+        page = 0
+        total = len(results)
         
-        for i, result in enumerate(results, 1):
-            title = result['title']
-            # Strip HTML tags from snippet
-            snippet = re.sub(r'<[^>]+>', '', result.get('snippet', ''))
+        while True:
+            start = page * page_size
+            end = min(start + page_size, total)
+            page_results = results[start:end]
             
-            print("\n{}. {}".format(i, title))
-            # Wrap snippet
-            if snippet:
-                wrapped = textwrap.fill(snippet, width=LINE_WIDTH - 3,
-                                      initial_indent="   ",
-                                      subsequent_indent="   ")
-                print(wrapped)
-        
-        return True
+            print("\n" + "-" * min(40, LINE_WIDTH))
+            print("Search Results ({}-{} of {})".format(start + 1, end, total))
+            print("-" * min(40, LINE_WIDTH))
+            
+            for i, result in enumerate(page_results, start + 1):
+                title = result['title']
+                # Strip HTML tags from snippet
+                snippet = re.sub(r'<[^>]+>', '', result.get('snippet', ''))
+                
+                print("\n{}. {}".format(i, title))
+                # Wrap snippet
+                if snippet:
+                    wrapped = textwrap.fill(snippet, width=LINE_WIDTH - 3,
+                                          initial_indent="   ",
+                                          subsequent_indent="   ")
+                    print(wrapped)
+            
+            # Build prompt
+            has_next = end < total
+            if has_next:
+                prompt = "\n[1-{}] or N)ext Q)uit :> ".format(total)
+            else:
+                prompt = "\n[1-{}] or Q)uit :> ".format(total)
+            
+            choice = input(prompt).strip().upper()
+            
+            if choice == 'Q':
+                return None
+            elif choice == 'N' and has_next:
+                page += 1
+            elif choice.isdigit():
+                num = int(choice)
+                if 1 <= num <= total:
+                    return results[num - 1]
+                else:
+                    print("Invalid selection (1-{}).".format(total))
+            else:
+                print("Invalid input.")
     
     def handle_article_view(self, title):
         """Handle article viewing with summary/full/links options"""
@@ -572,24 +600,11 @@ class WikiClient:
         print("\nSearching...")
         results = self.search_wiki(query)
         
-        if not self.display_search_results(results):
-            return
+        # Display paginated results and get selection
+        selected = self.display_search_results(results)
         
-        # Select result
-        choice = input("\nSelect article (1-{}) or Q)uit :> ".format(len(results))).strip()
-        
-        if choice.upper() == 'Q':
-            return
-        
-        if choice.isdigit():
-            num = int(choice)
-            if 1 <= num <= len(results):
-                title = results[num - 1]['title']
-                self.handle_article_view(title)
-            else:
-                print("Invalid selection.")
-        else:
-            print("Invalid input.")
+        if selected:
+            self.handle_article_view(selected['title'])
     
     def handle_random(self):
         """Handle random article"""

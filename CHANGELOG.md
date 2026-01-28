@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.5] - 2026-01-28
+### Changed
+- **Paginated search results**: Display 5 results at a time instead of 10
+  - Shows "Search Results (1-5 of 20)" header with current range
+  - N) Next to see more results
+  - Enter number anytime to select article (1-20)
+  - Q) Quit to cancel search
+  - Fetches up to 20 results for better browsing
+
 ## [wiki.py 1.4] - 2026-01-28
 ### Fixed
 - **403 Forbidden error**: Wikipedia API now requires proper User-Agent header
