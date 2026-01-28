@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 2.0] - 2026-01-28
+### Changed
+- **M) Menu prompt**: All prompts now include M to return to main menu
+  - Article view: `[F]ull [L]inks [1-N] M) Q)uit :>`
+  - Search results: `[1-N] or N)ext M) Q)uit :>`
+  - Article pagination: `[Enter]=Next [1-N] M) Q)uit :>`
+  - Both M and Q return to node (menu exit)
+
 ## [wiki.py 1.9] - 2026-01-28
 ### Changed
 - **Inline link markers**: Links now shown as `[#]` markers within the text itself

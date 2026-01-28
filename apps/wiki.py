@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.9
+Version: 2.0
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.9"
+VERSION = "2.0"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -504,14 +504,16 @@ class WikiClient:
             if i + PAGE_SIZE < len(lines):
                 # Show link navigation prompt during pagination
                 if self.current_links:
-                    prompt = "\n[Enter]=Next [#]=Link Q)uit :> "
+                    prompt = "\n[Enter]=Next [1-{}] M) Q)uit :> ".format(len(self.current_links))
                 else:
-                    prompt = "\n[Enter]=Next Q)uit :> "
+                    prompt = "\n[Enter]=Next M) Q)uit :> "
                 
                 response = input(prompt).strip()
                 
                 if response.upper() == 'Q':
                     break
+                elif response.upper() == 'M':
+                    return
                 elif response.isdigit() and self.current_links:
                     # Handle link navigation
                     link_num = int(response)
@@ -583,13 +585,15 @@ class WikiClient:
             # Build prompt
             has_next = end < total
             if has_next:
-                prompt = "\n[1-{}] or N)ext Q)uit :> ".format(total)
+                prompt = "\n[1-{}] or N)ext M) Q)uit :> ".format(total)
             else:
-                prompt = "\n[1-{}] or Q)uit :> ".format(total)
+                prompt = "\n[1-{}] M) Q)uit :> ".format(total)
             
             choice = input(prompt).strip().upper()
             
             if choice == 'Q':
+                return None
+            elif choice == 'M':
                 return None
             elif choice == 'N' and has_next:
                 page += 1
@@ -636,13 +640,15 @@ class WikiClient:
         while True:
             print("\n" + "-" * min(40, width))
             if self.current_links:
-                prompt = "[F]ull [L]inks [1-{}] Q)uit :> ".format(len(self.current_links))
+                prompt = "[F]ull [L]inks [1-{}] M) Q)uit :> ".format(len(self.current_links))
             else:
-                prompt = "[F]ull article Q)uit :> "
+                prompt = "[F]ull article M) Q)uit :> "
             
             choice = input(prompt).strip().upper()
             
             if choice == 'Q':
+                break
+            elif choice == 'M':
                 break
             elif choice == 'F':
                 # Show full article
