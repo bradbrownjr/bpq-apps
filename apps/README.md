@@ -16,6 +16,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [qrz3.py](#qrz3py)
   - [rss-news.py](#rss-newspy)
   - [space.py](#spacepy)
+  - [wiki.py](#wikipy)
   - [wx.py](#wxpy)
   - [wx-me.py](#wx-mepy)
   - [wxnws-ftp.py](#wxnws-ftppy)
@@ -497,7 +498,68 @@ wx-me.py
 ```wget -O wx-me.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx-me.py && chmod +x wx-me.py```
 
 ![Terminal output](../docs/images/wx.png)
+wiki.py
+-------
+**Type**: Python  
+**Purpose**: Wikipedia and sister wiki browser for packet radio  
+**Information source**: Wikipedia, Simple Wikipedia, Wiktionary, Wikiquote, Wikinews, Wikivoyage  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Uses MediaWiki REST API for article summaries and full text. Supports numbered link navigation for recursive browsing. Requires requests library. Python 3.5+ compatible.
 
+**Download or update**:  
+```wget -O wiki.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wiki.py && chmod +x wiki.py```
+
+**Features**:
+- Search Wikipedia and sister wikis
+- Article summaries with optional full text
+- Numbered link navigation (recursive browsing similar to Gopher)
+- Smart word wrapping for any terminal width
+- Pagination for long articles (20 lines per page)
+- Random article feature
+- Offline caching (last 10 summaries, 24-hour expiry)
+- Internet detection with graceful offline fallback
+- Automatic update functionality
+
+**Supported Projects**:
+- **Wikipedia** - Free encyclopedia (en.wikipedia.org)
+- **Simple Wikipedia** - Easier reading level (simple.wikipedia.org)
+- **Wiktionary** - Dictionary definitions (en.wiktionary.org)
+- **Wikiquote** - Famous quotations (en.wikiquote.org)
+- **Wikinews** - Current events coverage (en.wikinews.org)
+- **Wikivoyage** - Travel guides for DXpeditions (en.wikivoyage.org)
+
+**BPQ32 Configuration**:
+```
+APPLICATION 21,WIKI,C 9 HOST 17 NOCALL K S
+```
+
+**Usage**:
+1. Select wiki project from main menu (1-7)
+2. Enter search query
+3. Select article from numbered results
+4. View summary, then:
+   - `F` - View full article with pagination
+   - `L` - Display numbered links from article
+   - `[#]` - Navigate to numbered link
+   - `Q` - Return to menu
+
+**Link Navigation**:
+Articles display up to 50 internal links, numbered for easy navigation. Enter link number at any prompt to jump to that article. Type `M` to show additional links beyond the first 50.
+
+**Data Storage**:
+Cache stored in `wiki_cache.json` in same directory as script:
+```json
+{
+  "search:en.wikipedia.org:amateur radio": {
+    "timestamp": 1706486400,
+    "data": [...]
+  }
+}
+```
+
+**Dependencies**:
+- Python 3.5+
+- requests library (`pip3 install requests`)
 wxnws-ftp.py
 ------------
 **Type**: Python  

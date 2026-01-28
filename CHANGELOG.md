@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- **wiki.py 1.0**: Wikipedia and sister wiki browser for packet radio
+  - Search Wikipedia, Simple Wikipedia, Wiktionary, Wikiquote, Wikinews, Wikivoyage
+  - Article summaries with optional full text viewing
+  - Numbered link navigation for recursive browsing (similar to Gopher)
+  - Smart word wrapping for any terminal width
+  - Pagination for long articles (20 lines per page)
+  - Random article feature
+  - Offline caching (last 10 summaries, 24-hour expiry in wiki_cache.json)
+  - Internet detection with graceful offline fallback
+  - Uses MediaWiki REST API (direct API calls, not Wikipedia-API library due to Python 3.5.3 constraint)
+  - Port 63170 (HOST 17 in BPQ32)
+  - Python 3.5+ compatible with requests library
+
 ### Changed
 - **Rebranded Feed to Wall**: `feed.py` renamed to `wall.py` for better description of community message wall functionality
   - Updated all configuration examples (bpq32.cfg, /etc/services)
