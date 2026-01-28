@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher Update Exit Fix] - 2026-01-28
+### Fixed
+- **gopher.py v1.12**: App now exits properly after installing update
+  - Changed `return` to `sys.exit(0)` after successful update install
+  - Forces clean exit so user reconnects with new version
+  - Prevents running stale code from memory after update
+  - Updated message: "Please reconnect to use the updated version."
+
 ## [Gopher PNG Support] - 2026-01-28
 ### Added
 - **gopher.py v1.11**: Added PNG image download support

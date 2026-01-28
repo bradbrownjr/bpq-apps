@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.11
+Version: 1.12
 Date: January 2026
 """
 
@@ -28,7 +28,7 @@ try:
 except ImportError:
     YAPP_AVAILABLE = False
 
-VERSION = "1.11"
+VERSION = "1.12"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -113,9 +113,9 @@ def check_for_app_update(current_version, script_name):
                     os.replace(temp_path, script_path)
                     
                     print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nQuitting...")
-                    return  # Return instead of sys.exit to avoid disconnecting BPQ
+                    print("Please reconnect to use the updated version.")
+                    print("\n73!")
+                    sys.exit(0)  # Exit cleanly so user reconnects with new version
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     # Clean up temp file if it exists
