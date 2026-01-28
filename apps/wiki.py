@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.6
+Version: 1.7
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.6"
+VERSION = "1.7"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -556,11 +556,21 @@ class WikiClient:
         # Get links for navigation
         self.current_links = self.get_links(title)
         
+        # Show link preview if available
+        if self.current_links:
+            print("\n" + "-" * min(40, width))
+            print("Related Links ({} total):".format(len(self.current_links)))
+            # Show first 5 links as preview
+            for i, link in enumerate(self.current_links[:5], 1):
+                print("  {}. {}".format(i, link))
+            if len(self.current_links) > 5:
+                print("  ... L)inks for more")
+        
         # Article menu loop
         while True:
             print("\n" + "-" * min(40, width))
             if self.current_links:
-                prompt = "[F]ull [L]inks [#]=Link Q)uit :> "
+                prompt = "[F]ull [L]inks [1-{}] Q)uit :> ".format(len(self.current_links))
             else:
                 prompt = "[F]ull article Q)uit :> "
             

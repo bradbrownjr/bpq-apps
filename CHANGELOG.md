@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.7] - 2026-01-28
+### Added
+- **Link preview**: Shows first 5 related links after article summary
+  - Displays total link count: "Related Links (47 total)"
+  - Users can immediately enter a number to navigate
+  - Prompt now shows valid range: `[1-47]` instead of `[#]=Link`
+
 ## [wiki.py 1.6] - 2026-01-28
 ### Changed
 - **Dynamic terminal width**: Text now wraps to actual terminal width instead of fixed value
