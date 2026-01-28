@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.2] - 2026-01-28
+### Fixed
+- **Startup hang**: Fixed blocking stdin read that caused delay at startup
+  - Now uses select() with 0.1s timeout to check if callsign data available
+  - Only reads stdin if data is present (BPQ with S flag)
+  - Removed redundant internet connectivity warning at startup
+  - App now starts instantly when no callsign present
+
 ## [wiki.py 1.1] - 2026-01-28
 ### Fixed
 - **Menu duplication**: Fixed double menu display caused by BPQ callsign input

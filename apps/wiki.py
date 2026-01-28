@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.1
+Version: 1.2
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.1"
+VERSION = "1.2"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -670,20 +670,16 @@ def main():
     """Main entry point"""
     # Consume callsign from BPQ if present (S flag in APPLICATION line)
     # BPQ sends callsign as first line when 'S' flag is set
+    # Use select to avoid blocking if no data available
     try:
-        # Read and discard the callsign line
-        sys.stdin.readline()
+        import select
+        if select.select([sys.stdin], [], [], 0.1)[0]:
+            sys.stdin.readline()
     except Exception:
         pass
     
-    # Check for updates
+    # Check for updates (runs in background, 3-second timeout)
     check_for_app_update(VERSION, APP_NAME)
-    
-    # Check internet connectivity
-    if not is_internet_available():
-        print("Warning: No internet connection detected.")
-        print("Some features may not work properly.")
-        print()
     
     # Run application
     client = WikiClient()
