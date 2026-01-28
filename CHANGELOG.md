@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [YAPP Protocol Documentation] - 2026-01-28
+### Added
+- **YAPP Protocol Documentation** (`docs/YAPP-PROTOCOL.md`): Comprehensive technical documentation
+  - Complete protocol specification with frame formats
+  - Control characters (SOH, STX, ETX, EOT, ENQ, ACK, NAK, CAN)
+  - Handshaking sequences for normal and error scenarios
+  - State machine diagrams for sender and receiver
+  - YAPPC extension for resume capability
+  - Comparison with XMODEM, B2, FBB protocols
+  - BPQ32 implementation analysis from linbpq source code
+- **YAPP Python Implementation** (`apps/yapp.py`): Python 3.5.3 compatible module
+  - `YAPPProtocol` class for sending and receiving files
+  - Support for YAPPC resume capability
+  - Timeout handling and error recovery
+  - Debug mode for protocol tracing
+  - Command-line interface for testing
+  - stdio helper for BPQ application integration
+- **Application Ideas**: Documented potential uses for YAPP in bpq-apps
+  - Custom FILES repository (hierarchical, with metadata)
+  - Gopher file downloads (binary type 9 items)
+  - FTP browser (bridge internet FTP to packet users)
+
+### Notes
+- BPQ32 node rejects YAPP at command level ("Node doesn't support YAPP Transfers")
+- All YAPP transfers must occur within BPQ APPLICATION contexts
+- YAPP is streaming protocol (no per-block ACK) - efficient for packet radio
+- Protocol relies on AX.25 layer for error correction
+
 ## [Offline Caching Update] - 2026-01-28
 ### Added
 - **Offline support via cron-updated caches**: Multiple apps now support offline operation

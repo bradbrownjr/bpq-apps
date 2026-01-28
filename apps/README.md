@@ -20,6 +20,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [wx.py](#wxpy)
   - [wx-me.py](#wx-mepy)
   - [wxnws-ftp.py](#wxnws-ftppy)
+  - [yapp.py](#yapppy)
 - [Installation](#installation)
 - [BPQ Configuration](#bpq-configuration)
 
@@ -577,6 +578,56 @@ wxnws-ftp.py
 - Configurable regional NWS office
 
 **Status**: Experimental, not production-ready.
+
+yapp.py
+-------
+**Type**: Python module and CLI tool  
+**Purpose**: YAPP file transfer protocol implementation for packet radio  
+**Information source**: Protocol implementation (no external data)  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Python 3.5.3 compatible YAPP protocol implementation. Can be used as a module by other apps or as a standalone CLI tool for testing. Includes YAPPC extension support for file transfer resume.
+
+**Download or update**:  
+```wget -O yapp.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/yapp.py && chmod +x yapp.py```
+
+**Features**:
+- Complete YAPP protocol implementation (sender and receiver)
+- YAPPC extension support (resume capability)
+- YAPPProtocol class for embedding in other applications
+- Timeout handling and error recovery
+- Debug mode for protocol tracing
+- stdin/stdout helper for BPQ application integration
+- CLI interface for testing
+
+**Usage as module**:
+```python
+from yapp import YAPPProtocol
+
+# Create protocol handler
+yapp = YAPPProtocol(read_func, write_func, debug=True)
+
+# Send a file
+success, msg = yapp.send_file("test.txt", file_data)
+
+# Receive a file
+filename, data, error = yapp.receive_file(save_dir="/tmp")
+```
+
+**Usage as CLI**:
+```bash
+# Send a file
+python yapp.py --send myfile.txt
+
+# Receive a file  
+python yapp.py --receive --save-dir /tmp
+
+# Debug mode
+python yapp.py --send myfile.txt --debug
+```
+
+**Protocol Documentation**: See [YAPP-PROTOCOL.md](../docs/YAPP-PROTOCOL.md) for complete protocol specification.
+
+**Note**: BPQ32 node rejects YAPP at command level. YAPP transfers must occur within BPQ APPLICATION contexts that handle raw binary I/O.
 
 ## Subdirectories
 
