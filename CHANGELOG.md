@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 2.2] - 2026-01-28
+### Fixed
+- **Q)uit during pagination**: Pressing Q during full article pagination now properly exits the app and returns to node
+  - Previously only returned to article menu
+  - Now sets quit flag that propagates through all nested calls
+  - Works during pagination, full article view, and article menu
+
 ## [wiki.py 2.1] - 2026-01-28
 ### Added
 - **B)ack navigation**: Return to previous article after following tangent links

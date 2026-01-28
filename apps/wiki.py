@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 2.1
+Version: 2.2
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "2.1"
+VERSION = "2.2"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -235,6 +235,7 @@ class WikiClient:
         self.current_links = []
         self.session_history = []
         self.history_index = -1  # Track position in history
+        self.should_quit = False  # Flag to exit app
         
         # Import requests library
         try:
@@ -512,6 +513,7 @@ class WikiClient:
                 response = input(prompt).strip()
                 
                 if response.upper() == 'Q':
+                    self.should_quit = True  # Signal to exit app
                     break
                 elif response.upper() == 'M':
                     return
@@ -609,6 +611,10 @@ class WikiClient:
     
     def handle_article_view(self, title, add_to_history=True):
         """Handle article viewing with summary/full/links options"""
+        # Check if user quit from previous screen
+        if self.should_quit:
+            return
+        
         # Store current article
         self.current_article = title
         
@@ -662,6 +668,7 @@ class WikiClient:
             choice = input(prompt).strip().upper()
             
             if choice == 'Q':
+                self.should_quit = True
                 break
             elif choice == 'M':
                 break
@@ -681,6 +688,9 @@ class WikiClient:
                     # Insert inline link markers
                     marked_text = self.insert_link_markers(full_text, self.current_links)
                     result = self.display_article(marked_text, title, paginate=True, add_paragraph_spacing=True)
+                    # Check if user quit during pagination
+                    if self.should_quit:
+                        break
                     # Handle link navigation during pagination
                     if isinstance(result, tuple) and result[0] == 'link':
                         link_title = self.current_links[result[1]]
@@ -778,6 +788,11 @@ GitHub: bradbrownjr/bpq-apps
     def run(self):
         """Main application loop"""
         while True:
+            # Exit if quit flag was set
+            if self.should_quit:
+                print("\nExiting...")
+                break
+            
             self.show_menu()
             choice = input("\nMenu :> ").strip().upper()
             
