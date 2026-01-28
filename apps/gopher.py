@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.19
+Version: 1.20
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.19"
+VERSION = "1.20"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -327,29 +327,39 @@ class GopherClient:
             if end < total_lines:
                 # More pages available
                 if selectable_count > 0:
-                    prompt = "\n[Enter]=Next Pr)ev [1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
+                    if current_page > 0:
+                        prompt = "\n[Enter]=Next P)rev [1-{}] or [Enter] to continue :> ".format(selectable_count)
+                    else:
+                        prompt = "\n[Enter]=Next [1-{}] or [Enter] to continue :> ".format(selectable_count)
                 else:
-                    prompt = "\n[Enter]=Next Pr)ev H)ome M)arks Q)uit :> "
+                    if current_page > 0:
+                        prompt = "\n[Enter]=Next P)rev or [Enter] to continue :> "
+                    else:
+                        prompt = "\n[Enter]=Next or [Enter] to continue :> "
             else:
                 # Last page
                 if selectable_count > 0:
                     if current_page > 0:
-                        prompt = "\nPr)ev [1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\nP)rev [1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
                     else:
                         prompt = "\n[1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
                 else:
                     if current_page > 0:
-                        prompt = "\nPr)ev H)ome M)arks Q)uit :> "
+                        prompt = "\nP)rev H)ome M)arks Q)uit :> "
                     else:
                         prompt = "\nH)ome M)arks Q)uit :> "
             
             response = input(prompt).strip().lower()
             
             # Handle commands
-            if not response and end < total_lines:
-                # Empty = next page
-                current_page += 1
-            elif response.startswith('pr'):
+            if not response:
+                # Empty = next page or exit pagination if on last page
+                if end < total_lines:
+                    current_page += 1
+                else:
+                    # On last page, empty means done viewing
+                    break
+            elif response.startswith('p'):
                 # Previous page
                 if current_page > 0:
                     current_page -= 1
@@ -366,12 +376,8 @@ class GopherClient:
                 # Link number
                 return int(response)
             else:
-                if end >= total_lines:
-                    # Last page, stay here
-                    current_page = total_pages - 1
-                else:
-                    # Continue to next page
-                    current_page += 1
+                # Invalid command, stay on current page
+                pass
         
         return None
     
