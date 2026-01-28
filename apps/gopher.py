@@ -12,13 +12,13 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.6
+Version: 1.7
 Date: January 2026
 """
 
 import sys
 
-VERSION = "1.6"
+VERSION = "1.7"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -511,7 +511,7 @@ class GopherClient:
         print(r" \__, |\___/| .__/|_| |_|\___|_|   ")
         print(r" |___/      |_|                    ")
         print("")
-        print("A simple text-based Gopher protocol client.")
+        print("GOPHER v{} - Gopher Protocol Client".format(VERSION))
         print("Designed for AX.25 packet radio terminals.")
         print("\nCommands:")
         print("  H)ome    - Go to home page")
