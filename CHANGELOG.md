@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.9] - 2026-01-28
+### Changed
+- **Inline link markers**: Links now shown as `[#]` markers within the text itself
+  - "The Patriots compete in the National Football League[1] (NFL[2])..."
+  - Type a number to follow that link directly
+  - L) shows the full link list with titles
+  - No more automatic link preview after summary
+
 ## [wiki.py 1.8] - 2026-01-28
 ### Changed
 - **Contextual links**: Links now filtered to only those appearing in displayed text

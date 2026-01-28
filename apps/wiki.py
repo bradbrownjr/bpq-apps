@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 1.8
+Version: 1.9
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "1.8"
+VERSION = "1.9"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -393,6 +393,59 @@ class WikiClient:
         found_links.sort(key=lambda x: text_lower.find(x.lower()))
         return found_links
     
+    def insert_link_markers(self, text, links):
+        """Insert [#] markers after link terms in text"""
+        if not links:
+            return text
+        
+        # Build a mapping of link -> number
+        # Process longer links first to avoid partial matches
+        sorted_links = sorted(links, key=len, reverse=True)
+        link_nums = {link.lower(): links.index(link) + 1 for link in links}
+        
+        result = text
+        marked = set()  # Track positions we've already marked
+        
+        for link in sorted_links:
+            link_lower = link.lower()
+            num = link_nums[link_lower]
+            
+            # Find all occurrences (case-insensitive)
+            search_text = result.lower()
+            pos = 0
+            new_result = ""
+            last_end = 0
+            
+            while True:
+                idx = search_text.find(link_lower, pos)
+                if idx == -1:
+                    break
+                
+                # Check if this is a word boundary match
+                before_ok = idx == 0 or not result[idx-1].isalnum()
+                after_idx = idx + len(link)
+                after_ok = after_idx >= len(result) or not result[after_idx].isalnum()
+                
+                # Check if not already marked (look for existing [#])
+                already_marked = after_idx < len(result) and result[after_idx:after_idx+1] == '['
+                
+                if before_ok and after_ok and not already_marked and idx not in marked:
+                    # Insert marker after first occurrence only
+                    new_result += result[last_end:after_idx] + "[{}]".format(num)
+                    last_end = after_idx
+                    marked.add(idx)
+                    # Only mark first occurrence of each link
+                    break
+                
+                pos = idx + 1
+            
+            if new_result:
+                new_result += result[last_end:]
+                result = new_result
+                search_text = result.lower()
+        
+        return result
+    
     def wrap_text(self, text, width=None, add_paragraph_spacing=False):
         """Wrap text to terminal width with proper word wrapping"""
         if width is None:
@@ -569,22 +622,15 @@ class WikiClient:
         print(summary_data['title'])
         print("=" * min(40, width))
         summary_text = summary_data['extract']
-        print(self.wrap_text(summary_text))
         
         # Get links that appear in the summary text
         all_links = self.get_links(title)
         self.current_links = self.filter_links_in_text(all_links, summary_text)
         self.all_article_links = all_links  # Keep all links for full article
         
-        # Show link preview if available
-        if self.current_links:
-            print("\n" + "-" * min(40, width))
-            print("Links in summary ({}):".format(len(self.current_links)))
-            # Show first 5 links as preview
-            for i, link in enumerate(self.current_links[:5], 1):
-                print("  {}. {}".format(i, link))
-            if len(self.current_links) > 5:
-                print("  ... L)inks for more")
+        # Insert inline link markers and display
+        marked_text = self.insert_link_markers(summary_text, self.current_links)
+        print(self.wrap_text(marked_text))
         
         # Article menu loop
         while True:
@@ -605,7 +651,9 @@ class WikiClient:
                 if full_text:
                     # Update links to those found in full article
                     self.current_links = self.filter_links_in_text(self.all_article_links, full_text)
-                    result = self.display_article(full_text, title, paginate=True, add_paragraph_spacing=True)
+                    # Insert inline link markers
+                    marked_text = self.insert_link_markers(full_text, self.current_links)
+                    result = self.display_article(marked_text, title, paginate=True, add_paragraph_spacing=True)
                     # Handle link navigation during pagination
                     if isinstance(result, tuple) and result[0] == 'link':
                         link_title = self.current_links[result[1]]
