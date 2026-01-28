@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher Pagination Adjustment] - 2026-01-28
+### Changed
+- **gopher.py v1.15**: Increased page size from 20 to 24 lines
+  - Matches standard terminal height (80x24)
+  - Better screen utilization on typical terminals
+  - Reduces number of page prompts for longer articles
+
 ## [YAPP Unbuffered Output] - 2026-01-28
 ### Fixed
 - **yapp.py v1.3**: Force unbuffered binary mode for stdout

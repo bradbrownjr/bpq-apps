@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.14
+Version: 1.15
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     YAPP_AVAILABLE = False
     YAPP_VERSION = None
 
-VERSION = "1.14"
+VERSION = "1.15"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -225,7 +225,7 @@ BOOKMARKS = [
     ("Floodgap", "gopher://gopher.floodgap.com"),
     ("SDF Gopher", "gopher://sdf.org"),
 ]
-PAGE_SIZE = 20  # Lines per page for pagination
+PAGE_SIZE = 24  # Lines per page for pagination (standard terminal height)
 MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
 SOCKET_TIMEOUT = 30  # Timeout for socket connections in seconds
 LINE_WIDTH = get_line_width()  # Dynamic terminal width with 40-char fallback
