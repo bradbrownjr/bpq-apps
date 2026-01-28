@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher PNG Support] - 2026-01-28
+### Added
+- **gopher.py v1.11**: Added PNG image download support
+  - Type 'p' (PNG) now recognized in ITEM_TYPES
+  - Added to binary download handler alongside GIF, IMG types
+  - PNG images can be downloaded via YAPP protocol
+
 ## [Gopher YAPP Import Fix] - 2026-01-28
 ### Fixed
 - **gopher.py v1.10**: YAPP availability now detected correctly after dependency update

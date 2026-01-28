@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.10
+Version: 1.11
 Date: January 2026
 """
 
@@ -28,7 +28,7 @@ try:
 except ImportError:
     YAPP_AVAILABLE = False
 
-VERSION = "1.10"
+VERSION = "1.11"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -214,6 +214,7 @@ class GopherClient:
         '+': 'MIR',  # Mirror
         'g': 'GIF',  # GIF image
         'I': 'IMG',  # Image file
+        'p': 'PNG',  # PNG image
         'T': 'TN3',  # Telnet 3270
         'h': 'HTM',  # HTML file
         'i': 'INF',  # Informational text
@@ -519,7 +520,7 @@ class GopherClient:
             return True
         
         # Binary files and other types - offer download
-        elif item_type in ['4', '5', '6', '9', 'g', 'I', 's']:
+        elif item_type in ['4', '5', '6', '9', 'g', 'I', 'p', 's']:
             if not YAPP_AVAILABLE:
                 print("\nBinary file type '{}' requires YAPP for download.".format(item_type))
                 print("YAPP module not available.")
