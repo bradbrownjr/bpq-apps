@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 2.3
+Version: 2.4
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "2.3"
+VERSION = "2.4"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -698,7 +698,28 @@ class WikiClient:
         self.current_links = self.filter_links_in_text(all_links, summary_text)
         self.all_article_links = all_links  # Keep all links for full article
         
-        # Insert inline link markers and display
+        # For Wiktionary and other non-Wikipedia projects, skip blank summary and go straight to full article
+        if not summary_text.strip() and 'wikipedia' not in self.current_project:
+            print("\nFetching full article...")
+            full_text = self.get_full_text(title)
+            if full_text:
+                # Update links to those found in full article
+                self.current_links = self.filter_links_in_text(self.all_article_links, full_text)
+                # Insert inline link markers
+                marked_text = self.insert_link_markers(full_text, self.current_links)
+                result = self.display_article(marked_text, title, paginate=True, add_paragraph_spacing=True)
+                # Check if user quit during pagination
+                if self.should_quit:
+                    return
+                # Handle link navigation during pagination
+                if isinstance(result, tuple) and result[0] == 'link':
+                    link_title = self.current_links[result[1]]
+                    self.handle_article_view(link_title)
+            else:
+                print("Could not fetch full article.")
+            return
+        
+        # Insert inline link markers and display summary (for Wikipedia)
         marked_text = self.insert_link_markers(summary_text, self.current_links)
         print(self.wrap_text(marked_text))
         
@@ -871,6 +892,45 @@ GitHub: bradbrownjr/bpq-apps
 
 def main():
     """Main entry point"""
+    # Handle command-line arguments
+    if len(sys.argv) > 1:
+        if sys.argv[1] in ['--check-update', '-u']:
+            # Explicit update check with error reporting
+            print("Checking for updates...")
+            try:
+                import urllib.request
+                github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(APP_NAME)
+                print("Fetching: {}".format(github_url))
+                with urllib.request.urlopen(github_url, timeout=5) as response:
+                    content = response.read().decode('utf-8')
+                
+                # Extract version from docstring
+                version_match = re.search(r'Version:\s*([0-9.]+)', content)
+                if version_match:
+                    github_version = version_match.group(1)
+                    print("GitHub version: {}".format(github_version))
+                    print("Local version: {}".format(VERSION))
+                    
+                    cmp = compare_versions(github_version, VERSION)
+                    if cmp > 0:
+                        print("\nUpdate available! v{} -> v{}".format(VERSION, github_version))
+                        print("Restart the app to download and install.")
+                    elif cmp == 0:
+                        print("\nAlready on latest version: {}".format(VERSION))
+                    else:
+                        print("\nLocal version is newer than GitHub: {} > {}".format(VERSION, github_version))
+                else:
+                    print("ERROR: Could not find Version in GitHub file")
+            except Exception as e:
+                print("ERROR: {}".format(str(e)))
+            sys.exit(0)
+        elif sys.argv[1] in ['-h', '--help', '/?']:
+            print("Usage: {} [OPTIONS]".format(APP_NAME))
+            print("\nOPTIONS:")
+            print("  -u, --check-update   Check for updates from GitHub")
+            print("  -h, --help          Show this help message")
+            sys.exit(0)
+    
     # Check for updates (runs in background, 3-second timeout)
     check_for_app_update(VERSION, APP_NAME)
     
