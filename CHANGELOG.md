@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher Update Messages] - 2026-01-28
+### Changed
+- **gopher.py v1.14**: Improved update messages with more detail
+  - `update_dependency()` now detects and reports yapp.py version changes
+  - Shows "Installing dependency: yapp.py vX.Y" on first install
+  - Shows "Updating dependency: yapp.py vX.Y -> vZ.W" on updates
+  - Main app update includes script name: "gopher.py update available: vX.Y -> vZ.W"
+  - Helps users understand what's being updated and why
+
 ## [Gopher YAPP Version Display] - 2026-01-28
 ### Changed
 - **gopher.py v1.13**: Startup banner now shows YAPP module version

@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.13
+Version: 1.14
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     YAPP_AVAILABLE = False
     YAPP_VERSION = None
 
-VERSION = "1.13"
+VERSION = "1.14"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -44,9 +44,10 @@ if sys.version_info < (3, 5):
     sys.exit(1)
 
 def update_dependency(dependency_name):
-    """Download/update a dependency module from GitHub (silently)"""
+    """Download/update a dependency module from GitHub (with version detection)"""
     try:
         import urllib.request
+        import re
         import os
         import stat
         
@@ -54,21 +55,54 @@ def update_dependency(dependency_name):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         dependency_path = os.path.join(script_dir, dependency_name)
         
-        # Download from GitHub (silent with short timeout)
+        # Check current version if file exists
+        current_version = None
+        if os.path.exists(dependency_path):
+            try:
+                with open(dependency_path, 'r') as f:
+                    content_lines = f.read()
+                    version_match = re.search(r'Version:\s*([0-9.]+)', content_lines)
+                    if version_match:
+                        current_version = version_match.group(1)
+            except:
+                pass
+        
+        # Download from GitHub (with short timeout)
         github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(dependency_name)
         with urllib.request.urlopen(github_url, timeout=3) as response:
             content = response.read()
         
-        # Write to temporary file first, then replace
-        temp_path = dependency_path + '.tmp'
-        with open(temp_path, 'wb') as f:
-            f.write(content)
+        # Check GitHub version
+        github_version = None
+        try:
+            version_match = re.search(r'Version:\s*([0-9.]+)', content.decode('utf-8'))
+            if version_match:
+                github_version = version_match.group(1)
+        except:
+            pass
         
-        # Ensure file is executable
-        os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        # Determine if update needed
+        should_update = False
+        if current_version is None:
+            # New install
+            should_update = True
+            print("Installing dependency: {} v{}".format(dependency_name, github_version or "unknown"))
+        elif github_version and compare_versions(github_version, current_version) > 0:
+            # Update available
+            should_update = True
+            print("Updating dependency: {} v{} -> v{}".format(dependency_name, current_version, github_version))
         
-        # Replace old file with new one
-        os.replace(temp_path, dependency_path)
+        if should_update:
+            # Write to temporary file first, then replace
+            temp_path = dependency_path + '.tmp'
+            with open(temp_path, 'wb') as f:
+                f.write(content)
+            
+            # Ensure file is executable
+            os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+            
+            # Replace old file with new one
+            os.replace(temp_path, dependency_path)
         
     except Exception:
         # Silently fail - don't block startup if dependency update fails
@@ -96,7 +130,7 @@ def check_for_app_update(current_version, script_name):
             github_version = version_match.group(1)
             
             if compare_versions(github_version, current_version) > 0:
-                print("\nUpdate available: v{} -> v{}".format(current_version, github_version))
+                print("\n{} update available: v{} -> v{}".format(script_name, current_version, github_version))
                 print("Downloading new version...")
                 
                 # Download the new version
