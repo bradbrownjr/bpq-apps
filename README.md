@@ -13,18 +13,34 @@ Custom applications for a BPQ32 packet radio node
 
 **🔄 Automatic Updates**: All Python applications include built-in auto-update functionality that checks for new versions on GitHub at startup. Updates are downloaded and installed automatically with a 3-second timeout for reliable operation even when internet connectivity is limited.
 
-**📡 Offline Capability**: All applications are designed to work reliably even when internet connectivity is unavailable. This is critical for packet radio nodes with intermittent or no internet access. Apps use local caching, graceful error handling, and user-friendly offline messages instead of crashing on network failures.
+**� Emergency Communications Ready**: Designed for ARES (Amateur Radio Emergency Service) and SKYWARN operations where internet access may be unavailable during disasters, severe weather events, or infrastructure failures. All applications prioritize offline resilience with local data caching, ensuring critical information remains accessible when commercial communications are down.
 
-**Offline Features by Application**:
-- **hamtest.py, wall.py, predict.py, forms.py**: Cache local data (questions, messages, solar data, templates) for offline use
-- **rss-news.py, hamqsl.py, space.py, wx.py, wx-me.py**: Show friendly "Internet unavailable" messages instead of errors
-- **gopher.py, qrz3.py, callout.py, wxnws-ftp.py**: Work offline with graceful degradation of features
+**📡 Offline Capability**: All applications work reliably without internet connectivity. Apps use JSON caching (updated via cron), graceful error handling, and user-friendly messages instead of crashing on network failures.
+
+**Cached Data Applications** (with `--update-cache` cron support):
+- **wx.py**: Local weather observations, alerts, and SKYWARN activation status (2-hour cache)
+- **rss-news.py**: Emergency bulletins, weather warnings, ham radio news (2-hour cache)
+- **hamqsl.py**: HF propagation data for band planning (4-hour cache)
+- **space.py**: NOAA space weather reports for HF comms (4-hour cache)
+- **eventcal.py**: Club calendar and net schedules (6-hour cache)
+- **predict.py**: Callsign lookups with 30-day local cache
+
+**Always-Offline Applications** (no internet required):
+- **hamtest.py**: License exam practice with local question pools
+- **wall.py**: Community bulletin board (local JSON storage)
+- **forms.py**: ICS-213, radiograms, weather reports (local templates)
+- **callout.py**: Station information lookup (local data)
+
+**Graceful Degradation** (offline-aware):
+- **gopher.py**, **qrz3.py**, **wxnws-ftp.py**: Show "Internet unavailable" messages, continue operating
 
 All apps continue running even if:
 - GitHub is unreachable (auto-update fails silently)
 - External APIs are down (uses cached data or shows offline message)
 - Network connectivity is intermittent (retries without crashing)
 - Config files are missing (uses sensible defaults)
+
+**Setting Up Offline Caching**: See [docs/INSTALLATION.md](docs/INSTALLATION.md) for cron job configuration to keep cached data fresh (typically every 2-6 hours).
 
 ## Applications
 
