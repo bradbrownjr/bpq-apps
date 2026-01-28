@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.22
+Version: 1.23
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.22"
+VERSION = "1.23"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -742,8 +742,8 @@ class GopherClient:
         print("Designed for AX.25 packet radio terminals.")
         print("\nCommands:")
         print("  H)ome    - Go to home page")
-        print("  S)earch  - Search Gopherspace (Veronica-2)")
         print("  M)arks   - Show bookmarks")
+        print("  S)earch  - Search Gopherspace (Veronica-2)")
         print("  A)bout   - About Gopher protocol")
         print("  G)o URL  - Go to specific Gopher URL")
         print("  ?)       - Show help")
@@ -758,7 +758,7 @@ class GopherClient:
                 elif self.current_state == 'article':
                     prompt = "\nArticle: B)ack, H)ome, M)arks, G)o, ?)Help, Q)uit :> "
                 else:
-                    prompt = "\nGopher: H)ome, S)earch, M)arks, A)bout, G)o, ?)Help, Q)uit :> "
+                    prompt = "\nGopher: H)ome, M)arks, S)earch, A)bout, G)o, ?)Help, Q)uit :> "
                 
                 command = input(prompt).strip()
                 
