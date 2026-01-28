@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.17
+Version: 1.18
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.17"
+VERSION = "1.18"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -270,11 +270,16 @@ class GopherClient:
         return items
     
     def display_menu(self, items):
-        """Display a Gopher menu with numbered items"""
+        """Display a Gopher menu with numbered items and pagination"""
         self.last_menu = items
-        print("\n" + "-" * 40)
         
+        # Count selectable items (non-info lines)
+        selectable_count = sum(1 for item in items if item['type'] != 'i')
+        
+        # Build output lines first
+        output_lines = []
         item_num = 1
+        
         for item in items:
             item_type = item['type']
             display = item['display']
@@ -284,7 +289,7 @@ class GopherClient:
             
             # Info lines don't get numbers
             if item_type == 'i':
-                print("    {}".format(display))
+                output_lines.append("    {}".format(display))
             # All file types now get numbers for download capability
             else:
                 # Wrap long lines at word boundaries
@@ -292,14 +297,83 @@ class GopherClient:
                     wrapped = textwrap.fill(display, width=LINE_WIDTH - 12,
                                           subsequent_indent=' ' * 12, break_long_words=False)
                     lines = wrapped.split('\n')
-                    print("{:3}) [{}] {}".format(item_num, type_label, lines[0]))
+                    output_lines.append("{:3}) [{}] {}".format(item_num, type_label, lines[0]))
                     for line in lines[1:]:
-                        print(line)
+                        output_lines.append(line)
                 else:
-                    print("{:3}) [{}] {}".format(item_num, type_label, display))
+                    output_lines.append("{:3}) [{}] {}".format(item_num, type_label, display))
                 item_num += 1
-                
-        print("-" * 40)
+        
+        # Paginate output
+        total_lines = len(output_lines)
+        total_pages = (total_lines + PAGE_SIZE - 1) // PAGE_SIZE
+        current_page = 0
+        
+        while current_page < total_pages:
+            start = current_page * PAGE_SIZE
+            end = min(start + PAGE_SIZE, total_lines)
+            
+            print("\n" + "-" * 40)
+            if total_pages > 1:
+                print("Page {}/{}".format(current_page + 1, total_pages))
+                print("-" * 40)
+            
+            for line in output_lines[start:end]:
+                print(line)
+            
+            print("-" * 40)
+            
+            # Build prompt based on context
+            if end < total_lines:
+                # More pages available
+                if selectable_count > 0:
+                    prompt = "\n[Enter]=Next Pr)ev [1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
+                else:
+                    prompt = "\n[Enter]=Next Pr)ev H)ome M)arks Q)uit :> "
+            else:
+                # Last page
+                if selectable_count > 0:
+                    if current_page > 0:
+                        prompt = "\nPr)ev [1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
+                    else:
+                        prompt = "\n[1-{}] H)ome M)arks Q)uit :> ".format(selectable_count)
+                else:
+                    if current_page > 0:
+                        prompt = "\nPr)ev H)ome M)arks Q)uit :> "
+                    else:
+                        prompt = "\nH)ome M)arks Q)uit :> "
+            
+            response = input(prompt).strip().lower()
+            
+            # Handle commands
+            if not response and end < total_lines:
+                # Empty = next page
+                current_page += 1
+            elif response.startswith('pr'):
+                # Previous page
+                if current_page > 0:
+                    current_page -= 1
+            elif response.startswith('h'):
+                # Home
+                return 'home'
+            elif response.startswith('m'):
+                # Marks/bookmarks
+                return 'marks'
+            elif response.startswith('q'):
+                # Quit
+                return 'quit'
+            elif response.isdigit():
+                # Link number
+                return int(response)
+            else:
+                if end >= total_lines:
+                    # Last page, stay here
+                    current_page = total_pages - 1
+                else:
+                    # Continue to next page
+                    current_page += 1
+        
+        return None
     
     def get_article_size(self, host, port, selector):
         """Prefetch to determine article size in KB"""
@@ -378,8 +452,38 @@ class GopherClient:
                 return False
                 
             items = self.parse_gopher_menu(content)
-            self.display_menu(items)
+            result = self.display_menu(items)
             self.current_state = 'menu'
+            
+            # Handle return commands from pagination
+            if result == 'quit':
+                print("\nGoodbye! 73\n")
+                sys.exit(0)
+            elif result == 'home':
+                self.history = []
+                self.navigate_to(DEFAULT_HOME)
+                return True
+            elif result == 'marks':
+                self.show_bookmarks()
+                sel = input("Select bookmark # or [Enter] to cancel :> ").strip()
+                if sel.isdigit():
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(BOOKMARKS):
+                        self.navigate_to(BOOKMARKS[idx][1])
+                    else:
+                        print("Invalid bookmark number")
+                return True
+            elif isinstance(result, int):
+                # User selected item by number
+                selectable = [item for item in items if item['type'] != 'i']
+                if 1 <= result <= len(selectable):
+                    item = selectable[result - 1]
+                    url = "gopher://{}:{}/{}{}".format(
+                        item['host'], item['port'], item['type'], item['selector'])
+                    self.navigate_to(url)
+                else:
+                    print("Invalid selection. Choose 1-{}".format(len(selectable)))
+            
             return True
             
         # Text file
@@ -423,8 +527,37 @@ class GopherClient:
                     return False
                     
                 items = self.parse_gopher_menu(content)
-                self.display_menu(items)
+                result = self.display_menu(items)
                 self.current_state = 'menu'
+                
+                # Handle return commands from pagination
+                if result == 'quit':
+                    print("\nGoodbye! 73\n")
+                    sys.exit(0)
+                elif result == 'home':
+                    self.history = []
+                    self.navigate_to(DEFAULT_HOME)
+                    return True
+                elif result == 'marks':
+                    self.show_bookmarks()
+                    sel = input("Select bookmark # or [Enter] to cancel :> ").strip()
+                    if sel.isdigit():
+                        idx = int(sel) - 1
+                        if 0 <= idx < len(BOOKMARKS):
+                            self.navigate_to(BOOKMARKS[idx][1])
+                        else:
+                            print("Invalid bookmark number")
+                    return True
+                elif isinstance(result, int):
+                    # User selected item by number
+                    selectable = [item for item in items if item['type'] != 'i']
+                    if 1 <= result <= len(selectable):
+                        item = selectable[result - 1]
+                        url = "gopher://{}:{}/{}{}".format(
+                            item['host'], item['port'], item['type'], item['selector'])
+                        self.navigate_to(url)
+                    else:
+                        print("Invalid selection. Choose 1-{}".format(len(selectable)))
             return True
             
         # HTML (just show the URL)
