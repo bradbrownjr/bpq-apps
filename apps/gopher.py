@@ -12,13 +12,13 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
 import sys
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -71,7 +71,7 @@ def check_for_app_update(current_version, script_name):
                     print("\nUpdate installed successfully!")
                     print("Please re-run this command to use the updated version.")
                     print("\nQuitting...")
-                    sys.exit(0)
+                    return  # Return instead of sys.exit to avoid disconnecting BPQ
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     # Clean up temp file if it exists

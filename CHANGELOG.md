@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [gopher.py 1.5] - 2026-01-28
+### Fixed
+- **Connection drop on auto-update**: Replaced `sys.exit(0)` with `return` in auto-update success path
+  - Prevents BPQ from disconnecting stream when update is installed
+  - Matches clean exit pattern used in other apps
+
 ## [dict.py 1.7] - 2026-01-28
 ### Fixed
 - **Connection drop on quit**: Removed `sys.exit()` wrapper that caused BPQ to disconnect stream
