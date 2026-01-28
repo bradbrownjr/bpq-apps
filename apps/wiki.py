@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 2.2
+Version: 2.3
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "2.2"
+VERSION = "2.3"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -128,6 +128,29 @@ def get_line_width():
         return columns if columns > 0 else 80
     except (ValueError, OSError, AttributeError):
         return 80
+
+def sanitize_for_ascii(text):
+    """Remove non-ASCII and special Unicode characters for terminal display"""
+    if not text:
+        return text
+    
+    # Keep basic ASCII printable chars and common symbols
+    result = ""
+    for char in text:
+        # Keep ASCII printable (32-126) plus newline, tab
+        if ord(char) < 127 or char == '\n':
+            result += char
+        elif ord(char) > 127:
+            # Replace non-ASCII with placeholder or skip
+            # Skip it entirely to keep output clean
+            pass
+    
+    # Clean up multiple spaces
+    result = re.sub(r' +', ' ', result)
+    # Remove extra newlines
+    result = re.sub(r'\n\n\n+', '\n\n', result)
+    
+    return result.strip()
 
 # Configuration
 PAGE_SIZE = 20  # Lines per page for pagination
@@ -314,30 +337,58 @@ class WikiClient:
         if cached:
             return cached
         
-        # Use REST API for clean summary
-        url = "https://{}/api/rest_v1/page/summary/{}".format(
-            self.current_project, 
-            title.replace(' ', '_')
-        )
+        # Try REST API first (works best for Wikipedia)
+        if 'wikipedia' in self.current_project:
+            url = "https://{}/api/rest_v1/page/summary/{}".format(
+                self.current_project, 
+                title.replace(' ', '_')
+            )
+            
+            try:
+                response = self.session.get(url, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                
+                summary = {
+                    'title': data.get('title', title),
+                    'extract': sanitize_for_ascii(data.get('extract', '')),
+                    'url': data.get('content_urls', {}).get('desktop', {}).get('page', '')
+                }
+                
+                self.cache.set(cache_key, summary)
+                return summary
+            except Exception:
+                pass
         
-        try:
-            response = self.session.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            
-            summary = {
-                'title': data.get('title', title),
-                'extract': data.get('extract', ''),
-                'url': data.get('content_urls', {}).get('desktop', {}).get('page', '')
-            }
-            
-            self.cache.set(cache_key, summary)
-            return summary
-        except Exception:
-            if not is_internet_available():
-                print("\nInternet appears to be unavailable.")
-                print("Try again later.")
-            return None
+        # Fallback: Use MediaWiki API extract for Wiktionary and other projects
+        url = "https://{}/w/api.php".format(self.current_project)
+        params = {
+            'action': 'query',
+            'prop': 'extracts',
+            'titles': title,
+            'exintro': 1,  # Only intro section
+            'explaintext': 1,
+            'format': 'json'
+        }
+        
+        data = self._make_request(url, params)
+        if data and 'query' in data and 'pages' in data['query']:
+            pages = data['query']['pages']
+            page_id = list(pages.keys())[0]
+            if page_id != '-1':
+                extract = pages[page_id].get('extract', '')
+                summary = {
+                    'title': title,
+                    'extract': sanitize_for_ascii(extract),
+                    'url': ''
+                }
+                self.cache.set(cache_key, summary)
+                return summary
+        
+        if not is_internet_available():
+            print("\nInternet appears to be unavailable.")
+            print("Try again later.")
+        return None
     
     def get_full_text(self, title):
         """Get full article text (plain text)"""
@@ -355,7 +406,8 @@ class WikiClient:
             pages = data['query']['pages']
             page_id = list(pages.keys())[0]
             if page_id != '-1':  # -1 means page not found
-                return pages[page_id].get('extract', '')
+                text = pages[page_id].get('extract', '')
+                return sanitize_for_ascii(text)
         return None
     
     def get_links(self, title, limit=500):
@@ -574,8 +626,9 @@ class WikiClient:
             
             for i, result in enumerate(page_results, start + 1):
                 title = result['title']
-                # Strip HTML tags from snippet
+                # Strip HTML tags and sanitize for ASCII terminal
                 snippet = re.sub(r'<[^>]+>', '', result.get('snippet', ''))
+                snippet = sanitize_for_ascii(snippet)
                 
                 print("\n{}. {}".format(i, title))
                 # Wrap snippet
