@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Gopher YAPP Import Fix] - 2026-01-28
+### Fixed
+- **gopher.py v1.10**: YAPP availability now detected correctly after dependency update
+  - Added `reimport_yapp()` function to re-import yapp.py after download
+  - Called after `check_for_app_update()` runs
+  - Enables YAPP downloads immediately on first run (no restart needed)
+  - Fixes "yapp.py not found" message when module was just downloaded
+
 ## [Gopher Dependency Auto-Update] - 2026-01-28
 ### Changed
 - **gopher.py v1.9**: Auto-update now includes yapp.py dependency

@@ -14,7 +14,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.9
+Version: 1.10
 Date: January 2026
 """
 
@@ -28,7 +28,7 @@ try:
 except ImportError:
     YAPP_AVAILABLE = False
 
-VERSION = "1.9"
+VERSION = "1.10"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -127,6 +127,16 @@ def check_for_app_update(current_version, script_name):
     except Exception as e:
         # Don't block startup if update check fails (no internet, etc.)
         pass
+
+def reimport_yapp():
+    """Try to import yapp.py after dependency update (if initially failed)"""
+    global YAPP_AVAILABLE, create_stdio_yapp
+    if not YAPP_AVAILABLE:
+        try:
+            from yapp import create_stdio_yapp
+            YAPP_AVAILABLE = True
+        except ImportError:
+            pass
 
 def compare_versions(version1, version2):
     """
@@ -768,8 +778,12 @@ class GopherClient:
 
 if __name__ == '__main__':
     try:
-        # Check for app updates
+        # Check for app updates (includes yapp.py dependency)
         check_for_app_update(VERSION, APP_NAME)
+        
+        # Re-import yapp.py if it was just downloaded
+        reimport_yapp()
+        
         client = GopherClient()
         client.run()
     except KeyboardInterrupt:
