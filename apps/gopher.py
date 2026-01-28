@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.18
+Version: 1.19
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.18"
+VERSION = "1.19"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -664,6 +664,7 @@ class GopherClient:
         print("Designed for AX.25 packet radio terminals.")
         print("\nCommands:")
         print("  H)ome    - Go to home page")
+        print("  S)earch  - Search Gopherspace (Veronica-2)")
         print("  M)arks   - Show bookmarks")
         print("  A)bout   - About Gopher protocol")
         print("  G)o URL  - Go to specific Gopher URL")
@@ -679,7 +680,7 @@ class GopherClient:
                 elif self.current_state == 'article':
                     prompt = "\nArticle: B)ack, H)ome, M)arks, G)o, ?)Help, Q)uit :> "
                 else:
-                    prompt = "\nGopher: H)ome, M)arks, A)bout, G)o, ?)Help, Q)uit :> "
+                    prompt = "\nGopher: H)ome, S)earch, M)arks, A)bout, G)o, ?)Help, Q)uit :> "
                 
                 command = input(prompt).strip()
                 
@@ -697,6 +698,10 @@ class GopherClient:
                 elif cmd_lower.startswith('h'):
                     self.history = []
                     self.navigate_to(DEFAULT_HOME)
+                
+                # Search Veronica-2
+                elif cmd_lower.startswith('s'):
+                    self.navigate_to('gopher://gopher.floodgap.com:70/7/v2/vs')
                 
                 # Back
                 elif cmd_lower.startswith('b'):
