@@ -5,7 +5,7 @@ Dictionary Lookup Application for BPQ32 Packet Radio
 Uses the Linux 'dict' command to query dictd servers for word definitions.
 Provides simple interface for amateur radio operators to look up word meanings.
 
-Version: 1.7
+Version: 1.8
 Author: Brad Brown, KC1JMH
 Date: January 24, 2026
 """
@@ -16,7 +16,7 @@ import os
 import tempfile
 import stat
 
-VERSION = "1.7"
+VERSION = "1.8"
 
 # ASCII Art Logo (lowercase "dict" from asciiart.eu)
 LOGO = r"""
@@ -240,7 +240,7 @@ def main():
         print("")
         print("Exiting...")
         sys.stdout.flush()
-        return 1
+        return  # Changed from return 1
     
     # Main loop
     while True:
@@ -298,7 +298,7 @@ def main():
             sys.stdout.flush()
             break
     
-    return 0
+    # No return value needed
 
 
 if __name__ == '__main__':

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.8] - 2026-01-28
+### Fixed
+- **Connection drop on quit**: Removed all return values from main()
+  - Changed `return 0` and `return 1` to just `return`
+  - BPQ interprets non-zero exit codes as errors, causing disconnection
+  - App now exits cleanly without disconnecting stream
+
 ## [gopher.py 1.5] - 2026-01-28
 ### Fixed
 - **Connection drop on auto-update**: Replaced `sys.exit(0)` with `return` in auto-update success path
