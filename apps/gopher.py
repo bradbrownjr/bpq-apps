@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.21
+Version: 1.22
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.21"
+VERSION = "1.22"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -405,17 +405,19 @@ class GopherClient:
                     print(wrapped)
                 else:
                     print(line)
-            return
+            return None
         
         # Paginated display
-        page_num = 1
         total_pages = (len(lines) + PAGE_SIZE - 1) // PAGE_SIZE
+        current_page = 0
         
-        for i in range(0, len(lines), PAGE_SIZE):
-            chunk = lines[i:i + PAGE_SIZE]
+        while current_page < total_pages:
+            start = current_page * PAGE_SIZE
+            end = min(start + PAGE_SIZE, len(lines))
+            chunk = lines[start:end]
             
             print("\n" + "-" * 40)
-            print("Page {}/{}".format(page_num, total_pages))
+            print("Page {}/{}".format(current_page + 1, total_pages))
             print("-" * 40)
             
             for line in chunk:
@@ -425,12 +427,52 @@ class GopherClient:
                 else:
                     print(line)
             
-            page_num += 1
+            print("-" * 40)
             
-            if i + PAGE_SIZE < len(lines):
-                response = input("\n[Enter]=Next page, Q)uit :> ").strip().lower()
-                if response.startswith('q'):
+            # Build prompt based on context
+            if end < len(lines):
+                # More pages available
+                if current_page > 0:
+                    prompt = "\n[Enter]=Next P)rev B)ack :> "
+                else:
+                    prompt = "\n[Enter]=Next B)ack :> "
+            else:
+                # Last page
+                if current_page > 0:
+                    prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
+                else:
+                    prompt = "\nB)ack H)ome M)arks Q)uit :> "
+            
+            response = input(prompt).strip().lower()
+            
+            # Handle commands
+            if not response:
+                # Empty = next page or exit if on last page
+                if end < len(lines):
+                    current_page += 1
+                else:
                     break
+            elif response.startswith('b'):
+                # Back to menu
+                return 'back'
+            elif response.startswith('p'):
+                # Previous page
+                if current_page > 0:
+                    current_page -= 1
+            elif response.startswith('h'):
+                # Home
+                return 'home'
+            elif response.startswith('m'):
+                # Marks/bookmarks
+                return 'marks'
+            elif response.startswith('q'):
+                # Quit
+                return 'quit'
+            else:
+                # Invalid command, stay on current page
+                pass
+        
+        return None
     
     def show_bookmarks(self):
         """Display bookmarks menu"""
@@ -518,11 +560,38 @@ class GopherClient:
                 print("This may take significant time over packet radio.")
             
             if response.startswith('p'):
-                self.display_article(content, paginate=True)
+                result = self.display_article(content, paginate=True)
             else:  # Default to all at once (including 'v' or 'a' or empty/Enter)
-                self.display_article(content, paginate=False)
+                result = self.display_article(content, paginate=False)
             
             self.current_state = 'article'
+            
+            # Handle return commands from article pagination
+            if result == 'quit':
+                print("\nGoodbye! 73\n")
+                sys.exit(0)
+            elif result == 'home':
+                self.history = []
+                self.navigate_to(DEFAULT_HOME)
+                return True
+            elif result == 'marks':
+                self.show_bookmarks()
+                sel = input("Select bookmark # or [Enter] to cancel :> ").strip()
+                if sel.isdigit():
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(BOOKMARKS):
+                        self.navigate_to(BOOKMARKS[idx][1])
+                    else:
+                        print("Invalid bookmark number")
+                return True
+            elif result == 'back':
+                # Return to previous page (back in history)
+                if self.history:
+                    prev_url = self.history.pop()
+                    self.current_url = prev_url
+                    self.navigate_to(prev_url)
+                return True
+            
             return True
             
         # Search
