@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [YAPP Binary Mode Fix] - 2026-01-28
+### Fixed
+- **yapp.py v1.2**: Force binary mode for stdin/stdout in create_stdio_yapp()
+  - Control bytes (0x01-0x06, etc.) were being lost in text mode
+  - Now properly accesses sys.stdin.buffer and sys.stdout.buffer
+  - Falls back to io.open() for binary stream if buffer not available
+  - Fixes "HD: File Header Error" in EasyTerm caused by missing SOH/length bytes
+  - Ensures complete YAPP frames are transmitted correctly
+
 ## [YAPP Header Validation] - 2026-01-28
 ### Fixed
 - **yapp.py v1.1**: Added header length validation

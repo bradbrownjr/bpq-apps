@@ -16,7 +16,7 @@ Usage:
     filename, data, error = yapp.receive_file()
 
 Author: Brad KC1JMH
-Version: 1.1
+Version: 1.2
 Date: 2026-01-28
 License: MIT
 
@@ -506,10 +506,31 @@ def create_stdio_yapp(debug=False):
     """
     Create a YAPP protocol handler using stdin/stdout.
     
+    IMPORTANT: This forces stdin/stdout into binary mode for YAPP frames.
+    
     Returns:
         YAPPProtocol instance configured for stdio
     """
     import select
+    
+    # Force binary mode for stdin/stdout (required for YAPP control bytes)
+    if hasattr(sys.stdin, 'buffer'):
+        stdin_raw = sys.stdin.buffer
+    else:
+        stdin_raw = sys.stdin
+        
+    if hasattr(sys.stdout, 'buffer'):
+        stdout_raw = sys.stdout.buffer
+    else:
+        # For Python 2 or systems without buffer attribute
+        import io
+        stdout_raw = sys.stdout
+        # Try to get underlying binary stream
+        if hasattr(sys.stdout, 'fileno'):
+            try:
+                stdout_raw = io.open(sys.stdout.fileno(), 'wb', closefd=False)
+            except:
+                pass
     
     def read_bytes(n, timeout):
         """Read n bytes from stdin with timeout"""
@@ -523,17 +544,14 @@ def create_stdio_yapp(debug=False):
             
             # Check if data available
             if hasattr(select, 'select'):
-                rlist, _, _ = select.select([sys.stdin], [], [], min(remaining, 1.0))
+                rlist, _, _ = select.select([stdin_raw], [], [], min(remaining, 1.0))
                 if not rlist:
                     continue
             
-            # Read available data
-            if hasattr(sys.stdin, 'buffer'):
-                chunk = sys.stdin.buffer.read(n - len(result))
-            else:
-                chunk = sys.stdin.read(n - len(result))
-                if chunk:
-                    chunk = chunk.encode('latin-1')
+            # Read available data from binary stream
+            chunk = stdin_raw.read(n - len(result))
+            if isinstance(chunk, str):
+                chunk = chunk.encode('latin-1')
             
             if chunk:
                 result.extend(chunk)
@@ -543,13 +561,9 @@ def create_stdio_yapp(debug=False):
         return bytes(result) if result else None
     
     def write_bytes(data):
-        """Write bytes to stdout"""
-        if hasattr(sys.stdout, 'buffer'):
-            sys.stdout.buffer.write(data)
-            sys.stdout.buffer.flush()
-        else:
-            sys.stdout.write(data.decode('latin-1'))
-            sys.stdout.flush()
+        """Write bytes to stdout (binary mode)"""
+        stdout_raw.write(data)
+        stdout_raw.flush()
     
     return YAPPProtocol(read_bytes, write_bytes, debug=debug)
 
