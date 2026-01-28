@@ -43,71 +43,6 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 gopher.py")
     sys.exit(1)
 
-def update_dependency(dependency_name):
-    """Download/update a dependency module from GitHub (with version detection)"""
-    try:
-        import urllib.request
-        import re
-        import os
-        import stat
-        
-        # Get the dependency script directory (same as this script)
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        dependency_path = os.path.join(script_dir, dependency_name)
-        
-        # Check current version if file exists
-        current_version = None
-        if os.path.exists(dependency_path):
-            try:
-                with open(dependency_path, 'r') as f:
-                    content_lines = f.read()
-                    version_match = re.search(r'Version:\s*([0-9.]+)', content_lines)
-                    if version_match:
-                        current_version = version_match.group(1)
-            except:
-                pass
-        
-        # Download from GitHub (with short timeout)
-        github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(dependency_name)
-        with urllib.request.urlopen(github_url, timeout=3) as response:
-            content = response.read()
-        
-        # Check GitHub version
-        github_version = None
-        try:
-            version_match = re.search(r'Version:\s*([0-9.]+)', content.decode('utf-8'))
-            if version_match:
-                github_version = version_match.group(1)
-        except:
-            pass
-        
-        # Determine if update needed
-        should_update = False
-        if current_version is None:
-            # New install
-            should_update = True
-            print("Installing dependency: {} v{}".format(dependency_name, github_version or "unknown"))
-        elif github_version and compare_versions(github_version, current_version) > 0:
-            # Update available
-            should_update = True
-            print("Updating dependency: {} v{} -> v{}".format(dependency_name, current_version, github_version))
-        
-        if should_update:
-            # Write to temporary file first, then replace
-            temp_path = dependency_path + '.tmp'
-            with open(temp_path, 'wb') as f:
-                f.write(content)
-            
-            # Ensure file is executable
-            os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-            
-            # Replace old file with new one
-            os.replace(temp_path, dependency_path)
-        
-    except Exception:
-        # Silently fail - don't block startup if dependency update fails
-        pass
-
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
     try:
@@ -115,9 +50,6 @@ def check_for_app_update(current_version, script_name):
         import re
         import os
         import stat
-        
-        # First, ensure yapp.py dependency is present/updated (silently)
-        update_dependency('yapp.py')
         
         # Get the version from GitHub (silent check with short timeout)
         github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(script_name)
@@ -162,16 +94,6 @@ def check_for_app_update(current_version, script_name):
     except Exception as e:
         # Don't block startup if update check fails (no internet, etc.)
         pass
-
-def reimport_yapp():
-    """Try to import yapp.py after dependency update (if initially failed)"""
-    global YAPP_AVAILABLE, create_stdio_yapp, YAPP_VERSION
-    if not YAPP_AVAILABLE:
-        try:
-            from yapp import create_stdio_yapp, __version__ as YAPP_VERSION
-            YAPP_AVAILABLE = True
-        except ImportError:
-            pass
 
 def compare_versions(version1, version2):
     """
@@ -814,11 +736,8 @@ class GopherClient:
 
 if __name__ == '__main__':
     try:
-        # Check for app updates (includes yapp.py dependency)
+        # Check for app updates
         check_for_app_update(VERSION, APP_NAME)
-        
-        # Re-import yapp.py if it was just downloaded
-        reimport_yapp()
         
         client = GopherClient()
         client.run()
