@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 1.3] - 2026-01-28
+### Changed
+- **Removed callsign handling**: WIKI is an article reader and doesn't need user identification
+  - Removed stdin callsign reading code entirely
+  - Simplified startup - no more stdin handling
+  - BPQ32 APPLICATION line should use `NOCALL K` (no S flag)
+  - Faster startup without stdin checks
+
 ## [wiki.py 1.2] - 2026-01-28
 ### Fixed
 - **Startup hang**: Fixed blocking stdin read that caused delay at startup

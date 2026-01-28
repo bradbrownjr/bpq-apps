@@ -530,7 +530,7 @@ wiki.py
 
 **BPQ32 Configuration**:
 ```
-APPLICATION 21,WIKI,C 9 HOST 17 NOCALL K S
+APPLICATION 21,WIKI,C 9 HOST 17 NOCALL K
 ```
 
 **Usage**:
