@@ -241,7 +241,7 @@ class WikiClient:
             # Use session with proper User-Agent (required by Wikipedia)
             self.session = requests.Session()
             self.session.headers.update({
-                'User-Agent': 'WikiPacketRadio/{} (https://github.com/bradbrownjr/bpq-apps; packet radio terminal)'.format(VERSION)
+                'User-Agent': 'WikiTermBrowser/{} (https://github.com/bradbrownjr/bpq-apps; text terminal client)'.format(VERSION)
             })
         except ImportError:
             print("Error: requests library not found.")
