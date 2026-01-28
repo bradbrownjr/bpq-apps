@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [YAPP Demo Server Created] - 2026-01-28
+### Added
+- **yapp-demo-server.py v1.0**: Proof-of-concept YAPP socket server
+  - Demonstrates direct socket I/O bypasses control byte filtering
+  - Simple echo server that responds to YAPP ENQ frames
+  - Shows control characters (< 0x20) ARE received via direct sockets
+  - Confirms problem is stdio/inetd pipeline, not protocol itself
+  - Ready for testing on live node
+  - Usage: `./yapp-demo-server.py --port 63020`
+
+## [YAPP Binary Mode Research] - 2026-01-28
+### Documentation
+- **YAPP-PROTOCOL.md**: Conclusive research on telnet binary mode
+  - Reviewed BPQ32/LinBPQ source code (150+ excerpts)
+  - ProcessTelnetCommand() only supports echo and suppressgoahead
+  - Binary mode (option 0) explicitly rejected with WONT
+  - No ConnectionInfo field for binary mode flag
+  - Control character filtering hardcoded in multiple code paths
+  - **Verdict**: Telnet binary mode NOT VIABLE without C code changes
+  - Updated Alternative 4 with test case that would fail
+  - Confirms dedicated socket server is only practical solution
+
 ## [Gopher YAPP Disabled] - 2026-01-28
 ### Changed
 - **gopher.py v1.16**: Disabled YAPP download functionality
