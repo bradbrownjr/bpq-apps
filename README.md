@@ -1,5 +1,5 @@
 # bpq-apps
-Custom applications for a BPQ32 packet radio node
+Custom applications for a BPQ32 packet radio node, your console, or a terminal. Most applications are written in Python.
 
 ## Table of Contents
 - [Features](#features)
@@ -15,32 +15,7 @@ Custom applications for a BPQ32 packet radio node
 
 **� Emergency Communications Ready**: Designed for ARES (Amateur Radio Emergency Service) and SKYWARN operations where internet access may be unavailable during disasters, severe weather events, or infrastructure failures. All applications prioritize offline resilience with local data caching, ensuring critical information remains accessible when commercial communications are down.
 
-**📡 Offline Capability**: All applications work reliably without internet connectivity. Apps use JSON caching (updated via cron), graceful error handling, and user-friendly messages instead of crashing on network failures.
-
-**Cached Data Applications** (with `--update-cache` cron support):
-- **wx.py**: Local weather observations, alerts, and SKYWARN activation status (2-hour cache)
-- **rss-news.py**: Emergency bulletins, weather warnings, ham radio news (2-hour cache)
-- **hamqsl.py**: HF propagation data for band planning (4-hour cache)
-- **space.py**: NOAA space weather reports for HF comms (4-hour cache)
-- **eventcal.py**: Club calendar and net schedules (6-hour cache)
-- **predict.py**: Callsign lookups with 30-day local cache
-
-**Always-Offline Applications** (no internet required):
-- **hamtest.py**: License exam practice with local question pools
-- **wall.py**: Community bulletin board (local JSON storage)
-- **forms.py**: ICS-213, radiograms, weather reports (local templates)
-- **callout.py**: Station information lookup (local data)
-
-**Graceful Degradation** (offline-aware):
-- **gopher.py**, **qrz3.py**, **wxnws-ftp.py**: Show "Internet unavailable" messages, continue operating
-
-All apps continue running even if:
-- GitHub is unreachable (auto-update fails silently)
-- External APIs are down (uses cached data or shows offline message)
-- Network connectivity is intermittent (retries without crashing)
-- Config files are missing (uses sensible defaults)
-
-**Setting Up Offline Caching**: See [docs/INSTALLATION.md](docs/INSTALLATION.md) for cron job configuration to keep cached data fresh (typically every 2-6 hours).
+**📡 Offline Capability**: All applications, except where noted, work reliably without internet connectivity. Apps use JSON caching (updated via cron), graceful error handling, and user-friendly messages instead of crashing on network failures.
 
 ## Applications
 
@@ -78,21 +53,36 @@ Sysop tools for BBS management and network monitoring:
 
 * **nodemap.py** - Advanced network topology crawler with intelligent staleness detection. Discovers packet radio network structure by connecting to nodes via RF, analyzing routing tables and neighbor lists. Features resume capability for large networks, adaptive timeouts, and multi-operator data merging for comprehensive coverage.
 
-**Recommended Commands:**
-```bash
-# Initial crawl
-./nodemap.py 10 -v -l traffic.log -n https://notify.lynwood.us/packet
-
-# Resume interrupted crawl (recommended for large networks)
-./nodemap.py --resume -v -l traffic.log -n https://notify.lynwood.us/packet
-
-# Merge multiple operator perspectives
-./nodemap.py -m remote_*.json
-```
-
 See [utilities/README.md](utilities/README.md) for detailed documentation.
 
-## Installation
+## Offline Caching
+
+**Cached Data Applications** (with `--update-cache` cron support):
+- **wx.py**: Local weather observations, alerts, and SKYWARN activation status (2-hour cache)
+- **rss-news.py**: Emergency bulletins, weather warnings, ham radio news (2-hour cache)
+- **hamqsl.py**: HF propagation data for band planning (4-hour cache)
+- **space.py**: NOAA space weather reports for HF comms (4-hour cache)
+- **eventcal.py**: Club calendar and net schedules (6-hour cache)
+- **predict.py**: Callsign lookups with 30-day local cache
+
+**Always-Offline Applications** (no internet required):
+- **hamtest.py**: License exam practice with local question pools
+- **wall.py**: Community bulletin board (local JSON storage)
+- **forms.py**: ICS-213, radiograms, weather reports (local templates)
+- **callout.py**: Station information lookup (local data)
+
+**Graceful Degradation** (offline-aware):
+- **gopher.py**, **qrz3.py**, **wxnws-ftp.py**: Show "Internet unavailable" messages, continue operating
+
+All apps continue running even if:
+- GitHub is unreachable (auto-update fails silently)
+- External APIs are down (uses cached data or shows offline message)
+- Network connectivity is intermittent (retries without crashing)
+- Config files are missing (uses sensible defaults)
+
+**Setting Up Offline Caching**: See [docs/INSTALLATION.md](docs/INSTALLATION.md) for cron job configuration to keep cached data fresh (typically every 2-6 hours).
+
+## Quick Installation
 
 All applications feature automatic updates and can be installed with simple wget commands:
 
