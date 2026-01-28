@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [wiki.py 2.1] - 2026-01-28
+### Added
+- **B)ack navigation**: Return to previous article after following tangent links
+  - Shows B)ack option only when history available
+  - Navigates back without re-adding to history
+  - Prompts: `[F]ull [L]inks [1-N] B)ack M)enu Q)uit`
+  - Lets you explore references then return to continue reading
+
 ## [wiki.py 2.0] - 2026-01-28
 ### Changed
 - **M) Menu prompt**: All prompts now include M to return to main menu

@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 2.0
+Version: 2.1
 Date: January 2026
 """
 
@@ -26,7 +26,7 @@ import re
 import textwrap
 import socket
 
-VERSION = "2.0"
+VERSION = "2.1"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -234,6 +234,7 @@ class WikiClient:
         self.current_article = None
         self.current_links = []
         self.session_history = []
+        self.history_index = -1  # Track position in history
         
         # Import requests library
         try:
@@ -606,11 +607,17 @@ class WikiClient:
             else:
                 print("Invalid input.")
     
-    def handle_article_view(self, title):
+    def handle_article_view(self, title, add_to_history=True):
         """Handle article viewing with summary/full/links options"""
         # Store current article
         self.current_article = title
-        self.session_history.append(title)
+        
+        # Track history
+        if add_to_history:
+            # Remove any forward history when navigating to a new article
+            self.session_history = self.session_history[:self.history_index + 1]
+            self.session_history.append(title)
+            self.history_index = len(self.session_history) - 1
         
         # Get summary
         print("\nFetching article...")
@@ -640,15 +647,29 @@ class WikiClient:
         while True:
             print("\n" + "-" * min(40, width))
             if self.current_links:
-                prompt = "[F]ull [L]inks [1-{}] M)enu Q)uit :> ".format(len(self.current_links))
+                can_back = self.history_index > 0
+                if can_back:
+                    prompt = "[F]ull [L]inks [1-{}] B)ack M)enu Q)uit :> ".format(len(self.current_links))
+                else:
+                    prompt = "[F]ull [L]inks [1-{}] M)enu Q)uit :> ".format(len(self.current_links))
             else:
-                prompt = "[F]ull article M)enu Q)uit :> "
+                can_back = self.history_index > 0
+                if can_back:
+                    prompt = "[F]ull article B)ack M)enu Q)uit :> "
+                else:
+                    prompt = "[F]ull article M)enu Q)uit :> "
             
             choice = input(prompt).strip().upper()
             
             if choice == 'Q':
                 break
             elif choice == 'M':
+                break
+            elif choice == 'B' and self.history_index > 0:
+                # Go back to previous article
+                self.history_index -= 1
+                prev_title = self.session_history[self.history_index]
+                self.handle_article_view(prev_title, add_to_history=False)
                 break
             elif choice == 'F':
                 # Show full article
@@ -698,14 +719,14 @@ class WikiClient:
         selected = self.display_search_results(results)
         
         if selected:
-            self.handle_article_view(selected['title'])
+            self.handle_article_view(selected['title'], add_to_history=True)
     
     def handle_random(self):
         """Handle random article"""
         print("\nFetching random article...")
         title = self.get_random()
         if title:
-            self.handle_article_view(title)
+            self.handle_article_view(title, add_to_history=True)
         else:
             print("Could not fetch random article.")
     
