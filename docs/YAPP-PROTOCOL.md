@@ -428,6 +428,102 @@ if (len == 2 && ptr1[0] == 5 && ptr1[1] == 1)
 }
 ```
 
+**Terminal emulation behavior** (TelnetV6.c:861-897):
+```c
+// If line contains any data above 7f, assume binary and dont display
+for (i = 0; i < LineLen; i++)
+{
+    if (Line[i] > 127 || Line[i] < 32)
+        goto Skip;  // Suppresses control characters
+}
+```
+
+### Telnet Binary Mode Investigation
+
+**Research question:** Does BPQ32 respect RFC856 TRANSMIT-BINARY option?
+
+**Telnet option definitions** (telnetserver.h:94-109):
+```c
+#define WILL 251    // Indicates desire to begin performing option
+#define WONT 252    // Indicates refusal to perform option
+#define DOx  253    // Request that other party perform option
+#define DONT 254    // Demand that other party stop performing option
+#define IAC  255    // Interpret as command
+
+#define suppressgoahead 3  // RFC858
+#define echo 1             // RFC857
+// NOTE: No binary mode (0) defined in telnetserver.h
+```
+
+**Current telnet negotiation** (TelnetV6.c:3257-3289):
+```c
+char Negotiate[6]={IAC,WILL,suppressgoahead,IAC,WILL,echo};
+send(sock, Negotiate, 6, 0);
+```
+
+**Telnet command processing** (TelnetV6.c:5454-5504):
+```c
+BOOL ProcessTelnetCommand(struct ConnectionInfo * sockptr, byte * Msg, int * Len)
+{
+    // ...
+    switch (cmd)
+    {
+    case DOx:
+        switch (TelOption)
+        {
+        case echo:
+            sockptr->DoEcho = TRUE;
+            send(sockptr->socket, WillEcho, 3, 0);
+            break;
+        case suppressgoahead:
+            send(sockptr->socket, WillSupGA, 3, 0);
+            break;
+        default:
+            Wont[2] = TelOption;
+            send(sockptr->socket, Wont, 3, 0);  // REJECT unknown options
+        }
+    }
+}
+```
+
+**Key finding:** BPQ32's telnet implementation **rejects** all options except echo and suppressgoahead. Binary mode (option 0) is not implemented.
+
+**ConnectionInfo structure** (telnetserver.h:0-54):
+```c
+struct ConnectionInfo
+{
+    // ...
+    BOOL DoEcho;        // Telnet Echo option accepted
+    BOOL FBBMode;       // Pure TCP for FBB forwarding
+    BOOL NeedLF;        // FBB mode with CR > CRLF conversion
+    // NO FIELD FOR BINARY MODE
+};
+```
+
+### Findings: Telnet Binary Mode NOT Supported
+
+**Conclusive evidence:**
+1. **No binary option constant** in telnetserver.h (only echo, suppressgoahead defined)
+2. **Rejects unknown options** in ProcessTelnetCommand() - sends WONT for anything except echo/suppressgoahead
+3. **No binary mode flag** in ConnectionInfo structure
+4. **Control character filtering** hardcoded in multiple places:
+   - TelnetV6.c:861-897 (filters < 32 and > 127)
+   - Cmd.c:4972-5007 (explicitly rejects YAPP ENQ frames)
+5. **FBBMode is NOT binary** - still does CRLF conversion and character filtering
+
+**Why this matters for YAPP:**
+- YAPP uses control bytes: SOH (0x01), STX (0x02), ETX (0x03), EOT (0x04), ENQ (0x05), ACK (0x06)
+- All of these are < 0x20 and **will be filtered** by terminal emulation
+- Telnet binary mode negotiation (IAC WILL BINARY / IAC DO BINARY) **is not implemented**
+- Even if we send the negotiation sequence, BPQ32 will respond with WONT (refusal)
+
+**Test that would fail:**
+```python
+# Try to negotiate binary mode
+sock.send(b"\xff\xfb\x00")  # IAC WILL TRANSMIT-BINARY
+# BPQ32 response: \xff\xfc\x00 (IAC WONT TRANSMIT-BINARY)
+```
+
 BPQ32 explicitly rejects YAPP at the node command level. Even if this check were bypassed, the stdio pipeline strips control bytes:
 
 - **SOH (0x01)**, **STX (0x02)**, **ETX (0x03)** - frame delimiters
@@ -557,36 +653,97 @@ sock.send(b"\xFF\xFB\x00")  # Request binary send
 sock.send(b"\xFF\xFD\x00")  # Request binary receive
 ```
 
-**Research findings** (TelnetV6.c:5424-5453):
+**Research findings** (TelnetV6.c:5454-5504):
 ```c
 BOOL ProcessTelnetCommand(struct ConnectionInfo * sockptr, byte * Msg, int * Len)
 {
-    // Telnet IAC processing
-    if (cmd == DOx || cmd == DONT || cmd == WILL || cmd == WONT)
+    switch (cmd)
     {
-        // Option negotiation
+    case DOx:
+        switch (TelOption)
+        {
+        case echo:            // Supported (option 1)
+            sockptr->DoEcho = TRUE;
+            send(sockptr->socket, WillEcho, 3, 0);
+            break;
+        case suppressgoahead: // Supported (option 3)
+            send(sockptr->socket, WillSupGA, 3, 0);
+            break;
+        default:              // ALL OTHER OPTIONS REJECTED
+            Wont[2] = TelOption;
+            send(sockptr->socket, Wont, 3, 0);
+        }
     }
 }
 ```
 
-**Advantages**:
-- Standard Telnet protocol extension
-- Should disable control character filtering
-- No code changes to BPQ32 needed
+**telnetserver.h definitions** (lines 94-109):
+```c
+#define echo 1             // RFC857 - SUPPORTED
+#define suppressgoahead 3  // RFC858 - SUPPORTED
+// Binary mode (option 0) NOT DEFINED
+```
 
-**Disadvantages**:
-- **Requires terminal/client support** for binary mode
-- May not work with all BPQ32 versions (depends on telnet implementation)
-- Still goes through terminal emulation layer (may not fully disable filtering)
-- Untested - no evidence this works in practice
+**Verdict:** ❌ **NOT VIABLE**
+
+BPQ32 telnet implementation **explicitly rejects** binary mode (option 0):
+- Only echo and suppressgoahead options are recognized
+- All other options (including binary mode) receive WONT response
+- No ConnectionInfo field for binary mode flag
+- Control character filtering is hardcoded regardless of negotiation
+
+**Test that would fail:**
+```python
+sock.send(b"\xff\xfb\x00")  # IAC WILL TRANSMIT-BINARY
+# BPQ32 response: \xff\xfc\x00 (IAC WONT TRANSMIT-BINARY)
+# Control characters still filtered even if negotiation attempted
+```
 
 ### Conclusion
 
-**YAPP over stdio is fundamentally broken** in BPQ32/inetd architecture. The recommended approach is:
+**YAPP over stdio is fundamentally broken** in BPQ32/inetd architecture due to:
+1. Terminal emulation filtering (< 0x20, > 0x7F)
+2. Explicit YAPP rejection in node command handler (Cmd.c:4972-5007)
+3. **No binary mode support** in telnet implementation (only echo/suppressgoahead)
+4. Hardcoded control character filtering regardless of mode flags
 
-1. **Short-term**: Disable YAPP in gopher.py (already done in v1.17)
+**The recommended approach is:**
+
+1. **Short-term**: Disable YAPP in gopher.py (✅ done in v1.17)
 2. **Long-term**: Implement dedicated YAPP socket server (yapp_server.py) as standalone daemon
-3. **Future**: Investigate Telnet binary mode as potential transparent solution
+3. ❌ **Telnet binary mode is NOT viable** - requires C code changes to BPQ32 core
+
+### Implementation Paths Forward
+
+Since BPQ32 node architecture prevents stdio-based YAPP, all YAPP transfers must use **dedicated socket servers**:
+
+**Recommended:** Create yapp_server.py as standalone daemon
+- Listens on dedicated TCP port (e.g., 63020)
+- Accepts direct socket connections (no stdin/stdout)
+- Implements full YAPP state machine from yapp.py module
+- Add to /etc/services and inetd.conf
+- Configure in bpq32.cfg as APPLICATION with direct port
+
+**Code structure:**
+```python
+# yapp_server.py - Standalone YAPP daemon
+import socket
+from yapp import YAPPProtocol
+
+def handle_yapp_session(conn, addr):
+    yapp = YAPPProtocol(conn)  # Direct socket (no stdio filtering)
+    yapp.receive_file()        # Or send_file() based on protocol
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(('0.0.0.0', 63020))
+server.listen(5)
+
+while True:
+    conn, addr = server.accept()
+    threading.Thread(target=handle_yapp_session, args=(conn, addr)).start()
+```
+
+This bypasses **all** stdio/inetd/terminal emulation layers that cause control byte filtering.
 
 ### Implementation Notes
 
