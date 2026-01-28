@@ -504,9 +504,9 @@ class WikiClient:
             if i + PAGE_SIZE < len(lines):
                 # Show link navigation prompt during pagination
                 if self.current_links:
-                    prompt = "\n[Enter]=Next [1-{}] M) Q)uit :> ".format(len(self.current_links))
+                    prompt = "\n[Enter]=Next [1-{}] M)enu Q)uit :> ".format(len(self.current_links))
                 else:
-                    prompt = "\n[Enter]=Next M) Q)uit :> "
+                    prompt = "\n[Enter]=Next M)enu Q)uit :> "
                 
                 response = input(prompt).strip()
                 
@@ -585,9 +585,9 @@ class WikiClient:
             # Build prompt
             has_next = end < total
             if has_next:
-                prompt = "\n[1-{}] or N)ext M) Q)uit :> ".format(total)
+                prompt = "\n[1-{}] or N)ext M)enu Q)uit :> ".format(total)
             else:
-                prompt = "\n[1-{}] M) Q)uit :> ".format(total)
+                prompt = "\n[1-{}] M)enu Q)uit :> ".format(total)
             
             choice = input(prompt).strip().upper()
             
@@ -640,9 +640,9 @@ class WikiClient:
         while True:
             print("\n" + "-" * min(40, width))
             if self.current_links:
-                prompt = "[F]ull [L]inks [1-{}] M) Q)uit :> ".format(len(self.current_links))
+                prompt = "[F]ull [L]inks [1-{}] M)enu Q)uit :> ".format(len(self.current_links))
             else:
-                prompt = "[F]ull article M) Q)uit :> "
+                prompt = "[F]ull article M)enu Q)uit :> "
             
             choice = input(prompt).strip().upper()
             
