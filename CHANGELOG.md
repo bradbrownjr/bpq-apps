@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [dict.py 1.7] - 2026-01-28
+### Fixed
+- **Connection drop on quit**: Removed `sys.exit()` wrapper that caused BPQ to disconnect stream
+  - Now calls `main()` directly without sys.exit()
+  - Proper return to node prompt after quitting DICT
+  - Matches pattern used in other BPQ apps
+
 ## [wiki.py 1.3] - 2026-01-28
 ### Changed
 - **Removed callsign handling**: WIKI is an article reader and doesn't need user identification
