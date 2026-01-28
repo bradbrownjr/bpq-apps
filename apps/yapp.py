@@ -3,6 +3,17 @@
 """
 YAPP Protocol Implementation for BPQ Packet Radio Apps
 
+STATUS: EXPERIMENTAL - NOT FUNCTIONAL
+    This implementation is incomplete. YAPP requires sending raw binary
+    control bytes (0x01-0x06, etc.) which are stripped/filtered by the
+    BPQ32 -> inetd -> stdio pipeline. The terminal emulation layer
+    filters control bytes < 0x20, causing YAPP frames to be corrupted.
+    
+    Possible solutions (not yet implemented):
+    1. Dedicated YAPP socket server (bypasses stdio filtering)
+    2. ASCII-safe encoding (incompatible with standard YAPP clients)
+    3. Direct BPQ32 integration via DLL interface
+
 A Python 3.5.3 compatible implementation of the YAPP (Yet Another Packet
 Protocol) file transfer protocol for packet radio networks.
 
@@ -16,7 +27,7 @@ Usage:
     filename, data, error = yapp.receive_file()
 
 Author: Brad KC1JMH
-Version: 1.3
+Version: 1.4
 Date: 2026-01-28
 License: MIT
 
@@ -29,7 +40,7 @@ import sys
 import time
 import os
 
-__version__ = "1.3"
+__version__ = "1.4"
 
 # YAPP Control Characters
 SOH = 0x01  # Start of Header (file header frame)
