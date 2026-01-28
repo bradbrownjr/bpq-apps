@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [YAPP Unbuffered Output] - 2026-01-28
+### Fixed
+- **yapp.py v1.3**: Force unbuffered binary mode for stdout
+  - Uses `io.open(sys.stdout.fileno(), 'wb', buffering=0)`
+  - sys.stdout.buffer can have line buffering that corrupts YAPP frames
+  - Unbuffered mode ensures control bytes are sent immediately
+  - Prevents frame header being split or buffered separately from payload
+  - Should finally resolve "HD: File Header Error" in EasyTerm
+
 ## [Gopher Update Messages] - 2026-01-28
 ### Changed
 - **gopher.py v1.14**: Improved update messages with more detail

@@ -16,7 +16,7 @@ Usage:
     filename, data, error = yapp.receive_file()
 
 Author: Brad KC1JMH
-Version: 1.2
+Version: 1.3
 Date: 2026-01-28
 License: MIT
 
@@ -29,7 +29,7 @@ import sys
 import time
 import os
 
-__version__ = "1.2"
+__version__ = "1.3"
 
 # YAPP Control Characters
 SOH = 0x01  # Start of Header (file header frame)
@@ -508,31 +508,37 @@ def create_stdio_yapp(debug=False):
     """
     Create a YAPP protocol handler using stdin/stdout.
     
-    IMPORTANT: This forces stdin/stdout into binary mode for YAPP frames.
+    IMPORTANT: This forces stdin/stdout into binary unbuffered mode for YAPP frames.
     
     Returns:
         YAPPProtocol instance configured for stdio
     """
     import select
+    import io
     
     # Force binary mode for stdin/stdout (required for YAPP control bytes)
+    # Use unbuffered mode (buffering=0) to prevent control byte loss
     if hasattr(sys.stdin, 'buffer'):
         stdin_raw = sys.stdin.buffer
     else:
         stdin_raw = sys.stdin
-        
-    if hasattr(sys.stdout, 'buffer'):
+    
+    # For stdout, we MUST use unbuffered binary mode
+    # sys.stdout.buffer may still have line buffering which can corrupt YAPP frames
+    if hasattr(sys.stdout, 'fileno'):
+        try:
+            # Open stdout file descriptor in binary unbuffered mode
+            stdout_raw = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
+        except Exception:
+            # Fallback to buffer if available
+            if hasattr(sys.stdout, 'buffer'):
+                stdout_raw = sys.stdout.buffer
+            else:
+                stdout_raw = sys.stdout
+    elif hasattr(sys.stdout, 'buffer'):
         stdout_raw = sys.stdout.buffer
     else:
-        # For Python 2 or systems without buffer attribute
-        import io
         stdout_raw = sys.stdout
-        # Try to get underlying binary stream
-        if hasattr(sys.stdout, 'fileno'):
-            try:
-                stdout_raw = io.open(sys.stdout.fileno(), 'wb', closefd=False)
-            except:
-                pass
     
     def read_bytes(n, timeout):
         """Read n bytes from stdin with timeout"""
