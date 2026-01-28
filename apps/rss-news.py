@@ -44,9 +44,13 @@ from html import unescape
 from datetime import datetime
 import subprocess
 import tempfile
+import json
+import time
+import socket
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "rss-news.py"
+CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
@@ -124,8 +128,6 @@ SOCKET_TIMEOUT = 30  # Timeout for requests in seconds
 def is_internet_available():
     """Quick check if internet is available (tries to reach a reliable DNS)"""
     try:
-        # Try to reach Google's public DNS (simple and fast)
-        import socket
         socket.create_connection(('8.8.8.8', 53), timeout=2)
         return True
     except (socket.timeout, socket.error, OSError):
@@ -144,6 +146,39 @@ def get_line_width():
 
 LINE_WIDTH = get_line_width()  # Dynamic terminal width
 MAX_ARTICLES = 15  # Maximum number of articles to display per feed
+
+
+def format_cache_timestamp(timestamp):
+    """Format cache timestamp for display with local timezone"""
+    try:
+        dt = time.localtime(timestamp)
+        tz = time.strftime('%Z', dt)
+        return time.strftime('%m/%d/%Y at %H:%M', dt) + ' ' + tz
+    except Exception:
+        return 'Unknown'
+
+
+def load_cache():
+    """Load cached feed data from disk"""
+    try:
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, 'r') as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return None
+
+
+def save_cache(data):
+    """Save feed data to cache file"""
+    try:
+        data['cache_timestamp'] = time.time()
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+        return True
+    except Exception as e:
+        print("Error saving cache: {}".format(e))
+        return False
 
 
 class HTMLStripper(HTMLParser):
@@ -170,8 +205,22 @@ class RSSReader:
         self.current_category = None
         self.current_feed = None
         self.current_articles = []
+        self.cache = load_cache()  # Load cache for offline fallback
         self.load_config()
+    
+    def get_cached_feed(self, category, feed_name):
+        """Get feed articles from cache if available"""
+        if not self.cache:
+            return None
         
+        feeds = self.cache.get('feeds', {})
+        cat_feeds = feeds.get(category, {})
+        feed_data = cat_feeds.get(feed_name)
+        
+        if feed_data and 'articles' in feed_data:
+            return feed_data
+        return None
+    
     def load_config(self):
         """Load RSS feeds from configuration file, use defaults if missing"""
         # Built-in default feeds
@@ -658,7 +707,15 @@ class RSSReader:
                             if self.current_articles:
                                 self.display_articles(self.current_feed)
                             else:
-                                print("Error: Could not refresh feed")
+                                # Try cache on refresh failure
+                                cached = self.get_cached_feed(self.current_category, self.current_feed)
+                                if cached:
+                                    print("\n** OFFLINE: Using cached data **")
+                                    print("Cached: {}".format(format_cache_timestamp(cached.get('fetched', 0))))
+                                    self.current_articles = cached['articles']
+                                    self.display_articles(self.current_feed)
+                                else:
+                                    print("Error: Could not refresh feed")
                     else:
                         print("Nothing to refresh (not viewing a feed)")
                 
@@ -695,7 +752,24 @@ class RSSReader:
                                 self.display_articles(feed_name)
                                 state = 'articles'
                             else:
-                                print("Error: Could not load feed")
+                                # Try cache fallback
+                                cached = self.get_cached_feed(self.current_category, feed_name)
+                                if cached:
+                                    print("\n** OFFLINE: Using cached data **")
+                                    print("Cached: {}".format(format_cache_timestamp(cached.get('fetched', 0))))
+                                    age_hours = (time.time() - cached.get('fetched', 0)) / 3600
+                                    if age_hours > 24:
+                                        print("WARNING: Data over 24 hours old may be")
+                                        print("         inaccurate.")
+                                    self.current_articles = cached['articles']
+                                    self.display_articles(feed_name)
+                                    state = 'articles'
+                                else:
+                                    print("Error: Could not load feed")
+                                    if not is_internet_available():
+                                        print("No cached data available.")
+                                        print("Run 'rss-news.py --update-cache' when")
+                                        print("online to enable offline support.")
                         else:
                             print("Invalid selection. Choose 1-{}".format(len(feeds)))
                     
@@ -790,7 +864,87 @@ class RSSReader:
                 continue
 
 
+def update_cache():
+    """Fetch all feeds and update cache (for cron job)"""
+    print("Updating RSS feed cache...")
+    reader = RSSReader()
+    
+    cache_data = {
+        'feeds': {},
+        'cache_timestamp': time.time()
+    }
+    
+    total_feeds = 0
+    success_count = 0
+    
+    for category, feeds in reader.feeds.items():
+        cache_data['feeds'][category] = {}
+        for name, url in feeds:
+            total_feeds += 1
+            print("Fetching: {}...".format(name))
+            articles = reader.fetch_feed(url)
+            if articles:
+                cache_data['feeds'][category][name] = {
+                    'url': url,
+                    'articles': articles,
+                    'fetched': time.time()
+                }
+                success_count += 1
+    
+    if save_cache(cache_data):
+        print("Cache updated: {} of {} feeds.".format(success_count, total_feeds))
+        return True
+    return False
+
+
+def show_help():
+    """Display help message"""
+    print("NAME")
+    print("       rss-news.py - RSS feed reader for packet radio")
+    print("")
+    print("SYNOPSIS")
+    print("       rss-news.py [OPTIONS]")
+    print("")
+    print("VERSION")
+    print("       {}".format(VERSION))
+    print("")
+    print("DESCRIPTION")
+    print("       Text-based RSS feed reader optimized for packet")
+    print("       radio. Supports offline operation using cached")
+    print("       feed data.")
+    print("")
+    print("OPTIONS")
+    print("   -c, --update-cache")
+    print("          Fetch all feeds and update local cache.")
+    print("          Use with cron for offline support.")
+    print("")
+    print("   -h, --help, /?")
+    print("          Show this help message.")
+    print("")
+    print("EXAMPLES")
+    print("       rss-news.py")
+    print("              Interactive RSS reader.")
+    print("")
+    print("       rss-news.py --update-cache")
+    print("              Update cache for offline use.")
+    print("")
+    print("CRON SETUP")
+    print("       0 */2 * * * /usr/bin/python3 /path/to/rss-news.py -c")
+
+
 if __name__ == '__main__':
+    # Handle command-line arguments
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+        if arg in ['-h', '--help', '/?']:
+            show_help()
+            sys.exit(0)
+        elif arg in ['-c', '--update-cache']:
+            if update_cache():
+                sys.exit(0)
+            else:
+                sys.exit(1)
+    
     # Check for app updates
     check_for_app_update(VERSION, APP_NAME)
     reader = RSSReader()

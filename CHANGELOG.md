@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Offline Caching Update] - 2026-01-28
+### Added
+- **Offline support via cron-updated caches**: Multiple apps now support offline operation
+  - `wx.py` v4.6: Local weather cache (`wx_cache.json`, -c flag, 2hr interval)
+  - `rss-news.py` v1.6: RSS feed cache (`rss_cache.json`, -c flag, 2hr interval)
+  - `hamqsl.py` v1.2: HF propagation cache (`hamqsl_cache.json`, -c flag, 4hr interval)
+  - `space.py` v1.3: Space weather cache (`space_cache.json`, -c flag, 4hr interval)
+  - `eventcal.py` v2.4: Calendar cache (`eventcal_cache.json`, -c flag, 6hr interval)
+  - `predict.py` v1.8: Callsign lookup cache (`callsign_cache.json`, 30-day TTL)
+- **Cache freshness display**: Shows timestamp when using cached data
+  - Format: "Cached: 01/15/2026 at 10:00 EST"
+  - Warning when data >24 hours old
+- **INSTALLATION.md**: Added cron setup section with recommended schedules
+
+### Changed
+- `wall.py`: Renamed `wall_board.json` to `wall.json` for consistency
+
+### Fixed
+- `space.py`: Added missing `is_internet_available()` function (was referenced but undefined)
+
+### Removed
+- `clubcal.py`: Removed (redundant with eventcal.py)
+
 ## [wiki.py 2.4] - 2026-01-28
 ### Changed
 - **Wiktionary UX**: Skip blank summary screen, go straight to full article for Wiktionary/Wikiquote/etc

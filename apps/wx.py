@@ -39,10 +39,16 @@ from __future__ import print_function
 import sys
 import os
 import re
+import time
+import json
 from datetime import datetime
 
-VERSION = "4.5"
+VERSION = "4.6"
 APP_NAME = "wx.py"
+
+# Cache file path (alongside script)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(SCRIPT_DIR, "wx_cache.json")
 
 
 def check_for_app_update(current_version, script_name):
@@ -104,6 +110,51 @@ def compare_versions(version1, version2):
         return 0
     except (ValueError, AttributeError):
         return 0
+
+
+# ============= Cache Functions =============
+
+def format_cache_timestamp(timestamp):
+    """Format cache timestamp for display with timezone"""
+    try:
+        local_time = time.localtime(timestamp)
+        tz_name = time.strftime('%Z', local_time)
+        return time.strftime('%m/%d/%Y at %H:%M', local_time) + ' ' + tz_name
+    except Exception:
+        return "Unknown"
+
+
+def load_cache():
+    """Load cached weather data from disk"""
+    try:
+        with open(CACHE_FILE, 'r') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def save_cache(data):
+    """Save weather data to cache file"""
+    try:
+        data['cache_timestamp'] = time.time()
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+        return True
+    except Exception:
+        return False
+
+
+def get_cached_local_weather():
+    """Load cached local weather data, returns (data, timestamp) or (None, None)"""
+    cache = load_cache()
+    if not cache:
+        return None, None
+    
+    timestamp = cache.get('cache_timestamp', 0)
+    return cache, timestamp
+
+
+# ============= End Cache Functions =============
 
 
 def celsius_to_fahrenheit(celsius):
@@ -2077,13 +2128,23 @@ def main():
         selected_grid = None
         
         if choice == '1':
-            # Local weather
+            # Local weather - check internet, use cache if offline
+            if not is_internet_available():
+                # Try cached local weather
+                show_cached_local_weather()
+                continue
             selected_latlon = local_latlon
             selected_desc = "Local ({})".format(local_grid)
             selected_grid = local_grid
         
         elif choice == '2':
             # Weather for location
+            if not is_internet_available():
+                print("")
+                print("Internet appears to be unavailable.")
+                print("Only Option 1 (Local) supports offline")
+                print("mode via cached data.")
+                continue
             result = prompt_location("Enter location for weather:")
             if result:
                 selected_latlon, selected_desc = result
@@ -2093,6 +2154,12 @@ def main():
         
         elif choice == '3':
             # Weather for callsign
+            if not is_internet_available():
+                print("")
+                print("Internet appears to be unavailable.")
+                print("Only Option 1 (Local) supports offline")
+                print("mode via cached data.")
+                continue
             if my_callsign:
                 print("")
                 print("Input call sign or press enter for {}".format(my_callsign))
@@ -2263,11 +2330,184 @@ def main():
                 print("\nInvalid choice.")
 
 
+def update_cache():
+    """Fetch local weather and update cache (for cron job)"""
+    # Get local gridsquare
+    local_grid = get_bpq_locator()
+    if not local_grid:
+        local_grid = "FN43hp"
+        print("Warning: No LOCATOR in bpq32.cfg, using default")
+    
+    print("Updating local weather cache for {}...".format(local_grid))
+    
+    local_latlon = grid_to_latlon(local_grid)
+    if not local_latlon:
+        print("Error: Could not convert grid to coordinates.")
+        return False
+    
+    # Fetch all the data we need for local weather display
+    cache_data = {
+        'gridsquare': local_grid,
+        'latlon': list(local_latlon),
+    }
+    
+    # Get gridpoint and WFO
+    print("  Fetching gridpoint data...")
+    gridpoint, wfo = get_gridpoint(local_latlon)
+    cache_data['gridpoint'] = gridpoint
+    cache_data['wfo'] = wfo
+    
+    # Get current observations
+    print("  Fetching current observations...")
+    obs = get_current_observations(local_latlon)
+    cache_data['observations'] = obs
+    
+    # Get alerts
+    print("  Fetching alerts...")
+    alerts = get_alerts(local_latlon)
+    cache_data['alerts'] = alerts
+    
+    # Get SKYWARN status
+    if wfo:
+        print("  Checking SKYWARN status...")
+        skywarn_status, skywarn_active = get_hwo_skywarn_status(wfo)
+        cache_data['skywarn_status'] = skywarn_status
+        cache_data['skywarn_active'] = skywarn_active
+    
+    # Get coastal status
+    cache_data['is_coastal'] = is_coastal(local_latlon)
+    
+    # Save cache
+    if save_cache(cache_data):
+        print("Cache updated successfully.")
+        return True
+    else:
+        print("Error: Could not write cache file.")
+        return False
+
+
+def show_cached_local_weather():
+    """Display local weather from cache (offline mode)"""
+    cache, timestamp = get_cached_local_weather()
+    if not cache:
+        print("No cached data available.")
+        print("")
+        print("Run 'wx.py --update-cache' when online")
+        print("to enable offline support.")
+        return False
+    
+    print("")
+    print("** OFFLINE: Using cached data **")
+    print("Cached: {}".format(format_cache_timestamp(timestamp)))
+    age_hours = (time.time() - timestamp) / 3600
+    if age_hours > 24:
+        print("WARNING: Data over 24 hours old may be")
+        print("         inaccurate.")
+    
+    obs = cache.get('observations')
+    alerts = cache.get('alerts')
+    
+    # Show current conditions
+    print("")
+    print("-" * 40)
+    print("CURRENT CONDITIONS (cached)")
+    print("-" * 40)
+    
+    if obs:
+        temp_f = celsius_to_fahrenheit(obs.get('temp'))
+        wind_mph = ms_to_mph(obs.get('wind_speed'))
+        wind_gust_mph = ms_to_mph(obs.get('wind_gust'))
+        wind_dir = obs.get('wind_dir')
+        wind_cardinal = degrees_to_cardinal(wind_dir)
+        visibility_miles = meters_to_miles(obs.get('visibility'))
+        pressure_inhg = pascals_to_inhg(obs.get('pressure'))
+        humidity = obs.get('humidity')
+        
+        if temp_f is not None:
+            print("Temp: {}F".format(temp_f))
+        else:
+            print("Temp: N/A")
+        
+        if wind_mph is not None and wind_cardinal != "?":
+            wind_line = "Wind: {} mph".format(wind_mph)
+            if wind_gust_mph is not None:
+                wind_line += " gust {} mph".format(wind_gust_mph)
+            wind_line += " from {}".format(wind_cardinal)
+            print(wind_line)
+        elif wind_mph is not None:
+            print("Wind: {} mph".format(wind_mph))
+        else:
+            print("Wind: N/A")
+        
+        if humidity is not None:
+            try:
+                print("Humidity: {}%".format(int(humidity)))
+            except (ValueError, TypeError):
+                pass
+        
+        print("Conditions: {}".format(obs.get('weather', 'N/A')))
+        
+        if visibility_miles is not None:
+            print("Visibility: {} mi".format(visibility_miles))
+        
+        if pressure_inhg is not None:
+            print("Pressure: {} inHg".format(pressure_inhg))
+    else:
+        print("No observation data in cache.")
+    
+    # Show alert summary
+    print("")
+    print("-" * 40)
+    print("ALERTS (cached)")
+    print("-" * 40)
+    
+    if alerts and len(alerts) > 0:
+        print("Active alerts: {}".format(len(alerts)))
+        for alert in alerts:
+            severity = alert.get('severity', 'Unknown')
+            event = alert.get('event', 'Unknown')
+            if severity in ['Extreme', 'Severe']:
+                print("  *{}: {}".format(event, severity))
+            else:
+                print("  {}: {}".format(event, severity))
+    else:
+        print("No active alerts.")
+    
+    # Show SKYWARN status
+    if cache.get('skywarn_active'):
+        print("")
+        print("*** {} ***".format(cache.get('skywarn_status', 'SKYWARN ACTIVATED')))
+    
+    print("")
+    print("-" * 40)
+    print("")
+    print("Note: For detailed reports, run when")
+    print("online or use Options 2-3 for custom")
+    print("location lookup.")
+    
+    try:
+        input("\nPress enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+    
+    return True
+
+
 if __name__ == "__main__":
     try:
         # Check for CLI arguments
         if len(sys.argv) > 1:
-            if sys.argv[1] in ['--alert-summary', '-a']:
+            if sys.argv[1] in ['--update-cache', '-c']:
+                # Update local weather cache (for cron)
+                try:
+                    if update_cache():
+                        sys.exit(0)
+                    else:
+                        sys.exit(1)
+                except Exception as e:
+                    print("Error: {}".format(str(e)))
+                    sys.exit(1)
+            elif sys.argv[1] in ['--alert-summary', '-a']:
                 # Output alert summary for CTEXT (no header, just the line)
                 gridsquare = sys.argv[2] if len(sys.argv) > 2 else None
                 print(get_local_alert_summary(gridsquare))
@@ -2282,6 +2522,9 @@ if __name__ == "__main__":
                 print()
                 print("USAGE:")
                 print("  wx.py              - Interactive weather menu")
+                print("  wx.py --update-cache")
+                print("                     - Update local weather cache")
+                print("                       (for cron job)")
                 print("  wx.py --alert-summary [GRID]")
                 print("                     - Output alert summary line")
                 print("                       (for CTEXT display)")
@@ -2290,6 +2533,9 @@ if __name__ == "__main__":
                 print("                       alerts and SKYWARN status")
                 print()
                 print("OPTIONS:")
+                print("  -c, --update-cache")
+                print("                     Update local weather cache")
+                print("                     for offline support.")
                 print("  -a, --alert-summary [GRID]")
                 print("                     Output one-line alert summary")
                 print("                     Uses bpq32.cfg LOCATOR if GRID")
@@ -2300,9 +2546,13 @@ if __name__ == "__main__":
                 print("  -h, --help, /?     Show this help message")
                 print()
                 print("EXAMPLES:")
+                print("  wx.py --update-cache")
                 print("  wx.py --alert-summary")
                 print("  wx.py --alert-summary FN43hp")
                 print("  wx.py --beacon")
+                print()
+                print("CRON SETUP:")
+                print("  0 */2 * * * /path/to/wx.py -c")
                 print()
                 sys.exit(0)
         

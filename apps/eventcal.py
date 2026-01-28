@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 2.3
+Version: 2.4
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
-Internet-optional with graceful offline fallback.
+Internet-optional with graceful offline fallback and caching.
 
 Usage:
     eventcal.py                    # Interactive menu
     eventcal.py --help             # Show help
     eventcal.py --config <path>    # Use custom config file
+    eventcal.py --update-cache     # Update cache for offline use
 
 BPQ32 APPLICATION line:
     APPLICATION 6,CALENDAR,C 9 HOST # NOCALL K,CALLSIGN,FLAGS
@@ -28,8 +29,9 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.3"
+VERSION = "2.4"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
+CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eventcal_cache.json')
 
 
 def show_logo():
@@ -136,6 +138,84 @@ def compare_versions(v1, v2):
         elif p1 < p2:
             return -1
     return 0
+
+
+def format_cache_timestamp(timestamp):
+    """Format cache timestamp for display with local timezone"""
+    try:
+        dt = time.localtime(timestamp)
+        tz = time.strftime('%Z', dt)
+        return time.strftime('%m/%d/%Y at %H:%M', dt) + ' ' + tz
+    except Exception:
+        return 'Unknown'
+
+
+def load_cache():
+    """Load cached events from disk"""
+    try:
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, 'r') as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return None
+
+
+def save_cache(events, ical_url):
+    """Save events to cache file"""
+    try:
+        # Convert datetime objects to ISO strings for JSON
+        cached_events = []
+        for event in events:
+            cached_event = event.copy()
+            if 'dtstart' in cached_event and hasattr(cached_event['dtstart'], 'isoformat'):
+                cached_event['dtstart'] = cached_event['dtstart'].isoformat()
+            if 'dtend' in cached_event and cached_event['dtend'] and hasattr(cached_event['dtend'], 'isoformat'):
+                cached_event['dtend'] = cached_event['dtend'].isoformat()
+            cached_events.append(cached_event)
+        
+        data = {
+            'ical_url': ical_url,
+            'events': cached_events,
+            'cache_timestamp': time.time()
+        }
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+        return True
+    except Exception as e:
+        print("Error saving cache: {}".format(e))
+        return False
+
+
+def load_cached_events():
+    """Load and parse cached events, converting ISO strings back to datetime"""
+    cache = load_cache()
+    if not cache or 'events' not in cache:
+        return None, None
+    
+    events = []
+    for cached_event in cache['events']:
+        event = cached_event.copy()
+        # Convert ISO strings back to datetime
+        if 'dtstart' in event and isinstance(event['dtstart'], str):
+            try:
+                event['dtstart'] = datetime.fromisoformat(event['dtstart'])
+            except (ValueError, AttributeError):
+                try:
+                    event['dtstart'] = datetime.strptime(event['dtstart'], '%Y-%m-%dT%H:%M:%S')
+                except ValueError:
+                    pass
+        if 'dtend' in event and isinstance(event['dtend'], str):
+            try:
+                event['dtend'] = datetime.fromisoformat(event['dtend'])
+            except (ValueError, AttributeError):
+                try:
+                    event['dtend'] = datetime.strptime(event['dtend'], '%Y-%m-%dT%H:%M:%S')
+                except ValueError:
+                    pass
+        events.append(event)
+    
+    return events, cache.get('cache_timestamp')
 
 
 def load_config(config_path):
@@ -845,12 +925,28 @@ def main():
     ical_data = fetch_ical(ical_url)
     
     if not ical_data:
+        # Try cache fallback
+        cached_events, cache_timestamp = load_cached_events()
+        if cached_events:
+            print("\n** OFFLINE: Using cached data **")
+            print("Cached: {}".format(format_cache_timestamp(cache_timestamp)))
+            age_hours = (time.time() - cache_timestamp) / 3600
+            if age_hours > 24:
+                print("WARNING: Data over 24 hours old may be")
+                print("         inaccurate.")
+            print("Loaded {} event(s) from cache.".format(len(cached_events)))
+            main_menu(cached_events)
+            return
+        
         if is_internet_available():
             print("Error: Could not fetch calendar.")
             print("Check URL in {}".format(config_path))
         else:
             print("Internet appears to be unavailable.")
-            print("Try again later.")
+            print("No cached data available.")
+            print("")
+            print("Run 'eventcal.py --update-cache' when")
+            print("online to enable offline support.")
         sys.exit(1)
     
     events = parse_ical(ical_data)
@@ -859,13 +955,93 @@ def main():
         print("No events found in calendar.")
         sys.exit(0)
     
+    # Save to cache on successful fetch
+    save_cache(events, ical_url)
+    
     print("Loaded {} event(s).".format(len(events)))
     
     # Show main menu (which displays events and handles input)
     main_menu(events)
 
 
+def update_cache():
+    """Fetch calendar and update cache (for cron job)"""
+    config_path = CONFIG_FILE
+    ical_url = load_config(config_path)
+    
+    if not ical_url:
+        print("Error: No calendar URL configured.")
+        print("Run 'eventcal.py' to configure.")
+        return False
+    
+    print("Fetching calendar from: {}".format(ical_url))
+    ical_data = fetch_ical(ical_url)
+    
+    if not ical_data:
+        print("Error: Could not fetch calendar.")
+        return False
+    
+    events = parse_ical(ical_data)
+    
+    if save_cache(events, ical_url):
+        print("Cache updated: {} events.".format(len(events)))
+        return True
+    return False
+
+
+def show_help():
+    """Display help message"""
+    print("NAME")
+    print("       eventcal.py - Club calendar from iCal feed")
+    print("")
+    print("SYNOPSIS")
+    print("       eventcal.py [OPTIONS]")
+    print("")
+    print("VERSION")
+    print("       {}".format(VERSION))
+    print("")
+    print("DESCRIPTION")
+    print("       Displays upcoming events from an iCalendar (.ics)")
+    print("       URL. Supports offline operation using cached data.")
+    print("")
+    print("OPTIONS")
+    print("   -c, --update-cache")
+    print("          Fetch calendar and update local cache.")
+    print("          Use with cron for offline support.")
+    print("")
+    print("   --config <path>")
+    print("          Use custom config file.")
+    print("")
+    print("   -h, --help, /?")
+    print("          Show this help message.")
+    print("")
+    print("EXAMPLES")
+    print("       eventcal.py")
+    print("              Interactive calendar viewer.")
+    print("")
+    print("       eventcal.py --update-cache")
+    print("              Update cache for offline use.")
+    print("")
+    print("CRON SETUP")
+    print("       0 */6 * * * /usr/bin/python3 /path/to/eventcal.py -c")
+
+
 if __name__ == '__main__':
+    # Handle command-line arguments first
+    if len(sys.argv) > 1:
+        if sys.argv[1] in ['-h', '--help', '/?']:
+            show_help()
+            sys.exit(0)
+        elif sys.argv[1] in ['-c', '--update-cache']:
+            try:
+                if update_cache():
+                    sys.exit(0)
+                else:
+                    sys.exit(1)
+            except Exception as e:
+                print("Error: {}".format(str(e)))
+                sys.exit(1)
+    
     try:
         main()
     except Exception as e:

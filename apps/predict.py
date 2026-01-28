@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.7
+Version: 1.8
 Date: January 2026
 """
 
@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from predict import geo, solar, ionosphere
 
 # App version
-VERSION = "1.7"
+VERSION = "1.8"
 APP_NAME = "predict.py"
 
 # Display width
@@ -121,6 +121,64 @@ def compare_versions(version1, version2):
         return 0
 
 
+# ============= Callsign Cache Functions =============
+
+# Cache settings
+CALLSIGN_CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "callsign_cache.json")
+CALLSIGN_CACHE_TTL = 30 * 24 * 3600  # 30 days in seconds
+
+
+def load_callsign_cache():
+    """Load callsign cache from disk."""
+    try:
+        import json
+        with open(CALLSIGN_CACHE_FILE, 'r') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def save_callsign_cache(cache):
+    """Save callsign cache to disk."""
+    try:
+        import json
+        import time
+        # Clean expired entries before saving
+        current_time = time.time()
+        cleaned = {k: v for k, v in cache.items() 
+                   if current_time - v.get('timestamp', 0) < CALLSIGN_CACHE_TTL}
+        with open(CALLSIGN_CACHE_FILE, 'w') as f:
+            json.dump(cleaned, f, indent=2)
+    except Exception:
+        pass
+
+
+def get_cached_callsign(callsign):
+    """Get callsign grid from cache if not expired."""
+    import time
+    cache = load_callsign_cache()
+    entry = cache.get(callsign.upper())
+    if entry:
+        timestamp = entry.get('timestamp', 0)
+        if time.time() - timestamp < CALLSIGN_CACHE_TTL:
+            return entry.get('grid')
+    return None
+
+
+def cache_callsign(callsign, grid):
+    """Cache a callsign->grid lookup."""
+    import time
+    cache = load_callsign_cache()
+    cache[callsign.upper()] = {
+        'grid': grid,
+        'timestamp': time.time()
+    }
+    save_callsign_cache(cache)
+
+
+# ============= End Callsign Cache Functions =============
+
+
 def get_bpq_locator():
     """
     Read LOCATOR from BPQ32 config file.
@@ -147,6 +205,7 @@ def get_bpq_locator():
 def lookup_callsign(callsign):
     """
     Look up callsign gridsquare via HamDB/QRZ APIs.
+    Uses 30-day cache for offline support.
     
     Args:
         callsign: Amateur callsign
@@ -154,6 +213,12 @@ def lookup_callsign(callsign):
     Returns:
         Gridsquare string or None
     """
+    # Check cache first
+    cached_grid = get_cached_callsign(callsign)
+    if cached_grid:
+        return cached_grid
+    
+    # Try online lookup
     try:
         import urllib.request
         import json
@@ -169,7 +234,10 @@ def lookup_callsign(callsign):
         grid = hamdb.get('grid', '')
         
         if grid and geo.validate_grid(grid):
-            return grid.upper()
+            grid = grid.upper()
+            # Cache the result
+            cache_callsign(callsign, grid)
+            return grid
     except Exception:
         pass
     

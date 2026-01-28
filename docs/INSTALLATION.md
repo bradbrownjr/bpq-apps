@@ -184,6 +184,108 @@ If scripts run locally and via their inetd telnet port, but won't produce output
 
 ---
 
+## Offline Support: Cache Updates via Cron
+
+Several BPQ applications support offline operation using cached data. To enable this feature, configure cron jobs to periodically update the cache files when internet is available.
+
+### Why Cache Updates?
+
+Packet radio nodes may have intermittent or unreliable internet connectivity. Cache updates allow apps to continue functioning with previously-fetched data when the network is unavailable.
+
+### Cache-Enabled Apps
+
+| App | Cache File | Recommended Interval | What's Cached |
+|-----|-----------|---------------------|---------------|
+| `wx.py` | `wx_cache.json` | 2 hours | Local weather, alerts, SKYWARN |
+| `rss-news.py` | `rss_cache.json` | 2 hours | RSS feed articles |
+| `hamqsl.py` | `hamqsl_cache.json` | 4 hours | HF propagation data |
+| `space.py` | `space_cache.json` | 4 hours | Space weather reports |
+| `eventcal.py` | `eventcal_cache.json` | 6 hours | Calendar events |
+| `predict.py` | `solar_cache.json` | (auto) | Solar data (already cached) |
+
+### Configure Cron Jobs
+
+Edit the crontab for the user that runs BPQ (e.g., `ect` or `pi`):
+
+```bash
+crontab -e
+```
+
+Add the following entries (adjust paths for your system):
+
+```cron
+# BPQ App Cache Updates
+# ----------------------
+# wx.py - Local weather cache (every 2 hours)
+0 */2 * * * /home/ect/apps/wx.py -c >/dev/null 2>&1
+
+# rss-news.py - RSS feed cache (every 2 hours)
+30 */2 * * * /home/ect/apps/rss-news.py -c >/dev/null 2>&1
+
+# hamqsl.py - HF propagation cache (every 4 hours)
+15 */4 * * * /home/ect/apps/hamqsl.py -c >/dev/null 2>&1
+
+# space.py - Space weather cache (every 4 hours)
+45 */4 * * * /home/ect/apps/space.py -c >/dev/null 2>&1
+
+# eventcal.py - Calendar cache (every 6 hours)
+0 */6 * * * /home/ect/apps/eventcal.py -c >/dev/null 2>&1
+```
+
+**Notes:**
+- The `-c` or `--update-cache` flag runs the app in "cache update" mode
+- Output is suppressed with `>/dev/null 2>&1` to avoid cron mail
+- Stagger job times (0, 15, 30, 45 minutes) to avoid simultaneous network requests
+- Adjust paths to match your installation (`/home/pi/apps/` vs `/home/ect/apps/`)
+
+### Verify Cache Files
+
+After cron jobs have run, verify cache files exist:
+
+```bash
+ls -la ~/apps/*.json
+```
+
+You should see recently-modified cache files:
+```
+-rw-r--r-- 1 ect ect 2048 Jan 15 10:00 eventcal_cache.json
+-rw-r--r-- 1 ect ect 1024 Jan 15 10:15 hamqsl_cache.json
+-rw-r--r-- 1 ect ect 8192 Jan 15 10:00 rss_cache.json
+-rw-r--r-- 1 ect ect 4096 Jan 15 10:45 space_cache.json
+-rw-r--r-- 1 ect ect 3072 Jan 15 10:00 wx_cache.json
+```
+
+### Test Offline Mode
+
+To test offline operation:
+
+1. Run an app normally (should show live data)
+2. Temporarily block internet:
+   ```bash
+   sudo iptables -I OUTPUT -d 8.8.8.8 -j DROP
+   ```
+3. Run the app again (should show cached data with timestamp)
+4. Restore internet:
+   ```bash
+   sudo iptables -D OUTPUT -d 8.8.8.8 -j DROP
+   ```
+
+### Cache Freshness Indicators
+
+When using cached data, apps display:
+- **Cache timestamp**: When the data was last fetched
+- **Warning** (if >24 hours old): Data may be inaccurate
+
+Example output when offline:
+```
+** OFFLINE: Using cached data **
+Cached: 01/15/2026 at 10:00 EST
+WARNING: Data over 24 hours old may be
+         inaccurate.
+```
+
+---
+
 ## References
 
 * [LinBPQ Applications Interface Documentation](https://www.cantab.net/users/john.wiseman/Documents/LinBPQ%20Applications%20Interface.html)
