@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.9
+Version: 1.10
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -27,7 +27,7 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.9"
+VERSION = "1.10"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -240,6 +240,38 @@ def save_user_preference(config, callsign, provider):
         'last_used': '2026-01-29'
     }
     save_config(config)
+
+
+def offer_provider_switch(config, current_provider, callsign):
+    """Offer to switch providers on API error. Returns new provider or None to exit."""
+    providers = get_available_providers(config)
+    other_providers = [p for p in providers if p != current_provider]
+    
+    if not other_providers:
+        return None
+    
+    print("")
+    print("Switch to another provider?")
+    for i, p in enumerate(other_providers, 1):
+        model = "Gemini 2.5 Flash" if p == 'gemini' else "GPT-4o Mini"
+        print("{}. {} ({})".format(i, p.upper(), model))
+    print("Q. Quit")
+    print("")
+    
+    try:
+        choice = input("Select: ").strip().upper()
+        if choice == 'Q' or not choice:
+            return None
+        idx = int(choice) - 1
+        if 0 <= idx < len(other_providers):
+            new_provider = other_providers[idx]
+            save_user_preference(config, callsign, new_provider)
+            print("")
+            print("Switching to {}...".format(new_provider.upper()))
+            return new_provider
+    except (ValueError, EOFError):
+        pass
+    return None
 
 
 def select_provider(config, callsign, force_menu=False):
@@ -570,7 +602,11 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
         if error:
             print("AI: {}".format(error))
             if "API key" in error or "Rate limit" in error:
-                print("\nExiting due to API error...")
+                new_provider = offer_provider_switch(config, provider, callsign)
+                if new_provider:
+                    provider = new_provider
+                    continue  # Restart outer loop with new provider
+                print("\nExiting...")
                 return
             print("")
         elif greeting:
@@ -695,7 +731,12 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                 if error:
                     print("AI: {}".format(error))
                     if "API key" in error or "Rate limit" in error:
-                        print("\nExiting due to API error...")
+                        new_provider = offer_provider_switch(config, provider, callsign)
+                        if new_provider:
+                            provider = new_provider
+                            provider_switched = True
+                            break  # Restart outer loop with new provider
+                        print("\nExiting...")
                         return
                 elif response:
                     conversation_history.append({"role": "user", "text": user_input})
