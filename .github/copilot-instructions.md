@@ -224,6 +224,10 @@ Menu: [options] :>
 **Prompt Optimization**: Compress commands to save bandwidth
 - `P)ost D)el N)ext Pr)ev S)tat Q` instead of `P)ost, D)elete, N)ext, Pr)evious, S)tats, Q)uit`
 - Context-aware: `Menu: [commands] :>` or `Articles: [commands] :>`
+- **M)enu command**: When displaying paginated results/menus, include M)enu to redisplay current page
+  - Example: `[1-10] M)enu Q)uit :>` allows user to see menu again without navigating
+  - Reduces frustration from scrollback limitations on packet radio terminals
+  - See wiki.py and gopher.py for reference implementation
 
 ## Amateur Radio Formats
 **Callsigns**: 1-2 prefix letters, digit, 1-3 suffix letters, optional -SSID (0-15)

@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.37
+Version: 1.38
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.37"
+VERSION = "1.38"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -846,7 +846,7 @@ class GopherClient:
         print("COMMANDS")
         print("-" * 40)
         print("  [number] - Select menu item by number")
-        print("  [Enter]  - Redisplay current menu")
+        print("  M)enu    - Redisplay current menu")
         print("  H)ome    - Go to home page")
         print("  P)rev    - Previous page (within results)")
         print("  W)here   - Show current URL")
@@ -934,7 +934,7 @@ class GopherClient:
             try:
                 # Context-aware prompt
                 if self.current_state == 'menu':
-                    prompt = "\nMenu: [#] or [Enter] to redisplay, H)ome, B)ack, M)arks, G)o, ?)Help, Q)uit :> "
+                    prompt = "\nMenu: [#] or H)ome, B)ack, M)enu, G)o, ?)Help, Q)uit :> "
                 elif self.current_state == 'article':
                     prompt = "\nArticle: B)ack, H)ome, M)arks, G)o, ?)Help, Q)uit :> "
                 else:
@@ -943,8 +943,14 @@ class GopherClient:
                 command = input(prompt).strip()
                 
                 if not command:
-                    # Empty command - redisplay menu if we're in menu state
-                    if self.current_state == 'menu' and self.last_menu:
+                    continue
+                    
+                cmd_lower = command.lower()
+                
+                # Menu redisplay - M)enu in menu state
+                if cmd_lower == 'm' and self.current_state == 'menu':
+                    # M)enu - redisplay current menu
+                    if self.last_menu:
                         result = self.display_menu(self.last_menu)
                         # Handle any navigation commands from the redisplayed menu
                         if result == 'quit':
@@ -981,9 +987,6 @@ class GopherClient:
                                 self.navigate_to(url)
                             else:
                                 print("Invalid selection. Choose 1-{}".format(len(selectable)))
-                    continue
-                    
-                cmd_lower = command.lower()
                 
                 # Quit - works from anywhere
                 if cmd_lower.startswith('q'):
@@ -1010,8 +1013,8 @@ class GopherClient:
                         self.current_state = 'initial'
                         print("Already at main menu")
                 
-                # Bookmarks
-                elif cmd_lower.startswith('m'):
+                # M)arks - show bookmarks (unless in menu state where M is already used for redisplay)
+                elif cmd_lower.startswith('m') and self.current_state != 'menu':
                     self.show_bookmarks()
                     sel = input("Select bookmark # or [Enter] to cancel :> ").strip()
                     if sel.isdigit():
