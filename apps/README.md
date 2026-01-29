@@ -4,9 +4,8 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 ## Table of Contents
 - [Features](#features)
 - [Applications](#applications)
-  - [wall.py](#wallpy)
-  - [calendar.py](#calendarpy)
   - [callout.py](#calloutpy)
+  - [calendar.py](#calendarpy)
   - [dict.py](#dictpy)
   - [forms.py](#formspy)
   - [gopher.py](#gopherpy)
@@ -16,10 +15,10 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [qrz3.py](#qrz3py)
   - [rss-news.py](#rss-newspy)
   - [space.py](#spacepy)
+  - [wall.py](#wallpy)
   - [wiki.py](#wikipy)
   - [wx.py](#wxpy)
   - [wx-me.py](#wx-mepy)
-  - [wxnws-ftp.py](#wxnws-ftppy)
   - [yapp.py](#yapppy)
 - [Installation](#installation)
 - [BPQ Configuration](#bpq-configuration)
@@ -37,21 +36,15 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 
 ## Applications
 
-wall.py
------------
+callout.py
+----------
 **Type**: Python  
-**Purpose**: Community bulletin board for posting and viewing one-liner messages  
-**Information source**: User submissions stored locally  
-**Developer**: Brad Brown KC1JMH  
-**Notes**: Community message wall application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
+**Purpose**: Display ham radio station information via call lookup  
+**Information source**: QRZ.com callsign database  
+**Developer**: Brad Brown KC1JMH
 
 **Download or update**:  
-```wget -O wall.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wall.py && chmod +x wall.py```
-
-**Features**:
-- Post one-liner messages (up to 80 characters)
-- View recent messages with pagination (10 messages per page)
-- Delete your own messages
+```wget -O callout.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/callout.py && chmod +x callout.py```
 
 calendar.py
 -----------
@@ -96,16 +89,6 @@ Configuration stored in `calendar.conf` in same directory as script:
   "ical_url": "https://example.com/calendar.ics"
 }
 ```
-
-callout.py
-----------
-**Type**: Python  
-**Purpose**: Display ham radio station information via call lookup  
-**Information source**: QRZ.com callsign database  
-**Developer**: Brad Brown KC1JMH
-
-**Download or update**:  
-```wget -O callout.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/callout.py && chmod +x callout.py```
 
 dict.py
 -------
@@ -508,6 +491,23 @@ wx-me.py
 ```wget -O wx-me.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx-me.py && chmod +x wx-me.py```
 
 ![Terminal output](../docs/images/wx.png)
+
+wall.py
+-----------
+**Type**: Python  
+**Purpose**: Community bulletin board for posting and viewing one-liner messages  
+**Information source**: User submissions stored locally  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Community message wall application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
+
+**Download or update**:  
+```wget -O wall.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wall.py && chmod +x wall.py```
+
+**Features**:
+- Post one-liner messages (up to 80 characters)
+- View recent messages with pagination (10 messages per page)
+- Delete your own messages
+
 wiki.py
 -------
 **Type**: Python  
@@ -570,23 +570,6 @@ Cache stored in `wiki_cache.json` in same directory as script:
 **Dependencies**:
 - Python 3.5+
 - requests library (`pip3 install requests`)
-wxnws-ftp.py
-------------
-**Type**: Python  
-**Purpose**: Retrieve NWS products via FTP  
-**Information source**: NWS TGFTP server  
-**Developer**: Brad Brown KC1JMH  
-**Notes**: Experimental. Downloads and displays NWS text products from FTP server. Configurable region code.
-
-**Download or update**:  
-```wget -O wxnws-ftp.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wxnws-ftp.py && chmod +x wxnws-ftp.py```
-
-**Features**:
-- Downloads AFD (Area Forecast Discussion) files from NWS FTP
-- Pauses at section breaks (&&) for user pacing
-- Configurable regional NWS office
-
-**Status**: Experimental, not production-ready.
 
 yapp.py
 -------
