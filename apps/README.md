@@ -205,15 +205,9 @@ gopher.py
 **Developer**: Brad Brown KC1JMH
 
 **Download or update**:  
-```
-wget -O gopher.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.py && chmod +x gopher.py
-wget -O gopher.conf https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.conf
-```
+```wget -O gopher.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.py && chmod +x gopher.py```
 
-**Configuration**: Edit `gopher.conf` to customize bookmarks and settings  
-- JSON format with home page, bookmarks, page size, timeouts  
-- Falls back to defaults if file missing or invalid  
-- Add bookmarks: `{"name": "Site Name", "url": "gopher://hostname"}`
+**Configuration**: The script auto-downloads `gopher.conf` on first run if missing. Edit this JSON file to customize bookmarks, home page, page size, and timeouts. Falls back to defaults if file is invalid or missing.
 
 hamqsl.py
 ---------
@@ -260,13 +254,10 @@ predict.py
 **Developer**: Brad Brown KC1JMH  
 **Notes**: Simplified model (~70-80% accuracy). For precise predictions, use voacap.com.
 
-**Download or update** (from ~/apps directory):  
-```cd ~/apps && wget -O predict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict.py && chmod +x predict.py```  
-```mkdir -p predict && wget -O predict/__init__.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/__init__.py```  
-```wget -O predict/geo.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/geo.py```  
-```wget -O predict/solar.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/solar.py```  
-```wget -O predict/ionosphere.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/ionosphere.py```  
-```wget -O predict/regions.json https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/regions.json```
+**Download or update**:  
+```wget -O predict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict.py && chmod +x predict.py```
+
+**Module Files**: The script auto-downloads required library files (geo.py, solar.py, ionosphere.py, regions.json) to `predict/` subdirectory on first run or update if missing.
 
 **Features**:
 - Estimates best HF bands (80m-10m) and times for contacts

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [predict.py v1.9 - Auto-Download Modules] - 2026-01-29
+### Changed
+- **predict.py v1.9**: Auto-download missing library files during startup
+  - Checks for missing predict module files (geo.py, solar.py, ionosphere.py, regions.json, __init__.py)
+  - Downloads missing files from GitHub if not present (3-second timeout)
+  - Creates predict/ subdirectory automatically
+  - Fails silently if download fails - user can manually download if needed
+  - Simplifies installation - now just download predict.py and run it
+
 ## [gopher.py v1.40 - Auto-Download Config] - 2026-01-29
 ### Changed
 - **gopher.py v1.40**: Auto-download gopher.conf if missing during update check

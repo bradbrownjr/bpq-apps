@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.8
+Version: 1.9
 Date: January 2026
 """
 
@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from predict import geo, solar, ionosphere
 
 # App version
-VERSION = "1.8"
+VERSION = "1.9"
 APP_NAME = "predict.py"
 
 # Display width
@@ -99,6 +99,34 @@ def check_for_app_update(current_version, script_name):
                             os.remove(temp_path)
                         except:
                             pass
+        
+        # Check for missing predict module files and download them
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        predict_dir = os.path.join(script_dir, 'predict')
+        module_files = ['__init__.py', 'geo.py', 'solar.py', 'ionosphere.py', 'regions.json']
+        
+        missing_files = []
+        for filename in module_files:
+            if not os.path.exists(os.path.join(predict_dir, filename)):
+                missing_files.append(filename)
+        
+        if missing_files:
+            try:
+                # Create predict directory if it doesn't exist
+                if not os.path.exists(predict_dir):
+                    os.makedirs(predict_dir)
+                
+                for filename in missing_files:
+                    file_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/{}".format(filename)
+                    with urllib.request.urlopen(file_url, timeout=3) as response:
+                        file_content = response.read()
+                    
+                    file_path = os.path.join(predict_dir, filename)
+                    with open(file_path, 'wb') as f:
+                        f.write(file_content)
+            except:
+                # Silently ignore if module file download fails
+                pass
     except Exception:
         pass
 
