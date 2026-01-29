@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.12
+Version: 1.13
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -28,7 +28,7 @@ import readline
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.12"
+VERSION = "1.13"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -450,7 +450,11 @@ def call_gemini_api(api_key, prompt, conversation_history, operator_name=None, c
     """Call Gemini API with ham radio context"""
     try:
         # Build system prompt with ham radio context
-        system_context = """You are Elmer, an AI ham radio mentor. Keep responses brief (2-3 sentences max) for 1200 baud packet radio. ASCII text only - no Unicode, emoji, or special chars. Be helpful and use ham radio terminology. Do NOT say goodbye or sign off unless user says bye/quit."""
+        system_context = """You are Elmer, an AI ham radio mentor. Keep responses brief (2-3 sentences max) for 1200 baud packet radio. ASCII text only - no Unicode, emoji, or special chars. 
+
+When the user says goodbye or asks you to say goodbye, respond with ONLY ONE brief ham radio sign-off like: 73! or Good DX! or See you down the log! Nothing else.
+
+Otherwise, be helpful and use ham radio terminology. Do NOT say goodbye unless the user says bye/quit."""
 
         if operator_name:
             system_context += " User: {}".format(operator_name)
