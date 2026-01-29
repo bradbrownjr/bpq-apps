@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.9
+Version: 1.10
 Date: January 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.9"
+VERSION = "1.10"
 APP_NAME = "forms.py"
 
 import os
@@ -110,12 +110,15 @@ class FormsApp:
         return textwrap.fill(text, width=width)
     
     def get_input(self, prompt):
-        """Get user input with quit check"""
+        """Get user input with quit/back check"""
         try:
             user_input = input(prompt).strip()
             if user_input.upper() == 'Q':
                 print("\nQuitting...")
                 sys.exit(0)
+            elif user_input.upper() == 'B':
+                # Return special marker for back-to-menu
+                return '__BACK__'
             return user_input
         except (EOFError, KeyboardInterrupt):
             print("\n\nQuitting...")
@@ -427,12 +430,22 @@ class FormsApp:
             
             if field_type == 'text':
                 value = self.fill_text_field(field, required)
+                if value is None:
+                    return None  # User pressed B to back
             elif field_type == 'yesno':
                 value = self.fill_yesno_field(field, required)
+                if value is None:
+                    return None  # User pressed B to back
             elif field_type == 'choice':
                 value = self.fill_choice_field(field, required)
+                if value is None:
+                    return None  # User pressed B to back
+                if value is None:
+                    return None  # User pressed B to back
             elif field_type == 'textarea':
                 value = self.fill_textarea_field(field, required)
+                if value is None:
+                    return None  # User pressed B to back
             else:
                 print("Unknown field type: {}".format(field_type))
                 value = ""
@@ -495,7 +508,7 @@ class FormsApp:
             print("  2. Paste custom strip")
             print()
             
-            choice = self.get_input("Enter choice (1 or 2): ").strip()
+            choice = self.get_input("Enter choice (1 or 2, B)ack, Q)uit): ").strip().upper()
             
             if choice == '1':
                 # Use the template
@@ -503,8 +516,11 @@ class FormsApp:
             elif choice == '2':
                 # Get custom strip from user
                 strip_input = self.get_strip_input_from_user(form)
+            elif choice == 'B':
+                # Back to menu
+                return None
             else:
-                print("Invalid choice. Please enter 1 or 2.")
+                print("Invalid choice. Please enter 1, 2, B, or Q.")
                 return self.fill_strip_form(form)
         else:
             # No template, just get input from user
@@ -583,17 +599,19 @@ class FormsApp:
         return form_data
     
     def fill_text_field(self, field, required):
-        """Fill a single-line text field (press Enter to finish)"""
+        """Fill a single-line text field (press Enter to finish, B to back)"""
         max_length = field.get('max_length', 255)
         
         while True:
             value = self.get_input("> ")
             
-            if not value and not required:
+            if value == '__BACK__':
+                return None
+            elif not value and not required:
                 return ""
             elif not value and required:
                 print("This field is required. Please enter a value.")
-                print("(Or press Q to quit)")
+                print("(Or press B to go back, Q to quit)")
                 continue
             elif len(value) > max_length:
                 print("Input too long. Maximum {} characters.".format(max_length))
@@ -602,13 +620,15 @@ class FormsApp:
                 return value
     
     def fill_textarea_field(self, field, required):
-        """Fill a multi-line text field (terminated with /EX)"""
-        print("(Enter text. Type /EX on a new line when finished)")
+        """Fill a multi-line text field (terminated with /EX, B to back)"""
+        print("(Enter text. Type /EX on a new line when finished, B on empty line to go back)")
         lines = []
         
         while True:
             line = self.get_input("")
-            if line.upper() == '/EX':
+            if line == '__BACK__':
+                return None
+            elif line.upper() == '/EX':
                 break
             lines.append(line)
         
@@ -621,7 +641,7 @@ class FormsApp:
         return text
     
     def fill_yesno_field(self, field, required):
-        """Fill a yes/no/na field"""
+        """Fill a yes/no/na field (B to back)"""
         allow_na = field.get('allow_na', True)
         
         if allow_na:
@@ -630,7 +650,12 @@ class FormsApp:
             print("Enter Y (Yes) or N (No)")
         
         while True:
-            value = self.get_input("> ").upper()
+            value = self.get_input("> ")
+            
+            if value == '__BACK__':
+                return None
+            
+            value = value.upper()
             
             if not value and not required:
                 return "NA" if allow_na else ""
@@ -647,7 +672,7 @@ class FormsApp:
                     print("Please enter Y or N.")
     
     def fill_choice_field(self, field, required):
-        """Fill a numeric choice field"""
+        """Fill a numeric choice field (B to back)"""
         choices = field.get('choices', [])
         
         if not choices:
@@ -660,6 +685,9 @@ class FormsApp:
         
         while True:
             value = self.get_input("Enter number (1-{}): ".format(len(choices)))
+            
+            if value == '__BACK__':
+                return None
             
             if not value and not required:
                 return ""
