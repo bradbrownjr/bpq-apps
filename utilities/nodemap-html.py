@@ -461,6 +461,12 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             if not neighbor_key or neighbor_key not in node_coords:
                 continue
             
+            # Check reciprocal route - neighbor must also have quality > 0 route back
+            # This prevents drawing connections where one sysop has blocked the route
+            neighbor_routes = nodes[neighbor_key].get('routes', {})
+            if callsign_base not in neighbor_routes or neighbor_routes[callsign_base] == 0:
+                continue  # Skip if neighbor has no route back or has blocked it
+            
             to_lat, to_lon = node_coords[neighbor_key]
             
             # Connection key for deduplication (sorted pair)
@@ -1027,6 +1033,12 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             
             if not neighbor_key or neighbor_key not in node_coords:
                 continue
+            
+            # Check reciprocal route - neighbor must also have quality > 0 route back
+            # This prevents drawing connections where one sysop has blocked the route
+            neighbor_routes = nodes[neighbor_key].get('routes', {})
+            if callsign_base not in neighbor_routes or neighbor_routes[callsign_base] == 0:
+                continue  # Skip if neighbor has no route back or has blocked it
             
             to_lat, to_lon = node_coords[neighbor_key]
             

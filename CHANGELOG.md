@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [nodemap-html - Bidirectional Route Quality Check] - 2026-01-29
+### Fixed
+- **nodemap-html.py**: Map connections now require quality > 0 routes from BOTH nodes
+  - Fixes issue where connection shown as viable when one sysop blocks route with quality 0
+  - Example: K1NYY with 0 quality to W1EMA, but W1EMA non-zero to K1NYY
+  - Connection line NOT drawn if either node has quality 0 route to other
+  - Applies to both HTML (Leaflet) and SVG maps
+  - Prevents users from attempting blocked routes shown as working
+
 ## [YAPP Dead End - Cleanup] - 2026-01-28
 ### Removed
 - **yapp-demo-server.py**: Deleted proof-of-concept socket server
