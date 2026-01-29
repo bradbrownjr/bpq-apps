@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.7
+Version: 1.8
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -27,7 +27,7 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.7"
+VERSION = "1.8"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -539,8 +539,7 @@ def run_chat_session(config, provider, callsign=None, operator_name=None):
         api_key = config.get('gemini_api_key' if provider == 'gemini' else 'openai_api_key')
         call_api = call_gemini_api if provider == 'gemini' else call_openai_api
         model_name = "Gemini 2.5 Flash" if provider == 'gemini' else "GPT-4o Mini"
-        is_first_message = True
-        conversation_history = []  # Clear history on provider switch
+        is_first_message = len(conversation_history) == 0  # Only true if no history yet
         
         # Send initial greeting request to AI
         sys.stdout.write("Connecting...\r")
@@ -615,7 +614,7 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                                 save_user_preference(config, callsign, new_provider)
                                 print("")
                                 print("Switched to {}".format(new_provider.upper()))
-                                print("(Conversation history cleared)")
+                                print("(Conversation history preserved)")
                                 print("")
                                 provider = new_provider
                                 provider_switched = True
