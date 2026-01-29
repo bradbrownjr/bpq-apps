@@ -6,9 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [gemini.py v1.0 - AI Chat Assistant] - 2026-01-29
+## [ai.py v1.1 - Rename and Unicode Fix] - 2026-01-29
+### Changed
+- **ai.py v1.1**: Renamed from gemini.py (reserves "gemini" for Gemini web protocol)
+  - Renamed gemini.py → ai.py, gemini.conf → ai.conf
+  - Enhanced system prompt with explicit Unicode/emoji prohibition
+  - Added CRITICAL directive: ASCII only (characters 32-126), no Unicode, no emoji
+  - Updated all references and documentation
+  - BPQ APPLICATION command now uses "AI" instead of "GEMINI"
+
+## [ai.py v1.0 - AI Chat Assistant] - 2026-01-29
 ### Added
-- **gemini.py v1.0**: AI chat assistant for amateur radio operators
+- **ai.py v1.0**: AI chat assistant for amateur radio operators
   - Interactive chat powered by Google Gemini API (free tier)
   - Personalized greetings using HamDB/QRZ operator name lookup
   - Ham Radio Ten Commandments system prompt for appropriate tone/context
@@ -16,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Conversational memory within session (last 10 exchanges)
   - Internet connectivity check with graceful offline message
   - ASCII-only output, 40-char width text wrapping
-  - Config file for API key storage (gemini.conf)
+  - Config file for API key storage (ai.conf)
   - Interactive API key setup with instructions and Google link
   - Auto-update functionality with 3-second GitHub timeout
   - Ham radio sign-offs (73, Good DX, See you down the log)

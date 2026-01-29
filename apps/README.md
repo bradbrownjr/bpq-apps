@@ -8,7 +8,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [calendar.py](#calendarpy)
   - [callout.py](#calloutpy)
   - [forms.py](#formspy)
-  - [gemini.py](#geminipy)
+  - [ai.py](#aipy)
   - [gopher.py](#gopherpy)
   - [hamqsl.py](#hamqslpy)
   - [hamtest.py](#hamtestpy)
@@ -333,8 +333,8 @@ Note: Recipient is always prompted from user after form completion.
 - `choice` - Numbered list of options
 - `strip` - Slash-separated MARS/SHARES format for information request/response
 
-gemini.py
----------
+ai.py
+-----
 **Type**: Python  
 **Purpose**: AI chat assistant for amateur radio operators  
 **Information source**: Google Gemini API  
@@ -343,29 +343,30 @@ gemini.py
 
 **Download or update**:  
 ```
-wget -O gemini.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gemini.py && chmod +x gemini.py
+wget -O ai.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/ai.py && chmod +x ai.py
 ```
 
 **Features**:
 - Interactive AI chat powered by Google Gemini (free tier)
 - Personalized greetings using HamDB/QRZ operator name lookup
 - Ham Radio Ten Commandments system prompt for appropriate tone
+- Explicit ASCII-only directive (no Unicode, emoji, or special characters)
 - Brief responses optimized for 1200 baud packet radio (2-3 sentences max)
 - Conversational memory within session (last 10 exchanges)
 - Ham radio-appropriate sign-offs (73, Good DX, See you down the log)
 - Transactional prompts - exit at any time with Q
 - Internet connectivity check with graceful offline message
-- ASCII-only output, 40-char width text wrapping
+- 40-char width text wrapping
 - Automatic update functionality
 
 **Setup**:
 1. Get free Gemini API key: https://aistudio.google.com/apikey
-2. On first run, app prompts for API key and saves to `gemini.conf`
+2. On first run, app prompts for API key and saves to `ai.conf`
 3. API key stored locally, never transmitted over packet radio
 
 **BPQ32 Configuration**:
 ```
-APPLICATION 15,GEMINI,C 9 HOST 11 K
+APPLICATION 15,AI,C 9 HOST 11 K
 ```
 Note: Does NOT use NOCALL flag - callsign passed for personalized greetings. 'K' flag keeps session alive.
 
@@ -376,7 +377,7 @@ Note: Does NOT use NOCALL flag - callsign passed for personalized greetings. 'K'
 - Conversation memory retained within single session
 
 **Data Storage**:
-API key stored in `gemini.conf` in same directory as script:
+API key stored in `ai.conf` in same directory as script:
 ```json
 {
   "gemini_api_key": "your-api-key-here"

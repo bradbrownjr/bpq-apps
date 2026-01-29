@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.0
+Version: 1.1
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
 
 Usage:
-    gemini.py                  # Interactive chat session
-    gemini.py --help           # Show help
+    ai.py                      # Interactive chat session
+    ai.py --help               # Show help
 
 BPQ32 APPLICATION line:
-    APPLICATION 7,GEMINI,C 9 HOST # K,CALLSIGN,FLAGS
+    APPLICATION 7,AI,C 9 HOST # K,CALLSIGN,FLAGS
 
 Note: Requires callsign (no NOCALL flag) for personalized greetings.
 
@@ -27,8 +27,8 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.0"
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "gemini.conf")
+VERSION = "1.1"
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
 HAM_COMMANDMENTS = """
@@ -48,11 +48,11 @@ HAM_COMMANDMENTS = """
 def show_logo():
     """Display ASCII art logo"""
     logo = r"""
-                     _       _ 
-  __ _  ___ _ __ ___ (_)_ __ (_)
- / _` |/ _ \ '_ ` _ \| | '_ \| |
-| (_| |  __/ | | | | | | | | | |
- \__,_|\___|_| |_| |_|_|_| |_|_|
+       _ 
+  __ _(_)
+ / _` | |
+| (_| | |
+ \__,_|_|
 """
     print(logo)
 
@@ -195,7 +195,7 @@ def lookup_operator_name(callsign):
     # Try HamDB first (no API key required)
     try:
         url = "https://api.hamdb.org/v1/{}/json/bpq-apps".format(base_call)
-        req = Request(url, headers={"User-Agent": "BPQ-Gemini/1.0"})
+        req = Request(url, headers={"User-Agent": "BPQ-AI/1.1"})
         response = urlopen(req, timeout=3)
         data = json.loads(response.read().decode('utf-8'))
         
@@ -250,7 +250,9 @@ def call_gemini_api(api_key, prompt, conversation_history, operator_name=None, c
     """Call Gemini API with ham radio context"""
     try:
         # Build system prompt with ham radio context
-        system_context = """You are a helpful AI assistant for amateur radio operators. Keep responses brief (2-3 sentences max) due to 1200 baud packet radio bandwidth constraints. Use ASCII text only - no Unicode or special characters.
+        system_context = """You are a helpful AI assistant for amateur radio operators. Keep responses brief (2-3 sentences max) due to 1200 baud packet radio bandwidth constraints.
+
+CRITICAL: Use ASCII text only (characters 32-126). Absolutely NO Unicode characters, NO emoji, NO special symbols, NO accented letters, NO box-drawing characters. Plain text only.
 
 Ham Radio Ten Commandments (guide your tone and advice):
 {}
@@ -306,7 +308,7 @@ Sign off friendly with amateur radio expressions like:
             data=payload_json,
             headers={
                 "Content-Type": "application/json",
-                "User-Agent": "BPQ-Gemini/1.0"
+                "User-Agent": "BPQ-AI/1.1"
             }
         )
         
@@ -435,10 +437,10 @@ def run_chat_session(api_key, operator_name=None, callsign=None):
 def show_help():
     """Display help information"""
     help_text = """NAME
-    gemini.py - AI chat assistant for ham radio
+    ai.py - AI chat assistant for ham radio
 
 SYNOPSIS
-    gemini.py [OPTIONS]
+    ai.py [OPTIONS]
 
 VERSION
     {}
@@ -469,7 +471,7 @@ API KEY
     Stored in: {}
 
 EXAMPLES
-    gemini.py
+    ai.py
         Start interactive chat session
 
 SEE ALSO
@@ -482,7 +484,7 @@ SEE ALSO
 def main():
     """Main application entry point"""
     # Check for updates
-    check_for_app_update(VERSION, "gemini.py")
+    check_for_app_update(VERSION, "ai.py")
     
     # Handle command line arguments
     if len(sys.argv) > 1:
@@ -499,7 +501,7 @@ def main():
     # Show logo
     show_logo()
     print("")
-    print("GEMINI AI CHAT v{}".format(VERSION))
+    print("AI CHAT v{}".format(VERSION))
     print("AI Assistant for Ham Radio Operators")
     print("")
     print("-" * 40)
