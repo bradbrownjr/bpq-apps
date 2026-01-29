@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.29
+Version: 1.30
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.29"
+VERSION = "1.30"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -118,6 +118,58 @@ import socket
 import textwrap
 import os
 from urllib.parse import urlparse
+from html.parser import HTMLParser
+
+class HTMLStripper(HTMLParser):
+    """Strip HTML tags and convert to plain text"""
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = []
+        self.in_script = False
+        self.in_style = False
+    
+    def handle_starttag(self, tag, attrs):
+        """Handle HTML start tags"""
+        if tag.lower() in ['script', 'style']:
+            self.in_script = True if tag.lower() == 'script' else False
+            self.in_style = True if tag.lower() == 'style' else False
+        # Add newlines after block elements for readability
+        elif tag.lower() in ['p', 'div', 'br', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li']:
+            if self.text and self.text[-1] != '\n':
+                self.text.append('\n')
+    
+    def handle_endtag(self, tag):
+        """Handle HTML end tags"""
+        if tag.lower() in ['script', 'style']:
+            self.in_script = False
+            self.in_style = False
+        # Add newlines after block elements
+        elif tag.lower() in ['p', 'div', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li']:
+            if self.text and self.text[-1] != '\n':
+                self.text.append('\n')
+    
+    def handle_data(self, data):
+        """Handle text data"""
+        if not self.in_script and not self.in_style:
+            # Clean up whitespace but preserve structure
+            lines = data.split('\n')
+            for line in lines:
+                stripped = line.strip()
+                if stripped:
+                    self.text.append(stripped + ' ')
+                elif self.text and self.text[-1] != '\n':
+                    self.text.append('\n')
+    
+    def get_data(self):
+        """Get the stripped text"""
+        result = ''.join(self.text)
+        # Clean up excessive newlines
+        while '\n\n\n' in result:
+            result = result.replace('\n\n\n', '\n\n')
+        return result.strip()
 
 def get_line_width():
     """Get terminal width from COLUMNS env var, default to 80"""
@@ -667,14 +719,67 @@ class GopherClient:
                         print("Invalid selection. Choose 1-{}".format(len(selectable)))
             return True
             
-        # HTML (just show the URL)
+        # HTML - fetch and render as plain text
         elif item_type == 'h':
             if selector.startswith('URL:'):
                 url = selector[4:]
-                print("\nHTML link: {}".format(url))
-                print("(Cannot display HTML in text mode)")
-            self.current_state = 'menu'
-            return True
+                print("\nFetching HTML from: {}".format(url))
+                
+                try:
+                    import urllib.request
+                    # Fetch the HTML with timeout
+                    with urllib.request.urlopen(url, timeout=30) as response:
+                        html_content = response.read().decode('utf-8', errors='ignore')
+                    
+                    # Strip HTML tags and convert to plain text
+                    stripper = HTMLStripper()
+                    stripper.feed(html_content)
+                    text_content = stripper.get_data()
+                    
+                    if not text_content:
+                        print("Error: No text content found in HTML page")
+                        return False
+                    
+                    # Display as article with pagination
+                    result = self.display_article(text_content, paginate=True)
+                    self.current_state = 'article'
+                    
+                    # Handle return commands from article pagination
+                    if result == 'quit':
+                        print("\nGoodbye! 73\n")
+                        sys.exit(0)
+                    elif result == 'home':
+                        self.history = []
+                        self.navigate_to(DEFAULT_HOME)
+                        return True
+                    elif result == 'marks':
+                        self.show_bookmarks()
+                        sel = input("Select bookmark # or [Enter] to cancel :> ").strip()
+                        if sel.isdigit():
+                            idx = int(sel) - 1
+                            if 0 <= idx < len(BOOKMARKS):
+                                self.navigate_to(BOOKMARKS[idx][1])
+                            else:
+                                print("Invalid bookmark number")
+                        return True
+                    elif result == 'back':
+                        # Return to previous page (back in history)
+                        if self.history:
+                            prev_url = self.history.pop()
+                            self.current_url = None
+                            self.navigate_to(prev_url)
+                        return True
+                    
+                    return True
+                    
+                except Exception as e:
+                    print("Error fetching HTML: {}".format(str(e)))
+                    print("URL: {}".format(url))
+                    return False
+            else:
+                print("\nHTML link: {}".format(selector))
+                print("(Cannot parse HTML URL from selector)")
+                return False
         
         # Binary files and other types - not supported without downloads
         elif item_type in ['4', '5', '6', '9', 'g', 'I', 'p', 's']:
