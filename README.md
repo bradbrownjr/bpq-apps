@@ -23,14 +23,17 @@ These applications are custom-built for low bandwidth terminal access over packe
 
 * **callout.py** - Test application demonstrating BPQ callsign capture for other apps.
 * **dict.py** - Dictionary lookup using dictd server. Simple word definition searches.
+* **eventcal.py** - Club calendar displaying upcoming ham radio events from iCalendar feeds. Supports custom feed URLs via eventcal.conf.
+* **feed.py** - Classic BBS-style community bulletin board (legacy version - see wall.py for enhanced version).
 * **forms.py** - Fillable forms system for creating formatted messages (ICS-213, radiograms, weather reports, etc.)
-* **gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. It's like the Internet, but for terminals!  
+* **gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. Configurable bookmarks via gopher.conf.
 * **hamqsl.py** - HF propagation reports from www.hamqsl.com.  
 * **hamtest.py** - Ham radio license test practice with automatic question pool updates.  
 * **predict.py** - HF propagation estimator using simplified ionospheric model. Predicts best bands and times for contacts between two locations. Resilient design works online, cached, or fully offline. Supports gridsquare, GPS, DMS, state, country, and callsign input with HamDB lookup integration.
 * **qrz3.py** - Look up name, city, state, country of an amateur radio operator with QRZ.com.  
 * **rss-news.py** - News feed reader with categorized feeds: News, Science, Technology, Weather, and of course, ham radio topics.  
 * **wall.py** - Community bulletin board for one-liner messages. Users can post, view, and delete their own messages.
+* **wiki.py** - Wikipedia browser supporting search, article summaries, numbered link navigation, and multiple Wikimedia projects (Wikipedia, Wiktionary, Wikiquote, Wikinews, Wikivoyage). Includes offline caching.
 * **space.py** - NOAA Space Weather reports and solar activity data.  
 * **sysinfo.sh** - Node system information and BBS service status checker.  
 * **wx.py** - Weather reports using National Weather Service API.
