@@ -880,12 +880,13 @@ class FormsApp:
         """Main application loop"""
         self.clear_screen()
         
-        # Show loading message immediately
+        # Check for application updates BEFORE loading templates
+        # This prevents users from seeing "Loading..." then update prompt
+        self.check_for_app_update()
+        
+        # Show loading message after update check
         print("Loading form templates...")
         sys.stdout.flush()
-        
-        # Check for application updates
-        self.check_for_app_update()
         
         # Load form templates
         if not self.load_forms():
