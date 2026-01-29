@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.36
+Version: 1.37
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.36"
+VERSION = "1.37"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -631,7 +631,10 @@ class GopherClient:
                     self.current_url = None
                     self.navigate_to(prev_url)
                 else:
-                    print("No previous page in history")
+                    # No history - return to initial command prompt
+                    self.current_url = None
+                    self.current_state = 'initial'
+                    print("\nReturned to main menu")
                 return True
             elif isinstance(result, int):
                 # User selected item by number
@@ -698,6 +701,11 @@ class GopherClient:
                     prev_url = self.history.pop()
                     self.current_url = None
                     self.navigate_to(prev_url)
+                else:
+                    # No history - return to initial command prompt
+                    self.current_url = None
+                    self.current_state = 'initial'
+                    print("\nReturned to main menu")
                 return True
             
             return True
@@ -740,7 +748,10 @@ class GopherClient:
                         self.current_url = None
                         self.navigate_to(prev_url)
                     else:
-                        print("No previous page in history")
+                        # No history - return to initial command prompt
+                        self.current_url = None
+                        self.current_state = 'initial'
+                        print("\nReturned to main menu")
                     return True
                 elif isinstance(result, int):
                     # User selected item by number
@@ -803,6 +814,11 @@ class GopherClient:
                             prev_url = self.history.pop()
                             self.current_url = None
                             self.navigate_to(prev_url)
+                        else:
+                            # No history - return to initial command prompt
+                            self.current_url = None
+                            self.current_state = 'initial'
+                            print("\nReturned to main menu")
                         return True
                     
                     return True
@@ -951,7 +967,10 @@ class GopherClient:
                                 self.current_url = prev_url
                                 self.navigate_to(prev_url)
                             else:
-                                print("No previous page in history")
+                                # No history - return to initial command prompt
+                                self.current_url = None
+                                self.current_state = 'initial'
+                                print("\nReturned to main menu")
                         elif isinstance(result, int):
                             # User selected item by number
                             selectable = [item for item in self.last_menu if item['type'] != 'i']
@@ -986,7 +1005,10 @@ class GopherClient:
                         self.current_url = prev_url
                         self.navigate_to(prev_url)
                     else:
-                        print("No previous page in history")
+                        # No history - reset to initial state
+                        self.current_url = None
+                        self.current_state = 'initial'
+                        print("Already at main menu")
                 
                 # Bookmarks
                 elif cmd_lower.startswith('m'):
