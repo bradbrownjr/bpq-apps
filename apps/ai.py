@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.10
+Version: 1.11
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -27,7 +27,7 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.10"
+VERSION = "1.11"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
