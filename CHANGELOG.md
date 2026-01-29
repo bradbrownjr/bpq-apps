@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [gemini.py v1.0 - AI Chat Assistant] - 2026-01-29
+### Added
+- **gemini.py v1.0**: AI chat assistant for amateur radio operators
+  - Interactive chat powered by Google Gemini API (free tier)
+  - Personalized greetings using HamDB/QRZ operator name lookup
+  - Ham Radio Ten Commandments system prompt for appropriate tone/context
+  - Brief responses optimized for 1200 baud packet radio
+  - Conversational memory within session (last 10 exchanges)
+  - Internet connectivity check with graceful offline message
+  - ASCII-only output, 40-char width text wrapping
+  - Config file for API key storage (gemini.conf)
+  - Interactive API key setup with instructions and Google link
+  - Auto-update functionality with 3-second GitHub timeout
+  - Ham radio sign-offs (73, Good DX, See you down the log)
+  - Transactional prompts - user can quit at any time
+
 ## [rss-news.py v1.7 - Auto-Download Config] - 2026-01-29
 ### Changed
 - **rss-news.py v1.7**: Auto-download rss-news.conf if missing during update check

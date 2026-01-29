@@ -4,10 +4,11 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 ## Table of Contents
 - [Features](#features)
 - [Applications](#applications)
-  - [callout.py](#calloutpy)
+  - [feed.py](#feedpy)
   - [calendar.py](#calendarpy)
-  - [dict.py](#dictpy)
+  - [callout.py](#calloutpy)
   - [forms.py](#formspy)
+  - [gemini.py](#geminipy)
   - [gopher.py](#gopherpy)
   - [hamqsl.py](#hamqslpy)
   - [hamtest.py](#hamtestpy)
@@ -15,11 +16,9 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [qrz3.py](#qrz3py)
   - [rss-news.py](#rss-newspy)
   - [space.py](#spacepy)
-  - [wall.py](#wallpy)
-  - [wiki.py](#wikipy)
   - [wx.py](#wxpy)
   - [wx-me.py](#wx-mepy)
-  - [yapp.py](#yapppy)
+  - [wxnws-ftp.py](#wxnws-ftppy)
 - [Installation](#installation)
 - [BPQ Configuration](#bpq-configuration)
 
@@ -36,28 +35,21 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 
 ## Applications
 
-callout.py
-----------
+feed.py
+-----------
 **Type**: Python  
-**Purpose**: Test application demonstrating BPQ callsign capture  
-**Information source**: BPQ32 connection data  
+**Purpose**: Community message feed for posting and viewing one-liner messages  
+**Information source**: User submissions stored locally  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Simple proof-of-concept showing how to capture the connecting user's callsign from BPQ32 via stdin. Used as a reference for other applications.
+**Notes**: Twitter-style message feed door application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
 
 **Download or update**:  
-```wget -O callout.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/callout.py && chmod +x callout.py```
+```wget -O feed.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/feed.py && chmod +x feed.py```
 
 **Features**:
-- Captures callsign passed from BPQ32 via stdin
-- Demonstrates configuration without NOCALL flag
-- Shows how to use 'S' flag to strip SSID
-- Reference implementation for other applications
-
-**BPQ32 Configuration**:
-```
-APPLICATION 7,CALLOUT,C 9 HOST 3 S
-```
-The 'S' flag strips the SSID (e.g., KC1JMH-8 becomes KC1JMH). Remove 'S' to include SSID.
+- Post one-liner messages (up to 80 characters)
+- View recent messages with pagination (10 messages per page)
+- Delete your own messages
 
 calendar.py
 -----------
@@ -103,101 +95,8 @@ Configuration stored in `calendar.conf` in same directory as script:
 }
 ```
 
-dict.py
--------
-**Type**: Python  
-**Purpose**: Dictionary word lookup using the Linux `dict` command (dictd client)  
-**Information source**: Local dictd server or online via dictd protocol  
-**Developer**: Brad Brown KC1JMH  
-**Version**: 1.6
-
-**What It Is**:
-An interactive dictionary lookup application for packet radio that queries word definitions via the standard Linux `dict` command-line tool. Provides a simple interface for radio operators to look up words with definitions displayed at 80-column terminal width with automatic pagination.
-
-**Prerequisites**:
-1. Linux `dict` package (dictd client) must be installed
-2. At least one dictionary database available (online or local)
-3. Network connectivity to dictd server (typically online)
-
-```bash
-sudo apt-get install dictd dict
-```
-
-**Important Naming Constraint**:
-⚠️ **CRITICAL: Cannot be named "dict" in system configuration**
-- The Linux package `dict` is registered on standard port 2628 in `/etc/services`
-- BPQ32 will fail to resolve port conflicts if this app is named "dict" in `/etc/services`
-- **Solution: Name the BPQ service "dictionary" instead**
-  - In `/etc/services`: `dictionary    63160/tcp`
-  - In `/etc/inetd.conf`: `dictionary    stream  tcp  nowait  ect  /home/ect/apps/dict.py`
-  - In `bpq32.cfg`: `APPLICATION X,DICT,C 9 HOST Y NOCALL K`
-  - The BPQ APPLICATION name can still be "DICT"; only the system service name must be different
-
-**How It Works**:
-1. User connects to app and enters a word at the prompt
-2. App calls `dict <word>` subprocess to look up definition
-3. Output is word-wrapped to terminal width (80 chars default for inetd)
-4. Results paginated at 20-line intervals with user quit option
-5. User can press Enter to continue or 'Q' to quit
-
-**Download or update**:  
-```wget -O dict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/dict.py && chmod +x dict.py```
-
-**Features**:
-- Simple word lookup interface
-- Queries local or online dictd servers
-- ASCII art logo for packet radio
-- Dynamic terminal width handling (80-char fallback for inetd)
-- Pagination every 20 lines with graceful quit option
-- Word wrapping for long definitions
-- Automatic update functionality (3-second GitHub timeout)
-- Graceful error handling if `dict` command not installed
-- Python 3.5.3 compatible (Raspbian 9, RPi 3B)
-- No authentication required (NOCALL flag)
-
-**Usage**:
-```
-(app banner and ASCII logo)
-dict v1.X - Dictionary Lookup
-
-Enter word (Q to quit): aircraft
-(definitions displayed with pagination)
-(press Enter, Q to quit)
-```
-
-**BPQ32 Configuration** (WS1EC example):
-```
-# Port 9 CMDPORT list position (HOST 15)
-CMDPORT 63000 63010 63020 63030 63040 63050 63060 63070 63080 63090 63100 63110 63120 63130 63140 63160
-
-# /etc/services entry
-dictionary      63160/tcp               # Dictionary lookup (HOST 15)
-
-# /etc/inetd.conf entry
-dictionary      stream  tcp     nowait  ect     /home/ect/apps/dict.py
-
-# BPQ32 APPLICATION line
-APPLICATION 6,DICT,C 9 HOST 15 NOCALL K
-```
-
-**Data Flow**:
-```
-User telnet → Port 63160 → inetd → dict.py stdin/stdout → subprocess dict → dictd server
-```
-
-**Offline Behavior**:
-- If dictd server unavailable: Shows "Dict lookup failed" error
-- App continues running; user can try different word
-- Does not block or crash on network failure
-
-**Auto-Update Protocol**:
-- Checks GitHub for newer version on startup (3-second timeout)
-- If update available, downloads atomically to temp file, renames to replace current
-- Preserves executable permissions
-- Cleans up temp files on failure
-- Version stored in script docstring (e.g., `Version: 1.6`)
-
-gopher.py
+callout.py
+----------
 ---------
 **Type**: Python  
 **Purpose**: Gopher protocol client for accessing gopherspace  
@@ -206,8 +105,6 @@ gopher.py
 
 **Download or update**:  
 ```wget -O gopher.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.py && chmod +x gopher.py```
-
-**Configuration**: The script auto-downloads `gopher.conf` on first run if missing. Edit this JSON file to customize bookmarks, home page, page size, and timeouts. Falls back to defaults if file is invalid or missing.
 
 hamqsl.py
 ---------
@@ -254,10 +151,13 @@ predict.py
 **Developer**: Brad Brown KC1JMH  
 **Notes**: Simplified model (~70-80% accuracy). For precise predictions, use voacap.com.
 
-**Download or update**:  
-```wget -O predict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict.py && chmod +x predict.py```
-
-**Module Files**: The script auto-downloads required library files (geo.py, solar.py, ionosphere.py, regions.json) to `predict/` subdirectory on first run or update if missing.
+**Download or update** (from ~/apps directory):  
+```cd ~/apps && wget -O predict.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict.py && chmod +x predict.py```  
+```mkdir -p predict && wget -O predict/__init__.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/__init__.py```  
+```wget -O predict/geo.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/geo.py```  
+```wget -O predict/solar.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/solar.py```  
+```wget -O predict/ionosphere.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/ionosphere.py```  
+```wget -O predict/regions.json https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/regions.json```
 
 **Features**:
 - Estimates best HF bands (80m-10m) and times for contacts
@@ -304,12 +204,27 @@ rss-news.py
 **Purpose**: RSS feed reader with categorized feeds  
 **Information source**: Configurable RSS feeds  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Optionally uses w3m for better text extraction from web articles.
+**Notes**: Requires rss-news.conf configuration file. Optionally uses w3m for better text extraction from web articles.
 
 **Download or update**:  
-```wget -O rss-news.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/rss-news.py && chmod +x rss-news.py```
+```
+wget -O rss-news.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/rss-news.py && chmod +x rss-news.py
+wget -O rss-news.conf https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/rss-news.conf
+```
 
-**Configuration**: The script auto-downloads `rss-news.conf` on first run if missing. Edit this CSV file to add your own RSS feeds in the format: `Category,Feed Name,Feed URL`. Falls back to default feeds (ARRL, QRZ, BBC News, etc.) if file is missing or invalid.
+**Features**:
+- Categorized RSS feeds from configuration file
+- Browse feeds by category and view article lists
+- Article size warnings for bandwidth management
+- Pagination support for large articles
+- Clean text extraction from web pages
+- Optional full article fetching from source URLs
+
+**Configuration**:
+Edit `rss-news.conf` to add your own RSS feeds in CSV format:
+```
+Category,Feed Name,Feed URL
+```
 
 callout.py
 ----------
@@ -418,6 +333,56 @@ Note: Recipient is always prompted from user after form completion.
 - `choice` - Numbered list of options
 - `strip` - Slash-separated MARS/SHARES format for information request/response
 
+gemini.py
+---------
+**Type**: Python  
+**Purpose**: AI chat assistant for amateur radio operators  
+**Information source**: Google Gemini API  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Interactive AI chat with ham radio context and etiquette. Requires free Google Gemini API key. Internet-required with graceful offline detection.
+
+**Download or update**:  
+```
+wget -O gemini.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gemini.py && chmod +x gemini.py
+```
+
+**Features**:
+- Interactive AI chat powered by Google Gemini (free tier)
+- Personalized greetings using HamDB/QRZ operator name lookup
+- Ham Radio Ten Commandments system prompt for appropriate tone
+- Brief responses optimized for 1200 baud packet radio (2-3 sentences max)
+- Conversational memory within session (last 10 exchanges)
+- Ham radio-appropriate sign-offs (73, Good DX, See you down the log)
+- Transactional prompts - exit at any time with Q
+- Internet connectivity check with graceful offline message
+- ASCII-only output, 40-char width text wrapping
+- Automatic update functionality
+
+**Setup**:
+1. Get free Gemini API key: https://aistudio.google.com/apikey
+2. On first run, app prompts for API key and saves to `gemini.conf`
+3. API key stored locally, never transmitted over packet radio
+
+**BPQ32 Configuration**:
+```
+APPLICATION 15,GEMINI,C 9 HOST 11 K
+```
+Note: Does NOT use NOCALL flag - callsign passed for personalized greetings. 'K' flag keeps session alive.
+
+**Usage**:
+- Type questions or messages to chat with AI
+- AI responds with ham radio context awareness
+- Type Q, QUIT, EXIT, or BYE to end session
+- Conversation memory retained within single session
+
+**Data Storage**:
+API key stored in `gemini.conf` in same directory as script:
+```json
+{
+  "gemini_api_key": "your-api-key-here"
+}
+```
+
 space.py
 --------
 **Type**: Python  
@@ -481,134 +446,23 @@ wx-me.py
 
 ![Terminal output](../docs/images/wx.png)
 
-wall.py
------------
+wxnws-ftp.py
+------------
 **Type**: Python  
-**Purpose**: Community bulletin board for posting and viewing one-liner messages  
-**Information source**: User submissions stored locally  
+**Purpose**: Retrieve NWS products via FTP  
+**Information source**: NWS TGFTP server  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Community message wall application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
+**Notes**: Experimental. Downloads and displays NWS text products from FTP server. Configurable region code.
 
 **Download or update**:  
-```wget -O wall.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wall.py && chmod +x wall.py```
+```wget -O wxnws-ftp.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wxnws-ftp.py && chmod +x wxnws-ftp.py```
 
 **Features**:
-- Post one-liner messages (up to 80 characters)
-- View recent messages with pagination (10 messages per page)
-- Delete your own messages
+- Downloads AFD (Area Forecast Discussion) files from NWS FTP
+- Pauses at section breaks (&&) for user pacing
+- Configurable regional NWS office
 
-wiki.py
--------
-**Type**: Python  
-**Purpose**: Wikipedia and sister wiki browser for packet radio  
-**Information source**: Wikipedia, Simple Wikipedia, Wiktionary, Wikiquote, Wikinews, Wikivoyage  
-**Developer**: Brad Brown KC1JMH  
-**Notes**: Uses MediaWiki REST API for article summaries and full text. Supports numbered link navigation for recursive browsing. Requires requests library. Python 3.5+ compatible.
-
-**Download or update**:  
-```wget -O wiki.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wiki.py && chmod +x wiki.py```
-
-**Features**:
-- Search Wikipedia and sister wikis
-- Article summaries with optional full text
-- Numbered link navigation (recursive browsing similar to Gopher)
-- Smart word wrapping for any terminal width
-- Pagination for long articles (20 lines per page)
-- Random article feature
-- Offline caching (last 10 summaries, 24-hour expiry)
-- Internet detection with graceful offline fallback
-- Automatic update functionality
-
-**Supported Projects**:
-- **Wikipedia** - Free encyclopedia (en.wikipedia.org)
-- **Simple Wikipedia** - Easier reading level (simple.wikipedia.org)
-- **Wiktionary** - Dictionary definitions (en.wiktionary.org)
-- **Wikiquote** - Famous quotations (en.wikiquote.org)
-- **Wikinews** - Current events coverage (en.wikinews.org)
-- **Wikivoyage** - Travel guides for DXpeditions (en.wikivoyage.org)
-
-**BPQ32 Configuration**:
-```
-APPLICATION 21,WIKI,C 9 HOST 17 NOCALL K
-```
-
-**Usage**:
-1. Select wiki project from main menu (1-7)
-2. Enter search query
-3. Select article from numbered results
-4. View summary, then:
-   - `F` - View full article with pagination
-   - `L` - Display numbered links from article
-   - `[#]` - Navigate to numbered link
-   - `Q` - Return to menu
-
-**Link Navigation**:
-Articles display up to 50 internal links, numbered for easy navigation. Enter link number at any prompt to jump to that article. Type `M` to show additional links beyond the first 50.
-
-**Data Storage**:
-Cache stored in `wiki_cache.json` in same directory as script:
-```json
-{
-  "search:en.wikipedia.org:amateur radio": {
-    "timestamp": 1706486400,
-    "data": [...]
-  }
-}
-```
-
-**Dependencies**:
-- Python 3.5+
-- requests library (`pip3 install requests`)
-
-yapp.py
--------
-**Type**: Python module and CLI tool  
-**Purpose**: YAPP file transfer protocol implementation for packet radio  
-**Information source**: Protocol implementation (no external data)  
-**Developer**: Brad Brown KC1JMH  
-**Notes**: ⚠️ **NOT COMPATIBLE WITH BPQ32** - BPQ32 filters control characters (< 0x20) making binary transfers impossible via APPLICATION interface. Code retained for reference. Python 3.5.3 compatible implementation with YAPPC extension support for file transfer resume.
-
-**Download or update**:  
-```wget -O yapp.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/yapp.py && chmod +x yapp.py```
-
-**Features**:
-- Complete YAPP protocol implementation (sender and receiver)
-- YAPPC extension support (resume capability)
-- YAPPProtocol class for embedding in other applications
-- Timeout handling and error recovery
-- Debug mode for protocol tracing
-- stdin/stdout helper for BPQ application integration
-- CLI interface for testing
-
-**Usage as module**:
-```python
-from yapp import YAPPProtocol
-
-# Create protocol handler
-yapp = YAPPProtocol(read_func, write_func, debug=True)
-
-# Send a file
-success, msg = yapp.send_file("test.txt", file_data)
-
-# Receive a file
-filename, data, error = yapp.receive_file(save_dir="/tmp")
-```
-
-**Usage as CLI**:
-```bash
-# Send a file
-python yapp.py --send myfile.txt
-
-# Receive a file  
-python yapp.py --receive --save-dir /tmp
-
-# Debug mode
-python yapp.py --send myfile.txt --debug
-```
-
-**Protocol Documentation**: See [YAPP-PROTOCOL.md](../docs/YAPP-PROTOCOL.md) for complete protocol specification.
-
-**⚠️ BPQ32 Incompatibility**: BPQ32 strips control characters from stdin/stdout, making binary file transfers impossible via the APPLICATION interface. YAPP cannot work on BPQ32 without C code modifications to support binary mode. See protocol documentation for detailed analysis.
+**Status**: Experimental, not production-ready.
 
 ## Subdirectories
 
@@ -622,6 +476,11 @@ Contains ham radio license exam question pools in JSON format. Automatically dow
 Screenshots and example output images for documentation.
 
 **Note**: Sysop utilities for managing the BBS are located in `/utilities` at repository root.
+
+# ToDos
+[X] **All** - Update #! to call interpreter regardless of location using env  
+[ ] **qrz3.py** - Add variable check so as to not require sysop to comment lines if used in the mode that requires user login  
+[ ] **wx.py** - Expand to provide weather information for other areas, in the meantime the txt web requests may be updated to pull any URL.
 
 ## Configuration
 
