@@ -597,11 +597,11 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                 # Translate exit commands to natural goodbye for AI
                 if is_first_message:
                     # If first message, add minimal context
-                    goodbye_prompt = "You are {}, ham radio AI. Say goodbye using ham sign-offs (73!, Good DX!, etc). ASCII only.".format(ai_name)
+                    goodbye_prompt = "You are {}, ham radio AI. Say goodbye with ONE brief ham radio sign-off only (73!, Good DX!, etc). ONE phrase max. ASCII only.".format(ai_name)
                     message_to_send = goodbye_prompt + "\n\nUser says goodbye."
                 else:
                     # AI already has context - send natural goodbye
-                    message_to_send = "Goodbye, thanks for your help!"
+                    message_to_send = "Say goodbye with ONE brief ham sign-off only (73!, Good DX!, etc). Keep it to ONE phrase."
                 
                 # Get goodbye from AI
                 sys.stdout.write("AI: [thinking...]\r")
