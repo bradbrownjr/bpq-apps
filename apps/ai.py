@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.2
+Version: 1.3
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -27,7 +27,7 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.2"
+VERSION = "1.3"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -122,71 +122,171 @@ def extract_base_call(callsign):
 
 
 def load_config():
-    """Load API key from config file"""
+    """Load config file with API keys and user preferences"""
     if not os.path.exists(CONFIG_FILE):
-        return None
+        return {}
     
     try:
         with open(CONFIG_FILE, 'r') as f:
-            data = json.load(f)
-            return data.get('gemini_api_key')
+            return json.load(f)
     except Exception:
-        return None
+        return {}
 
 
-def save_config(api_key):
-    """Save API key to config file"""
+def save_config(config_data):
+    """Save config data to file"""
     try:
         with open(CONFIG_FILE, 'w') as f:
-            json.dump({'gemini_api_key': api_key}, f, indent=2)
+            json.dump(config_data, f, indent=2)
         return True
     except Exception:
         return False
 
 
-def prompt_for_api_key():
-    """Prompt user to enter and save API key"""
+def prompt_for_api_key(provider, config):
+    """Prompt user to enter and save API key for a provider"""
     print("-" * 40)
-    print("GEMINI API KEY SETUP")
+    if provider == 'gemini':
+        print("GEMINI API KEY SETUP")
+    else:
+        print("OPENAI API KEY SETUP")
     print("-" * 40)
     print("")
-    print("To use this app, you need a free Google")
-    print("Gemini API key.")
-    print("")
-    print("Get your API key at:")
-    print("https://aistudio.google.com/apikey")
-    print("")
-    print("Steps:")
-    print("1. Visit the URL above")
-    print("2. Sign in with Google account")
-    print("3. Click 'Create API key'")
-    print("4. Copy the key")
+    
+    if provider == 'gemini':
+        print("Get free Google Gemini API key:")
+        print("1. Create project:")
+        print("   https://aistudio.google.com/projects")
+        print("2. Create API key:")
+        print("   https://aistudio.google.com/api-keys")
+        print("3. Enable Generative Language API")
+    else:
+        print("Get OpenAI API key:")
+        print("1. Sign up at:")
+        print("   https://platform.openai.com/signup")
+        print("2. Create API key:")
+        print("   https://platform.openai.com/api-keys")
+        print("   - Choose 'Service account' (not You)")
+        print("   - Name it (e.g., bpq-api)")
+        print("3. Add credits (pay-as-you-go)")
+        print("4. Set budget limit (recommended $10):")
+        print("   https://platform.openai.com/")
+        print("   settings/organization/limits")
+    
     print("")
     print("-" * 40)
     print("")
     
     try:
-        api_key = input("Paste your API key (or Q to quit): ").strip()
+        api_key = input("Paste API key (or Q to quit): ").strip()
         
         if api_key.upper() == 'Q':
             print("\nExiting...")
             return None
         
         if not api_key or len(api_key) < 20:
-            print("\nInvalid API key. Must be at least")
-            print("20 characters.")
+            print("\nInvalid API key.")
             return None
         
-        if save_config(api_key):
-            print("\nAPI key saved successfully!")
+        key_field = 'gemini_api_key' if provider == 'gemini' else 'openai_api_key'
+        config[key_field] = api_key
+        
+        if save_config(config):
+            print("\nAPI key saved!")
             return api_key
         else:
-            print("\nError saving config file.")
+            print("\nError saving config.")
             return None
             
     except (EOFError, KeyboardInterrupt):
         print("\n\nExiting...")
         return None
+
+
+def get_ai_name(config):
+    """Get AI name from config, default to Elmer"""
+    return config.get('ai_name', 'Elmer')
+
+
+def get_available_providers(config):
+    """Return list of configured AI providers"""
+    providers = []
+    if config.get('gemini_api_key'):
+        providers.append('gemini')
+    if config.get('openai_api_key'):
+        providers.append('openai')
+    return providers
+
+
+def get_user_preference(config, callsign):
+    """Get user's last used provider"""
+    if not callsign:
+        return None
+    prefs = config.get('user_preferences', {})
+    user_pref = prefs.get(callsign, {})
+    return user_pref.get('provider')
+
+
+def save_user_preference(config, callsign, provider):
+    """Save user's provider preference"""
+    if not callsign:
+        return
+    
+    if 'user_preferences' not in config:
+        config['user_preferences'] = {}
+    
+    config['user_preferences'][callsign] = {
+        'provider': provider,
+        'last_used': '2026-01-29'
+    }
+    save_config(config)
+
+
+def select_provider(config, callsign, force_menu=False):
+    """Let user select AI provider or use sysop default/user preference"""
+    providers = get_available_providers(config)
+    
+    if not providers:
+        return None
+    
+    if len(providers) == 1:
+        return providers[0]
+    
+    # Don't show menu if forced (e.g., user typed 'switch')
+    if not force_menu:
+        # Check sysop default first
+        default = config.get('default_provider')
+        if default and default in providers:
+            return default
+        
+        # Check user preference
+        pref = get_user_preference(config, callsign)
+        if pref and pref in providers:
+            return pref
+    
+    # Show menu
+    print("SELECT AI PROVIDER")
+    for i, provider in enumerate(providers, 1):
+        model = "Gemini 2.5 Flash" if provider == 'gemini' else "GPT-4o Mini"
+        print("{}. {} ({})".format(i, provider.upper(), model))
+    print("")
+    
+    try:
+        choice = input("Select [1-{}]: ".format(len(providers))).strip()
+        idx = int(choice) - 1
+        if 0 <= idx < len(providers):
+            selected = providers[idx]
+            save_user_preference(config, callsign, selected)
+            print("")
+            return selected
+    except (ValueError, EOFError, KeyboardInterrupt):
+        # If input fails (EOF from piped stdin), default to first provider
+        print("(defaulting to {})".format(providers[0].upper()))
+        print("")
+        pass
+    
+    # Default to first provider
+    return providers[0]
 
 
 def lookup_operator_name(callsign):
@@ -247,6 +347,69 @@ def lookup_operator_name(callsign):
     return None
 
 
+def call_openai_api(api_key, prompt, conversation_history, operator_name=None, callsign=None):
+    """Call OpenAI API with conversation context"""
+    try:
+        url = "https://api.openai.com/v1/chat/completions"
+        
+        # Build messages array
+        messages = []
+        
+        # Add conversation history
+        for msg in conversation_history:
+            messages.append({
+                "role": "assistant" if msg["role"] == "model" else msg["role"],
+                "content": msg["text"]
+            })
+        
+        # Add current prompt
+        messages.append({
+            "role": "user",
+            "content": prompt
+        })
+        
+        payload = {
+            "model": "gpt-4o-mini",
+            "messages": messages,
+            "max_tokens": 256,
+            "temperature": 0.7
+        }
+        
+        payload_json = json.dumps(payload).encode('utf-8')
+        
+        req = Request(
+            url,
+            data=payload_json,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {}".format(api_key),
+                "User-Agent": "BPQ-AI/1.2"
+            }
+        )
+        
+        response = urlopen(req, timeout=10)
+        result = json.loads(response.read().decode('utf-8'))
+        
+        # Extract response text
+        if 'choices' in result and len(result['choices']) > 0:
+            text = result['choices'][0]['message']['content'].strip()
+            return text, None
+        
+        return None, "No response from AI"
+        
+    except HTTPError as e:
+        if e.code == 401:
+            return None, "Invalid API key"
+        elif e.code == 429:
+            return None, "Rate limit exceeded. Try again later."
+        else:
+            return None, "HTTP error: {}".format(e.code)
+    except URLError:
+        return None, "Network error. Check internet connection."
+    except Exception as e:
+        return None, "Error: {}".format(str(e))
+
+
 def call_gemini_api(api_key, prompt, conversation_history, operator_name=None, callsign=None):
     """Call Gemini API with ham radio context"""
     try:
@@ -289,13 +452,10 @@ Sign off friendly with amateur radio expressions like:
         })
         
         # Build request
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={}".format(api_key)
+        url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={}".format(api_key)
         
         payload = {
             "contents": contents,
-            "systemInstruction": {
-                "parts": [{"text": system_context}]
-            },
             "generationConfig": {
                 "maxOutputTokens": 256,  # Keep responses short
                 "temperature": 0.7
@@ -338,8 +498,14 @@ Sign off friendly with amateur radio expressions like:
         return None, "Error: {}".format(str(e))
 
 
-def wrap_text(text, width=40):
+def wrap_text(text, width=None):
     """Wrap text to fit terminal width"""
+    if width is None:
+        try:
+            width = os.get_terminal_size().columns
+        except Exception:
+            width = 80  # Fallback for piped/non-TTY
+    
     words = text.split()
     lines = []
     current_line = []
@@ -362,20 +528,55 @@ def wrap_text(text, width=40):
     return '\n'.join(lines)
 
 
-def run_chat_session(api_key, operator_name=None, callsign=None):
+def run_chat_session(config, provider, callsign=None, operator_name=None):
     """Run interactive chat session"""
+    api_key = config.get('gemini_api_key' if provider == 'gemini' else 'openai_api_key')
+    call_api = call_gemini_api if provider == 'gemini' else call_openai_api
+    model_name = "Gemini 2.5 Flash" if provider == 'gemini' else "GPT-4o Mini"
+    ai_name = get_ai_name(config)
+    
     conversation_history = []
+    is_first_message = True
     
-    # Initial greeting
+    # Send initial greeting request to AI
+    sys.stdout.write("Connecting...\r")
+    sys.stdout.flush()
+    
+    # Build system context for first message
+    system_context = """You are {}, an AI ham radio mentor. Brief responses (2-3 sentences) for 1200 baud packet radio. ASCII only - no Unicode/emoji/special chars.
+
+Ham principles: Assist others, be courteous, use minimum power, operate legally, promote amateur radio, help in emergencies, improve skills, respect frequencies, share knowledge.
+
+Greeting: Hi!/Hello!/Howdy! Introduce yourself as {}.
+Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack warm!). Never "bye"/"goodbye".
+""".format(ai_name, ai_name)
+    
     if operator_name:
-        greeting = "Hello, {}! I'm your AI assistant for amateur radio. Ask me anything about ham radio, operating practices, equipment, or propagation. Type Q to quit.".format(operator_name)
-    else:
-        greeting = "Hello! I'm your AI assistant for amateur radio. Ask me anything about ham radio, operating practices, equipment, or propagation. Type Q to quit."
+        system_context += "Operator: {} {}".format(operator_name, callsign if callsign else "")
+    elif callsign:
+        system_context += "Callsign: {}".format(callsign)
     
-    print("-" * 40)
-    print(wrap_text(greeting))
-    print("-" * 40)
-    print("")
+    greeting_prompt = system_context + "\n\nGreet the operator. Keep it brief and friendly."
+    
+    greeting, error = call_api(api_key, greeting_prompt, [], operator_name=operator_name, callsign=callsign)
+    
+    sys.stdout.write(" " * 40 + "\r")
+    sys.stdout.flush()
+    
+    if error:
+        print("AI: {}".format(error))
+        if "API key" in error or "Rate limit" in error:
+            print("\nExiting due to API error...")
+            return
+        print("")
+    elif greeting:
+        print("-" * 40)
+        print("Powered by {}".format(model_name))
+        print("-" * 40)
+        print("AI: {}".format(greeting))
+        print("")
+        print("")
+        # Don't add greeting to history - let conversation start fresh
     
     while True:
         try:
@@ -384,18 +585,56 @@ def run_chat_session(api_key, operator_name=None, callsign=None):
             if not user_input:
                 continue
             
+            print("")
+            
+            # Handle special commands without calling AI
+            if user_input.lower() == 'switch':
+                print("")
+                print("Switching providers...")
+                print("Please exit and reconnect.")
+                print("")
+                print("")
+                continue
+            
+            # Check for quit commands first
             if user_input.upper() in ['Q', 'QUIT', 'EXIT', 'BYE']:
-                print("\n73! See you down the log!")
+                # Translate exit commands to natural goodbye for AI
+                if is_first_message:
+                    # If first message, add minimal context
+                    goodbye_prompt = "You are {}, ham radio AI. Say goodbye using ham sign-offs (73!, Good DX!, etc). ASCII only.".format(ai_name)
+                    message_to_send = goodbye_prompt + "\n\nUser says goodbye."
+                else:
+                    # AI already has context - send natural goodbye
+                    message_to_send = "Goodbye, thanks for your help!"
+                
+                # Get goodbye from AI
+                sys.stdout.write("AI: [thinking...]\r")
+                sys.stdout.flush()
+                response, error = call_api(api_key, message_to_send, conversation_history, operator_name=operator_name, callsign=callsign)
+                sys.stdout.write(" " * 40 + "\r")
+                sys.stdout.flush()
+                
+                if response:
+                    print("AI: {}".format(response))
+                    print("")
+                print("")
                 break
+            
+            # Prepend system context to first message only
+            message_to_send = user_input
+            if is_first_message:
+                # Add brief reminder since greeting already set the context
+                message_to_send = "Remember: Brief responses, ASCII only, ham-friendly tone.\n\nUser: " + user_input
+                is_first_message = False
             
             # Show thinking indicator (stays on one line)
             sys.stdout.write("AI: [thinking...]\r")
             sys.stdout.flush()
             
             # Call API
-            response, error = call_gemini_api(
+            response, error = call_api(
                 api_key, 
-                user_input, 
+                message_to_send, 
                 conversation_history,
                 operator_name=operator_name,
                 callsign=callsign
@@ -426,12 +665,13 @@ def run_chat_session(api_key, operator_name=None, callsign=None):
                     conversation_history = conversation_history[-20:]
                 
                 # Display response
-                print("AI: {}".format(wrap_text(response)))
+                print("AI: {}".format(response))
+                print("")
             
             print("")
             
         except (EOFError, KeyboardInterrupt):
-            print("\n\n73! See you down the log!")
+            print("\n\nExiting...")
             break
 
 
@@ -447,33 +687,62 @@ VERSION
     {}
 
 DESCRIPTION
-    Interactive AI chat powered by Google Gemini.
-    Designed for packet radio with ham-focused
-    context and bandwidth-efficient responses.
+    Interactive AI chat powered by Google Gemini
+    or OpenAI. Designed for packet radio with
+    ham-focused context and bandwidth-efficient
+    responses.
 
 OPTIONS
     -h, --help, /?
         Display this help message
 
-    --config
-        Force config setup (API key)
+    --config [gemini|openai]
+        Configure API key for provider
+        Default: gemini
+    
+    --set-name NAME
+        Set AI assistant name (default: Elmer)
+    
+    --set-default [gemini|openai]
+        Set default AI provider for all users
 
 FEATURES
-    - Personalized greetings using callsign lookup
-    - Ham radio context and etiquette awareness
-    - Brief responses for 1200 baud efficiency
+    - Multiple AI providers (Gemini, OpenAI)
+    - Per-callsign provider preferences
+    - Personalized greetings using callsign
+    - Ham radio context and etiquette
+    - Brief responses for 1200 baud
     - Conversational memory within session
     - Offline detection with graceful errors
 
-API KEY
-    Get free API key at:
-    https://aistudio.google.com/apikey
+API KEYS
+    Gemini (free):
+      https://aistudio.google.com/projects
+    
+    OpenAI (paid):
+      https://platform.openai.com/api-keys
 
-    Stored in: {}
+    Config stored in: {}
+    
+    Sysop can set default provider:
+      "default_provider": "gemini" or "openai"
+    Users can override with 'switch' command.
 
 EXAMPLES
     ai.py
-        Start interactive chat session
+        Start chat session
+    
+    ai.py --config gemini
+        Configure Gemini API key
+    
+    ai.py --config openai
+        Configure OpenAI API key
+    
+    ai.py --set-name Hal
+        Change AI name to Hal
+    
+    ai.py --set-default gemini
+        Set Gemini as default for all users
 
 SEE ALSO
     qrz3.py - Callsign lookup
@@ -487,16 +756,48 @@ def main():
     # Check for updates
     check_for_app_update(VERSION, "ai.py")
     
-    # Handle command line arguments
+    # Handle command line arguments FIRST, before reading stdin
     if len(sys.argv) > 1:
         arg = sys.argv[1].lower()
         if arg in ['-h', '--help', '/?']:
             show_help()
             return
         elif arg == '--config':
-            api_key = prompt_for_api_key()
+            provider = sys.argv[2].lower() if len(sys.argv) > 2 else 'gemini'
+            if provider not in ['gemini', 'openai']:
+                print("Invalid provider. Use: gemini or openai")
+                return
+            config = load_config()
+            api_key = prompt_for_api_key(provider, config)
             if api_key:
                 print("\nConfig saved. Run app again to chat.")
+            return
+        elif arg == '--set-name':
+            if len(sys.argv) < 3:
+                print("Usage: ai.py --set-name NAME")
+                return
+            name = sys.argv[2]
+            config = load_config()
+            config['ai_name'] = name
+            if save_config(config):
+                print("AI name set to: {}".format(name))
+            else:
+                print("Error saving config.")
+            return
+        elif arg == '--set-default':
+            if len(sys.argv) < 3:
+                print("Usage: ai.py --set-default [gemini|openai]")
+                return
+            provider = sys.argv[2].lower()
+            if provider not in ['gemini', 'openai']:
+                print("Invalid provider. Use: gemini or openai")
+                return
+            config = load_config()
+            config['default_provider'] = provider
+            if save_config(config):
+                print("Default provider set to: {}".format(provider.upper()))
+            else:
+                print("Error saving config.")
             return
     
     # Show logo
@@ -516,31 +817,49 @@ def main():
         print("\nExiting...")
         return
     
-    # Load or prompt for API key
-    api_key = load_config()
-    if not api_key:
-        api_key = prompt_for_api_key()
-        if not api_key:
-            return
+    # Load config
+    config = load_config()
+    
+    # Check available providers
+    providers = get_available_providers(config)
+    if not providers:
+        print("No AI providers configured.")
         print("")
+        print("Configure at least one:")
+        print("1. Gemini (free): --config gemini")
+        print("2. OpenAI (paid): --config openai")
+        print("")
+        return
     
     # Try to get callsign from stdin (BPQ sends it if no NOCALL flag)
     callsign = None
     operator_name = None
+    force_menu = False
     
-    # Check if stdin has data (non-interactive mode from BPQ)
-    if not sys.stdin.isatty():
-        try:
-            first_line = sys.stdin.readline().strip()
-            if first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
+    # BPQ sends callsign as first line when no NOCALL flag
+    # Use input() like callout.py - simpler and works in both scenarios
+    try:
+        # Set a short timeout to avoid hanging if no callsign is sent
+        import select
+        if select.select([sys.stdin], [], [], 0.1)[0]:
+            first_line = input().strip()
+            if first_line.lower() == 'switch':
+                # User wants to switch providers
+                force_menu = True
+            elif first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
                 callsign = first_line
                 # Lookup operator name
                 operator_name = lookup_operator_name(callsign)
-        except Exception:
-            pass
+    except Exception:
+        pass
+    
+    # Select provider
+    provider = select_provider(config, callsign, force_menu=force_menu)
+    if not provider:
+        return
     
     # Run chat session
-    run_chat_session(api_key, operator_name=operator_name, callsign=callsign)
+    run_chat_session(config, provider, callsign=callsign, operator_name=operator_name)
 
 
 if __name__ == "__main__":
