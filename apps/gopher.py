@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.33
+Version: 1.34
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.33"
+VERSION = "1.34"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -566,17 +566,34 @@ class GopherClient:
         
         host, port, item_type, selector = self.parse_gopher_url(url)
         
-        # Save to history
+        # Save to history (will be undone if navigation fails)
+        saved_url = self.current_url
         if self.current_url:
             self.history.append(self.current_url)
         self.current_url = url
+        
+        def handle_nav_error(msg):
+            """Handle navigation error - restore context and offer to go back"""
+            print(msg)
+            # Restore previous state
+            if saved_url:
+                self.history.pop() if self.history else None
+                self.current_url = saved_url
+            print("\nPress Enter to go back, or Q to quit")
+            resp = input(":> ").strip().lower()
+            if resp.startswith('q'):
+                print("\nGoodbye! 73\n")
+                sys.exit(0)
+            # Auto-return to previous page if we have one
+            if saved_url:
+                self.navigate_to(saved_url)
+            return False
         
         # Directory/menu
         if item_type == '1' or item_type == '':
             content = self.fetch_gopher(host, port, selector)
             if isinstance(content, tuple):
-                print("Error: {}".format(content[1]))
-                return False
+                return handle_nav_error("Error: {}".format(content[1]))
                 
             items = self.parse_gopher_menu(content)
             result = self.display_menu(items)
@@ -627,8 +644,7 @@ class GopherClient:
             # Prefetch to get size
             result = self.get_article_size(host, port, selector)
             if result is None:
-                print("Error: Could not fetch article")
-                return False
+                return handle_nav_error("Error: Could not fetch article")
                 
             size_kb, content = result
             print("\nArticle size: {:.1f} KB".format(size_kb))
@@ -686,8 +702,7 @@ class GopherClient:
                 search_selector = selector + '\t' + query
                 content = self.fetch_gopher(host, port, search_selector)
                 if isinstance(content, tuple):
-                    print("Error: {}".format(content[1]))
-                    return False
+                    return handle_nav_error("Error: {}".format(content[1]))
                     
                 items = self.parse_gopher_menu(content)
                 result = self.display_menu(items)
@@ -786,29 +801,21 @@ class GopherClient:
                     return True
                     
                 except Exception as e:
-                    print("Error fetching HTML: {}".format(str(e)))
-                    print("URL: {}".format(url))
-                    return False
+                    return handle_nav_error("Error fetching HTML: {}\nURL: {}".format(str(e), url))
             else:
-                print("\nHTML link: {}".format(selector))
-                print("(Cannot parse HTML URL from selector)")
-                return False
+                return handle_nav_error("HTML link: {}\n(Cannot parse HTML URL from selector)".format(selector))
         
         # Binary files and other types - not supported without downloads
         elif item_type in ['4', '5', '6', '9', 'g', 'I', 'p', 's']:
-            print("\nBinary file type '{}' not supported.".format(item_type))
-            print("(Binary downloads not available - YAPP protocol disabled)")
-            return False
+            return handle_nav_error("Binary file type '{}' not supported.\n(Binary downloads not available - YAPP protocol disabled)".format(item_type))
 
         
         # Unsupported types
         elif item_type in ['2', '8', 'T']:
-            print("Item type '{}' not supported".format(item_type))
-            return False
+            return handle_nav_error("Item type '{}' not supported".format(item_type))
             
         else:
-            print("Item type '{}' not supported in text mode".format(item_type))
-            return False
+            return handle_nav_error("Item type '{}' not supported in text mode".format(item_type))
     
     def show_help(self):
         """Display help/commands menu"""
