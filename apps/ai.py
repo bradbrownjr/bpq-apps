@@ -570,12 +570,7 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
             return
         print("")
     elif greeting:
-        print("-" * 40)
-        print("Powered by {}".format(model_name))
-        print("-" * 40)
         print("AI: {}".format(greeting))
-        print("")
-        print("(Say 'bye' or enter Q to quit)")
         print("")
         # Don't add greeting to history - let conversation start fresh
     
@@ -804,8 +799,14 @@ def main():
     # Show logo
     show_logo()
     print("")
-    print("AI CHAT v{}".format(VERSION))
+    print("AI CHAT v{}" .format(VERSION))
+    print("Powered by {}".format("Gemini/OpenAI" if len(get_available_providers(config)) > 1 else ("Gemini 2.5 Flash" if 'gemini_api_key' in config and config['gemini_api_key'] else "GPT-4o Mini")))
     print("AI Assistant for Ham Radio Operators")
+    print("-" * 40)
+    print("Say 'bye' or enter Q to quit")
+    if len(get_available_providers(config)) > 1:
+        print('Enter "switch" to change AI provider')
+    print("-" * 40)
     print("")
     
     # Check internet connectivity
