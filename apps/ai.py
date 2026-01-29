@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.8
+Version: 1.9
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -27,7 +27,7 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.8"
+VERSION = "1.9"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -387,7 +387,7 @@ def call_openai_api(api_key, prompt, conversation_history, operator_name=None, c
             }
         )
         
-        response = urlopen(req, timeout=10)
+        response = urlopen(req, timeout=30)
         result = json.loads(response.read().decode('utf-8'))
         
         # Extract response text
@@ -455,6 +455,9 @@ Sign off friendly with amateur radio expressions like:
         url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={}".format(api_key)
         
         payload = {
+            "systemInstruction": {
+                "parts": [{"text": system_context}]
+            },
             "contents": contents,
             "generationConfig": {
                 "maxOutputTokens": 256,  # Keep responses short
@@ -473,7 +476,7 @@ Sign off friendly with amateur radio expressions like:
             }
         )
         
-        response = urlopen(req, timeout=10)
+        response = urlopen(req, timeout=30)
         result = json.loads(response.read().decode('utf-8'))
         
         # Extract response text
