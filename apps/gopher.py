@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.26
+Version: 1.27
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.26"
+VERSION = "1.27"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -275,6 +275,17 @@ class GopherClient:
         
         # Count selectable items (non-info lines)
         selectable_count = sum(1 for item in items if item['type'] != 'i')
+        
+        # Check if menu is empty or only has info
+        if selectable_count == 0:
+            print("\nNo selectable items available on this page.")
+            if items:
+                print("-" * 40)
+                for item in items:
+                    if item['type'] == 'i':
+                        print(item['display'])
+                print("-" * 40)
+            return None
         
         # Build output lines first
         output_lines = []
@@ -670,7 +681,8 @@ class GopherClient:
         print("-" * 40)
         print("  [number] - Select menu item by number")
         print("  H)ome    - Go to home page")
-        print("  B)ack    - Go back to previous page")
+        print("  P)rev    - Previous page (within results)")
+        print("  B)ack    - Back to previous view")
         print("  M)arks   - Show bookmarks")
         print("  G)o URL  - Go to specific Gopher URL")
         print("  A)bout   - About Gopher protocol")
