@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.27
+Version: 1.28
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.27"
+VERSION = "1.28"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -338,15 +338,27 @@ class GopherClient:
             if end < total_lines:
                 # More pages available
                 if selectable_count > 0:
-                    prompt = "\n[Enter]=Next P)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                    if current_page > 0:
+                        prompt = "\n[Enter]=Next P)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                    else:
+                        prompt = "\n[Enter]=Next [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                 else:
-                    prompt = "\n[Enter]=Next P)rev B)ack H)ome M)arks Q)uit :> "
+                    if current_page > 0:
+                        prompt = "\n[Enter]=Next P)rev B)ack H)ome M)arks Q)uit :> "
+                    else:
+                        prompt = "\n[Enter]=Next B)ack H)ome M)arks Q)uit :> "
             else:
                 # Last page
                 if selectable_count > 0:
-                    prompt = "\nP)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                    if current_page > 0:
+                        prompt = "\nP)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                    else:
+                        prompt = "\n[1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                 else:
-                    prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
+                    if current_page > 0:
+                        prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
+                    else:
+                        prompt = "\nB)ack H)ome M)arks Q)uit :> "
             
             response = input(prompt).strip().lower()
             
@@ -431,10 +443,16 @@ class GopherClient:
             # Build prompt based on context
             if end < len(lines):
                 # More pages available
-                prompt = "\n[Enter]=Next P)rev B)ack H)ome M)arks Q)uit :> "
+                if current_page > 0:
+                    prompt = "\n[Enter]=Next P)rev B)ack H)ome M)arks Q)uit :> "
+                else:
+                    prompt = "\n[Enter]=Next B)ack H)ome M)arks Q)uit :> "
             else:
                 # Last page
-                prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
+                if current_page > 0:
+                    prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
+                else:
+                    prompt = "\nB)ack H)ome M)arks Q)uit :> "
             
             response = input(prompt).strip().lower()
             
