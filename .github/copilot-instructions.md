@@ -34,10 +34,13 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
   - Clean error handling with temporary file cleanup
 - **README Documentation:** All README.md files longer than one paragraph must include table of contents
 - **Version bumping protocol:**
-  - Update docstring `Version:` field in app modules
+  - **CRITICAL: Both docstring AND VERSION variable must be updated together**
+  - Update docstring `Version: X.Y` field in app modules
+  - Update `VERSION = "X.Y"` variable (must match docstring exactly to prevent infinite update loops)
   - Update `__version__` variable when present
   - Bump `version` field in .frm JSON form templates
   - **Apps with self-update:** Version bump triggers auto-download on user systems
+  - **VERIFY:** Run `grep -n "Version:" appname.py` and `grep -n "^VERSION = " appname.py` to confirm both match before committing
 - Commit and push changes to GitHub after completing work
 
 ## Resilience & Offline Operation
@@ -469,11 +472,13 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 - **Service naming collision:** Don't name app "dict" (conflicts with standard port 2628). Use "dictionary" or other name in `/etc/services` and inetd.conf. BPQ APPLICATION name can still be DICT, but system service name must differ to avoid port resolution conflicts.
 
 **Auto-Update Implementation:**
+- **VERSION variable must match docstring version exactly** - mismatch causes infinite update loop (CRITICAL)
 - Must use atomic writes (write to temp, then rename)
 - Must preserve executable permissions: `os.chmod(script_path, current_mode)`
 - Must cleanup temp files on failure: `try/finally` with `os.remove(temp_path)`
 - Version comparison: Parse as tuples `(1, 2, 3)` for proper numeric comparison
 - Timeout: Hardcode to 3 seconds (never configurable - user frustration)
+- **Before committing version bumps, verify:** `grep "Version:" appname.py` matches `grep "^VERSION = " appname.py`
 
 **Network Resilience:**
 - Always wrap external API calls in `try/except` with timeout
