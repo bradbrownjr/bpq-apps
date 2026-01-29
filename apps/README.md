@@ -39,12 +39,25 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 callout.py
 ----------
 **Type**: Python  
-**Purpose**: Display ham radio station information via call lookup  
-**Information source**: QRZ.com callsign database  
-**Developer**: Brad Brown KC1JMH
+**Purpose**: Test application demonstrating BPQ callsign capture  
+**Information source**: BPQ32 connection data  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Simple proof-of-concept showing how to capture the connecting user's callsign from BPQ32 via stdin. Used as a reference for other applications.
 
 **Download or update**:  
 ```wget -O callout.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/callout.py && chmod +x callout.py```
+
+**Features**:
+- Captures callsign passed from BPQ32 via stdin
+- Demonstrates configuration without NOCALL flag
+- Shows how to use 'S' flag to strip SSID
+- Reference implementation for other applications
+
+**BPQ32 Configuration**:
+```
+APPLICATION 7,CALLOUT,C 9 HOST 3 S
+```
+The 'S' flag strips the SSID (e.g., KC1JMH-8 becomes KC1JMH). Remove 'S' to include SSID.
 
 calendar.py
 -----------
