@@ -154,12 +154,16 @@ def prompt_for_api_key(provider, config):
     print("")
     
     if provider == 'gemini':
-        print("Get free Google Gemini API key:")
+        print("Get Google Gemini API key:")
         print("1. Create project:")
         print("   https://aistudio.google.com/projects")
         print("2. Create API key:")
         print("   https://aistudio.google.com/api-keys")
         print("3. Enable Generative Language API")
+        print("4. Add billing (required for usage):")
+        print("   https://console.cloud.google.com/")
+        print("   billing/linkedaccount")
+        print("   - Link card to your project")
     else:
         print("Get OpenAI API key:")
         print("1. Sign up at:")
