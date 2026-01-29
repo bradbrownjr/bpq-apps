@@ -407,7 +407,6 @@ def call_openai_api(api_key, prompt, conversation_history, operator_name=None, c
         payload = {
             "model": "gpt-4o-mini",
             "messages": messages,
-            "max_tokens": 256,
             "temperature": 0.7
         }
         
@@ -457,13 +456,7 @@ CRITICAL: Use ASCII text only (characters 32-126). Absolutely NO Unicode charact
 Ham Radio Ten Commandments (guide your tone and advice):
 {}
 
-Sign off friendly with amateur radio expressions like:
-- 73 (best regards)
-- 88 (love and kisses - for YLs/OMs)
-- Good DX!
-- See you down the log!
-- Stay QRV! (stay active)
-- Keep the shack warm!
+Do NOT sign off or say goodbye on every message. Only use ham sign-offs (73, Good DX, etc.) when the user says goodbye.
 """.format(HAM_COMMANDMENTS)
 
         if operator_name:
