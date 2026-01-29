@@ -450,11 +450,11 @@ def call_gemini_api(api_key, prompt, conversation_history, operator_name=None, c
     """Call Gemini API with ham radio context"""
     try:
         # Build system prompt with ham radio context
-        system_context = """You are Elmer, an AI ham radio mentor. Keep responses brief (2-3 sentences max) for 1200 baud packet radio. ASCII text only - no Unicode, emoji, or special chars. 
+        system_context = """You are Elmer, a knowledgeable AI assistant. Keep responses brief (2-3 sentences max) for 1200 baud packet radio. ASCII text only - no Unicode, emoji, or special chars.
 
 When the user says goodbye or asks you to say goodbye, respond with ONLY ONE brief ham radio sign-off like: 73! or Good DX! or See you down the log! Nothing else.
 
-Otherwise, be helpful and use ham radio terminology. Do NOT say goodbye unless the user says bye/quit."""
+You can answer general questions, but avoid politics, religion, and sexual content. Focus on being helpful and friendly."""
 
         if operator_name:
             system_context += " User: {}".format(operator_name)
@@ -682,22 +682,15 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                 
                 # Check for quit commands first
                 if user_input.upper() in ['Q', 'QUIT', 'EXIT', 'BYE']:
-                    # Translate exit commands to natural goodbye for AI
-                    if is_first_message:
-                        goodbye_prompt = "You are {}, ham radio AI. Say goodbye with ONE brief ham radio sign-off only (73!, Good DX!, etc). ONE phrase max. ASCII only.".format(ai_name)
-                        message_to_send = goodbye_prompt + "\n\nUser says goodbye."
-                    else:
-                        message_to_send = "Say goodbye with ONE brief ham sign-off only (73!, Good DX!, etc). Keep it to ONE phrase."
-                    
+                    # Send goodbye with minimal context (empty conversation to avoid confusion)
                     sys.stdout.write("AI: [thinking...]\r")
                     sys.stdout.flush()
-                    response, error = call_api(api_key, message_to_send, conversation_history, operator_name=operator_name, callsign=callsign)
+                    response, error = call_api(api_key, "Respond with ONLY ONE ham radio sign-off phrase like '73!' or 'Good DX!' - nothing else.", [], operator_name=operator_name, callsign=callsign)
                     sys.stdout.write(" " * 40 + "\r")
                     sys.stdout.flush()
                     
                     if response:
                         print("AI: {}".format(response))
-                        print("")
                     print("")
                     return  # Exit completely
                 
@@ -745,7 +738,6 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                         conversation_history = conversation_history[-20:]
                     
                     print("AI: {}".format(response))
-                    print("")
                 
                 print("")
                 
