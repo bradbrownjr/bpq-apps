@@ -24,7 +24,6 @@ These applications are custom-built for low bandwidth terminal access over packe
 * **callout.py** - Test application demonstrating BPQ callsign capture for other apps.
 * **dict.py** - Dictionary lookup using dictd server. Simple word definition searches.
 * **eventcal.py** - Club calendar displaying upcoming ham radio events from iCalendar feeds. Supports custom feed URLs via eventcal.conf.
-* **feed.py** - Classic BBS-style community bulletin board (legacy version - see wall.py for enhanced version).
 * **forms.py** - Fillable forms system for creating formatted messages (ICS-213, radiograms, weather reports, etc.)
 * **gopher.py** - Gopher protocol client for accessing gopherspace with text-based navigation. Configurable bookmarks via gopher.conf.
 * **hamqsl.py** - HF propagation reports from www.hamqsl.com.  
