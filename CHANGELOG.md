@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [rss-news.py v1.7 - Auto-Download Config] - 2026-01-29
+### Changed
+- **rss-news.py v1.7**: Auto-download rss-news.conf if missing during update check
+  - Checks for missing rss-news.conf on startup (same time as app update check)
+  - Downloads default config from GitHub if file doesn't exist
+  - Never overwrites existing rss-news.conf (preserves user customizations)
+  - Falls back silently to defaults if download fails (no internet)
+  - Simplified installation - just download rss-news.py
+
 ## [predict.py v1.9 - Auto-Download Modules] - 2026-01-29
 ### Changed
 - **predict.py v1.9**: Auto-download missing library files during startup

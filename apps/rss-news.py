@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.5
+Version: 1.7
 Date: January 2026
 """
 
@@ -48,7 +48,7 @@ import json
 import time
 import socket
 
-VERSION = "1.6"
+VERSION = "1.7"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
@@ -97,6 +97,20 @@ def check_for_app_update(current_version, script_name):
                             os.remove(temp_path)
                         except:
                             pass
+        
+        # Check if rss-news.conf is missing and download it (don't overwrite existing)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(script_dir, 'rss-news.conf')
+        if not os.path.exists(config_path):
+            try:
+                config_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/rss-news.conf"
+                with urllib.request.urlopen(config_url, timeout=3) as response:
+                    config_content = response.read()
+                with open(config_path, 'wb') as f:
+                    f.write(config_content)
+            except:
+                # Silently ignore if config download fails - app will use defaults
+                pass
     except Exception as e:
         # Don't block startup if update check fails (no internet, etc.)
         pass
