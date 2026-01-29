@@ -398,7 +398,8 @@ battleship  stream  tcp  nowait  ect  /usr/bin/python3  python3 /home/ect/games/
 **Testing**: `telnet localhost 23000` (port from /etc/services)
 
 ## Testing
-- SSH: ect@ws1ec.mainepacketradio.org -p 4722
+- SSH: `ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org` (lowercase -p for port)
+- SCP: `scp -i ~/.ssh/id_rsa -P 4722 file.py ect@ws1ec.mainepacketradio.org:/path/` (uppercase -P for port)
 - Verify Py3.5.3 compatibility, ASCII output
 - WSL terminals required (SSH keys configured, POSIX compatibility)
 - Never use PowerShell for SSH or remote commands
@@ -519,8 +520,11 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 
 **Deploying to WS1EC:**
 ```bash
-# SSH into node
-ssh ect@ws1ec.mainepacketradio.org -p 4722
+# SSH into node (lowercase -p for port)
+ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org
+
+# Or SCP file directly (uppercase -P for port)
+scp -i ~/.ssh/id_rsa -P 4722 appname.py ect@ws1ec.mainepacketradio.org:/home/ect/apps/
 
 # Update app (auto-downloaded if version bumped)
 # Or manual deployment:
