@@ -494,7 +494,6 @@ Sign off friendly with amateur radio expressions like:
         payload = {
             "contents": contents,
             "generationConfig": {
-                "maxOutputTokens": 512,  # Allow longer responses
                 "temperature": 0.7
             }
         }
