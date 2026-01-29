@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.34
+Version: 1.35
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.34"
+VERSION = "1.35"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -580,20 +580,20 @@ class GopherClient:
         self.current_url = url
         
         def handle_nav_error(msg):
-            """Handle navigation error - restore context and offer to go back"""
+            """Handle navigation error - restore context and stay at current page"""
             print(msg)
             # Restore previous state
             if saved_url:
                 self.history.pop() if self.history else None
                 self.current_url = saved_url
-            print("\nPress Enter to go back, or Q to quit")
+            else:
+                self.current_url = None
+            print("\nPress Enter to continue, or Q to quit")
             resp = input(":> ").strip().lower()
             if resp.startswith('q'):
                 print("\nGoodbye! 73\n")
                 sys.exit(0)
-            # Auto-return to previous page if we have one
-            if saved_url:
-                self.navigate_to(saved_url)
+            # Just return - caller will continue displaying current menu
             return False
         
         # Directory/menu
