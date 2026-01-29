@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.7
+Version: 1.8
 Date: January 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.7"
+VERSION = "1.8"
 APP_NAME = "forms.py"
 
 import os
@@ -354,11 +354,15 @@ class FormsApp:
             status = form.get('_status', '')
             if status:
                 title = "{} - {}".format(title, status)
-            print("{}. {}".format(idx, title))
             desc = form.get('description', '')
             if desc:
-                print("   {}".format(self.wrap_text(desc, width=LINE_WIDTH-3)))
-            print()
+                # Truncate description to single line for 1200 baud efficiency
+                max_desc_len = LINE_WIDTH - len(str(idx)) - 4  # Leave room for number and spacing
+                if len(desc) > max_desc_len:
+                    desc = desc[:max_desc_len - 3] + "..."
+                print("{}. {} - {}".format(idx, title, desc))
+            else:
+                print("{}. {}".format(idx, title))
         
         self.print_separator()
         print("\nPress Q at any time to quit.")
