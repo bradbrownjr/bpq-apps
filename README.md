@@ -37,7 +37,6 @@ These applications are custom-built for low bandwidth terminal access over packe
 * **sysinfo.sh** - Node system information and BBS service status checker.  
 * **wx.py** - Weather reports using National Weather Service API.
 * **wx-me.py** - Local weather reports for Southern Maine and New Hampshire.
-* **wxnws-ftp.py** - NWS weather product downloader via FTP.
 
 For detailed documentation, see [apps/README.md](apps/README.md).
 
