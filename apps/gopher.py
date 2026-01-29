@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.28
+Version: 1.29
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.28"
+VERSION = "1.29"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -536,10 +536,10 @@ class GopherClient:
                         print("Invalid bookmark number")
                 return True
             elif result == 'back':
-                # Navigate back in history
+                # Navigate back in history (clear current_url so it won't be re-added)
                 if self.history:
                     prev_url = self.history.pop()
-                    self.current_url = prev_url
+                    self.current_url = None
                     self.navigate_to(prev_url)
                 else:
                     print("No previous page in history")
@@ -608,7 +608,7 @@ class GopherClient:
                 # Return to previous page (back in history)
                 if self.history:
                     prev_url = self.history.pop()
-                    self.current_url = prev_url
+                    self.current_url = None
                     self.navigate_to(prev_url)
                 return True
             
@@ -647,10 +647,10 @@ class GopherClient:
                             print("Invalid bookmark number")
                     return True
                 elif result == 'back':
-                    # Navigate back in history
+                    # Navigate back in history (clear current_url so it won't be re-added)
                     if self.history:
                         prev_url = self.history.pop()
-                        self.current_url = prev_url
+                        self.current_url = None
                         self.navigate_to(prev_url)
                     else:
                         print("No previous page in history")
