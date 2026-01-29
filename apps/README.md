@@ -566,7 +566,7 @@ yapp.py
 **Purpose**: YAPP file transfer protocol implementation for packet radio  
 **Information source**: Protocol implementation (no external data)  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Python 3.5.3 compatible YAPP protocol implementation. Can be used as a module by other apps or as a standalone CLI tool for testing. Includes YAPPC extension support for file transfer resume.
+**Notes**: ⚠️ **NOT COMPATIBLE WITH BPQ32** - BPQ32 filters control characters (< 0x20) making binary transfers impossible via APPLICATION interface. Code retained for reference. Python 3.5.3 compatible implementation with YAPPC extension support for file transfer resume.
 
 **Download or update**:  
 ```wget -O yapp.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/yapp.py && chmod +x yapp.py```
@@ -608,7 +608,7 @@ python yapp.py --send myfile.txt --debug
 
 **Protocol Documentation**: See [YAPP-PROTOCOL.md](../docs/YAPP-PROTOCOL.md) for complete protocol specification.
 
-**Note**: BPQ32 node rejects YAPP at command level. YAPP transfers must occur within BPQ APPLICATION contexts that handle raw binary I/O.
+**⚠️ BPQ32 Incompatibility**: BPQ32 strips control characters from stdin/stdout, making binary file transfers impossible via the APPLICATION interface. YAPP cannot work on BPQ32 without C code modifications to support binary mode. See protocol documentation for detailed analysis.
 
 ## Subdirectories
 
@@ -622,11 +622,6 @@ Contains ham radio license exam question pools in JSON format. Automatically dow
 Screenshots and example output images for documentation.
 
 **Note**: Sysop utilities for managing the BBS are located in `/utilities` at repository root.
-
-# ToDos
-[X] **All** - Update #! to call interpreter regardless of location using env  
-[ ] **qrz3.py** - Add variable check so as to not require sysop to comment lines if used in the mode that requires user login  
-[ ] **wx.py** - Expand to provide weather information for other areas, in the meantime the txt web requests may be updated to pull any URL.
 
 ## Configuration
 
