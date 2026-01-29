@@ -494,7 +494,7 @@ Sign off friendly with amateur radio expressions like:
         payload = {
             "contents": contents,
             "generationConfig": {
-                "maxOutputTokens": 256,  # Keep responses short
+                "maxOutputTokens": 512,  # Allow longer responses
                 "temperature": 0.7
             }
         }
@@ -513,12 +513,18 @@ Sign off friendly with amateur radio expressions like:
         response = urlopen(req, timeout=30)
         result = json.loads(response.read().decode('utf-8'))
         
-        # Extract response text
+        # Extract response text (handle multiple parts)
         if 'candidates' in result and len(result['candidates']) > 0:
             candidate = result['candidates'][0]
             if 'content' in candidate and 'parts' in candidate['content']:
-                text = candidate['content']['parts'][0].get('text', '').strip()
-                return text, None
+                # Concatenate all text parts
+                text_parts = []
+                for part in candidate['content']['parts']:
+                    if 'text' in part:
+                        text_parts.append(part['text'])
+                text = ''.join(text_parts).strip()
+                if text:
+                    return text, None
         
         return None, "No response from AI"
         
