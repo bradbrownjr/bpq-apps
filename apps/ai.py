@@ -445,19 +445,17 @@ Sign off friendly with amateur radio expressions like:
                 "parts": [{"text": msg["text"]}]
             })
         
-        # Add current user prompt
+        # Add current user prompt with system context prepended
+        full_prompt = system_context + "\n\n" + prompt
         contents.append({
             "role": "user",
-            "parts": [{"text": prompt}]
+            "parts": [{"text": full_prompt}]
         })
         
         # Build request
         url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={}".format(api_key)
         
         payload = {
-            "systemInstruction": {
-                "parts": [{"text": system_context}]
-            },
             "contents": contents,
             "generationConfig": {
                 "maxOutputTokens": 256,  # Keep responses short
