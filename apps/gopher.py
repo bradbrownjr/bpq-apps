@@ -13,14 +13,15 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.38
+Version: 1.39
 Date: January 2026
 """
 
 import sys
 import os
+import json
 
-VERSION = "1.38"
+VERSION = "1.39"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -189,17 +190,42 @@ def get_line_width():
         pass
     return 80  # Default width for packet radio terminals
 
-# Configuration
-# -------------
-DEFAULT_HOME = "gopher://gopher.floodgap.com"  # Default home page
-BOOKMARKS = [
-    ("Wikipedia", "gopher://gopherpedia.com"),
-    ("Floodgap", "gopher://gopher.floodgap.com"),
-    ("SDF Gopher", "gopher://sdf.org"),
-]
-PAGE_SIZE = 24  # Lines per page for pagination (standard terminal height)
-MAX_ARTICLE_SIZE_KB = 100  # Warn if article is larger than this
-SOCKET_TIMEOUT = 30  # Timeout for socket connections in seconds
+def load_config():
+    """Load configuration from gopher.conf JSON file with fallback to defaults"""
+    defaults = {
+        'home': 'gopher://gopher.floodgap.com',
+        'bookmarks': [
+            {'name': 'Floodgap', 'url': 'gopher://gopher.floodgap.com'},
+            {'name': 'SDF Gopher', 'url': 'gopher://sdf.org'}
+        ],
+        'page_size': 24,
+        'max_article_size_kb': 100,
+        'socket_timeout': 30
+    }
+    
+    # Try to load from config file in same directory as script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(script_dir, 'gopher.conf')
+    
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            # Merge with defaults (use config values, fall back to defaults)
+            for key in defaults:
+                if key not in config:
+                    config[key] = defaults[key]
+            return config
+    except (IOError, OSError, json.JSONDecodeError):
+        # File doesn't exist or is invalid - use defaults
+        return defaults
+
+# Load configuration
+_CONFIG = load_config()
+DEFAULT_HOME = _CONFIG['home']
+BOOKMARKS = [(b['name'], b['url']) for b in _CONFIG['bookmarks']]
+PAGE_SIZE = _CONFIG['page_size']
+MAX_ARTICLE_SIZE_KB = _CONFIG['max_article_size_kb']
+SOCKET_TIMEOUT = _CONFIG['socket_timeout']
 LINE_WIDTH = get_line_width()  # Dynamic terminal width with 40-char fallback
 
 

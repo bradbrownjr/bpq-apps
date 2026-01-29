@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [gopher.py v1.39 - External Config] - 2026-01-29
+### Added
+- **gopher.conf**: New JSON configuration file for bookmarks and settings
+  - Easier to update bookmarks without editing Python code
+  - Configuration: home page, bookmarks list, page size, timeouts
+  - Falls back to sensible defaults if file missing or invalid
+
+### Changed
+- **gopher.py v1.39**: Load configuration from gopher.conf JSON file
+  - Bookmarks now defined in external JSON file (easier for sysops to customize)
+  - Graceful fallback to defaults if config file doesn't exist
+  - Removed Gopherpedia bookmark (site currently down)
+  - Default bookmarks: Floodgap, SDF Gopher
+
 ## [nodemap-html - Bidirectional Route Quality Check] - 2026-01-29
 ### Fixed
 - **nodemap-html.py**: Map connections now require quality > 0 routes from BOTH nodes

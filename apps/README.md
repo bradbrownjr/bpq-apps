@@ -201,14 +201,23 @@ User telnet → Port 63160 → inetd → dict.py stdin/stdout → subprocess dic
 - Cleans up temp files on failure
 - Version stored in script docstring (e.g., `Version: 1.6`)
 
-forms.py
+gopher.py
+---------
 **Type**: Python  
 **Purpose**: Gopher protocol client for accessing gopherspace  
 **Information source**: Gopher servers worldwide  
 **Developer**: Brad Brown KC1JMH
 
 **Download or update**:  
-```wget -O gopher.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.py && chmod +x gopher.py```
+```
+wget -O gopher.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.py && chmod +x gopher.py
+wget -O gopher.conf https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.conf
+```
+
+**Configuration**: Edit `gopher.conf` to customize bookmarks and settings  
+- JSON format with home page, bookmarks, page size, timeouts  
+- Falls back to defaults if file missing or invalid  
+- Add bookmarks: `{"name": "Site Name", "url": "gopher://hostname"}`
 
 hamqsl.py
 ---------
