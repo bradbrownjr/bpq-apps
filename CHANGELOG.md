@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [gopher.py v1.40 - Auto-Download Config] - 2026-01-29
+### Changed
+- **gopher.py v1.40**: Auto-download gopher.conf if missing during update check
+  - Checks for missing gopher.conf on startup (same time as app update check)
+  - Downloads default config from GitHub if file doesn't exist
+  - Never overwrites existing gopher.conf (preserves user customizations)
+  - Falls back silently to defaults if download fails (no internet)
+
 ## [gopher.py v1.39 - External Config] - 2026-01-29
 ### Added
 - **gopher.conf**: New JSON configuration file for bookmarks and settings
