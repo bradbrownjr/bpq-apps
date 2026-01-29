@@ -858,6 +858,11 @@ def main():
     if not provider:
         return
     
+    # Show which model is being used
+    model_name = "Gemini 2.5 Flash" if provider == 'gemini' else "GPT-4o Mini"
+    print("Using: {}".format(model_name))
+    print("")
+    
     # Run chat session
     run_chat_session(config, provider, callsign=callsign, operator_name=operator_name)
 
