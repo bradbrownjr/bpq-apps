@@ -575,6 +575,7 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
         print("-" * 40)
         print("AI: {}".format(greeting))
         print("")
+        print("(Say 'bye' or enter Q to quit)")
         print("")
         # Don't add greeting to history - let conversation start fresh
     
@@ -805,8 +806,6 @@ def main():
     print("")
     print("AI CHAT v{}".format(VERSION))
     print("AI Assistant for Ham Radio Operators")
-    print("")
-    print("-" * 40)
     print("")
     
     # Check internet connectivity
