@@ -389,8 +389,15 @@ def call_openai_api(api_key, prompt, conversation_history, operator_name=None, c
     try:
         url = "https://api.openai.com/v1/chat/completions"
         
+        # Build system message
+        system_msg = """You are Elmer, a knowledgeable AI assistant. Keep responses brief (2-3 sentences max) for 1200 baud packet radio. ASCII text only - no Unicode, emoji, or special chars.
+
+When the user says goodbye or asks you to say goodbye, respond with ONLY ONE brief ham radio sign-off like: 73! or Good DX! or See you down the log! Nothing else.
+
+You can answer general questions, but avoid politics, religion, and sexual content. Focus on being helpful and friendly."""
+        
         # Build messages array
-        messages = []
+        messages = [{"role": "system", "content": system_msg}]
         
         # Add conversation history
         for msg in conversation_history:
@@ -399,7 +406,7 @@ def call_openai_api(api_key, prompt, conversation_history, operator_name=None, c
                 "content": msg["text"]
             })
         
-        # Add current prompt
+        # Add current prompt (no prepending needed - system message is separate)
         messages.append({
             "role": "user",
             "content": prompt
@@ -471,8 +478,12 @@ You can answer general questions, but avoid politics, religion, and sexual conte
                 "parts": [{"text": msg["text"]}]
             })
         
-        # Add current user prompt with system context prepended
-        full_prompt = system_context + "\n\n" + prompt
+        # Add current user prompt (only prepend system context if no history)
+        if len(conversation_history) == 0:
+            full_prompt = system_context + "\n\n" + prompt
+        else:
+            full_prompt = prompt
+        
         contents.append({
             "role": "user",
             "parts": [{"text": full_prompt}]
