@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.35
+Version: 1.36
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.35"
+VERSION = "1.36"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -830,6 +830,7 @@ class GopherClient:
         print("COMMANDS")
         print("-" * 40)
         print("  [number] - Select menu item by number")
+        print("  [Enter]  - Redisplay current menu")
         print("  H)ome    - Go to home page")
         print("  P)rev    - Previous page (within results)")
         print("  W)here   - Show current URL")
@@ -917,7 +918,7 @@ class GopherClient:
             try:
                 # Context-aware prompt
                 if self.current_state == 'menu':
-                    prompt = "\nMenu: [#] or H)ome, B)ack, M)arks, G)o, A)bout, ?)Help, Q)uit :> "
+                    prompt = "\nMenu: [#] or [Enter] to redisplay, H)ome, B)ack, M)arks, G)o, ?)Help, Q)uit :> "
                 elif self.current_state == 'article':
                     prompt = "\nArticle: B)ack, H)ome, M)arks, G)o, ?)Help, Q)uit :> "
                 else:
@@ -926,6 +927,41 @@ class GopherClient:
                 command = input(prompt).strip()
                 
                 if not command:
+                    # Empty command - redisplay menu if we're in menu state
+                    if self.current_state == 'menu' and self.last_menu:
+                        result = self.display_menu(self.last_menu)
+                        # Handle any navigation commands from the redisplayed menu
+                        if result == 'quit':
+                            print("\nGoodbye! 73\n")
+                            break
+                        elif result == 'home':
+                            self.navigate_to(DEFAULT_HOME)
+                        elif result == 'marks':
+                            self.show_bookmarks()
+                            sel = input("Select bookmark # or [Enter] to cancel :> ").strip()
+                            if sel.isdigit():
+                                idx = int(sel) - 1
+                                if 0 <= idx < len(BOOKMARKS):
+                                    self.navigate_to(BOOKMARKS[idx][1])
+                                else:
+                                    print("Invalid bookmark number")
+                        elif result == 'back':
+                            if self.history:
+                                prev_url = self.history.pop()
+                                self.current_url = prev_url
+                                self.navigate_to(prev_url)
+                            else:
+                                print("No previous page in history")
+                        elif isinstance(result, int):
+                            # User selected item by number
+                            selectable = [item for item in self.last_menu if item['type'] != 'i']
+                            if 1 <= result <= len(selectable):
+                                item = selectable[result - 1]
+                                url = "gopher://{}:{}/{}{}" .format(
+                                    item['host'], item['port'], item['type'], item['selector'])
+                                self.navigate_to(url)
+                            else:
+                                print("Invalid selection. Choose 1-{}".format(len(selectable)))
                     continue
                     
                 cmd_lower = command.lower()
@@ -937,7 +973,6 @@ class GopherClient:
                 
                 # Home
                 elif cmd_lower.startswith('h'):
-                    self.history = []
                     self.navigate_to(DEFAULT_HOME)
                 
                 # Search Veronica-2
