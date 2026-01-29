@@ -146,9 +146,16 @@ class HTMLStripper(HTMLParser):
         if tag.lower() in ['script', 'style']:
             self.in_script = False
             self.in_style = False
-        # Add newlines after block elements
+        # Add double newlines after block elements for spacing
         elif tag.lower() in ['p', 'div', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li']:
+            # Remove trailing spaces, add double newline for paragraph spacing
+            while self.text and self.text[-1] == ' ':
+                self.text.pop()
             if self.text and self.text[-1] != '\n':
+                self.text.append('\n')
+            if not self.text or self.text[-1] != '\n':
+                self.text.append('\n')
+            else:
                 self.text.append('\n')
     
     def handle_data(self, data):
@@ -166,9 +173,9 @@ class HTMLStripper(HTMLParser):
     def get_data(self):
         """Get the stripped text"""
         result = ''.join(self.text)
-        # Clean up excessive newlines
-        while '\n\n\n' in result:
-            result = result.replace('\n\n\n', '\n\n')
+        # Clean up excessive newlines (more than 2 blank lines)
+        while '\n\n\n\n' in result:
+            result = result.replace('\n\n\n\n', '\n\n\n')
         return result.strip()
 
 def get_line_width():
