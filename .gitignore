@@ -27,3 +27,4 @@ apps/bulletin_board.json
 .github/ws1ec-bpq32.cfg.old
 .github/ect@WS1EC ~utilities.txt
 .github/ws1ec-services.conf
+apps/ai.conf

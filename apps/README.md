@@ -337,9 +337,9 @@ ai.py
 -----
 **Type**: Python  
 **Purpose**: AI chat assistant for amateur radio operators  
-**Information source**: Google Gemini API  
+**Information source**: Google Gemini API or OpenAI API  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Interactive AI chat with ham radio context and etiquette. Requires free Google Gemini API key. Internet-required with graceful offline detection.
+**Notes**: Interactive AI chat with Elmer persona (ham radio mentor). Supports multiple AI providers with per-callsign preferences. Internet-required with graceful offline detection.
 
 **Download or update**:  
 ```
@@ -347,41 +347,82 @@ wget -O ai.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/a
 ```
 
 **Features**:
-- Interactive AI chat powered by Google Gemini (free tier)
+- Multiple AI providers: Google Gemini 2.5 Flash (free tier) or OpenAI GPT-4o Mini (paid)
+- Per-callsign provider preference tracking
+- Elmer persona - AI introduces itself as a ham radio mentor/teacher
 - Personalized greetings using HamDB/QRZ operator name lookup
-- Ham Radio Ten Commandments system prompt for appropriate tone
+- Ham Radio Ten Commandments guidance for appropriate tone
 - Explicit ASCII-only directive (no Unicode, emoji, or special characters)
 - Brief responses optimized for 1200 baud packet radio (2-3 sentences max)
 - Conversational memory within session (last 10 exchanges)
 - Ham radio-appropriate sign-offs (73, Good DX, See you down the log)
 - Transactional prompts - exit at any time with Q
 - Internet connectivity check with graceful offline message
-- 40-char width text wrapping
+- Dynamic text wrapping (40-char fallback for packet radio)
 - Automatic update functionality
+- Token-optimized system prompts to avoid rate limits
 
 **Setup**:
-1. Get free Gemini API key: https://aistudio.google.com/apikey
-2. On first run, app prompts for API key and saves to `ai.conf`
-3. API key stored locally, never transmitted over packet radio
+1. Configure at least one AI provider:
+   - **Gemini (free)**: `./ai.py --config gemini`
+     - Create project at https://aistudio.google.com/projects
+     - Create API key at https://aistudio.google.com/api-keys
+     - Enable Generative Language API (if prompted)
+   - **OpenAI (paid)**: `./ai.py --config openai`
+     - Sign up at https://platform.openai.com/signup
+     - Create API key at https://platform.openai.com/api-keys
+     - Choose "Service account" (not "You") and name it (e.g., bpq-api)
+     - Add credits to account
+     - **Set budget limit** at https://platform.openai.com/settings/organization/limits
+       - Recommended: $10/month to prevent surprise bills
+       - GPT-4o Mini costs ~$0.15 per 1M input tokens, ~$0.60 per 1M output tokens
+       - Typical chat session: 100-200 tokens (~$0.00002-0.00004 per exchange)
+2. On first connection, user selects preferred AI provider
+3. Preference saved per callsign, auto-selected on return visits
+4. Type 'switch' as first input to change providers
 
 **BPQ32 Configuration**:
 ```
 APPLICATION 15,AI,C 9 HOST 11 K
 ```
-Note: Does NOT use NOCALL flag - callsign passed for personalized greetings. 'K' flag keeps session alive.
+Note: Does NOT use NOCALL flag - callsign passed for personalized greetings and preference tracking. 'K' flag keeps session alive.
 
 **Usage**:
-- Type questions or messages to chat with AI
+- AI greets user immediately (confirms online status)
+- Type questions or messages to chat with Elmer
 - AI responds with ham radio context awareness
-- Type Q, QUIT, EXIT, or BYE to end session
+- Type Q, QUIT, EXIT, or BYE to end session (AI says goodbye)
 - Conversation memory retained within single session
 
 **Data Storage**:
-API key stored in `ai.conf` in same directory as script:
+API keys and per-user preferences stored in `ai.conf`:
 ```json
 {
-  "gemini_api_key": "your-api-key-here"
+  "gemini_api_key": "your-gemini-key-here",
+  "openai_api_key": "your-openai-key-here",
+  "default_provider": "gemini",
+  "ai_name": "Elmer",
+  "user_preferences": {
+    "KC1JMH": {
+      "provider": "openai",
+      "last_used": "2026-01-29"
+    }
+  }
 }
+```
+
+**Sysop Configuration**:
+- Set `default_provider` to "gemini" or "openai" to skip provider selection menu
+- Set `ai_name` to customize AI assistant name (default: "Elmer")
+- Without default_provider, users see menu on first connection
+- Users can override sysop default by typing 'switch' during session
+- Per-user preferences saved and auto-selected on return visits
+
+**Sysop CLI Commands**:
+```bash
+./ai.py --set-name Hal          # Change AI name
+./ai.py --set-default openai    # Set default provider
+./ai.py --config gemini         # Configure API keys
 ```
 
 space.py
