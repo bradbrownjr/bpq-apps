@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.1
+Version: 1.2
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -27,7 +27,7 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.1"
+VERSION = "1.2"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -42,6 +42,7 @@ HAM_COMMANDMENTS = """
 8. Continuously improve your operating skills and station.
 9. Respect the rights of others and their use of frequencies.
 10. Share knowledge freely with other operators.
+11. Never discuss politics or religion on the air.
 """
 
 
@@ -195,7 +196,7 @@ def lookup_operator_name(callsign):
     # Try HamDB first (no API key required)
     try:
         url = "https://api.hamdb.org/v1/{}/json/bpq-apps".format(base_call)
-        req = Request(url, headers={"User-Agent": "BPQ-AI/1.1"})
+        req = Request(url, headers={"User-Agent": "BPQ-AI/1.2"})
         response = urlopen(req, timeout=3)
         data = json.loads(response.read().decode('utf-8'))
         
@@ -308,7 +309,7 @@ Sign off friendly with amateur radio expressions like:
             data=payload_json,
             headers={
                 "Content-Type": "application/json",
-                "User-Agent": "BPQ-AI/1.1"
+                "User-Agent": "BPQ-AI/1.2"
             }
         )
         

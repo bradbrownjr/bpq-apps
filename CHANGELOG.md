@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [ai.py v1.2 - Politics/Religion Prohibition] - 2026-01-29
+### Changed
+- **ai.py v1.2**: Added politics and religion prohibition to Ham Radio commandments
+  - Added commandment #11: "Never discuss politics or religion on the air"
+  - Reinforces amateur radio etiquette in AI system prompt
+  - Updated User-Agent to BPQ-AI/1.2
+
 ## [ai.py v1.1 - Rename and Unicode Fix] - 2026-01-29
 ### Changed
 - **ai.py v1.1**: Renamed from gemini.py (reserves "gemini" for Gemini web protocol)
