@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.6
+Version: 1.7
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -27,7 +27,7 @@ import re
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.6"
+VERSION = "1.7"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -540,191 +540,182 @@ def run_chat_session(config, provider, callsign=None, operator_name=None):
         call_api = call_gemini_api if provider == 'gemini' else call_openai_api
         model_name = "Gemini 2.5 Flash" if provider == 'gemini' else "GPT-4o Mini"
         is_first_message = True
+        conversation_history = []  # Clear history on provider switch
         
         # Send initial greeting request to AI
         sys.stdout.write("Connecting...\r")
         sys.stdout.flush()
-    
-    # Build system context for first message
-    system_context = """You are {}, an AI ham radio mentor. Brief responses (2-3 sentences) for 1200 baud packet radio. ASCII only - no Unicode/emoji/special chars.
+        
+        # Build system context for first message
+        system_context = """You are {}, an AI ham radio mentor. Brief responses (2-3 sentences) for 1200 baud packet radio. ASCII only - no Unicode/emoji/special chars.
 
 Ham principles: Assist others, be courteous, use minimum power, operate legally, promote amateur radio, help in emergencies, improve skills, respect frequencies, share knowledge.
 
 Greeting: Hi!/Hello!/Howdy! Introduce yourself as {}.
 Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack warm!). Never "bye"/"goodbye".
 """.format(ai_name, ai_name)
-    
-    if operator_name:
-        system_context += "Operator: {} {}".format(operator_name, callsign if callsign else "")
-    elif callsign:
-        system_context += "Callsign: {}".format(callsign)
-    
-    greeting_prompt = system_context + "\n\nGreet the operator. Keep it brief and friendly."
-    
-    greeting, error = call_api(api_key, greeting_prompt, [], operator_name=operator_name, callsign=callsign)
-    
-    sys.stdout.write(" " * 40 + "\r")
-    sys.stdout.flush()
-    
-    if error:
-        print("AI: {}".format(error))
-        if "API key" in error or "Rate limit" in error:
-            print("\nExiting due to API error...")
-            return
-        print("")
-    elif greeting:
-        print("AI: {}".format(greeting))
-        print("")
-        # Don't add greeting to history - let conversation start fresh
-    
-    while True:
-        try:
-            user_input = input("You: ").strip()
-            
-            if not user_input:
-                continue
-            
+        
+        if operator_name:
+            system_context += "Operator: {} {}".format(operator_name, callsign if callsign else "")
+        elif callsign:
+            system_context += "Callsign: {}".format(callsign)
+        
+        greeting_prompt = system_context + "\n\nGreet the operator. Keep it brief and friendly."
+        
+        greeting, error = call_api(api_key, greeting_prompt, [], operator_name=operator_name, callsign=callsign)
+        
+        sys.stdout.write(" " * 40 + "\r")
+        sys.stdout.flush()
+        
+        if error:
+            print("AI: {}".format(error))
+            if "API key" in error or "Rate limit" in error:
+                print("\nExiting due to API error...")
+                return
             print("")
-            
-            # Handle special commands without calling AI
-            if user_input.lower() == 'switch':
-                print("")
-                # Show provider menu
-                providers = get_available_providers(config)
-                if len(providers) < 2:
-                    print("Only one provider configured.")
-                    print("")
+        elif greeting:
+            print("AI: {}".format(greeting))
+            print("")
+            # Don't add greeting to history - let conversation start fresh
+        
+        # Inner chat loop
+        provider_switched = False
+        while True:
+            try:
+                user_input = input("You: ").strip()
+                
+                if not user_input:
                     continue
                 
-                print("SELECT AI PROVIDER")
-                for i, p in enumerate(providers, 1):
-                    model = "Gemini 2.5 Flash" if p == 'gemini' else "GPT-4o Mini"
-                    current = " (current)" if p == provider else ""
-                    print("{}. {} ({}){}".format(i, p.upper(), model, current))
                 print("")
                 
-                try:
-                    choice = input("Select [1-{}]: ".format(len(providers))).strip()
-                    idx = int(choice) - 1
-                    if 0 <= idx < len(providers):
-                        new_provider = providers[idx]
-                        if new_provider != provider:
-                            save_user_preference(config, callsign, new_provider)
-                            print("")
-                            print("Switched to {}".format(new_provider.upper()))
-                            print("(Conversation history cleared)")
-                            print("")
-                            # Break out of chat loop to restart with new provider
-                            provider = new_provider
-                            break
+                # Handle special commands without calling AI
+                if user_input.lower() == 'switch':
+                    print("")
+                    # Show provider menu
+                    providers = get_available_providers(config)
+                    if len(providers) < 2:
+                        print("Only one provider configured.")
+                        print("")
+                        continue
+                    
+                    print("SELECT AI PROVIDER")
+                    for i, p in enumerate(providers, 1):
+                        model = "Gemini 2.5 Flash" if p == 'gemini' else "GPT-4o Mini"
+                        current = " (current)" if p == provider else ""
+                        print("{}. {} ({}){}".format(i, p.upper(), model, current))
+                    print("")
+                    
+                    try:
+                        choice = input("Select [1-{}]: ".format(len(providers))).strip()
+                        idx = int(choice) - 1
+                        if 0 <= idx < len(providers):
+                            new_provider = providers[idx]
+                            if new_provider != provider:
+                                save_user_preference(config, callsign, new_provider)
+                                print("")
+                                print("Switched to {}".format(new_provider.upper()))
+                                print("(Conversation history cleared)")
+                                print("")
+                                provider = new_provider
+                                provider_switched = True
+                                break  # Break inner loop to restart with new provider
+                            else:
+                                print("")
+                                print("Already using {}".format(provider.upper()))
+                                print("")
                         else:
                             print("")
-                            print("Already using {}".format(provider.upper()))
+                            print("Invalid selection")
                             print("")
-                    else:
+                    except (ValueError, EOFError):
                         print("")
-                        print("Invalid selection")
+                        print("Cancelled")
                         print("")
-                except (ValueError, EOFError):
-                    print("")
-                    print("Cancelled")
-                    print("")
-                continue
-            
-            # Repeat last prompt with new/same provider
-            if user_input.lower() in ['repeat', 'again', 'retry']:
-                if not last_user_input:
-                    print("")
-                    print("No previous message to repeat")
-                    print("")
                     continue
-                user_input = last_user_input
-                print("Repeating: {}".format(user_input))
-                print("")
-            
-            # Check for quit commands first
-            if user_input.upper() in ['Q', 'QUIT', 'EXIT', 'BYE']:
-                # Translate exit commands to natural goodbye for AI
-                if is_first_message:
-                    # If first message, add minimal context
-                    goodbye_prompt = "You are {}, ham radio AI. Say goodbye with ONE brief ham radio sign-off only (73!, Good DX!, etc). ONE phrase max. ASCII only.".format(ai_name)
-                    message_to_send = goodbye_prompt + "\n\nUser says goodbye."
-                else:
-                    # AI already has context - send natural goodbye
-                    message_to_send = "Say goodbye with ONE brief ham sign-off only (73!, Good DX!, etc). Keep it to ONE phrase."
                 
-                # Get goodbye from AI
+                # Repeat last prompt with new/same provider
+                if user_input.lower() in ['repeat', 'again', 'retry']:
+                    if not last_user_input:
+                        print("")
+                        print("No previous message to repeat")
+                        print("")
+                        continue
+                    user_input = last_user_input
+                    print("Repeating: {}".format(user_input))
+                    print("")
+                
+                # Check for quit commands first
+                if user_input.upper() in ['Q', 'QUIT', 'EXIT', 'BYE']:
+                    # Translate exit commands to natural goodbye for AI
+                    if is_first_message:
+                        goodbye_prompt = "You are {}, ham radio AI. Say goodbye with ONE brief ham radio sign-off only (73!, Good DX!, etc). ONE phrase max. ASCII only.".format(ai_name)
+                        message_to_send = goodbye_prompt + "\n\nUser says goodbye."
+                    else:
+                        message_to_send = "Say goodbye with ONE brief ham sign-off only (73!, Good DX!, etc). Keep it to ONE phrase."
+                    
+                    sys.stdout.write("AI: [thinking...]\r")
+                    sys.stdout.flush()
+                    response, error = call_api(api_key, message_to_send, conversation_history, operator_name=operator_name, callsign=callsign)
+                    sys.stdout.write(" " * 40 + "\r")
+                    sys.stdout.flush()
+                    
+                    if response:
+                        print("AI: {}".format(response))
+                        print("")
+                    print("")
+                    return  # Exit completely
+                
+                # Prepend system context to first message only
+                message_to_send = user_input
+                if is_first_message:
+                    message_to_send = "Remember: Brief responses, ASCII only, ham-friendly tone.\n\nUser: " + user_input
+                    is_first_message = False
+                
+                # Save for repeat command
+                last_user_input = user_input
+                
+                # Show thinking indicator
                 sys.stdout.write("AI: [thinking...]\r")
                 sys.stdout.flush()
-                response, error = call_api(api_key, message_to_send, conversation_history, operator_name=operator_name, callsign=callsign)
+                
+                # Call API
+                response, error = call_api(
+                    api_key, 
+                    message_to_send, 
+                    conversation_history,
+                    operator_name=operator_name,
+                    callsign=callsign
+                )
+                
+                # Clear thinking indicator
                 sys.stdout.write(" " * 40 + "\r")
                 sys.stdout.flush()
                 
-                if response:
+                if error:
+                    print("AI: {}".format(error))
+                    if "API key" in error or "Rate limit" in error:
+                        print("\nExiting due to API error...")
+                        return
+                elif response:
+                    conversation_history.append({"role": "user", "text": user_input})
+                    conversation_history.append({"role": "model", "text": response})
+                    
+                    if len(conversation_history) > 20:
+                        conversation_history = conversation_history[-20:]
+                    
                     print("AI: {}".format(response))
                     print("")
-                print("")
-                break
-            
-            # Prepend system context to first message only
-            message_to_send = user_input
-            if is_first_message:
-                # Add brief reminder since greeting already set the context
-                message_to_send = "Remember: Brief responses, ASCII only, ham-friendly tone.\n\nUser: " + user_input
-                is_first_message = False
-            
-            # Save for repeat command
-            last_user_input = user_input
-            
-            # Show thinking indicator (stays on one line)
-            sys.stdout.write("AI: [thinking...]\r")
-            sys.stdout.flush()
-            
-            # Call API
-            response, error = call_api(
-                api_key, 
-                message_to_send, 
-                conversation_history,
-                operator_name=operator_name,
-                callsign=callsign
-            )
-            
-            # Clear thinking indicator
-            sys.stdout.write(" " * 40 + "\r")
-            sys.stdout.flush()
-            
-            if error:
-                print("AI: {}".format(error))
-                if "API key" in error or "Rate limit" in error:
-                    print("\nExiting due to API error...")
-                    break
-            elif response:
-                # Add to conversation history
-                conversation_history.append({
-                    "role": "user",
-                    "text": user_input
-                })
-                conversation_history.append({
-                    "role": "model",
-                    "text": response
-                })
                 
-                # Keep conversation history manageable (last 10 exchanges)
-                if len(conversation_history) > 20:
-                    conversation_history = conversation_history[-20:]
-                
-                # Display response
-                print("AI: {}".format(response))
                 print("")
-            
-            print("")
-            
-        except (EOFError, KeyboardInterrupt):
-            print("\n\nExiting...")
-            return  # Exit completely
+                
+            except (EOFError, KeyboardInterrupt):
+                print("\n\nExiting...")
+                return
         
-        # If we broke out of inner loop (provider switch), continue outer loop
-        # Otherwise return (user quit)
+        # If we get here via break (provider switch), continue outer loop
+        if not provider_switched:
+            return  # User quit normally
 
 
 def show_help():
