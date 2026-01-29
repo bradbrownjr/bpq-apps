@@ -13,7 +13,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.32
+Version: 1.33
 Date: January 2026
 """
 
@@ -219,6 +219,9 @@ class GopherClient:
         'h': 'HTM',  # HTML file
         'i': 'INF',  # Informational text
         's': 'SND',  # Sound file
+        ':': 'BMP',  # Bitmap image
+        ';': 'MOV',  # Movie file
+        'd': 'DOC',  # Document/PDF
     }
     
     def __init__(self):
@@ -423,9 +426,10 @@ class GopherClient:
                     # On last page, empty means done viewing
                     break
             elif response.startswith('w'):
-                # Show current URL
+                # Show current URL and wait for acknowledgment
                 print("\nCurrent URL: {}".format(self.current_url))
-                continue
+                input("\nPress Enter to continue...")
+                # Don't continue - will redisplay page after break from loop
             elif response.startswith('b'):
                 # Back - navigate to previous page in history
                 return 'back'
@@ -523,9 +527,10 @@ class GopherClient:
                 # Back to menu
                 return 'back'
             elif response.startswith('w'):
-                # Show current URL
+                # Show current URL and wait for acknowledgment
                 print("\nCurrent URL: {}".format(self.current_url))
-                continue
+                input("\nPress Enter to continue...")
+                # Don't continue - will redisplay page after break from loop
             elif response.startswith('p'):
                 # Previous page
                 if current_page > 0:
