@@ -20,7 +20,7 @@ Date: January 2026
 import sys
 import os
 
-VERSION = "1.32"
+VERSION = "1.33"
 APP_NAME = "gopher.py"
 
 # Check Python version
