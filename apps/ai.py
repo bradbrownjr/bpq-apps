@@ -530,17 +530,20 @@ def wrap_text(text, width=None):
 
 def run_chat_session(config, provider, callsign=None, operator_name=None):
     """Run interactive chat session"""
-    api_key = config.get('gemini_api_key' if provider == 'gemini' else 'openai_api_key')
-    call_api = call_gemini_api if provider == 'gemini' else call_openai_api
-    model_name = "Gemini 2.5 Flash" if provider == 'gemini' else "GPT-4o Mini"
     ai_name = get_ai_name(config)
-    
     conversation_history = []
-    is_first_message = True
+    last_user_input = None
     
-    # Send initial greeting request to AI
-    sys.stdout.write("Connecting...\r")
-    sys.stdout.flush()
+    # Main session loop - allows provider switching
+    while True:
+        api_key = config.get('gemini_api_key' if provider == 'gemini' else 'openai_api_key')
+        call_api = call_gemini_api if provider == 'gemini' else call_openai_api
+        model_name = "Gemini 2.5 Flash" if provider == 'gemini' else "GPT-4o Mini"
+        is_first_message = True
+        
+        # Send initial greeting request to AI
+        sys.stdout.write("Connecting...\r")
+        sys.stdout.flush()
     
     # Build system context for first message
     system_context = """You are {}, an AI ham radio mentor. Brief responses (2-3 sentences) for 1200 baud packet radio. ASCII only - no Unicode/emoji/special chars.
@@ -586,11 +589,58 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
             # Handle special commands without calling AI
             if user_input.lower() == 'switch':
                 print("")
-                print("Switching providers...")
-                print("Please exit and reconnect.")
+                # Show provider menu
+                providers = get_available_providers(config)
+                if len(providers) < 2:
+                    print("Only one provider configured.")
+                    print("")
+                    continue
+                
+                print("SELECT AI PROVIDER")
+                for i, p in enumerate(providers, 1):
+                    model = "Gemini 2.5 Flash" if p == 'gemini' else "GPT-4o Mini"
+                    current = " (current)" if p == provider else ""
+                    print("{}. {} ({}){}".format(i, p.upper(), model, current))
                 print("")
-                print("")
+                
+                try:
+                    choice = input("Select [1-{}]: ".format(len(providers))).strip()
+                    idx = int(choice) - 1
+                    if 0 <= idx < len(providers):
+                        new_provider = providers[idx]
+                        if new_provider != provider:
+                            save_user_preference(config, callsign, new_provider)
+                            print("")
+                            print("Switched to {}".format(new_provider.upper()))
+                            print("(Conversation history cleared)")
+                            print("")
+                            # Break out of chat loop to restart with new provider
+                            provider = new_provider
+                            break
+                        else:
+                            print("")
+                            print("Already using {}".format(provider.upper()))
+                            print("")
+                    else:
+                        print("")
+                        print("Invalid selection")
+                        print("")
+                except (ValueError, EOFError):
+                    print("")
+                    print("Cancelled")
+                    print("")
                 continue
+            
+            # Repeat last prompt with new/same provider
+            if user_input.lower() in ['repeat', 'again', 'retry']:
+                if not last_user_input:
+                    print("")
+                    print("No previous message to repeat")
+                    print("")
+                    continue
+                user_input = last_user_input
+                print("Repeating: {}".format(user_input))
+                print("")
             
             # Check for quit commands first
             if user_input.upper() in ['Q', 'QUIT', 'EXIT', 'BYE']:
@@ -622,6 +672,9 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                 # Add brief reminder since greeting already set the context
                 message_to_send = "Remember: Brief responses, ASCII only, ham-friendly tone.\n\nUser: " + user_input
                 is_first_message = False
+            
+            # Save for repeat command
+            last_user_input = user_input
             
             # Show thinking indicator (stays on one line)
             sys.stdout.write("AI: [thinking...]\r")
@@ -668,7 +721,10 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
             
         except (EOFError, KeyboardInterrupt):
             print("\n\nExiting...")
-            break
+            return  # Exit completely
+        
+        # If we broke out of inner loop (provider switch), continue outer loop
+        # Otherwise return (user quit)
 
 
 def show_help():
