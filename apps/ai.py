@@ -796,6 +796,9 @@ def main():
                 print("Error saving config.")
             return
     
+    # Load config first (needed for header display)
+    config = load_config()
+    
     # Show logo
     show_logo()
     print("")
@@ -816,9 +819,6 @@ def main():
         print("Try again later.")
         print("\nExiting...")
         return
-    
-    # Load config
-    config = load_config()
     
     # Check available providers
     providers = get_available_providers(config)
