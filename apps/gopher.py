@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.31
+Version: 1.32
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.31"
+VERSION = "1.32"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -348,7 +348,7 @@ class GopherClient:
             display = item['display']
             
             # Get type label
-            type_label = self.ITEM_TYPES.get(item_type, '???')
+            type_label = self.ITEM_TYPES.get(item_type, 'UNK')
             
             # Info lines don't get numbers
             if item_type == 'i':
@@ -391,14 +391,14 @@ class GopherClient:
                 # More pages available
                 if selectable_count > 0:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next Page P)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\n[Enter]=Next Page P)rev [1-{}] W)here B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                     else:
-                        prompt = "\n[Enter]=Next Page [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\n[Enter]=Next Page [1-{}] W)here B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                 else:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next Page P)rev B)ack H)ome M)arks Q)uit :> "
+                        prompt = "\n[Enter]=Next Page P)rev W)here B)ack H)ome M)arks Q)uit :> "
                     else:
-                        prompt = "\n[Enter]=Next Page B)ack H)ome M)arks Q)uit :> "
+                        prompt = "\n[Enter]=Next Page W)here B)ack H)ome M)arks Q)uit :> "
             else:
                 # Last page
                 if selectable_count > 0:
@@ -422,6 +422,10 @@ class GopherClient:
                 else:
                     # On last page, empty means done viewing
                     break
+            elif response.startswith('w'):
+                # Show current URL
+                print("\nCurrent URL: {}".format(self.current_url))
+                continue
             elif response.startswith('b'):
                 # Back - navigate to previous page in history
                 return 'back'
@@ -496,15 +500,15 @@ class GopherClient:
             if end < len(lines):
                 # More pages available
                 if current_page > 0:
-                    prompt = "\n[Enter]=Next Page P)rev B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\n[Enter]=Next Page P)rev W)here B)ack H)ome M)arks Q)uit :> "
                 else:
-                    prompt = "\n[Enter]=Next Page B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\n[Enter]=Next Page W)here B)ack H)ome M)arks Q)uit :> "
             else:
                 # Last page
                 if current_page > 0:
-                    prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\nP)rev W)here B)ack H)ome M)arks Q)uit :> "
                 else:
-                    prompt = "\nB)ack H)ome M)arks Q)uit :> "
+                    prompt = "\nW)here B)ack H)ome M)arks Q)uit :> "
             
             response = input(prompt).strip().lower()
             
@@ -518,6 +522,10 @@ class GopherClient:
             elif response.startswith('b'):
                 # Back to menu
                 return 'back'
+            elif response.startswith('w'):
+                # Show current URL
+                print("\nCurrent URL: {}".format(self.current_url))
+                continue
             elif response.startswith('p'):
                 # Previous page
                 if current_page > 0:
@@ -805,6 +813,7 @@ class GopherClient:
         print("  [number] - Select menu item by number")
         print("  H)ome    - Go to home page")
         print("  P)rev    - Previous page (within results)")
+        print("  W)here   - Show current URL")
         print("  B)ack    - Back to previous view")
         print("  M)arks   - Show bookmarks")
         print("  G)o URL  - Go to specific Gopher URL")
