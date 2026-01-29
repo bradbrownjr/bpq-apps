@@ -24,6 +24,7 @@ import os
 import json
 import socket
 import re
+import readline
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
