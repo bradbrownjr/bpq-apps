@@ -13,14 +13,14 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.30
+Version: 1.31
 Date: January 2026
 """
 
 import sys
 import os
 
-VERSION = "1.30"
+VERSION = "1.31"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -391,14 +391,14 @@ class GopherClient:
                 # More pages available
                 if selectable_count > 0:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next P)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\n[Enter]=Next Page P)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                     else:
-                        prompt = "\n[Enter]=Next [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\n[Enter]=Next Page [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
                 else:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next P)rev B)ack H)ome M)arks Q)uit :> "
+                        prompt = "\n[Enter]=Next Page P)rev B)ack H)ome M)arks Q)uit :> "
                     else:
-                        prompt = "\n[Enter]=Next B)ack H)ome M)arks Q)uit :> "
+                        prompt = "\n[Enter]=Next Page B)ack H)ome M)arks Q)uit :> "
             else:
                 # Last page
                 if selectable_count > 0:
@@ -496,9 +496,9 @@ class GopherClient:
             if end < len(lines):
                 # More pages available
                 if current_page > 0:
-                    prompt = "\n[Enter]=Next P)rev B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\n[Enter]=Next Page P)rev B)ack H)ome M)arks Q)uit :> "
                 else:
-                    prompt = "\n[Enter]=Next B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\n[Enter]=Next Page B)ack H)ome M)arks Q)uit :> "
             else:
                 # Last page
                 if current_page > 0:
