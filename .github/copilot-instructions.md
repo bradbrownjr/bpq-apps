@@ -398,8 +398,9 @@ battleship  stream  tcp  nowait  ect  /usr/bin/python3  python3 /home/ect/games/
 **Testing**: `telnet localhost 23000` (port from /etc/services)
 
 ## Testing
-- SSH: `ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org` (lowercase -p for port)
+- SSH: `ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org` (lowercase -p for port, use interactive mode for sudo commands)
 - SCP: `scp -i ~/.ssh/id_rsa -P 4722 file.py ect@ws1ec.mainepacketradio.org:/path/` (uppercase -P for port)
+- For commands requiring sudo: Use interactive SSH and user will provide password when prompted
 - Verify Py3.5.3 compatibility, ASCII output
 - WSL terminals required (SSH keys configured, POSIX compatibility)
 - Never use PowerShell for SSH or remote commands
@@ -520,7 +521,8 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 
 **Deploying to WS1EC:**
 ```bash
-# SSH into node (lowercase -p for port)
+# SSH into node (lowercase -p for port, interactive mode)
+# Use interactive SSH for sudo commands - user provides password when prompted
 ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org
 
 # Or SCP file directly (uppercase -P for port)
@@ -532,10 +534,10 @@ cd ~/apps
 wget -O appname.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/appname.py
 chmod +x appname.py
 
-# Restart services (if inetd.conf changed)
+# Restart services (if inetd.conf changed) - requires interactive SSH for sudo prompt
 sudo killall -HUP inetd
 
-# Restart BPQ (if bpq32.cfg changed)
+# Restart BPQ (if bpq32.cfg changed) - requires interactive SSH for sudo prompt
 sudo systemctl restart linbpq
 ```
 
