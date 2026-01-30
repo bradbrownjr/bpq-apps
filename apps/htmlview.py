@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.1
+Version: 1.2
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.1"
+VERSION = "1.2"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -225,6 +225,34 @@ class HTMLParser:
         # Parse nav links (don't number them in text, store separately)
         self._extract_nav_links(nav_html)
         
+        # ALSO extract simple nav-like links from top of content (Home, About, Contact, etc.)
+        # These are often missed by structural detection
+        simple_nav_pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>([^<]{2,15})</a>'
+        top_content = content_html[:4000]  # Scan first 4KB for nav links
+        for match in re.finditer(simple_nav_pattern, top_content, flags=re.IGNORECASE):
+            href = match.group(1)
+            text = match.group(2).strip()
+            # Check if it's a simple site nav link (same domain, short text, common nav words)
+            nav_words = ['home', 'about', 'contact', 'members', 'join', 'login', 'register']
+            if (text.lower() in nav_words or 
+                (len(text) < 12 and (href.startswith('/') or 'ws1sm.com' in href))):
+                # Add to nav links if not already there
+                if (href, text) not in self.nav_links:
+                    self.nav_links.append((href, text))
+        
+        # Remove any nav link URLs from content to prevent duplicate numbering
+        # This ensures links already in nav menu don't appear in content
+        nav_hrefs = set()
+        for href, text in self.nav_links:
+            nav_hrefs.add(href)
+        
+        # Remove nav links from content HTML
+        for href in nav_hrefs:
+            # Match links with this href (handle both " and ' quotes)
+            escaped_href = re.escape(href)
+            content_html = re.sub(r'<a[^>]+href=["\']' + escaped_href + r'["\'][^>]*>.*?</a>',
+                                 '', content_html, flags=re.DOTALL | re.IGNORECASE)
+        
         # Parse content with numbered links
         text = self._html_to_text(content_html, number_links=True)
         
@@ -296,6 +324,24 @@ class HTMLParser:
         # Remove identified nav divs from content
         for nav_part in nav_parts:
             content_html = content_html.replace(nav_part, '', 1)
+        
+        # Detect standalone top-level nav links (common pattern: few links before main content)
+        # Match links to site pages (with common web extensions or root paths)
+        top_link_pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>([^<]{3,30})</a>'
+        top_links = []
+        for match in re.finditer(top_link_pattern, content_html[:3000], flags=re.IGNORECASE):
+            href = match.group(1)
+            text = match.group(2).strip()
+            # Only consider links that look like navigation (not external, not long text)
+            if (not href.startswith('http') or href.startswith('http://www.ws1sm.com') or 
+                href.startswith('https://www.ws1sm.com')) and len(text) < 30 and text.lower() not in ['click here', 'read more']:
+                top_links.append((match.group(0), href, text))
+        
+        # If we found 2-8 links at the top, they're likely nav
+        if 2 <= len(top_links) <= 8:
+            for link_html, href, text in top_links:
+                nav_parts.append(link_html)
+                content_html = content_html.replace(link_html, '', 1)
         
         # Detect dense link clusters at top (fallback heuristic)
         if not nav_parts:
@@ -469,6 +515,14 @@ class HTMLParser:
         while i < len(raw_lines):
             line = raw_lines[i]
             
+            # Merge short all-caps words into headings (e.g. "OUR" + "STORY")
+            while (len(line) < 15 and line.isupper() and
+                   i + 1 < len(raw_lines) and
+                   len(raw_lines[i + 1]) < 20 and
+                   (raw_lines[i + 1].isupper() or raw_lines[i + 1][0].isupper())):
+                i += 1
+                line = line + ' ' + raw_lines[i]
+            
             # Check if this line should be merged with the next
             # Merge conditions: short line without terminal punctuation
             while (len(line) < 50 and 
@@ -489,7 +543,18 @@ class HTMLParser:
             lines.append(line)
             i += 1
         
-        return lines
+        # Add paragraph spacing (blank line after sentences ending paragraphs)
+        spaced_lines = []
+        for i, line in enumerate(lines):
+            spaced_lines.append(line)
+            # Add blank line after sentences, but not after links or short headings
+            if (line.endswith(('.', '!', '?')) and 
+                i + 1 < len(lines) and
+                len(line) > 40 and  # Not a short heading
+                not line.endswith(']')):  # Not a numbered link line
+                spaced_lines.append('')
+        
+        return spaced_lines
 
 
 class HTMLViewer:
