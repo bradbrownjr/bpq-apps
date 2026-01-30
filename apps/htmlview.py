@@ -614,11 +614,29 @@ class HTMLViewer:
         self.selected_link = None
         self.go_back = False
         
-        # Extract page title
+        # Extract page title before parsing
         title = self._extract_title(html)
         
         # Parse HTML
         self.text_lines, self.nav_links, self.content_links = self.parser.parse(html)
+        
+        # Remove title from text_lines if it appears (avoid duplication)
+        if title:
+            # Remove first occurrence of the full title or truncated title
+            full_title = title
+            trunc_title = title[:DEFAULT_TITLE_WIDTH - 3] + '...' if len(title) > DEFAULT_TITLE_WIDTH else title
+            
+            cleaned_lines = []
+            removed = False
+            for line in self.text_lines:
+                # Skip first line that matches the title (full or truncated version)
+                if not removed and (line.strip() == full_title.strip() or 
+                                   line.strip() == trunc_title.strip() or
+                                   line.strip().startswith(full_title[:20])):
+                    removed = True
+                    continue
+                cleaned_lines.append(line)
+            self.text_lines = cleaned_lines
         
         # Wrap lines to terminal width
         self.wrapped_lines = []
