@@ -456,6 +456,7 @@ def main():
             show_about()
         elif choice == '1':
             print("\nLoading home page...")
+            sys.stdout.flush()
             current_url = HOME_URL
         elif choice == '2':
             print("\nBookmarks:")
@@ -474,6 +475,7 @@ def main():
                 if 0 <= idx < len(BOOKMARKS):
                     name, url = BOOKMARKS[idx]
                     print("\nLoading {}...".format(name))
+                    sys.stdout.flush()
                     current_url = url
                 else:
                     current_url = None
@@ -483,6 +485,7 @@ def main():
             query = input("\nSearch query :> ").strip()
             if query:
                 print("\nSearching...")
+                sys.stdout.flush()
                 current_url = browser.search(query)
             else:
                 current_url = None
@@ -492,6 +495,7 @@ def main():
                 if not url.startswith('http'):
                     url = 'http://' + url
                 print("\nLoading...")
+                sys.stdout.flush()
                 current_url = url
             else:
                 current_url = None
@@ -499,6 +503,7 @@ def main():
             back_url = browser.go_back()
             if back_url:
                 print("\nGoing back...")
+                sys.stdout.flush()
                 current_url = back_url
             else:
                 current_url = None
@@ -517,6 +522,7 @@ def main():
                 current_url = None
             elif next_url:
                 print("\nLoading...")
+                sys.stdout.flush()
                 current_url = next_url
             else:
                 current_url = None

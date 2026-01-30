@@ -185,8 +185,13 @@ SEE ALSO
 - Terminal width handling:
   - Separator lines: Fixed 40-character width using dash character: `print("-" * 40)`
   - Longform text (descriptions, content): Adjust dynamically to terminal width with word wrapping
-  - Paginate long output (20 lines per page) with "(press Enter, Q to quit)" prompt
+  - Paginate long output (20 lines per page) with prompt
   - Fallback: 80-character width for piped/non-TTY input: `os.get_terminal_size(fallback=(80, 24)).columns`
+- **Output buffering**: Flush stdout after status messages that precede blocking operations
+  - Pattern: `print("Loading..."); sys.stdout.flush()` then network call
+  - Ensures user sees "Loading..." immediately, not after fetch completes
+  - Critical on slow packet radio - shows app didn't freeze
+  - Example: Before `browser.browse()`, before `urlopen()`, before database queries
 - ASCII-only decorative elements - NO Unicode, ANSI codes, or control characters
 - No welcome messages - straight to functionality
 - Terse but clear prompts and navigation
