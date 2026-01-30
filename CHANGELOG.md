@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [repeater.py v1.5 - Display Input Frequency] - 2026-01-30
+### Changed
+- **repeater.py v1.5**: Display input frequency for convenience
+  - Format: "145.110 - (144.510)" shows both output and input frequencies
+  - Users no longer need to calculate offset manually
+  - Helpful for programming radios
+
 ## [repeater.py v1.4 - Fix API Field Names] - 2026-01-30
 ### Fixed
 - **repeater.py v1.4**: Use correct RepeaterBook API field names

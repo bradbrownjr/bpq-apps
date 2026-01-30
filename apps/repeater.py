@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -338,10 +338,11 @@ def format_repeater(rep, index=None, show_distance=True):
         input_freq = float(rep.get('Input Freq', 0))
         if output_freq > 0 and input_freq > 0:
             diff = output_freq - input_freq
+            input_formatted = format_frequency(rep.get('Input Freq', ''))
             if diff > 0.001:  # Output higher than input
-                line1 += "{} -".format(freq)  # Minus offset (reverse of normal convention)
+                line1 += "{} - ({})".format(freq, input_formatted)  # Minus offset
             elif diff < -0.001:  # Input higher than output
-                line1 += "{} +".format(freq)  # Plus offset
+                line1 += "{} + ({})".format(freq, input_formatted)  # Plus offset
             else:
                 line1 += freq  # Simplex
         else:
