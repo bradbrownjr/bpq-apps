@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.1
+Version: 1.2
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.1"
+VERSION = "1.2"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -245,28 +245,37 @@ def get_cache_key(state, proximity, lat, lon):
 
 def fetch_repeaters(state, proximity, lat, lon):
     """Fetch repeaters from RepeaterBook API"""
-    params = {
-        'country': 'United States',
-        'proximity': str(proximity)
+    # RepeaterBook proximity API format with state abbreviation
+    state_abbrev_map = {
+        'maine': 'Maine', 'nh': 'New%20Hampshire', 'vermont': 'Vermont',
+        'massachusetts': 'Massachusetts', 'connecticut': 'Connecticut',
+        'rhode island': 'Rhode%20Island'
     }
     
     if state:
-        params['state'] = state
-    
-    # RepeaterBook API uses lat/lon in state_id parameter for proximity search
-    # But we'll use the proximity endpoint with state filter
-    
-    url = API_BASE + '?' + urllib.parse.urlencode(params)
+        # Use state-based export
+        state_param = state_abbrev_map.get(state.lower(), state.replace(' ', '%20'))
+        url = "{}?country=United%20States&state={}".format(API_BASE, state_param)
+    else:
+        # Use proximity search - RepeaterBook doesn't support direct proximity without state
+        # Default to Maine for gridsquare searches in FN43 area
+        url = "{}?country=United%20States&state=Maine".format(API_BASE)
     
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'BPQ-Apps'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'BPQ-Apps/1.1'})
         with urllib.request.urlopen(req, timeout=15) as response:
             data = json.loads(response.read().decode('utf-8'))
             
-        if not data or 'results' not in data:
-            return data if isinstance(data, list) else []
+        if not data:
+            return []
         
-        return data['results'] if isinstance(data['results'], list) else data
+        # RepeaterBook returns direct array or dict with 'results'
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict) and 'results' in data:
+            return data['results']
+        
+        return []
     except Exception as e:
         raise Exception("API error: {}".format(str(e)))
 
@@ -535,6 +544,12 @@ def search_by_gridsquare():
     
     if not grid or len(grid) < 4:
         print("Invalid gridsquare format.")
+        return
+    
+    # Validate gridsquare format
+    if not re.match(r'^[A-R]{2}[0-9]{2}([A-X]{2})?$', grid):
+        print("Invalid gridsquare format.")
+        print("Format: AA##aa (e.g., FN43hp)")
         return
     
     lat, lon = gridsquare_to_latlon(grid)
