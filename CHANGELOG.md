@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.5 - Pagination/Deduplication Filter] - 2026-01-30
+### Fixed
+- **htmlview.py v1.5**: Filter pagination elements and deduplicate nav links
+  - Skip pagination text patterns (numeric "2", "Next", "Previous", "Load More", etc.)
+  - Deduplicate navigation links by href URL (fixes WordPress/responsive menu duplicates)
+  - Cap nav links to max 75 items to prevent massive menus
+  - Reduces noise on sites with mobile menu clones and pagination controls
+
 ## [htmlview.py v1.0 - Reusable HTML Viewer Module] - 2026-01-30
 ### Added
 - **htmlview.py v1.0**: Reusable HTML viewer module for packet radio apps

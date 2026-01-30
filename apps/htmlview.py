@@ -439,6 +439,14 @@ class HTMLParser:
         """Extract links from navigation sections"""
         link_pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>'
         
+        # Pagination patterns to skip
+        pagination_patterns = [
+            r'^\d+$',  # Single digit "2", "3", etc.
+            r'^(next|prev|previous|last|first|load more|older|newer|...|more)$',
+        ]
+        
+        seen_hrefs = set()  # Track URLs to deduplicate
+        
         for match in re.finditer(link_pattern, nav_html, flags=re.DOTALL | re.IGNORECASE):
             href = match.group(1)
             text = re.sub(r'<[^>]+>', '', match.group(2)).strip()
@@ -451,8 +459,21 @@ class HTMLParser:
             text = decode_html_entities(text)
             text = re.sub(r'\s+', ' ', text).strip()
             
+            # Skip pagination patterns
+            if any(re.match(pattern, text, re.IGNORECASE) for pattern in pagination_patterns):
+                continue
+            
+            # Skip if we've seen this href before (deduplication)
+            if href in seen_hrefs:
+                continue
+            
             if text and len(text) < 100:  # Skip overly long "links"
                 self.nav_links.append((href, text))
+                seen_hrefs.add(href)
+                
+                # Cap nav links at 75 to prevent massive menus
+                if len(self.nav_links) >= 75:
+                    break
     
     def _html_to_text(self, html, number_links=True):
         """Convert HTML to text, optionally numbering links"""
