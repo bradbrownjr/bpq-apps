@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [repeater.py v1.6 - Redisplay Menu After Search] - 2026-01-30
+### Changed
+- **repeater.py v1.6**: Improved navigation UX
+  - Menu redisplays after returning from search results
+  - Users can see options without scrolling back
+  - Better experience on packet radio terminals with limited scrollback
+
 ## [repeater.py v1.5 - Display Input Frequency] - 2026-01-30
 ### Changed
 - **repeater.py v1.5**: Display input frequency for convenience

@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.5
+Version: 1.6
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -495,29 +495,31 @@ def main_menu(user_callsign=None):
     """Display main menu and handle user interaction"""
     config = load_config()
     
-    print(LOGO)
-    print("\nREPEATER DIRECTORY v{}".format(VERSION))
-    print("Data from RepeaterBook.com")
-    
-    if user_callsign:
-        print("User: {}".format(user_callsign))
-    
-    print("\n" + "-" * 40)
-    print("MAIN MENU")
-    print("-" * 40)
-    print("1) Search by Gridsquare")
-    print("2) Search by Callsign")
-    print("3) Search by Frequency")
-    print("4) Search by State & Proximity")
-    
-    if config.get('last_location'):
-        print("5) My Location ({})".format(config['last_location'].get('grid', 'saved')))
-    
-    print("\n6) View Cached Results")
-    print("\nA) About  Q) Quit")
-    print("-" * 40)
-    
     while True:
+        print(LOGO)
+        print("\nREPEATER DIRECTORY v{}".format(VERSION))
+        print("Data from RepeaterBook.com")
+        
+        if user_callsign:
+            print("User: {}".format(user_callsign))
+        
+        print("\n" + "-" * 40)
+        print("MAIN MENU")
+        print("-" * 40)
+        print("1) Search by Gridsquare")
+        print("2) Search by Callsign")
+        print("3) Search by Frequency")
+        print("4) Search by State & Proximity")
+        
+        # Reload config to get latest last_location
+        config = load_config()
+        if config.get('last_location'):
+            print("5) My Location ({})".format(config['last_location'].get('grid', 'saved')))
+        
+        print("\n6) View Cached Results")
+        print("\nA) About  Q) Quit")
+        print("-" * 40)
+        
         try:
             choice = input("Menu: [1-6 A Q] :> ").strip().upper()
         except EOFError:
