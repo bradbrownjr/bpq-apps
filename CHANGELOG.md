@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.8 - WordPress Cleanup] - 2026-01-30
+### Fixed
+- **htmlview.py v1.8**: Aggressive WordPress junk filtering
+  - Fixed content_links tuple inconsistency (pagination links removed - not useful)
+  - Strip WordPress sidebars (<aside>, .sidebar, .widget divs)
+  - Remove "Skip to content", "open primary menu", social media icons
+  - Filter facebook/twitter/etc text lines from output
+  - Result: Clean content starts immediately on mainepacketradio.org
+  - First page now shows actual content, not 3 pages of sidebar
+
 ## [htmlview.py v1.7, www.py v1.4 - Version Bump, Key Fix, WordPress Nav] - 2026-01-30
 ### Fixed
 - **htmlview.py v1.7**: Version bump + key handler fix + improved WordPress nav detection

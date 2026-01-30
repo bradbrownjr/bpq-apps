@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.7
+Version: 1.8
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.7"
+VERSION = "1.8"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -211,6 +211,21 @@ class HTMLParser:
         html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'<noscript[^>]*>.*?</noscript>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
+        
+        # Remove WordPress sidebars/widgets (before parsing)
+        html = re.sub(r'<aside[^>]*>.*?</aside>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*sidebar[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*widget[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*id="[^"]*sidebar[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove WordPress skip-to-content and menu helpers
+        html = re.sub(r'<a[^>]+class="[^"]*skip-link[^"]*"[^>]*>.*?</a>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'Skip to content', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'open primary menu', '', html, flags=re.IGNORECASE)
+        
+        # Remove social media icons/links aggressively
+        html = re.sub(r'<a[^>]*>(facebook|twitter|instagram|linkedin|youtube|pinterest)</a>', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'<a[^>]*>\s*(facebook|twitter|instagram|linkedin|youtube|pinterest)\s*\[?\d+\]?\s*</a>', '', html, flags=re.IGNORECASE)
         
         # Try to identify and extract nav sections
         nav_html, content_html = self._separate_nav_content(html)
@@ -476,11 +491,8 @@ class HTMLParser:
             if any(re.match(pattern, text, re.IGNORECASE) for pattern in social_patterns):
                 continue
             
-            # Pagination links go to content_links instead of nav_links
+            # Skip pagination links (not useful - they're blog page navigation)
             if any(re.match(pattern, text, re.IGNORECASE) for pattern in pagination_patterns):
-                if href not in seen_hrefs and text and len(text) < 100:
-                    self.content_links.append((href, text))
-                    seen_hrefs.add(href)
                 continue
             
             # Skip if we've seen this href before (deduplication)
@@ -611,7 +623,16 @@ class HTMLParser:
         while result_lines and not result_lines[-1]:
             result_lines.pop()
         
-        return result_lines
+        # Filter out social media icons and WordPress junk lines
+        filtered_lines = []
+        social_junk = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'pinterest']
+        for line in result_lines:
+            # Skip lines that are JUST social media names (with or without link numbers)
+            clean_line = re.sub(r'\s*\[\d+\]\s*$', '', line).strip().lower()
+            if clean_line not in social_junk:
+                filtered_lines.append(line)
+        
+        return filtered_lines
 
 
 class HTMLViewer:
