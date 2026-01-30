@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [www.py v1.5 - Fix Error Navigation] - 2026-01-30
+### Fixed
+- **www.py v1.5**: Return to previous page on fetch error instead of main menu
+  - When link fetch fails (404, timeout, etc.), prompt user and return to previous page
+  - Prevents losing context when encountering broken links
+  - User can try other links without re-navigating from main menu
+
 ## [htmlview.py v1.8 - WordPress Cleanup] - 2026-01-30
 ### Fixed
 - **htmlview.py v1.8**: Aggressive WordPress junk filtering

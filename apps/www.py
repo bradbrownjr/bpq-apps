@@ -16,7 +16,7 @@ Features:
 - Smart word wrapping for terminal width
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ try:
 except ImportError:
     from urlparse import urljoin, urlparse
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "www.py"
 
 # Check Python version
@@ -349,6 +349,11 @@ class WebBrowser:
         """Browse to a URL using htmlview module"""
         html = self.fetch_url(url)
         if not html:
+            # Fetch failed - return to previous page if available
+            if len(self.history) > 0:
+                input("\nPress Enter to return to previous page...")
+                prev_url = self.history[-1] if self.history else None
+                return prev_url
             return None
         
         self.current_html = html
