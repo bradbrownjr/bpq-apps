@@ -698,30 +698,53 @@ class HTMLViewer:
                 break
     
     def _show_nav_menu(self):
-        """Display page navigation menu"""
-        print("\n" + "-" * 40)
-        print("PAGE MENU ({} items)".format(len(self.nav_links)))
-        print("-" * 40)
+        """Display page navigation menu with pagination"""
+        total_links = len(self.nav_links)
+        links_per_page = self.page_size - 4  # Leave room for header/footer
+        start = 0
         
-        for i, (url, text) in enumerate(self.nav_links, 1):
-            # Truncate long text
-            display_text = text[:35] + '...' if len(text) > 35 else text
-            print("{}. {}".format(i, display_text))
-        
-        print("-" * 40)
-        try:
-            response = input("Select [1-{}], M)ain, Q)uit :> ".format(len(self.nav_links))).strip().lower()
-        except EOFError:
-            return None
-        
-        if response == 'q':
-            return None
-        elif response == 'm' or response == '':
-            return None  # Return to content
-        elif response.isdigit():
-            idx = int(response) - 1
-            if 0 <= idx < len(self.nav_links):
-                return self.nav_links[idx][0]
+        while True:
+            end = min(start + links_per_page, total_links)
+            
+            print("\n" + "-" * 40)
+            print("PAGE MENU ({}-{} of {})".format(start + 1, end, total_links))
+            print("-" * 40)
+            
+            for i in range(start, end):
+                url, text = self.nav_links[i]
+                display_text = text[:35] + '...' if len(text) > 35 else text
+                print("{}. {}".format(i + 1, display_text))
+            
+            print("-" * 40)
+            
+            # Build prompt based on position
+            if end < total_links:
+                prompt = "Select [1-{}], Enter=more, B)ack, M)ain, Q)uit :> ".format(total_links)
+            else:
+                prompt = "Select [1-{}], B)ack, M)ain, Q)uit :> ".format(total_links)
+            
+            try:
+                response = input(prompt).strip().lower()
+            except EOFError:
+                return None
+            
+            if response == 'q':
+                return None
+            elif response == 'b':
+                return None  # Back to content
+            elif response == 'm':
+                return None  # Return to content
+            elif response == '' and end < total_links:
+                start = end  # Next page
+                continue
+            elif response == '':
+                return None  # At end, return to content
+            elif response.isdigit():
+                idx = int(response) - 1
+                if 0 <= idx < total_links:
+                    return self.nav_links[idx][0]
+            
+            # Invalid input, stay on current page
         
         return None
     
@@ -745,11 +768,13 @@ class HTMLViewer:
             
             if end < total_links:
                 try:
-                    response = input("\n(Enter=more, #=select, M=main) :> ").strip().lower()
+                    response = input("\n(Enter=more, #=select, B)ack, M=main) :> ").strip().lower()
                 except EOFError:
                     return None
                 
-                if response == 'm' or response == '':
+                if response == 'b':
+                    return None  # Back to content
+                elif response == 'm' or response == '':
                     if response == '':
                         start = end
                         continue
@@ -758,11 +783,13 @@ class HTMLViewer:
                     return self._get_content_link(int(response))
             else:
                 try:
-                    response = input("\nSelect [1-{}], M)ain :> ".format(total_links)).strip().lower()
+                    response = input("\nSelect [1-{}], B)ack, M)ain :> ".format(total_links)).strip().lower()
                 except EOFError:
                     return None
                 
-                if response.isdigit():
+                if response == 'b':
+                    return None  # Back to content
+                elif response.isdigit():
                     return self._get_content_link(int(response))
                 return None
             
