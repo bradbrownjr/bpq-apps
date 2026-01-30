@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.0
+Version: 1.1
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.0"
+VERSION = "1.1"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -214,6 +214,14 @@ class HTMLParser:
         # Try to identify and extract nav sections
         nav_html, content_html = self._separate_nav_content(html)
         
+        # Remove dropdown buttons from content (CSS menu labels)
+        content_html = re.sub(r'<button[^>]*class=["\'][^"\']*dropbtn[^"\']*["\'][^>]*>.*?</button>', '', 
+                              content_html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove dropdown wrapper divs (the menu container structure)
+        content_html = re.sub(r'<div[^>]*class=["\'][^"\']*dropdown[^"\']*["\'][^>]*>\s*</div>', '', 
+                              content_html, flags=re.DOTALL | re.IGNORECASE)
+        
         # Parse nav links (don't number them in text, store separately)
         self._extract_nav_links(nav_html)
         
@@ -232,7 +240,8 @@ class HTMLParser:
         Looks for:
         - <nav> tags
         - <header> tags with multiple links
-        - <div> with nav/menu in class/id
+        - <div> with nav/menu/dropdown/container in class/id
+        - CSS dropdown menus (dropdown-content class)
         - Dense link clusters at top of document
         """
         nav_parts = []
@@ -247,20 +256,46 @@ class HTMLParser:
         # Extract <header> tags
         header_matches = re.findall(r'<header[^>]*>.*?</header>', html, flags=re.DOTALL | re.IGNORECASE)
         for match in header_matches:
-            # Only treat as nav if it has multiple links
             link_count = len(re.findall(r'<a[^>]+href=', match, re.IGNORECASE))
             if link_count >= self.nav_threshold:
                 nav_parts.append(match)
                 content_html = content_html.replace(match, '')
         
-        # Extract divs with nav/menu classes
-        nav_div_pattern = r'<div[^>]+(?:class|id)=["\'][^"\']*(?:nav|menu|sidebar|header)[^"\']*["\'][^>]*>.*?</div>'
-        nav_div_matches = re.findall(nav_div_pattern, html, flags=re.DOTALL | re.IGNORECASE)
-        for match in nav_div_matches:
-            link_count = len(re.findall(r'<a[^>]+href=', match, re.IGNORECASE))
-            if link_count >= self.nav_threshold:
-                nav_parts.append(match)
-                content_html = content_html.replace(match, '')
+        # Extract CSS dropdown menu structures (div.dropdown containing button + dropdown-content)
+        # These are complete nav menu items that should be removed entirely
+        dropdown_wrapper_pattern = r'<div[^>]+class=["\'][^"\']*dropdown[^"\']*["\'][^>]*>'
+        for match in re.finditer(dropdown_wrapper_pattern, content_html, flags=re.IGNORECASE):
+            div_content = self._extract_balanced_tag(content_html, match.start(), 'div')
+            if div_content:
+                # Check if it contains dropdown-content (actual menu) or links
+                if 'dropdown-content' in div_content.lower() or len(re.findall(r'<a[^>]+href=', div_content, re.IGNORECASE)) >= 2:
+                    nav_parts.append(div_content)
+        
+        # Remove identified dropdown wrappers from content
+        for nav_part in nav_parts:
+            if nav_part in content_html:
+                content_html = content_html.replace(nav_part, '', 1)
+        
+        # Extract divs with nav/menu/sidebar/header classes (but not dropdown - already handled)
+        nav_class_keywords = r'(?:nav|menu|sidebar|header|container)'
+        nav_div_pattern = r'<div[^>]+(?:class|id)=["\'][^"\']*' + nav_class_keywords + r'[^"\']*["\'][^>]*>'
+        
+        # For each matching div start, extract links only (not whole div - too greedy)
+        for match in re.finditer(nav_div_pattern, content_html, flags=re.IGNORECASE):
+            # Find the extent of this div by counting nested divs
+            div_start = match.start()
+            div_content = self._extract_balanced_tag(content_html, div_start, 'div')
+            if div_content:
+                link_count = len(re.findall(r'<a[^>]+href=', div_content, re.IGNORECASE))
+                # Only treat as nav if link-dense (many links, short text)
+                text_only = re.sub(r'<[^>]+>', ' ', div_content)
+                text_only = re.sub(r'\s+', ' ', text_only).strip()
+                if link_count >= 3 and (len(text_only) < link_count * 60 or link_count >= self.nav_threshold):
+                    nav_parts.append(div_content)
+        
+        # Remove identified nav divs from content
+        for nav_part in nav_parts:
+            content_html = content_html.replace(nav_part, '', 1)
         
         # Detect dense link clusters at top (fallback heuristic)
         if not nav_parts:
@@ -268,6 +303,42 @@ class HTMLParser:
         
         nav_html = '\n'.join(nav_parts)
         return nav_html, content_html
+    
+    def _extract_balanced_tag(self, html, start_pos, tag_name):
+        """
+        Extract content of a tag with balanced nesting.
+        Returns the full tag content including opening and closing tags.
+        """
+        open_tag = '<{}'.format(tag_name)
+        close_tag = '</{}>'.format(tag_name)
+        
+        # Find the end of the opening tag
+        tag_end = html.find('>', start_pos)
+        if tag_end == -1:
+            return None
+        
+        pos = tag_end + 1
+        depth = 1
+        max_search = min(len(html), start_pos + 50000)  # Limit search depth
+        
+        while pos < max_search and depth > 0:
+            # Find next open or close tag
+            next_open = html.lower().find(open_tag.lower(), pos)
+            next_close = html.lower().find(close_tag.lower(), pos)
+            
+            if next_close == -1:
+                return None  # Malformed HTML
+            
+            if next_open != -1 and next_open < next_close:
+                depth += 1
+                pos = next_open + len(open_tag)
+            else:
+                depth -= 1
+                pos = next_close + len(close_tag)
+        
+        if depth == 0:
+            return html[start_pos:pos]
+        return None
     
     def _detect_link_cluster(self, html):
         """
@@ -383,13 +454,40 @@ class HTMLParser:
         return text
     
     def _clean_text(self, text):
-        """Clean up text and split into lines"""
-        # Normalize whitespace
-        lines = []
+        """Clean up text and split into lines, merging orphan lines"""
+        # Normalize whitespace and split
+        raw_lines = []
         for line in text.split('\n'):
             line = re.sub(r'\s+', ' ', line).strip()
             if line:
-                lines.append(line)
+                raw_lines.append(line)
+        
+        # Merge short orphan lines with adjacent lines
+        # Short lines that don't end with strong punctuation are likely orphans
+        lines = []
+        i = 0
+        while i < len(raw_lines):
+            line = raw_lines[i]
+            
+            # Check if this line should be merged with the next
+            # Merge conditions: short line without terminal punctuation
+            while (len(line) < 50 and 
+                   i + 1 < len(raw_lines) and
+                   not line.endswith(('.', '!', '?', ']'))):
+                # Only stop merging if next line is a clear new paragraph
+                # (starts with capital after our complete sentence, or is a heading-like all caps)
+                next_line = raw_lines[i + 1]
+                
+                # Don't merge if both lines are very short (likely a list or headings)
+                if len(line) < 15 and len(next_line) < 15 and next_line.isupper():
+                    break
+                    
+                # Merge with next line
+                i += 1
+                line = line + ' ' + next_line
+            
+            lines.append(line)
+            i += 1
         
         return lines
 
