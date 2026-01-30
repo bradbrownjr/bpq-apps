@@ -36,7 +36,9 @@ CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater.conf')
 
 # RepeaterBook API base URL
-API_BASE = "https://www.repeaterbook.com/api/export.php"
+# Note: RepeaterBook's API may require registration or have rate limits
+# Using state export endpoint as fallback
+API_BASE = "https://www.repeaterbook.com/api/exportROW.php"
 
 LOGO = r"""
                            _            
@@ -513,10 +515,15 @@ def show_about():
     print("-" * 40)
     print(wrap_text(
         "Search for amateur radio repeaters using "
-        "RepeaterBook.com API. Search by gridsquare, "
-        "callsign, frequency, or state with proximity "
-        "radius. Callsign lookup via HamDB API. "
-        "Results cached for 30 days for offline access.", 40
+        "RepeaterBook.com data. Search by state for "
+        "best results. Gridsquare/callsign searches "
+        "default to your state. Results cached for "
+        "30 days for offline access.", 40
+    ))
+    print("\n" + wrap_text(
+        "Note: RepeaterBook API has authentication "
+        "limits. Use State search (option 4) for "
+        "most reliable results.", 40
     ))
     print("\n" + wrap_text(
         "Data courtesy of RepeaterBook.com - the "
