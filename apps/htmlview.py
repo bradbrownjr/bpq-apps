@@ -613,6 +613,9 @@ class HTMLViewer:
         self.selected_link = None
         self.go_back = False
         
+        # Extract page title
+        title = self._extract_title(html)
+        
         # Parse HTML
         self.text_lines, self.nav_links, self.content_links = self.parser.parse(html)
         
@@ -623,14 +626,47 @@ class HTMLViewer:
             self.wrapped_lines.extend(wrapped if wrapped else [''])
         
         # Display with pagination
-        self._paginate()
+        self._paginate(title)
         
         return self.selected_link
     
-    def _paginate(self):
+    def _extract_title(self, html):
+        """Extract page title from HTML"""
+        # Try <title> tag first
+        match = re.search(r'<title[^>]*>(.*?)</title>', html, flags=re.DOTALL | re.IGNORECASE)
+        if match:
+            title = match.group(1).strip()
+            title = re.sub(r'<[^>]+>', '', title)  # Remove any tags
+            title = decode_html_entities(title)
+            title = re.sub(r'\s+', ' ', title).strip()
+            if title:
+                return title
+        
+        # Fallback: try first h1 or h2
+        for tag in ['h1', 'h2', 'h3']:
+            match = re.search(r'<{0}[^>]*>(.*?)</{0}>'.format(tag), html, 
+                            flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                title = match.group(1).strip()
+                title = re.sub(r'<[^>]+>', '', title)
+                title = decode_html_entities(title)
+                title = re.sub(r'\s+', ' ', title).strip()
+                if title and len(title) < 100:  # Reasonable length
+                    return title
+        
+        return None
+    
+    def _paginate(self, title=None):
         """Display content with pagination and navigation options"""
         total_lines = len(self.wrapped_lines)
         current_pos = 0
+        
+        # Display page header with title
+        if title:
+            sep_line = "-" * len(title)
+            print(sep_line)
+            print(title)
+            print(sep_line)
         
         while current_pos < total_lines:
             end_pos = min(current_pos + self.page_size, total_lines)
