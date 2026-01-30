@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.7
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.4"
+VERSION = "1.7"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -272,15 +272,24 @@ class HTMLParser:
         - <div> with nav/menu/dropdown/container in class/id
         - CSS dropdown menus (dropdown-content class)
         - Dense link clusters at top of document
-        """
-        nav_parts = []
-        content_html = html
         
-        # Extract <nav> tags
-        nav_matches = re.findall(r'<nav[^>]*>.*?</nav>', html, flags=re.DOTALL | re.IGNORECASE)
-        for match in nav_matches:
-            nav_parts.append(match)
-            content_html = content_html.replace(match, '')
+        Excludes article/main sections to avoid blog titles.
+        """
+        # Remove article/main content sections to avoid extracting blog titles as nav
+        html_for_nav = re.sub(r'<(article|main)[^>]*>.*?</\\1>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        nav_parts = []
+        content_html = html_for_nav
+        
+        # Extract <nav> tags (use html_for_nav which has articles removed)
+        nav_matches = re.findall(r'<nav[^>]*>.*?</nav>', html_for_nav, flags=re.DOTALL | re.IGNORECASE)
+        if nav_matches:
+            # Found explicit <nav> tags - use ONLY these (skip all heuristics)
+            # This prevents WordPress/CMS blog titles from being detected as nav
+            for match in nav_matches:
+                nav_parts.append(match)
+            nav_html = '\\n'.join(nav_parts)
+            return nav_html, html  # Return original html as content
         
         # Extract <header> tags
         header_matches = re.findall(r'<header[^>]*>.*?</header>', html, flags=re.DOTALL | re.IGNORECASE)
@@ -333,9 +342,8 @@ class HTMLParser:
         for match in re.finditer(top_link_pattern, content_html[:3000], flags=re.IGNORECASE):
             href = match.group(1)
             text = match.group(2).strip()
-            # Only consider links that look like navigation (not external, not long text)
-            if (not href.startswith('http') or href.startswith('http://www.ws1sm.com') or 
-                href.startswith('https://www.ws1sm.com')) and len(text) < 30 and text.lower() not in ['click here', 'read more']:
+            # Only consider links that look like navigation (short text, not "read more" style)
+            if len(text) < 30 and text.lower() not in ['click here', 'read more', 'continue reading', 'learn more', 'more']:
                 top_links.append((match.group(0), href, text))
         
         # If we found 2-8 links at the top, they're likely nav
@@ -779,7 +787,7 @@ class HTMLViewer:
                 elif response == 'b':
                     self.go_back = True
                     break
-                elif response == 'p' and has_nav:
+                elif response == 's' and has_nav:
                     nav_result = self._show_nav_menu()
                     if nav_result == '__EXIT__':
                         self.selected_link = '__EXIT__'

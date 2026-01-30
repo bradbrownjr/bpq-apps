@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.7, www.py v1.4 - Version Bump, Key Fix, WordPress Nav] - 2026-01-30
+### Fixed
+- **htmlview.py v1.7**: Version bump + key handler fix + improved WordPress nav detection
+  - S)ite menu key handler now works (was still using 'p' instead of 's')
+  - WordPress/CMS nav detection: Use ONLY explicit `<nav>` tags when present
+  - Filters article/main sections before detection to avoid blog post titles
+  - Result: mainepacketradio.org shows 11 clean menu items (was 70 with blog titles)
+- **www.py v1.4**: Version bump for consistency
+
 ## [htmlview.py v1.6.1 - Fix Site Menu Q)uit Signal] - 2026-01-30
 ### Fixed
 - **htmlview.py v1.6.1**: Q)uit from site menu now exits app
