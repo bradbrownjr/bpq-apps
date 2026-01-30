@@ -648,8 +648,11 @@ class HTMLViewer:
                 print("")
                 prompt_parts = []
                 
-                # Sort by scope: quit, page menu, links, enter more, back, main
+                # Prompt order: furthest to closest from current page
+                # Exit/Nav (furthest) -> Local content (closest)
                 prompt_parts.append("Q)uit")
+                prompt_parts.append("M)ain")
+                prompt_parts.append("B)ack")
                 if has_nav:
                     prompt_parts.append("P)age menu")
                 if has_links:
@@ -657,8 +660,6 @@ class HTMLViewer:
                     prompt_parts.append("#=follow")
                 if has_more:
                     prompt_parts.append("Enter=more")
-                prompt_parts.append("B)ack")
-                prompt_parts.append("M)ain")
                 
                 # Calculate page numbers instead of line numbers
                 page_size = self.page_size
@@ -739,11 +740,11 @@ class HTMLViewer:
             
             print("-" * 40)
             
-            # Build prompt based on position
+            # Build prompt based on position (furthest to closest)
             if end < total_links:
-                prompt = "Select [1-{}], Enter=more, B)ack, M)ain, Q)uit :> ".format(total_links)
+                prompt = "Select [1-{}], Q)uit, M)ain, B)ack, Enter=more :> ".format(total_links)
             else:
-                prompt = "Select [1-{}], B)ack, M)ain, Q)uit :> ".format(total_links)
+                prompt = "Select [1-{}], Q)uit, M)ain, B)ack :> ".format(total_links)
             
             try:
                 response = input(prompt).strip().lower()
@@ -790,7 +791,7 @@ class HTMLViewer:
             
             if end < total_links:
                 try:
-                    response = input("\n(Enter=more, #=select, B)ack, M)ain, Q)uit) :> ").strip().lower()
+                    response = input("\n(Q)uit, M)ain, B)ack, #=select, Enter=more) :> ").strip().lower()
                 except EOFError:
                     return None
                 
@@ -807,7 +808,7 @@ class HTMLViewer:
                     return self._get_content_link(int(response))
             else:
                 try:
-                    response = input("\nSelect [1-{}], B)ack, M)ain, Q)uit :> ".format(total_links)).strip().lower()
+                    response = input("\nSelect [1-{}], Q)uit, M)ain, B)ack :> ".format(total_links)).strip().lower()
                 except EOFError:
                     return None
                 
