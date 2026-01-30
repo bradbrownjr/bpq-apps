@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [eventcal.py v2.6 - Remove Word Wrapping] - 2026-01-30
+### Changed
+- **eventcal.py v2.6**: Removed automatic word wrapping
+  - Display text as-is from calendar source (preserves original formatting)
+  - No more line breaking on locations or descriptions
+  - Calendar content controls its own formatting
+
 ## [eventcal.py v2.5 - Wordwrap Fix] - 2026-01-30
 ### Fixed
 - **eventcal.py v2.5**: Fixed wordwrap in event detail view

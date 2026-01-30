@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 2.5
+Version: 2.6
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
@@ -29,7 +29,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.5"
+VERSION = "2.6"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eventcal_cache.json')
 
@@ -623,9 +623,7 @@ def display_events(events, show_all=False, page=0, page_size=5, start_at_today=F
         if location:
             clean_loc = clean_location(location)
             if clean_loc:
-                loc_lines = wrap_text("Location: {}".format(clean_loc), width - 3)
-                for line in loc_lines:
-                    print("   {}".format(line))
+                print("   Location: {}".format(clean_loc))
         
         # Display dates with timezone conversion
         utc_line = None
@@ -756,13 +754,11 @@ def show_event_detail(event):
     print(summary)
     print("-" * 40)
     
-    # Display location with word wrapping
+    # Display location
     if location:
         clean_loc = clean_location(location)
         if clean_loc:
-            loc_lines = wrap_text("Location: {}".format(clean_loc), width)
-            for line in loc_lines:
-                print(line)
+            print("Location: {}".format(clean_loc))
             print("")
     
     # Display dates with timezone
@@ -807,16 +803,8 @@ def show_event_detail(event):
         # Strip HTML tags and convert escaped newlines
         clean_desc = strip_html(description)
         if clean_desc:
-            # Handle multi-paragraph text
-            paragraphs = clean_desc.split('\n')
-            for para in paragraphs:
-                para = para.strip()
-                if para:
-                    para_lines = wrap_text(para, width)
-                    for line in para_lines:
-                        print(line)
-                else:
-                    print("")  # Preserve blank lines between paragraphs
+            # Print as-is, preserving original formatting
+            print(clean_desc)
     
     print("-" * 40)
     try:
