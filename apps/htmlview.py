@@ -27,8 +27,9 @@ VERSION = "1.4"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
-DEFAULT_PAGE_SIZE = 24
+DEFAULT_PAGE_SIZE = 20  # Content lines per page (accounts for title/prompt overhead)
 DEFAULT_TERM_WIDTH = 80
+DEFAULT_TITLE_WIDTH = 40  # Max width for page title and separators (BPQ standard)
 NAV_LINK_THRESHOLD = 5  # Min consecutive links to consider as nav menu
 NAV_SCAN_LINES = 50     # Lines to scan for nav detection
 
@@ -631,7 +632,7 @@ class HTMLViewer:
         return self.selected_link
     
     def _extract_title(self, html):
-        """Extract page title from HTML"""
+        """Extract page title from HTML, capped at title width"""
         # Try <title> tag first
         match = re.search(r'<title[^>]*>(.*?)</title>', html, flags=re.DOTALL | re.IGNORECASE)
         if match:
@@ -640,6 +641,9 @@ class HTMLViewer:
             title = decode_html_entities(title)
             title = re.sub(r'\s+', ' ', title).strip()
             if title:
+                # Truncate to title width
+                if len(title) > DEFAULT_TITLE_WIDTH:
+                    title = title[:DEFAULT_TITLE_WIDTH - 3] + '...'
                 return title
         
         # Fallback: try first h1 or h2
@@ -652,6 +656,9 @@ class HTMLViewer:
                 title = decode_html_entities(title)
                 title = re.sub(r'\s+', ' ', title).strip()
                 if title and len(title) < 100:  # Reasonable length
+                    # Truncate to title width
+                    if len(title) > DEFAULT_TITLE_WIDTH:
+                        title = title[:DEFAULT_TITLE_WIDTH - 3] + '...'
                     return title
         
         return None
@@ -661,9 +668,11 @@ class HTMLViewer:
         total_lines = len(self.wrapped_lines)
         current_pos = 0
         
-        # Display page header with title
+        # Display page header with title (capped at title width)
         if title:
-            sep_line = "-" * len(title)
+            # Use actual title length, but cap separator to DEFAULT_TITLE_WIDTH
+            sep_width = min(len(title), DEFAULT_TITLE_WIDTH)
+            sep_line = "-" * sep_width
             print(sep_line)
             print(title)
             print(sep_line)
