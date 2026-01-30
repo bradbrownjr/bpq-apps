@@ -398,9 +398,13 @@ battleship  stream  tcp  nowait  ect  /usr/bin/python3  python3 /home/ect/games/
 **Testing**: `telnet localhost 23000` (port from /etc/services)
 
 ## Testing
-- SSH: `ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org` (lowercase -p for port, use interactive mode for sudo commands)
+- SSH: `ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org` (lowercase -p for port)
 - SCP: `scp -i ~/.ssh/id_rsa -P 4722 file.py ect@ws1ec.mainepacketradio.org:/path/` (uppercase -P for port)
-- For commands requiring sudo: Use interactive SSH and user will provide password when prompted
+- **Sudo commands over SSH**: Use `-t` flag to force pseudo-terminal allocation for password prompt
+  - Example: `ssh -i ~/.ssh/id_rsa -p 4722 -t ect@ws1ec.mainepacketradio.org "sudo command && sudo another_command"`
+  - User will be prompted for password interactively
+  - Multiple sudo commands can be chained with `&&`
+  - Always echo confirmation message at end of command chain
 - Verify Py3.5.3 compatibility, ASCII output
 - WSL terminals required (SSH keys configured, POSIX compatibility)
 - Never use PowerShell for SSH or remote commands
@@ -521,23 +525,28 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 
 **Deploying to WS1EC:**
 ```bash
-# SSH into node (lowercase -p for port, interactive mode)
-# Use interactive SSH for sudo commands - user provides password when prompted
-ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org
-
-# Or SCP file directly (uppercase -P for port)
+# SCP file to node (uppercase -P for port)
 scp -i ~/.ssh/id_rsa -P 4722 appname.py ect@ws1ec.mainepacketradio.org:/home/ect/apps/
 
-# Update app (auto-downloaded if version bumped)
-# Or manual deployment:
+# Make executable
+ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org "chmod +x /home/ect/apps/appname.py"
+
+# Add service and inetd entry with sudo (use -t flag for interactive password prompt)
+ssh -i ~/.ssh/id_rsa -p 4722 -t ect@ws1ec.mainepacketradio.org "sudo sed -i '\$ a appname        PORT/tcp       # Description' /etc/services && sudo bash -c \"echo 'appname  stream  tcp  nowait  ect  /home/ect/apps/appname.py  appname.py' >> /etc/inetd.conf\" && sudo killall -HUP inetd && echo 'Services configured'"
+
+# Add APPLICATION to bpq32.cfg
+ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org "sed -i '/^APPLICATION [0-9]*,/a APPLICATION X,APPNAME,C 9 HOST X S K,WS1EC-6,CCEDX,255' ~/linbpq/bpq32.cfg"
+
+# Or manual deployment via interactive SSH:
+ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org
 cd ~/apps
 wget -O appname.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/appname.py
 chmod +x appname.py
 
-# Restart services (if inetd.conf changed) - requires interactive SSH for sudo prompt
+# Restart services (requires sudo password)
 sudo killall -HUP inetd
 
-# Restart BPQ (if bpq32.cfg changed) - requires interactive SSH for sudo prompt
+# Restart BPQ if bpq32.cfg changed (requires sudo password)
 sudo systemctl restart linbpq
 ```
 
