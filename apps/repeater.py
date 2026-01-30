@@ -473,7 +473,7 @@ def main_menu(user_callsign=None):
     
     while True:
         try:
-            choice = raw_input("Menu: [1-6 A Q] :> ").strip().upper()
+            choice = input("Menu: [1-6 A Q] :> ").strip().upper()
         except EOFError:
             return
         
@@ -517,7 +517,7 @@ def show_about():
     print("Version: {}".format(VERSION))
     print("-" * 40)
     try:
-        raw_input("\nPress Enter to continue...")
+        input("\nPress Enter to continue...")
     except EOFError:
         pass
 
@@ -529,7 +529,7 @@ def search_by_gridsquare():
     print("-" * 40)
     
     try:
-        grid = raw_input("Gridsquare (e.g., FN43hp): ").strip().upper()
+        grid = input("Gridsquare (e.g., FN43hp): ").strip().upper()
     except EOFError:
         return
     
@@ -548,13 +548,13 @@ def search_by_gridsquare():
     save_config(config)
     
     try:
-        radius = raw_input("Radius in miles [25]: ").strip()
+        radius = input("Radius in miles [25]: ").strip()
         radius = int(radius) if radius else 25
     except (EOFError, ValueError):
         radius = 25
     
     try:
-        band_input = raw_input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -617,11 +617,11 @@ def search_by_callsign(default_callsign=None):
     try:
         if default_callsign:
             prompt = "Callsign [{}]: ".format(default_callsign)
-            callsign = raw_input(prompt).strip().upper()
+            callsign = input(prompt).strip().upper()
             if not callsign:
                 callsign = default_callsign
         else:
-            callsign = raw_input("Callsign: ").strip().upper()
+            callsign = input("Callsign: ").strip().upper()
     except EOFError:
         return
     
@@ -656,13 +656,13 @@ def search_by_callsign(default_callsign=None):
     save_config(config)
     
     try:
-        radius = raw_input("Radius in miles [25]: ").strip()
+        radius = input("Radius in miles [25]: ").strip()
         radius = int(radius) if radius else 25
     except (EOFError, ValueError):
         radius = 25
     
     try:
-        band_input = raw_input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -714,7 +714,7 @@ def search_by_frequency():
     print("-" * 40)
     
     try:
-        freq_input = raw_input("Frequency in MHz (e.g., 146.52): ").strip()
+        freq_input = input("Frequency in MHz (e.g., 146.52): ").strip()
     except EOFError:
         return
     
@@ -729,7 +729,7 @@ def search_by_frequency():
         return
     
     try:
-        grid = raw_input("Your gridsquare (e.g., FN43hp): ").strip().upper()
+        grid = input("Your gridsquare (e.g., FN43hp): ").strip().upper()
     except EOFError:
         return
     
@@ -748,7 +748,7 @@ def search_by_frequency():
     save_config(config)
     
     try:
-        radius = raw_input("Search radius in miles [50]: ").strip()
+        radius = input("Search radius in miles [50]: ").strip()
         radius = int(radius) if radius else 50
     except (EOFError, ValueError):
         radius = 50
@@ -793,13 +793,13 @@ def search_my_location():
     print("-" * 40)
     
     try:
-        radius = raw_input("Radius in miles [25]: ").strip()
+        radius = input("Radius in miles [25]: ").strip()
         radius = int(radius) if radius else 25
     except (EOFError, ValueError):
         radius = 25
     
     try:
-        band_input = raw_input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -859,7 +859,7 @@ def search_by_state():
     print("-" * 40)
     
     try:
-        state = raw_input("State (e.g., Maine): ").strip()
+        state = input("State (e.g., Maine): ").strip()
     except EOFError:
         return
     
@@ -868,18 +868,18 @@ def search_by_state():
         return
     
     try:
-        city = raw_input("City (optional): ").strip()
+        city = input("City (optional): ").strip()
     except EOFError:
         city = ""
     
     try:
-        radius = raw_input("Radius in miles [25]: ").strip()
+        radius = input("Radius in miles [25]: ").strip()
         radius = int(radius) if radius else 25
     except (EOFError, ValueError):
         radius = 25
     
     try:
-        band_input = raw_input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -936,7 +936,7 @@ def view_cached_results():
     print("-" * 40)
     
     try:
-        choice = raw_input("Select [1-{}] or Q: ".format(len(cache_list))).strip()
+        choice = input("Select [1-{}] or Q: ".format(len(cache_list))).strip()
     except EOFError:
         return
     
@@ -972,7 +972,7 @@ def browse_results(repeaters):
             prompt = "M)enu Q :> "
         
         try:
-            choice = raw_input(prompt).strip().upper()
+            choice = input(prompt).strip().upper()
         except EOFError:
             return
         
