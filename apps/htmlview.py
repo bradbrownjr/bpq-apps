@@ -1,0 +1,679 @@
+#!/usr/bin/env python3
+"""
+HTML Viewer Module for Packet Radio
+------------------------------------
+Reusable text-mode HTML rendering with intelligent link separation.
+Separates navigation menus from content links for cleaner viewing.
+
+Features:
+- Detects and separates nav links from content links
+- Strips JavaScript, CSS, images for text-only rendering
+- Numbered link navigation
+- Pagination with P)age menu, L)inks, N)ext, B)ack, Q)uit
+- Smart word wrapping for terminal width
+- Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
+
+Author: Brad Brown KC1JMH
+Version: 1.0
+Date: January 2026
+"""
+
+import sys
+import os
+import re
+import textwrap
+
+VERSION = "1.0"
+MODULE_NAME = "htmlview.py"
+
+# Default settings (can be overridden)
+DEFAULT_PAGE_SIZE = 24
+DEFAULT_TERM_WIDTH = 80
+NAV_LINK_THRESHOLD = 5  # Min consecutive links to consider as nav menu
+NAV_SCAN_LINES = 50     # Lines to scan for nav detection
+
+
+def check_htmlview_update():
+    """Check if htmlview module has an update available on GitHub"""
+    try:
+        import urllib.request
+        import stat
+        
+        github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(MODULE_NAME)
+        with urllib.request.urlopen(github_url, timeout=3) as response:
+            content = response.read().decode('utf-8')
+        
+        version_match = re.search(r'Version:\s*([0-9.]+)', content)
+        if version_match:
+            github_version = version_match.group(1)
+            
+            if _compare_versions(github_version, VERSION) > 0:
+                # Download the new version
+                script_path = os.path.abspath(__file__)
+                try:
+                    temp_path = script_path + '.tmp'
+                    with open(temp_path, 'wb') as f:
+                        f.write(content.encode('utf-8'))
+                    
+                    os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | 
+                             stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                    os.replace(temp_path, script_path)
+                    return True  # Updated
+                except Exception:
+                    if os.path.exists(temp_path):
+                        try:
+                            os.remove(temp_path)
+                        except:
+                            pass
+    except Exception:
+        pass
+    return False
+
+
+def ensure_htmlview_available(app_dir=None):
+    """
+    Ensure htmlview.py is available and up-to-date.
+    Call this from consuming apps at startup.
+    
+    Args:
+        app_dir: Directory where htmlview.py should be located.
+                 Defaults to same directory as calling script.
+    
+    Returns:
+        True if module is available, False if download failed
+    """
+    if app_dir is None:
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    module_path = os.path.join(app_dir, MODULE_NAME)
+    
+    # Check if module exists
+    if os.path.exists(module_path):
+        # Module exists, check for updates silently
+        try:
+            check_htmlview_update()
+        except:
+            pass
+        return True
+    
+    # Module doesn't exist, try to download
+    try:
+        import urllib.request
+        import stat
+        
+        github_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/{}".format(MODULE_NAME)
+        with urllib.request.urlopen(github_url, timeout=3) as response:
+            content = response.read()
+        
+        with open(module_path, 'wb') as f:
+            f.write(content)
+        
+        os.chmod(module_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | 
+                 stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        return True
+    except Exception:
+        return False
+
+
+def _compare_versions(version1, version2):
+    """Compare two version strings"""
+    v1_parts = [int(x) for x in version1.split('.')]
+    v2_parts = [int(x) for x in version2.split('.')]
+    
+    max_len = max(len(v1_parts), len(v2_parts))
+    v1_parts += [0] * (max_len - len(v1_parts))
+    v2_parts += [0] * (max_len - len(v2_parts))
+    
+    for i in range(max_len):
+        if v1_parts[i] > v2_parts[i]:
+            return 1
+        elif v1_parts[i] < v2_parts[i]:
+            return -1
+    return 0
+
+
+def decode_html_entities(text):
+    """Decode common HTML entities to ASCII"""
+    entities = {
+        '&nbsp;': ' ',
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+        '&apos;': "'",
+        '&mdash;': '--',
+        '&ndash;': '-',
+        '&hellip;': '...',
+        '&copy;': '(c)',
+        '&reg;': '(R)',
+        '&trade;': '(TM)',
+        '&bull;': '*',
+        '&middot;': '-',
+        '&laquo;': '<<',
+        '&raquo;': '>>',
+        '&ldquo;': '"',
+        '&rdquo;': '"',
+        '&lsquo;': "'",
+        '&rsquo;': "'",
+        '&deg;': ' deg',
+        '&plusmn;': '+/-',
+        '&times;': 'x',
+        '&divide;': '/',
+        '&frac12;': '1/2',
+        '&frac14;': '1/4',
+        '&frac34;': '3/4',
+    }
+    
+    for entity, replacement in entities.items():
+        text = text.replace(entity, replacement)
+    
+    # Handle numeric entities
+    text = re.sub(r'&#(\d+);', lambda m: chr(int(m.group(1))) if int(m.group(1)) < 128 else '?', text)
+    text = re.sub(r'&#x([0-9a-fA-F]+);', lambda m: chr(int(m.group(1), 16)) if int(m.group(1), 16) < 128 else '?', text)
+    
+    return text
+
+
+class HTMLParser:
+    """
+    Parse HTML and extract text with intelligent link separation.
+    
+    Separates navigation links (menus, sidebars) from content links
+    based on link density and position in the document.
+    """
+    
+    def __init__(self, nav_threshold=NAV_LINK_THRESHOLD, nav_scan_lines=NAV_SCAN_LINES):
+        self.nav_threshold = nav_threshold
+        self.nav_scan_lines = nav_scan_lines
+        self.reset()
+    
+    def reset(self):
+        """Reset parser state"""
+        self.nav_links = []      # Navigation menu links
+        self.content_links = []  # In-content links
+        self.text_lines = []     # Parsed text content
+        self.raw_html = ""
+    
+    def parse(self, html):
+        """
+        Parse HTML and separate nav links from content.
+        
+        Returns:
+            tuple: (text_lines, nav_links, content_links)
+        """
+        self.reset()
+        self.raw_html = html
+        
+        # Remove script, style, and other non-content tags
+        html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<noscript[^>]*>.*?</noscript>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
+        
+        # Try to identify and extract nav sections
+        nav_html, content_html = self._separate_nav_content(html)
+        
+        # Parse nav links (don't number them in text, store separately)
+        self._extract_nav_links(nav_html)
+        
+        # Parse content with numbered links
+        text = self._html_to_text(content_html, number_links=True)
+        
+        # Wrap and clean text
+        self.text_lines = self._clean_text(text)
+        
+        return self.text_lines, self.nav_links, self.content_links
+    
+    def _separate_nav_content(self, html):
+        """
+        Separate navigation elements from main content.
+        
+        Looks for:
+        - <nav> tags
+        - <header> tags with multiple links
+        - <div> with nav/menu in class/id
+        - Dense link clusters at top of document
+        """
+        nav_parts = []
+        content_html = html
+        
+        # Extract <nav> tags
+        nav_matches = re.findall(r'<nav[^>]*>.*?</nav>', html, flags=re.DOTALL | re.IGNORECASE)
+        for match in nav_matches:
+            nav_parts.append(match)
+            content_html = content_html.replace(match, '')
+        
+        # Extract <header> tags
+        header_matches = re.findall(r'<header[^>]*>.*?</header>', html, flags=re.DOTALL | re.IGNORECASE)
+        for match in header_matches:
+            # Only treat as nav if it has multiple links
+            link_count = len(re.findall(r'<a[^>]+href=', match, re.IGNORECASE))
+            if link_count >= self.nav_threshold:
+                nav_parts.append(match)
+                content_html = content_html.replace(match, '')
+        
+        # Extract divs with nav/menu classes
+        nav_div_pattern = r'<div[^>]+(?:class|id)=["\'][^"\']*(?:nav|menu|sidebar|header)[^"\']*["\'][^>]*>.*?</div>'
+        nav_div_matches = re.findall(nav_div_pattern, html, flags=re.DOTALL | re.IGNORECASE)
+        for match in nav_div_matches:
+            link_count = len(re.findall(r'<a[^>]+href=', match, re.IGNORECASE))
+            if link_count >= self.nav_threshold:
+                nav_parts.append(match)
+                content_html = content_html.replace(match, '')
+        
+        # Detect dense link clusters at top (fallback heuristic)
+        if not nav_parts:
+            nav_parts, content_html = self._detect_link_cluster(content_html)
+        
+        nav_html = '\n'.join(nav_parts)
+        return nav_html, content_html
+    
+    def _detect_link_cluster(self, html):
+        """
+        Detect dense link clusters at the beginning of content.
+        
+        Heuristic: If we find N+ consecutive lines that are mostly links
+        with little other text, treat them as navigation.
+        """
+        nav_parts = []
+        
+        # Convert to text temporarily to analyze structure
+        temp_text = re.sub(r'<[^>]+>', '\n', html)
+        temp_lines = [l.strip() for l in temp_text.split('\n') if l.strip()]
+        
+        # Find links in the original HTML with their positions
+        link_pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>'
+        links_with_pos = [(m.start(), m.group(0), m.group(1), m.group(2)) 
+                         for m in re.finditer(link_pattern, html, flags=re.DOTALL | re.IGNORECASE)]
+        
+        if len(links_with_pos) < self.nav_threshold:
+            return [], html  # Not enough links to have a nav section
+        
+        # Check if first N links are clustered (within first portion of doc)
+        scan_limit = len(html) // 4  # First quarter of document
+        early_links = [l for l in links_with_pos if l[0] < scan_limit]
+        
+        if len(early_links) >= self.nav_threshold:
+            # Check link density - are these links close together?
+            if len(early_links) >= 2:
+                first_pos = early_links[0][0]
+                last_pos = early_links[min(self.nav_threshold - 1, len(early_links) - 1)][0]
+                region = html[first_pos:last_pos + len(early_links[-1][1])]
+                
+                # Calculate text-to-link ratio
+                text_only = re.sub(r'<[^>]+>', ' ', region)
+                text_only = re.sub(r'\s+', ' ', text_only).strip()
+                
+                # If the region is mostly links (short text between them), it's nav
+                avg_text_per_link = len(text_only) / len(early_links) if early_links else 999
+                
+                if avg_text_per_link < 50:  # Less than 50 chars avg between links = nav
+                    # Extract this region as nav
+                    nav_end = last_pos + len(early_links[-1][1]) + 100  # Buffer
+                    nav_html = html[:nav_end]
+                    content_html = html[nav_end:]
+                    return [nav_html], content_html
+        
+        return [], html
+    
+    def _extract_nav_links(self, nav_html):
+        """Extract links from navigation sections"""
+        link_pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>'
+        
+        for match in re.finditer(link_pattern, nav_html, flags=re.DOTALL | re.IGNORECASE):
+            href = match.group(1)
+            text = re.sub(r'<[^>]+>', '', match.group(2)).strip()
+            
+            # Skip empty, anchors, javascript
+            if not href or href.startswith('#') or href.startswith('javascript:'):
+                continue
+            
+            # Clean up link text
+            text = decode_html_entities(text)
+            text = re.sub(r'\s+', ' ', text).strip()
+            
+            if text and len(text) < 100:  # Skip overly long "links"
+                self.nav_links.append((href, text))
+    
+    def _html_to_text(self, html, number_links=True):
+        """Convert HTML to text, optionally numbering links"""
+        # Convert block elements to newlines
+        html = re.sub(r'</(p|div|h[1-6]|li|tr|br|article|section)>', '\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'<br\s*/?>', '\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'<(p|div|h[1-6]|li|tr|article|section)[^>]*>', '\n', html, flags=re.IGNORECASE)
+        
+        # Handle lists
+        html = re.sub(r'<[ou]l[^>]*>', '\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'</[ou]l>', '\n', html, flags=re.IGNORECASE)
+        
+        # Extract and number content links
+        link_counter = [0]  # Use list to allow modification in nested function
+        
+        def replace_link(match):
+            href = match.group(1)
+            text = re.sub(r'<[^>]+>', '', match.group(2)).strip()
+            
+            # Skip empty, anchors, javascript
+            if not href or href.startswith('#') or href.startswith('javascript:'):
+                return text
+            
+            text = decode_html_entities(text)
+            text = re.sub(r'\s+', ' ', text).strip()
+            
+            if not text:
+                return ''
+            
+            if number_links:
+                link_counter[0] += 1
+                self.content_links.append((link_counter[0], href, text))
+                return "{} [{}]".format(text, link_counter[0])
+            else:
+                return text
+        
+        html = re.sub(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', 
+                      replace_link, html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove remaining tags
+        text = re.sub(r'<[^>]+>', '', html)
+        
+        # Decode entities
+        text = decode_html_entities(text)
+        
+        return text
+    
+    def _clean_text(self, text):
+        """Clean up text and split into lines"""
+        # Normalize whitespace
+        lines = []
+        for line in text.split('\n'):
+            line = re.sub(r'\s+', ' ', line).strip()
+            if line:
+                lines.append(line)
+        
+        return lines
+
+
+class HTMLViewer:
+    """
+    Interactive HTML viewer with pagination and link navigation.
+    
+    Usage:
+        viewer = HTMLViewer(term_width=80, page_size=24)
+        viewer.view(html_content, base_url="http://example.com")
+        
+        # Get selected link URL (if user chose to follow a link)
+        if viewer.selected_link:
+            next_url = viewer.selected_link
+    """
+    
+    def __init__(self, term_width=DEFAULT_TERM_WIDTH, page_size=DEFAULT_PAGE_SIZE):
+        self.term_width = term_width
+        self.page_size = page_size
+        self.parser = HTMLParser()
+        
+        # State
+        self.text_lines = []
+        self.wrapped_lines = []
+        self.nav_links = []
+        self.content_links = []
+        self.base_url = ""
+        self.selected_link = None  # URL user chose to follow
+        self.go_back = False       # User chose to go back
+    
+    def view(self, html, base_url=""):
+        """
+        View HTML content with interactive pagination.
+        
+        Args:
+            html: Raw HTML content
+            base_url: Base URL for resolving relative links
+            
+        Returns:
+            str or None: URL to navigate to, or None if user quit/back
+        """
+        self.base_url = base_url
+        self.selected_link = None
+        self.go_back = False
+        
+        # Parse HTML
+        self.text_lines, self.nav_links, self.content_links = self.parser.parse(html)
+        
+        # Wrap lines to terminal width
+        self.wrapped_lines = []
+        for line in self.text_lines:
+            wrapped = textwrap.wrap(line, width=self.term_width)
+            self.wrapped_lines.extend(wrapped if wrapped else [''])
+        
+        # Display with pagination
+        self._paginate()
+        
+        return self.selected_link
+    
+    def _paginate(self):
+        """Display content with pagination and navigation options"""
+        total_lines = len(self.wrapped_lines)
+        current_pos = 0
+        
+        while current_pos < total_lines:
+            end_pos = min(current_pos + self.page_size, total_lines)
+            
+            # Display current page
+            for i in range(current_pos, end_pos):
+                print(self.wrapped_lines[i])
+            
+            # Build prompt based on available options
+            has_more = end_pos < total_lines
+            has_nav = len(self.nav_links) > 0
+            has_links = len(self.content_links) > 0
+            
+            if has_more or has_nav or has_links:
+                print("")
+                prompt_parts = []
+                
+                if has_more:
+                    prompt_parts.append("Enter=more")
+                if has_nav:
+                    prompt_parts.append("P)age menu")
+                if has_links:
+                    prompt_parts.append("L)inks")
+                    prompt_parts.append("#=follow")
+                prompt_parts.append("B)ack")
+                prompt_parts.append("Q)uit")
+                
+                status = "({}/{})".format(end_pos, total_lines)
+                prompt = "{} [{}] :> ".format(status, " ".join(prompt_parts))
+                
+                try:
+                    response = input(prompt).strip().lower()
+                except EOFError:
+                    break
+                
+                if response == 'q':
+                    break
+                elif response == 'b':
+                    self.go_back = True
+                    break
+                elif response == 'p' and has_nav:
+                    nav_result = self._show_nav_menu()
+                    if nav_result:
+                        self.selected_link = self._resolve_url(nav_result)
+                        break
+                elif response == 'l' and has_links:
+                    link_result = self._show_content_links()
+                    if link_result:
+                        self.selected_link = self._resolve_url(link_result)
+                        break
+                elif response.isdigit() and has_links:
+                    link_num = int(response)
+                    url = self._get_content_link(link_num)
+                    if url:
+                        self.selected_link = self._resolve_url(url)
+                        break
+                    else:
+                        print("Invalid link number.")
+                elif response == '' and has_more:
+                    current_pos = end_pos  # Next page
+                else:
+                    current_pos = end_pos  # Default: next page
+            else:
+                # No more content, no links
+                break
+    
+    def _show_nav_menu(self):
+        """Display page navigation menu"""
+        print("\n" + "-" * 40)
+        print("PAGE MENU ({} items)".format(len(self.nav_links)))
+        print("-" * 40)
+        
+        for i, (url, text) in enumerate(self.nav_links, 1):
+            # Truncate long text
+            display_text = text[:35] + '...' if len(text) > 35 else text
+            print("{}. {}".format(i, display_text))
+        
+        print("-" * 40)
+        try:
+            response = input("Select [1-{}], M)ain, Q)uit :> ".format(len(self.nav_links))).strip().lower()
+        except EOFError:
+            return None
+        
+        if response == 'q':
+            return None
+        elif response == 'm' or response == '':
+            return None  # Return to content
+        elif response.isdigit():
+            idx = int(response) - 1
+            if 0 <= idx < len(self.nav_links):
+                return self.nav_links[idx][0]
+        
+        return None
+    
+    def _show_content_links(self):
+        """Display numbered content links"""
+        print("\n" + "-" * 40)
+        print("CONTENT LINKS ({} items)".format(len(self.content_links)))
+        print("-" * 40)
+        
+        # Paginate links list
+        links_per_page = self.page_size - 4
+        total_links = len(self.content_links)
+        start = 0
+        
+        while start < total_links:
+            end = min(start + links_per_page, total_links)
+            
+            for num, url, text in self.content_links[start:end]:
+                display_text = text[:35] + '...' if len(text) > 35 else text
+                print("{}. {}".format(num, display_text))
+            
+            if end < total_links:
+                try:
+                    response = input("\n(Enter=more, #=select, M=main) :> ").strip().lower()
+                except EOFError:
+                    return None
+                
+                if response == 'm' or response == '':
+                    if response == '':
+                        start = end
+                        continue
+                    return None
+                elif response.isdigit():
+                    return self._get_content_link(int(response))
+            else:
+                try:
+                    response = input("\nSelect [1-{}], M)ain :> ".format(total_links)).strip().lower()
+                except EOFError:
+                    return None
+                
+                if response.isdigit():
+                    return self._get_content_link(int(response))
+                return None
+            
+            start = end
+        
+        return None
+    
+    def _get_content_link(self, link_num):
+        """Get URL for a content link by number"""
+        for num, url, text in self.content_links:
+            if num == link_num:
+                return url
+        return None
+    
+    def _resolve_url(self, url):
+        """Resolve relative URL to absolute"""
+        if not url:
+            return url
+        
+        if url.startswith('http://') or url.startswith('https://') or url.startswith('gopher://'):
+            return url
+        
+        if not self.base_url:
+            return url
+        
+        try:
+            from urllib.parse import urljoin
+        except ImportError:
+            from urlparse import urljoin
+        
+        return urljoin(self.base_url, url)
+
+
+# Convenience function for quick viewing
+def view_html(html, base_url="", term_width=DEFAULT_TERM_WIDTH, page_size=DEFAULT_PAGE_SIZE):
+    """
+    Quick function to view HTML content.
+    
+    Args:
+        html: Raw HTML content
+        base_url: Base URL for resolving relative links
+        term_width: Terminal width for wrapping
+        page_size: Lines per page
+        
+    Returns:
+        tuple: (selected_url, go_back) - URL if link selected, or None; whether back was chosen
+    """
+    viewer = HTMLViewer(term_width=term_width, page_size=page_size)
+    selected = viewer.view(html, base_url)
+    return selected, viewer.go_back
+
+
+# Test/demo when run directly
+if __name__ == '__main__':
+    test_html = """
+    <html>
+    <head><title>Test Page</title></head>
+    <body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/products">Products</a>
+        <a href="/services">Services</a>
+        <a href="/blog">Blog</a>
+    </nav>
+    <main>
+        <h1>Welcome to Test Page</h1>
+        <p>This is a test paragraph with a <a href="/page1">link to page 1</a> 
+        and another <a href="/page2">link to page 2</a>.</p>
+        <p>More content here with <a href="http://example.com">external link</a>.</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do 
+        eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <p>Another paragraph with some <a href="/more">more info</a> available.</p>
+    </main>
+    </body>
+    </html>
+    """
+    
+    print("HTMLView Module v{} - Test".format(VERSION))
+    print("-" * 40)
+    
+    selected, go_back = view_html(test_html, base_url="http://example.com", term_width=60, page_size=10)
+    
+    print("\n" + "-" * 40)
+    if selected:
+        print("Selected URL: {}".format(selected))
+    elif go_back:
+        print("User chose to go back")
+    else:
+        print("User quit")
