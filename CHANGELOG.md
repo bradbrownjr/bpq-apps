@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [repeater.py v1.3 - Display Formatting Fix] - 2026-01-30
+### Fixed
+- **repeater.py v1.3**: Repeater display formatting
+  - Fixed callsign (trustee) display - now shows on separate line
+  - Fixed offset direction symbols (+/-) - now displays correctly
+  - Improved output structure with distinct lines for each field
+  - Better handling of numeric offset values
+  - Index number now prepends frequency line instead of separate line
+
 ## [repeater.py v1.2 - API Authentication Fix] - 2026-01-30
 ### Fixed
 - **repeater.py v1.2**: RepeaterBook API authentication

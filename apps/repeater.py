@@ -323,50 +323,59 @@ def filter_by_distance(repeaters, center_lat, center_lon, max_distance):
 
 def format_repeater(rep, index=None, show_distance=True):
     """Format repeater info for display (40-char width)"""
-    lines = []
+    output = []
     
+    # Line 1: Index and frequency with offset
+    line1 = ""
     if index is not None:
-        lines.append("{}. ".format(index))
+        line1 = "{}. ".format(index)
     
     freq = format_frequency(rep.get('Frequency', 'N/A'))
     offset = rep.get('Offset', 'N/A')
+    
+    # Determine offset direction
     if offset and offset != 'N/A':
         offset_val = offset.replace('MHz', '').strip()
-        if offset_val.startswith('+'):
-            freq_line = "{} +".format(freq)
-        elif offset_val.startswith('-'):
-            freq_line = "{} -".format(freq)
+        if offset_val.startswith('+') or (offset_val and float(offset_val) > 0):
+            line1 += "{} +".format(freq)
+        elif offset_val.startswith('-') or (offset_val and float(offset_val) < 0):
+            line1 += "{} -".format(freq)
         else:
-            freq_line = freq
+            line1 += freq
     else:
-        freq_line = freq
+        line1 += freq
     
+    # Add tone if present
     tone = rep.get('PL', '')
     if tone and tone != 'CSQ':
-        freq_line += " ({})".format(tone)
+        line1 += " ({})".format(tone)
     
-    lines.append(freq_line)
+    output.append(line1)
     
+    # Line 2: Use status
     use = rep.get('Use', 'N/A')
     if use and use != 'N/A':
-        lines.append(" {}".format(use))
+        output.append(use)
     
+    # Line 3: Location
     location = rep.get('Nearest City', '')
     state = rep.get('State', '')
     if location or state:
         loc_line = "{} {}".format(location, state).strip()
         if len(loc_line) > 38:
             loc_line = loc_line[:35] + "..."
-        lines.append(loc_line)
+        output.append(loc_line)
     
+    # Line 4: Callsign
     callsign = rep.get('Trustee', '')
     if callsign:
-        lines.append(callsign)
+        output.append(callsign)
     
+    # Line 5: Distance
     if show_distance and 'distance' in rep:
-        lines.append("{:.1f} mi".format(rep['distance']))
+        output.append("{:.1f} mi".format(rep['distance']))
     
-    return '\n'.join(lines)
+    return '\n'.join(output)
 
 
 def display_repeaters(repeaters, page=1, per_page=5):
