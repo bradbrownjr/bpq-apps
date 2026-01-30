@@ -463,8 +463,13 @@ def main():
             for i, (name, url) in enumerate(BOOKMARKS, 1):
                 print("{}. {}".format(i, name))
             
-            bookmark_choice = input("\nSelect [1-{}], M)enu :> ".format(len(BOOKMARKS))).strip()
-            if bookmark_choice.isdigit():
+            bookmark_choice = input("\nSelect [1-{}], M)enu, Q)uit :> ".format(len(BOOKMARKS))).strip().lower()
+            if bookmark_choice == 'q':
+                print("\nExiting...")
+                sys.exit(0)
+            elif bookmark_choice == 'm' or bookmark_choice == '':
+                current_url = None
+            elif bookmark_choice.isdigit():
                 idx = int(bookmark_choice) - 1
                 if 0 <= idx < len(BOOKMARKS):
                     name, url = BOOKMARKS[idx]
@@ -503,7 +508,14 @@ def main():
         # Browse loop - follow links until user returns to menu
         while current_url:
             next_url = browser.browse(current_url)
-            if next_url:
+            if next_url == '__EXIT__':
+                # User pressed Q)uit - exit app
+                print("\nExiting...")
+                sys.exit(0)
+            elif next_url == '__MAIN__':
+                # User pressed M)ain - return to main menu
+                current_url = None
+            elif next_url:
                 print("\nLoading...")
                 current_url = next_url
             else:

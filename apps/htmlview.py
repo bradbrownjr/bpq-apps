@@ -656,6 +656,7 @@ class HTMLViewer:
                     prompt_parts.append("L)inks")
                     prompt_parts.append("#=follow")
                 prompt_parts.append("B)ack")
+                prompt_parts.append("M)ain")
                 prompt_parts.append("Q)uit")
                 
                 status = "({}/{})".format(end_pos, total_lines)
@@ -667,18 +668,34 @@ class HTMLViewer:
                     break
                 
                 if response == 'q':
+                    self.selected_link = '__EXIT__'  # Signal to exit app
+                    break
+                elif response == 'm':
+                    self.selected_link = '__MAIN__'  # Signal to go to main menu
                     break
                 elif response == 'b':
                     self.go_back = True
                     break
                 elif response == 'p' and has_nav:
                     nav_result = self._show_nav_menu()
-                    if nav_result:
+                    if nav_result == '__EXIT__':
+                        self.selected_link = '__EXIT__'
+                        break
+                    elif nav_result == '__MAIN__':
+                        self.selected_link = '__MAIN__'
+                        break
+                    elif nav_result:
                         self.selected_link = self._resolve_url(nav_result)
                         break
                 elif response == 'l' and has_links:
                     link_result = self._show_content_links()
-                    if link_result:
+                    if link_result == '__EXIT__':
+                        self.selected_link = '__EXIT__'
+                        break
+                    elif link_result == '__MAIN__':
+                        self.selected_link = '__MAIN__'
+                        break
+                    elif link_result:
                         self.selected_link = self._resolve_url(link_result)
                         break
                 elif response.isdigit() and has_links:
@@ -768,26 +785,32 @@ class HTMLViewer:
             
             if end < total_links:
                 try:
-                    response = input("\n(Enter=more, #=select, B)ack, M=main) :> ").strip().lower()
+                    response = input("\n(Enter=more, #=select, B)ack, M)ain, Q)uit) :> ").strip().lower()
                 except EOFError:
                     return None
                 
-                if response == 'b':
+                if response == 'q':
+                    return '__EXIT__'  # Signal to exit app
+                elif response == 'm':
+                    return '__MAIN__'  # Signal to go to main menu
+                elif response == 'b':
                     return None  # Back to content
-                elif response == 'm' or response == '':
-                    if response == '':
-                        start = end
-                        continue
-                    return None
+                elif response == '':
+                    start = end
+                    continue
                 elif response.isdigit():
                     return self._get_content_link(int(response))
             else:
                 try:
-                    response = input("\nSelect [1-{}], B)ack, M)ain :> ".format(total_links)).strip().lower()
+                    response = input("\nSelect [1-{}], B)ack, M)ain, Q)uit :> ".format(total_links)).strip().lower()
                 except EOFError:
                     return None
                 
-                if response == 'b':
+                if response == 'q':
+                    return '__EXIT__'  # Signal to exit app
+                elif response == 'm':
+                    return '__MAIN__'  # Signal to go to main menu
+                elif response == 'b':
                     return None  # Back to content
                 elif response.isdigit():
                     return self._get_content_link(int(response))
