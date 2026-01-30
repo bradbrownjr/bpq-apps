@@ -8,11 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [htmlview.py v1.5 - Pagination/Deduplication Filter] - 2026-01-30
 ### Fixed
-- **htmlview.py v1.5**: Filter pagination elements and deduplicate nav links
-  - Skip pagination text patterns (numeric "2", "Next", "Previous", "Load More", etc.)
+- **htmlview.py v1.5**: Deduplicate nav links and move pagination to content links
+  - Move pagination links to L)inks menu instead of filtering them (they're legitimate content nav)
   - Deduplicate navigation links by href URL (fixes WordPress/responsive menu duplicates)
   - Cap nav links to max 75 items to prevent massive menus
-  - Reduces noise on sites with mobile menu clones and pagination controls
+  - Result: P)age menu clean (71 items), L)inks menu has pagination (2, Next, Previous)
 
 ## [htmlview.py v1.0 - Reusable HTML Viewer Module] - 2026-01-30
 ### Added
