@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.9 - Add Where Command] - 2026-01-30
+### Added
+- **htmlview.py v1.9**: W)here command to show current URL
+  - Added W)here option to all three prompts (content page, site menu, content links)
+  - Displays current URL for debugging when pages render poorly
+  - Consistent with gopher.py pattern for user familiarity
+  - Shows URL, waits for Enter, redisplays current page (non-destructive)
+  - Helps diagnose encoding issues and verify page source
+
 ## [www.py v1.5 - Fix Error Navigation] - 2026-01-30
 ### Fixed
 - **www.py v1.5**: Return to previous page on fetch error instead of main menu

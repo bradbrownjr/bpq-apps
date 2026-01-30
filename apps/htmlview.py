@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.8
+Version: 1.9
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.8"
+VERSION = "1.9"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -776,6 +776,7 @@ class HTMLViewer:
                 
                 # Prompt order: furthest to closest from current page
                 # Exit/Nav (furthest) -> Local content (closest)
+                prompt_parts.append("W)here")
                 prompt_parts.append("Q)uit")
                 prompt_parts.append("M)ain")
                 prompt_parts.append("B)ack")
@@ -799,7 +800,13 @@ class HTMLViewer:
                 except EOFError:
                     break
                 
-                if response == 'q':
+                if response == 'w':
+                    # Show current URL
+                    print("\nCurrent URL: {}".format(self.base_url))
+                    input("Press Enter to continue...")
+                    # Redisplay current page
+                    continue
+                elif response == 'q':
                     self.selected_link = '__EXIT__'  # Signal to exit app
                     break
                 elif response == 'm':
@@ -868,16 +875,21 @@ class HTMLViewer:
             
             # Build prompt based on position (furthest to closest)
             if end < total_links:
-                prompt = "Select [1-{}], Q)uit, M)ain, B)ack, Enter=more :> ".format(total_links)
+                prompt = "Select [1-{}] W)here Q)uit M)ain B)ack Enter=more :> ".format(total_links)
             else:
-                prompt = "Select [1-{}], Q)uit, M)ain, B)ack :> ".format(total_links)
+                prompt = "Select [1-{}] W)here Q)uit M)ain B)ack :> ".format(total_links)
             
             try:
                 response = input(prompt).strip().lower()
             except EOFError:
                 return None
             
-            if response == 'q':
+            if response == 'w':
+                # Show current URL
+                print("\nCurrent URL: {}".format(self.base_url))
+                input("Press Enter to continue...")
+                continue
+            elif response == 'q':
                 return '__EXIT__'  # Exit app
             elif response == 'm':
                 return '__MAIN__'  # Return to main menu
@@ -917,11 +929,16 @@ class HTMLViewer:
             
             if end < total_links:
                 try:
-                    response = input("\n(Q)uit, M)ain, B)ack, #=select, Enter=more) :> ").strip().lower()
+                    response = input("\n(W)here #=select Q)uit M)ain B)ack Enter=more) :> ").strip().lower()
                 except EOFError:
                     return None
                 
-                if response == 'q':
+                if response == 'w':
+                    # Show current URL
+                    print("\nCurrent URL: {}".format(self.base_url))
+                    input("Press Enter to continue...")
+                    continue
+                elif response == 'q':
                     return '__EXIT__'  # Signal to exit app
                 elif response == 'm':
                     return '__MAIN__'  # Signal to go to main menu
@@ -934,11 +951,16 @@ class HTMLViewer:
                     return self._get_content_link(int(response))
             else:
                 try:
-                    response = input("\nSelect [1-{}], Q)uit, M)ain, B)ack :> ".format(total_links)).strip().lower()
+                    response = input("\nSelect [1-{}] W)here Q)uit M)ain B)ack :> ".format(total_links)).strip().lower()
                 except EOFError:
                     return None
                 
-                if response == 'q':
+                if response == 'w':
+                    # Show current URL
+                    print("\nCurrent URL: {}".format(self.base_url))
+                    input("Press Enter to continue...")
+                    continue
+                elif response == 'q':
                     return '__EXIT__'  # Signal to exit app
                 elif response == 'm':
                     return '__MAIN__'  # Signal to go to main menu
