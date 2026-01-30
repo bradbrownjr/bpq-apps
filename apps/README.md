@@ -17,6 +17,8 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [repeater.py](#repeaterpy)
   - [rss-news.py](#rss-newspy)
   - [space.py](#spacepy)
+  - [wiki.py](#wikipy)
+  - [www.py](#wwwpy)
   - [wx.py](#wxpy)
   - [wx-me.py](#wx-mepy)
   - [wxnws-ftp.py](#wxnws-ftppy)
@@ -493,6 +495,82 @@ sysinfo.sh
 ```wget -O sysinfo.sh https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/sysinfo.sh && chmod +x sysinfo.sh```
 
 ![Terminal output](../docs/images/sysinfo.png)
+
+wiki.py
+-------
+**Type**: Python  
+**Purpose**: Browse Wikipedia and sister projects over packet radio  
+**Information source**: Wikipedia API  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Text-mode Wikipedia browser with search, summaries, and numbered link navigation. Supports Wikipedia, Simple Wikipedia, Wiktionary, Wikiquote, Wikinews, and Wikivoyage.
+
+**Download or update**:  
+```wget -O wiki.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wiki.py && chmod +x wiki.py```
+
+**Features**:
+- Search across multiple Wikipedia projects
+- Article summaries with full text option
+- Numbered link navigation (recursive browsing)
+- Pagination for long content
+- Smart word wrapping for terminal width
+- Offline caching (last 10 summaries, 24-hour expiry)
+- Random articles
+
+**Status**: Production-ready (v2.4+)
+
+www.py
+------
+**Type**: Python  
+**Purpose**: Terminal web browser for packet radio  
+**Information source**: World Wide Web (HTTP/HTTPS)  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Text-mode web browser with numbered link navigation. Strips JavaScript and CSS for text-only rendering. Ideal for browsing ham radio club sites and text-friendly news sources over packet radio.
+
+**Download or update**:  
+```wget -O www.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/www.py && chmod +x www.py```  
+```wget -O www.conf https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/www.conf```
+
+**Features**:
+- Text-mode HTML rendering (removes JavaScript, CSS, images)
+- Numbered link navigation (click links by number)
+- Search via FrogFind.com (text-only search engine)
+- Pagination at 24 lines per page
+- Bookmarks for packet-radio-friendly sites
+  - WS1SM Club (ws1sm.com)
+  - Maine Packet Radio (mainepacketradio.org)
+  - ARRL (www.arrl.org)
+  - QRZ.com, eHam.net
+  - Text-only news sites (NPR, CNN Lite)
+- Offline page caching (10 pages, 24-hour expiry)
+- Smart word wrapping for terminal width
+- Menu-based interface
+- Configuration via www.conf (bookmarks, home page, search URL)
+
+**Configuration** (www.conf):
+```json
+{
+  "home": "https://frogfind.com",
+  "search_url": "https://frogfind.com/?q={}",
+  "bookmarks": [
+    {"name": "WS1SM Club", "url": "http://ws1sm.com"},
+    {"name": "Maine Packet Radio", "url": "https://mainepacketradio.org"}
+  ],
+  "page_size": 24,
+  "max_page_size_kb": 200,
+  "socket_timeout": 15
+}
+```
+
+**Usage**:
+- 1: Go to home page
+- 2: Browse bookmarks
+- 3: Search (via FrogFind)
+- 4: Enter URL manually
+- 5: View links on current page
+- 6: Follow a numbered link
+- 7: Go back in history
+
+**Status**: Production-ready (v1.0+)
 
 wx.py
 -----

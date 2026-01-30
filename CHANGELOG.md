@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [www.py v1.0 - New Web Browser App] - 2026-01-30
+### Added
+- **www.py v1.0**: Terminal web browser for packet radio
+  - Text-mode HTML rendering with numbered link navigation
+  - Search via FrogFind.com (text-only search engine)
+  - Pagination at 24 lines per page
+  - Bookmarks: WS1SM, Maine Packet Radio, ARRL, QRZ, eHam, text-only news sites
+  - Offline page caching (10 pages, 24-hour expiry)
+  - Smart word wrapping for terminal width
+  - Menu-based interface similar to GOPHER and WIKI apps
+  - Configuration via www.conf (bookmarks, home page, search URL)
+  - ASCII art logo
+  - Auto-update functionality
+
+## [repeater.py v1.7 - Reduce Pagination Size] - 2026-01-30
+### Changed
+- **repeater.py v1.7**: Pagination optimized for screen size
+  - Reduced from 5 to 4 repeaters per page
+  - Better fits on typical packet radio terminal screens
+  - Prevents scrolling off-screen during pagination
+
 ## [repeater.py v1.6 - Redisplay Menu After Search] - 2026-01-30
 ### Changed
 - **repeater.py v1.6**: Improved navigation UX
