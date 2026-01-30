@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.9
+Version: 1.10
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.9"
+VERSION = "1.10"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -169,9 +169,46 @@ def decode_html_entities(text):
     for entity, replacement in entities.items():
         text = text.replace(entity, replacement)
     
-    # Handle numeric entities
-    text = re.sub(r'&#(\d+);', lambda m: chr(int(m.group(1))) if int(m.group(1)) < 128 else '?', text)
-    text = re.sub(r'&#x([0-9a-fA-F]+);', lambda m: chr(int(m.group(1), 16)) if int(m.group(1), 16) < 128 else '?', text)
+    # Handle numeric entities - convert high unicode to ASCII equivalents
+    # Unicode: 8216-8217=quotes, 8220-8221=dquotes, 8211-8212=dashes, 8230=ellipsis
+    def decode_numeric(match):
+        code = int(match.group(1))
+        # Smart quotes and dashes
+        if code == 8216 or code == 8217:  # Single quotes
+            return "'"
+        elif code == 8220 or code == 8221:  # Double quotes
+            return '"'
+        elif code == 8211:  # En dash
+            return '-'
+        elif code == 8212:  # Em dash
+            return '--'
+        elif code == 8230:  # Ellipsis
+            return '...'
+        elif code < 128:
+            return chr(code)
+        else:
+            return '?'
+    
+    def decode_hex(match):
+        code = int(match.group(1), 16)
+        # Smart quotes and dashes
+        if code == 0x2018 or code == 0x2019:  # Single quotes
+            return "'"
+        elif code == 0x201C or code == 0x201D:  # Double quotes
+            return '"'
+        elif code == 0x2013:  # En dash
+            return '-'
+        elif code == 0x2014:  # Em dash
+            return '--'
+        elif code == 0x2026:  # Ellipsis
+            return '...'
+        elif code < 128:
+            return chr(code)
+        else:
+            return '?'
+    
+    text = re.sub(r'&#(\d+);', decode_numeric, text)
+    text = re.sub(r'&#x([0-9a-fA-F]+);', decode_hex, text)
     
     return text
 
@@ -776,10 +813,10 @@ class HTMLViewer:
                 
                 # Prompt order: furthest to closest from current page
                 # Exit/Nav (furthest) -> Local content (closest)
-                prompt_parts.append("W)here")
                 prompt_parts.append("Q)uit")
                 prompt_parts.append("M)ain")
                 prompt_parts.append("B)ack")
+                prompt_parts.append("W)here")
                 if has_nav:
                     prompt_parts.append("S)ite menu")
                 if has_links:
@@ -884,17 +921,17 @@ class HTMLViewer:
             except EOFError:
                 return None
             
-            if response == 'w':
-                # Show current URL
-                print("\nCurrent URL: {}".format(self.base_url))
-                input("Press Enter to continue...")
-                continue
-            elif response == 'q':
+            if response == 'q':
                 return '__EXIT__'  # Exit app
             elif response == 'm':
                 return '__MAIN__'  # Return to main menu
             elif response == 'b':
                 return None  # Back to content
+            elif response == 'w':
+                # Show current URL
+                print("\nCurrent URL: {}".format(self.base_url))
+                input("Press Enter to continue...")
+                continue
             elif response == '' and end < total_links:
                 start = end  # Next page
                 continue
@@ -929,21 +966,21 @@ class HTMLViewer:
             
             if end < total_links:
                 try:
-                    response = input("\n(W)here #=select Q)uit M)ain B)ack Enter=more) :> ").strip().lower()
+                    response = input("\n(Q)uit M)ain B)ack W)here #=select Enter=more) :> ").strip().lower()
                 except EOFError:
                     return None
                 
-                if response == 'w':
-                    # Show current URL
-                    print("\nCurrent URL: {}".format(self.base_url))
-                    input("Press Enter to continue...")
-                    continue
-                elif response == 'q':
+                if response == 'q':
                     return '__EXIT__'  # Signal to exit app
                 elif response == 'm':
                     return '__MAIN__'  # Signal to go to main menu
                 elif response == 'b':
                     return None  # Back to content
+                elif response == 'w':
+                    # Show current URL
+                    print("\nCurrent URL: {}".format(self.base_url))
+                    input("Press Enter to continue...")
+                    continue
                 elif response == '':
                     start = end
                     continue
@@ -951,21 +988,21 @@ class HTMLViewer:
                     return self._get_content_link(int(response))
             else:
                 try:
-                    response = input("\nSelect [1-{}] W)here Q)uit M)ain B)ack :> ".format(total_links)).strip().lower()
+                    response = input("\nSelect [1-{}] Q)uit M)ain B)ack W)here :> ".format(total_links)).strip().lower()
                 except EOFError:
                     return None
                 
-                if response == 'w':
-                    # Show current URL
-                    print("\nCurrent URL: {}".format(self.base_url))
-                    input("Press Enter to continue...")
-                    continue
-                elif response == 'q':
+                if response == 'q':
                     return '__EXIT__'  # Signal to exit app
                 elif response == 'm':
                     return '__MAIN__'  # Signal to go to main menu
                 elif response == 'b':
                     return None  # Back to content
+                elif response == 'w':
+                    # Show current URL
+                    print("\nCurrent URL: {}".format(self.base_url))
+                    input("Press Enter to continue...")
+                    continue
                 elif response.isdigit():
                     return self._get_content_link(int(response))
                 return None

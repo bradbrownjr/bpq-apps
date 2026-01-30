@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.10 - Prompt Ordering and Unicode Fix] - 2026-01-30
+### Fixed
+- **htmlview.py v1.10**: Proper prompt ordering per standards + unicode-to-ASCII conversion
+  - Moved W)here to correct position (after B)ack with page navigation, not at leftmost exit position)
+  - Per copilot-instructions: scope ordering = Q)uit, M)ain, B)ack, W)here, S)ite, L)inks, Enter=more
+  - Improved unicode entity handling: smart quotes (' "), en-dashes (-), em-dashes (--), ellipsis (...)
+  - Converts numeric entities (&#8217; etc) and hex entities (&#x2019; etc) to ASCII
+  - Fixes textfiles.com smart quotes displaying as ? characters
+  - All three prompts now follow consistent standard ordering
+
 ## [htmlview.py v1.9 - Add Where Command] - 2026-01-30
 ### Added
 - **htmlview.py v1.9**: W)here command to show current URL
