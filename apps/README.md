@@ -14,6 +14,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [hamtest.py](#hamtestpy)
   - [predict.py](#predictpy)
   - [qrz3.py](#qrz3py)
+  - [repeater.py](#repeaterpy)
   - [rss-news.py](#rss-newspy)
   - [space.py](#spacepy)
   - [wx.py](#wxpy)
@@ -184,6 +185,37 @@ Real-time solar indices from hamqsl.com determine band reliability:
 
 qrz3.py
 - Use option 5 to manually update question pools
+
+repeater.py
+-----------
+**Type**: Python  
+**Purpose**: Amateur radio repeater directory search  
+**Information source**: RepeaterBook.com API  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Search for repeaters by gridsquare or state/city with proximity radius. Results cached for 30 days.
+
+**Download or update**:  
+```wget -O repeater.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/repeater.py && chmod +x repeater.py```
+
+**Features**:
+- Search by gridsquare (e.g., FN43hp) or state/city
+- Proximity radius search (default 25 miles)
+- Filter by band (6M, 2M, 1.25M, 70cm, 33cm, 23cm)
+- Display frequency, offset, tone (PL/CTCSS), location, callsign
+- Sort results by distance from search center
+- 30-day local caching for offline operation
+- Paginated display (5 repeaters per page)
+- Graceful offline fallback with cached searches
+- ASCII art logo optimized for packet radio terminals
+
+**Usage**:
+- Select search method from main menu (gridsquare or state)
+- Enter search parameters (location, radius, optional band filter)
+- Browse results with N)ext, P)revious navigation
+- View cached searches for offline access
+
+**Data Storage**:
+Repeater search results cached in `repeater_cache.json` for 30 days.
 
 qrz3.py
 -------

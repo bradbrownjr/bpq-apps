@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [repeater.py v1.0 - Repeater Directory] - 2026-01-30
+### Added
+- **repeater.py v1.0**: Amateur radio repeater directory search
+  - Search by gridsquare or state with proximity radius
+  - RepeaterBook.com API integration (free public API)
+  - Filter by band (6M, 2M, 1.25M, 70cm, 33cm, 23cm)
+  - Display frequency, offset, tone (PL), location, callsign
+  - Sort results by distance from search center
+  - 30-day local caching for offline operation
+  - Paginated display (5 repeaters per page, 40-char width)
+  - Graceful offline fallback with cached searches
+  - Lowercase ASCII art logo
+
 ## [eventcal.py v2.6 - Remove Word Wrapping] - 2026-01-30
 ### Changed
 - **eventcal.py v2.6**: Removed automatic word wrapping
