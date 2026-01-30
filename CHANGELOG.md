@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Known Issues
+- **BUG: DX application conflict** - DX (APPLICATION 22) mapped to HOST 17, conflicts with AI (APPLICATION 3). DX loads AI app instead. Need to assign DX to unique HOST port (18 available). Update: `/etc/services` needs `dx 63180/tcp` entry, `/etc/inetd.conf` needs dx service config, then update bpq32.cfg APPLICATION 22 to use `C 9 HOST 18 S`.
+- **BUG: CALENDAR fails to load** - CALENDAR (APPLICATION 5) hangs or returns to node. Using eventcal.py on HOST 14 (port 63140). Need to investigate eventcal.py for runtime errors, check `/etc/inetd.conf` service config, verify eventcal.conf accessibility.
+- **BUG: NEWS feed 403 errors** - Associated Press and Reuters feeds in rss-news.conf return HTTP 403 Forbidden. URLs using rsshub.app proxy:
+  - `https://rsshub.app/apnews/topics/apf-topnews`
+  - `https://rsshub.app/reuters/world/us`
+  - RSSHub may be blocking requests or feeds moved. Need alternative URLs or direct RSS feeds from AP/Reuters.
+
 ## [ai.py v1.2 - Politics/Religion Prohibition] - 2026-01-29
 ### Changed
 - **ai.py v1.2**: Added politics and religion prohibition to Ham Radio commandments
