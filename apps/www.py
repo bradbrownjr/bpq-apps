@@ -16,7 +16,7 @@ Features:
 - Smart word wrapping for terminal width
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ try:
 except ImportError:
     from urlparse import urljoin, urlparse
 
-VERSION = "1.2"
+VERSION = "1.3"
 APP_NAME = "www.py"
 
 # Check Python version
@@ -391,13 +391,10 @@ class WebBrowser:
 def show_logo():
     """Display ASCII art logo"""
     logo = r"""
- __      ____      ____      ____      __
-/\ \  __/\  _`\   /\  _`\   /\  _`\   /\ \
-\ \ \/\ \ \ \/\ \ \ \ \/\ \ \ \ \/\ \ \ \ \
- \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \
-  \ \ \_/ \ \ \_\ \ \ \ \_\ \ \ \ \_\ \ \ \_\
-   \ `\___/\ \____/  \ \____/  \ \____/  \/\_\
-    `\/__/  \/___/    \/___/    \/___/    \/_/
+__      ____      ____      __
+\ \ /\ / /\ \ /\ / /\ \ /\ / /
+ \ V  V /  \ V  V /  \ V  V / 
+  \_/\_/    \_/\_/    \_/\_/  
 """
     print(logo)
 

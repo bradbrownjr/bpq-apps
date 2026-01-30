@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.2"
+VERSION = "1.3"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -524,16 +524,19 @@ class HTMLParser:
                 line = line + ' ' + raw_lines[i]
             
             # Check if this line should be merged with the next
-            # Merge conditions: short line without terminal punctuation
-            while (len(line) < 50 and 
-                   i + 1 < len(raw_lines) and
-                   not line.endswith(('.', '!', '?', ']'))):
-                # Only stop merging if next line is a clear new paragraph
-                # (starts with capital after our complete sentence, or is a heading-like all caps)
+            # Merge conditions: incomplete sentence or fragment
+            while (i + 1 < len(raw_lines) and
+                   (len(line) < 60 or  # Short line - likely fragment
+                    line.endswith(('with', 'and', 'or', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of')) or  # Ends with article/preposition
+                    (not line.endswith(('.', '!', '?', ':', ']')) and len(line) < 100))):
                 next_line = raw_lines[i + 1]
                 
-                # Don't merge if both lines are very short (likely a list or headings)
-                if len(line) < 15 and len(next_line) < 15 and next_line.isupper():
+                # Stop if next line is clearly a new section (all caps heading)
+                if len(next_line) < 30 and next_line.isupper():
+                    break
+                    
+                # Stop if current line is complete sentence and next is new sentence
+                if line.endswith(('.', '!', '?')) and len(line) > 50:
                     break
                     
                 # Merge with next line
@@ -543,16 +546,19 @@ class HTMLParser:
             lines.append(line)
             i += 1
         
-        # Add paragraph spacing (blank line after sentences ending paragraphs)
+        # Add paragraph spacing (blank line after complete sentences)
         spaced_lines = []
         for i, line in enumerate(lines):
             spaced_lines.append(line)
-            # Add blank line after sentences, but not after links or short headings
-            if (line.endswith(('.', '!', '?')) and 
-                i + 1 < len(lines) and
-                len(line) > 40 and  # Not a short heading
-                not line.endswith(']')):  # Not a numbered link line
-                spaced_lines.append('')
+            # Add blank line after complete sentences that are likely paragraph endings
+            if i + 1 < len(lines):
+                next_line = lines[i + 1]
+                # Add space if current line ends sentence and next starts new thought
+                if (line.endswith(('.', '!', '?')) and 
+                    len(line) > 50 and  # Substantial sentence
+                    not line.endswith(']') and  # Not a numbered link
+                    (next_line[0].isupper() or next_line.isupper())):  # Next starts with capital
+                    spaced_lines.append('')
         
         return spaced_lines
 
