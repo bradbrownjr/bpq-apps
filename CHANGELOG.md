@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.6 - Rename P)age to S)ite, Filter Social Icons] - 2026-01-30
+### Changed
+- **htmlview.py v1.6**: Rename P)age to S)ite menu for clarity
+  - Rename PAGE MENU to SITE MENU (more descriptive of site navigation structure)
+  - Update all prompts: P)age -> S)ite for consistency
+  - Filter out social media icons (facebook, twitter, instagram, etc.)
+  - Social media icons don't render well in terminal, low value in text mode
+  - Result: Cleaner site menu focused on actual navigation
+
 ## [htmlview.py v1.5 - Pagination/Deduplication Filter] - 2026-01-30
 ### Fixed
 - **htmlview.py v1.5**: Deduplicate nav links and move pagination to content links

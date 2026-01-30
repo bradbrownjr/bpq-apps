@@ -7,7 +7,7 @@ Designed for low-bandwidth, ASCII-only browsing with numbered links.
 
 Features:
 - Text-mode HTML rendering (strips JavaScript, CSS)
-- Intelligent nav/content link separation (P for page menu)
+- Intelligent nav/content link separation (S for site menu)
 - Numbered link navigation (recursive browsing)
 - Pagination at 24 lines per page
 - Bookmarks for packet-radio-friendly sites
@@ -407,14 +407,14 @@ def show_about():
     print("\nA text-mode web browser designed for")
     print("low-bandwidth AX.25 packet radio.")
     print("\nFeatures:")
-    print("- P)age menu separates nav from content")
+    print("- S)ite menu separates nav from content")
     print("- Numbered link navigation")
     print("- Text-only rendering")
     print("- Offline page caching")
     print("- Smart word wrapping")
     print("\nPage Navigation:")
     print("  Enter = next page")
-    print("  P = page menu (site navigation)")
+    print("  S = site menu (site navigation)")
     print("  L = content links")
     print("  # = follow link by number")
     print("  B = back, Q = quit to menu")

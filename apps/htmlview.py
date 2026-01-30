@@ -9,7 +9,7 @@ Features:
 - Detects and separates nav links from content links
 - Strips JavaScript, CSS, images for text-only rendering
 - Numbered link navigation
-- Pagination with P)age menu, L)inks, N)ext, B)ack, Q)uit
+- Pagination with S)ite menu, L)inks, N)ext, B)ack, Q)uit
 - Smart word wrapping for terminal width
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
@@ -445,6 +445,11 @@ class HTMLParser:
             r'^(next|prev|previous|last|first|load more|older|newer|...|more)$',
         ]
         
+        # Social media icon patterns (low value in terminal, poor rendering)
+        social_patterns = [
+            r'^(facebook|twitter|instagram|linkedin|youtube|tiktok|snapchat|pinterest|github)$',
+        ]
+        
         seen_hrefs = set()  # Track URLs to deduplicate
         
         for match in re.finditer(link_pattern, nav_html, flags=re.DOTALL | re.IGNORECASE):
@@ -458,6 +463,10 @@ class HTMLParser:
             # Clean up link text
             text = decode_html_entities(text)
             text = re.sub(r'\s+', ' ', text).strip()
+            
+            # Skip social media icons (they don't render well in terminal)
+            if any(re.match(pattern, text, re.IGNORECASE) for pattern in social_patterns):
+                continue
             
             # Pagination links go to content_links instead of nav_links
             if any(re.match(pattern, text, re.IGNORECASE) for pattern in pagination_patterns):
@@ -742,7 +751,7 @@ class HTMLViewer:
                 prompt_parts.append("M)ain")
                 prompt_parts.append("B)ack")
                 if has_nav:
-                    prompt_parts.append("P)age menu")
+                    prompt_parts.append("S)ite menu")
                 if has_links:
                     prompt_parts.append("L)inks")
                     prompt_parts.append("#=follow")
@@ -818,7 +827,7 @@ class HTMLViewer:
             end = min(start + links_per_page, total_links)
             
             print("\n" + "-" * 40)
-            print("PAGE MENU ({}-{} of {})".format(start + 1, end, total_links))
+            print("SITE MENU ({}-{} of {})".format(start + 1, end, total_links))
             print("-" * 40)
             
             for i in range(start, end):
