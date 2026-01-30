@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 2.4
+Version: 2.5
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
@@ -29,7 +29,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.4"
+VERSION = "2.5"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eventcal_cache.json')
 
@@ -506,9 +506,12 @@ def wrap_text(text, width):
 
 
 def get_terminal_width():
-    """Get terminal width with fallback"""
+    """Get terminal width with fallback (40-char for packet radio)"""
     try:
-        return os.get_terminal_size(fallback=(80, 24)).columns
+        # Force 40-char width for packet radio compatibility
+        # Even if terminal reports larger, keep it narrow for 1200 baud
+        width = os.get_terminal_size(fallback=(40, 24)).columns
+        return min(width, 40)  # Never exceed 40 chars
     except Exception:
         return 40
 
@@ -753,11 +756,13 @@ def show_event_detail(event):
     print(summary)
     print("-" * 40)
     
-    # Display location
+    # Display location with word wrapping
     if location:
         clean_loc = clean_location(location)
         if clean_loc:
-            print("Location: {}".format(clean_loc))
+            loc_lines = wrap_text("Location: {}".format(clean_loc), width)
+            for line in loc_lines:
+                print(line)
             print("")
     
     # Display dates with timezone

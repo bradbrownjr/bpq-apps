@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [eventcal.py v2.5 - Wordwrap Fix] - 2026-01-30
+### Fixed
+- **eventcal.py v2.5**: Fixed wordwrap in event detail view
+  - Enforced 40-character max width for packet radio (previously used 80-char default)
+  - Applied word wrapping to location field in detail view
+  - Description text now properly wraps to terminal width
+
 ### Fixed
 - **BUG FIX: CALENDAR application** - Fixed /etc/inetd.conf pointing to non-existent calendar.py instead of eventcal.py. Application now loads correctly.
 - **BUG FIX: DX application conflict** - Fixed APPLICATION 22 DX app conflicting with AI (both on HOST 17). Changed DX to connect directly to DX Spider daemon on port 7300.
