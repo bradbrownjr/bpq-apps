@@ -15,7 +15,7 @@ Features:
 - Smart word wrapping for terminal width
 
 Author: Brad Brown KC1JMH
-Version: 1.0
+Version: 1.1
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ try:
 except ImportError:
     from urlparse import urljoin, urlparse
 
-VERSION = "1.0"
+VERSION = "1.1"
 APP_NAME = "www.py"
 
 # Check Python version
@@ -409,15 +409,23 @@ class WebBrowser:
             return
         
         total_lines = len(self.current_page)
-        end_line = min(start_line + PAGE_SIZE, total_lines)
+        current_pos = start_line
         
-        # Display page content
-        for i in range(start_line, end_line):
-            print(self.current_page[i])
-        
-        # Show pagination info and links if any
-        if end_line < total_lines:
-            print("\n--- More --- ({}/{} lines)".format(end_line, total_lines))
+        while current_pos < total_lines:
+            end_line = min(current_pos + PAGE_SIZE, total_lines)
+            
+            # Display page content
+            for i in range(current_pos, end_line):
+                print(self.current_page[i])
+            
+            # Show pagination info and links if any
+            if end_line < total_lines:
+                print("\n--- More --- ({}/{} lines)".format(end_line, total_lines))
+                response = input("(press Enter, Q to quit) :> ").strip().lower()
+                if response == 'q':
+                    break
+            
+            current_pos = end_line
         
         if self.current_links:
             print("\n{} links available on this page.".format(len(self.current_links)))
