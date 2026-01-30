@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.6.1 - Fix Site Menu Q)uit Signal] - 2026-01-30
+### Fixed
+- **htmlview.py v1.6.1**: Q)uit from site menu now exits app
+  - Q)uit returns __EXIT__ signal instead of None (now properly exits app)
+  - M)ain returns __MAIN__ signal to go to main menu
+  - B)ack returns None (stays on page)
+
 ## [htmlview.py v1.6 - Rename P)age to S)ite, Filter Social Icons] - 2026-01-30
 ### Changed
 - **htmlview.py v1.6**: Rename P)age to S)ite menu for clarity

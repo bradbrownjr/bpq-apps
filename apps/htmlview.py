@@ -849,11 +849,11 @@ class HTMLViewer:
                 return None
             
             if response == 'q':
-                return None
+                return '__EXIT__'  # Exit app
+            elif response == 'm':
+                return '__MAIN__'  # Return to main menu
             elif response == 'b':
                 return None  # Back to content
-            elif response == 'm':
-                return None  # Return to content
             elif response == '' and end < total_links:
                 start = end  # Next page
                 continue
