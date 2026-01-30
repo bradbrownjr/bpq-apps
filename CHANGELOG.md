@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.0 - Reusable HTML Viewer Module] - 2026-01-30
+### Added
+- **htmlview.py v1.0**: Reusable HTML viewer module for packet radio apps
+  - Intelligent nav/content link separation using multiple heuristics
+  - Detects `<nav>`, `<header>`, nav/menu class divs, link density patterns
+  - P)age menu displays navigation links (site menus, sidebars)
+  - L)inks shows content-only links (in-page links)
+  - Direct link following (#number) during pagination
+  - Can be imported by other apps: gopher.py, wiki.py, rss-news.py
+  - Auto-download/update via ensure_htmlview_module() function
+
+## [www.py v1.2 - htmlview Integration] - 2026-01-30
+### Changed
+- **www.py v1.2**: Refactored to use htmlview module
+  - Intelligent nav/content link separation
+  - P)age menu for site navigation links
+  - L)inks for in-content links only
+  - Auto-downloads htmlview.py module from GitHub
+  - Better user experience on menu-heavy sites
+
 ## [www.py v1.0 - New Web Browser App] - 2026-01-30
 ### Added
 - **www.py v1.0**: Terminal web browser for packet radio
