@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.0
+Version: 1.1
 Date: January 2026
 """
 
@@ -29,10 +29,11 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.0"
+VERSION = "1.1"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater.conf')
 
 # RepeaterBook API base URL
 API_BASE = "https://www.repeaterbook.com/api/export.php"
@@ -115,6 +116,51 @@ def is_internet_available():
         socket.create_connection(('8.8.8.8', 53), timeout=2)
         return True
     except (socket.timeout, socket.error, OSError):
+        return False
+
+
+def lookup_gridsquare_from_callsign(callsign):
+    """Look up gridsquare from callsign using HamDB API"""
+    try:
+        base_call = callsign.split('-')[0] if callsign else ""
+        if not base_call:
+            return None
+        
+        url = "https://api.hamdb.org/v1/{}/json/bpq-apps".format(base_call)
+        req = urllib.request.Request(url, headers={'User-Agent': 'BPQ-Apps'})
+        
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            
+        if data.get('hamdb', {}).get('messages', {}).get('status') == 'OK':
+            callsign_data = data.get('hamdb', {}).get('callsign', {})
+            grid = callsign_data.get('grid', '')
+            if grid and len(grid) >= 4:
+                return grid.upper()
+        
+        return None
+    except Exception:
+        return None
+
+
+def load_config():
+    """Load app configuration"""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r') as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def save_config(config):
+    """Save app configuration"""
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(config, f, indent=2)
+        return True
+    except Exception:
         return False
 
 
@@ -351,6 +397,21 @@ def filter_by_band(repeaters, band):
     return filtered
 
 
+def filter_by_frequency(repeaters, target_freq, tolerance=0.5):
+    """Filter repeaters by frequency with tolerance in MHz"""
+    filtered = []
+    
+    for rep in repeaters:
+        try:
+            freq = float(rep.get('Frequency', 0))
+            if abs(freq - target_freq) <= tolerance:
+                filtered.append(rep)
+        except (ValueError, TypeError):
+            continue
+    
+    return filtered
+
+
 def get_terminal_width():
     """Get terminal width with fallback"""
     try:
@@ -384,23 +445,35 @@ def wrap_text(text, width=40):
     return '\n'.join(lines)
 
 
-def main_menu():
+def main_menu(user_callsign=None):
     """Display main menu and handle user interaction"""
+    config = load_config()
+    
     print(LOGO)
     print("\nREPEATER DIRECTORY v{}".format(VERSION))
     print("Data from RepeaterBook.com")
+    
+    if user_callsign:
+        print("User: {}".format(user_callsign))
+    
     print("\n" + "-" * 40)
     print("MAIN MENU")
     print("-" * 40)
     print("1) Search by Gridsquare")
-    print("2) Search by State & Proximity")
-    print("3) View Cached Results")
+    print("2) Search by Callsign")
+    print("3) Search by Frequency")
+    print("4) Search by State & Proximity")
+    
+    if config.get('last_location'):
+        print("5) My Location ({})".format(config['last_location'].get('grid', 'saved')))
+    
+    print("\n6) View Cached Results")
     print("\nA) About  Q) Quit")
     print("-" * 40)
     
     while True:
         try:
-            choice = raw_input("Menu: [1-3 A Q] :> ").strip().upper()
+            choice = raw_input("Menu: [1-6 A Q] :> ").strip().upper()
         except EOFError:
             return
         
@@ -412,8 +485,15 @@ def main_menu():
         elif choice == '1':
             search_by_gridsquare()
         elif choice == '2':
-            search_by_state()
+            search_by_callsign(user_callsign)
         elif choice == '3':
+            search_by_frequency()
+        elif choice == '4':
+            search_by_state()
+        elif choice == '5':
+            if config.get('last_location'):
+                search_my_location()
+        elif choice == '6':
             view_cached_results()
 
 
@@ -424,9 +504,10 @@ def show_about():
     print("-" * 40)
     print(wrap_text(
         "Search for amateur radio repeaters using "
-        "RepeaterBook.com API. Search by gridsquare "
-        "or state with proximity radius. Results are "
-        "cached for 30 days for offline access.", 40
+        "RepeaterBook.com API. Search by gridsquare, "
+        "callsign, frequency, or state with proximity "
+        "radius. Callsign lookup via HamDB API. "
+        "Results cached for 30 days for offline access.", 40
     ))
     print("\n" + wrap_text(
         "Data courtesy of RepeaterBook.com - the "
@@ -461,6 +542,11 @@ def search_by_gridsquare():
         print("Invalid gridsquare.")
         return
     
+    # Save location for My Location feature
+    config = load_config()
+    config['last_location'] = {'grid': grid, 'lat': lat, 'lon': lon}
+    save_config(config)
+    
     try:
         radius = raw_input("Radius in miles [25]: ").strip()
         radius = int(radius) if radius else 25
@@ -487,6 +573,250 @@ def search_by_gridsquare():
         else:
             print("No cached data available.")
             print("Try again when online.")
+            return
+    else:
+        try:
+            repeaters = fetch_repeaters(None, radius, lat, lon)
+            repeaters = filter_by_distance(repeaters, lat, lon, radius)
+            
+            cache[cache_key] = {
+                'timestamp': time.time(),
+                'data': repeaters,
+                'search': {
+                    'grid': grid,
+                    'radius': radius,
+                    'lat': lat,
+                    'lon': lon
+                }
+            }
+            save_cache(cache)
+        except Exception as e:
+            print("Error fetching data: {}".format(str(e)))
+            if cache_key in cache:
+                print("Using cached data...")
+                repeaters = cache[cache_key]['data']
+            else:
+                return
+    
+    if band_input:
+        repeaters = filter_by_band(repeaters, band_input)
+    
+    if not repeaters:
+        print("\nNo repeaters found.")
+        return
+    
+    browse_results(repeaters)
+
+
+def search_by_callsign(default_callsign=None):
+    """Search repeaters by callsign (looks up gridsquare)"""
+    print("\n" + "-" * 40)
+    print("SEARCH BY CALLSIGN")
+    print("-" * 40)
+    
+    try:
+        if default_callsign:
+            prompt = "Callsign [{}]: ".format(default_callsign)
+            callsign = raw_input(prompt).strip().upper()
+            if not callsign:
+                callsign = default_callsign
+        else:
+            callsign = raw_input("Callsign: ").strip().upper()
+    except EOFError:
+        return
+    
+    if not callsign:
+        print("Callsign required.")
+        return
+    
+    print("\nLooking up gridsquare for {}...".format(callsign))
+    
+    if not is_internet_available():
+        print("Internet appears to be unavailable.")
+        print("Callsign lookup requires internet.")
+        return
+    
+    grid = lookup_gridsquare_from_callsign(callsign)
+    
+    if not grid:
+        print("Could not find gridsquare for {}".format(callsign))
+        print("Try searching by gridsquare instead.")
+        return
+    
+    print("Found: {}".format(grid))
+    
+    lat, lon = gridsquare_to_latlon(grid)
+    if lat is None or lon is None:
+        print("Invalid gridsquare data.")
+        return
+    
+    # Save location
+    config = load_config()
+    config['last_location'] = {'grid': grid, 'lat': lat, 'lon': lon, 'callsign': callsign}
+    save_config(config)
+    
+    try:
+        radius = raw_input("Radius in miles [25]: ").strip()
+        radius = int(radius) if radius else 25
+    except (EOFError, ValueError):
+        radius = 25
+    
+    try:
+        band_input = raw_input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+    except EOFError:
+        band_input = ""
+    
+    print("\nSearching...")
+    
+    cache = load_cache()
+    cache_key = get_cache_key(None, radius, lat, lon)
+    
+    repeaters = None
+    
+    try:
+        repeaters = fetch_repeaters(None, radius, lat, lon)
+        repeaters = filter_by_distance(repeaters, lat, lon, radius)
+        
+        cache[cache_key] = {
+            'timestamp': time.time(),
+            'data': repeaters,
+            'search': {
+                'callsign': callsign,
+                'grid': grid,
+                'radius': radius,
+                'lat': lat,
+                'lon': lon
+            }
+        }
+        save_cache(cache)
+    except Exception as e:
+        print("Error fetching data: {}".format(str(e)))
+        if cache_key in cache:
+            print("Using cached data...")
+            repeaters = cache[cache_key]['data']
+        else:
+            return
+    
+    if band_input:
+        repeaters = filter_by_band(repeaters, band_input)
+    
+    if not repeaters:
+        print("\nNo repeaters found.")
+        return
+    
+    browse_results(repeaters)
+
+
+def search_by_frequency():
+    """Search repeaters by frequency"""
+    print("\n" + "-" * 40)
+    print("SEARCH BY FREQUENCY")
+    print("-" * 40)
+    
+    try:
+        freq_input = raw_input("Frequency in MHz (e.g., 146.52): ").strip()
+    except EOFError:
+        return
+    
+    if not freq_input:
+        print("Frequency required.")
+        return
+    
+    try:
+        target_freq = float(freq_input)
+    except ValueError:
+        print("Invalid frequency format.")
+        return
+    
+    try:
+        grid = raw_input("Your gridsquare (e.g., FN43hp): ").strip().upper()
+    except EOFError:
+        return
+    
+    if not grid or len(grid) < 4:
+        print("Invalid gridsquare format.")
+        return
+    
+    lat, lon = gridsquare_to_latlon(grid)
+    if lat is None or lon is None:
+        print("Invalid gridsquare.")
+        return
+    
+    # Save location
+    config = load_config()
+    config['last_location'] = {'grid': grid, 'lat': lat, 'lon': lon}
+    save_config(config)
+    
+    try:
+        radius = raw_input("Search radius in miles [50]: ").strip()
+        radius = int(radius) if radius else 50
+    except (EOFError, ValueError):
+        radius = 50
+    
+    print("\nSearching...")
+    
+    if not is_internet_available():
+        print("Internet appears to be unavailable.")
+        print("Frequency search requires internet.")
+        return
+    
+    try:
+        repeaters = fetch_repeaters(None, radius, lat, lon)
+        repeaters = filter_by_distance(repeaters, lat, lon, radius)
+        repeaters = filter_by_frequency(repeaters, target_freq, tolerance=0.5)
+        
+        if not repeaters:
+            print("\nNo repeaters found near {:.4f} MHz".format(target_freq))
+            return
+        
+        browse_results(repeaters)
+    except Exception as e:
+        print("Error fetching data: {}".format(str(e)))
+
+
+def search_my_location():
+    """Quick search using saved location"""
+    config = load_config()
+    last_loc = config.get('last_location')
+    
+    if not last_loc:
+        print("\nNo saved location found.")
+        print("Use another search method first.")
+        return
+    
+    grid = last_loc.get('grid', 'Unknown')
+    lat = last_loc.get('lat')
+    lon = last_loc.get('lon')
+    
+    print("\n" + "-" * 40)
+    print("MY LOCATION: {}".format(grid))
+    print("-" * 40)
+    
+    try:
+        radius = raw_input("Radius in miles [25]: ").strip()
+        radius = int(radius) if radius else 25
+    except (EOFError, ValueError):
+        radius = 25
+    
+    try:
+        band_input = raw_input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+    except EOFError:
+        band_input = ""
+    
+    print("\nSearching...")
+    
+    cache = load_cache()
+    cache_key = get_cache_key(None, radius, lat, lon)
+    
+    repeaters = None
+    
+    if not is_internet_available():
+        print("Internet appears to be unavailable.")
+        if cache_key in cache:
+            print("Using cached data...")
+            repeaters = cache[cache_key]['data']
+        else:
+            print("No cached data available.")
             return
     else:
         try:
@@ -660,8 +990,18 @@ def main():
     """Main entry point"""
     check_for_app_update(VERSION, APP_NAME)
     
+    # Read callsign from stdin (sent by BPQ if S flag not NOCALL)
+    user_callsign = None
     try:
-        main_menu()
+        if not sys.stdin.isatty():
+            first_line = sys.stdin.readline().strip()
+            if first_line and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', first_line):
+                user_callsign = first_line
+    except Exception:
+        pass
+    
+    try:
+        main_menu(user_callsign)
     except KeyboardInterrupt:
         print("\n\nExiting...")
     except Exception as e:

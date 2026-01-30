@@ -192,16 +192,20 @@ repeater.py
 **Purpose**: Amateur radio repeater directory search  
 **Information source**: RepeaterBook.com API  
 **Developer**: Brad Brown KC1JMH  
-**Notes**: Search for repeaters by gridsquare or state/city with proximity radius. Results cached for 30 days.
+**Notes**: Search for repeaters by gridsquare, callsign, frequency, or state. Auto-detects callsign from BPQ. Results cached for 30 days.
 
 **Download or update**:  
 ```wget -O repeater.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/repeater.py && chmod +x repeater.py```
 
 **Features**:
-- Search by gridsquare (e.g., FN43hp) or state/city
-- Proximity radius search (default 25 miles)
+- Search by gridsquare (e.g., FN43hp)
+- Search by callsign (auto-lookup gridsquare via HamDB API)
+- Search by frequency (find repeaters near specific frequency)
+- Search by state/city with proximity radius
+- "My Location" quick search (remembers last location)
+- Auto-detect user callsign from BPQ connection
 - Filter by band (6M, 2M, 1.25M, 70cm, 33cm, 23cm)
-- Display frequency, offset, tone (PL/CTCSS), location, callsign
+- Display frequency, offset, tone (PL/CTCSS), location, callsign, distance
 - Sort results by distance from search center
 - 30-day local caching for offline operation
 - Paginated display (5 repeaters per page)
@@ -209,13 +213,21 @@ repeater.py
 - ASCII art logo optimized for packet radio terminals
 
 **Usage**:
-- Select search method from main menu (gridsquare or state)
-- Enter search parameters (location, radius, optional band filter)
+- Select search method from main menu
+- Callsign search uses your callsign as default
+- Enter search parameters (radius, optional band filter)
 - Browse results with N)ext, P)revious navigation
-- View cached searches for offline access
+- My Location option appears after first search
 
 **Data Storage**:
-Repeater search results cached in `repeater_cache.json` for 30 days.
+- Repeater search results cached in `repeater_cache.json` (30 days)
+- Last search location saved in `repeater.conf`
+
+**BPQ32 Configuration**:
+Remove `NOCALL` flag to auto-detect user callsign:
+```
+APPLICATION X,REPEATER,C 9 HOST X S K,CALLSIGN,FLAGS
+```
 
 qrz3.py
 -------

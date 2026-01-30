@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [repeater.py v1.1 - Enhanced Search Features] - 2026-01-30
+### Added
+- **repeater.py v1.1**: Enhanced search capabilities
+  - Search by callsign (auto-lookup gridsquare via HamDB API)
+  - Search by frequency (find repeaters near specific frequency with tolerance)
+  - "My Location" quick search (remembers last search location)
+  - Auto-detect user callsign from BPQ stdin
+  - Save last search location to repeater.conf
+  - Display user callsign in menu when connected via BPQ
+
+### Changed
+- **repeater.py v1.1**: Improved user experience
+  - Callsign search suggests user's callsign as default
+  - My Location menu option shows saved gridsquare
+  - All search methods save location for quick re-search
+  - Updated menu structure (6 options + About/Quit)
+
 ## [repeater.py v1.0 - Repeater Directory] - 2026-01-30
 ### Added
 - **repeater.py v1.0**: Amateur radio repeater directory search
