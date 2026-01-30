@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -29,16 +29,16 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.2"
+VERSION = "1.3"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater.conf')
 
 # RepeaterBook API base URL
-# Note: RepeaterBook's API may require registration or have rate limits
-# Using state export endpoint as fallback
-API_BASE = "https://www.repeaterbook.com/api/exportROW.php"
+API_BASE = "https://www.repeaterbook.com/api/export.php"
+# User-Agent required per RepeaterBook API docs
+USER_AGENT = "BPQ-Repeater-Directory/1.2 (https://github.com/bradbrownjr/bpq-apps, kc1jmh@mainehamradio.com)"
 
 LOGO = r"""
                            _            
@@ -129,7 +129,7 @@ def lookup_gridsquare_from_callsign(callsign):
             return None
         
         url = "https://api.hamdb.org/v1/{}/json/bpq-apps".format(base_call)
-        req = urllib.request.Request(url, headers={'User-Agent': 'BPQ-Apps'})
+        req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
         
         with urllib.request.urlopen(req, timeout=5) as response:
             data = json.loads(response.read().decode('utf-8'))
@@ -164,6 +164,19 @@ def save_config(config):
         return True
     except Exception:
         return False
+
+
+def get_api_key():
+    """Get RepeaterBook API key from config"""
+    config = load_config()
+    return config.get('repeaterbook_api_key')
+
+
+def set_api_key(api_key):
+    """Save RepeaterBook API key to config"""
+    config = load_config()
+    config['repeaterbook_api_key'] = api_key
+    return save_config(config)
 
 
 def gridsquare_to_latlon(grid):
@@ -247,39 +260,47 @@ def get_cache_key(state, proximity, lat, lon):
 
 def fetch_repeaters(state, proximity, lat, lon):
     """Fetch repeaters from RepeaterBook API"""
-    # RepeaterBook proximity API format with state abbreviation
-    state_abbrev_map = {
-        'maine': 'Maine', 'nh': 'New%20Hampshire', 'vermont': 'Vermont',
+    # State names for API
+    state_map = {
+        'maine': 'Maine', 'new hampshire': 'New%20Hampshire', 'vermont': 'Vermont',
         'massachusetts': 'Massachusetts', 'connecticut': 'Connecticut',
-        'rhode island': 'Rhode%20Island'
+        'rhode island': 'Rhode%20Island', 'nh': 'New%20Hampshire', 'vt': 'Vermont',
+        'ma': 'Massachusetts', 'ct': 'Connecticut', 'ri': 'Rhode%20Island', 'me': 'Maine'
     }
     
     if state:
-        # Use state-based export
-        state_param = state_abbrev_map.get(state.lower(), state.replace(' ', '%20'))
-        url = "{}?country=United%20States&state={}".format(API_BASE, state_param)
+        state_param = state_map.get(state.lower(), state.replace(' ', '%20'))
     else:
-        # Use proximity search - RepeaterBook doesn't support direct proximity without state
-        # Default to Maine for gridsquare searches in FN43 area
-        url = "{}?country=United%20States&state=Maine".format(API_BASE)
+        # Default to Maine for gridsquare searches in FN region
+        state_param = 'Maine'
+    
+    url = "{}?country=United%20States&state={}".format(API_BASE, state_param)
     
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'BPQ-Apps/1.1'})
+        req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
         with urllib.request.urlopen(req, timeout=15) as response:
             data = json.loads(response.read().decode('utf-8'))
             
         if not data:
             return []
         
-        # RepeaterBook returns direct array or dict with 'results'
+        # Handle different response formats
         if isinstance(data, list):
             return data
-        elif isinstance(data, dict) and 'results' in data:
-            return data['results']
+        elif isinstance(data, dict):
+            if 'results' in data:
+                return data['results']
+            elif 'error' in data:
+                raise Exception(data.get('error', 'API error'))
         
         return []
+                
+    except urllib.error.HTTPError as e:
+        if e.code == 401:
+            raise Exception("API authentication error. Check User-Agent.")
+        raise Exception("HTTP {} {}".format(e.code, e.reason))
     except Exception as e:
-        raise Exception("API error: {}".format(str(e)))
+        raise Exception("{}".format(str(e)))
 
 
 def filter_by_distance(repeaters, center_lat, center_lon, max_distance):
@@ -519,11 +540,6 @@ def show_about():
         "best results. Gridsquare/callsign searches "
         "default to your state. Results cached for "
         "30 days for offline access.", 40
-    ))
-    print("\n" + wrap_text(
-        "Note: RepeaterBook API has authentication "
-        "limits. Use State search (option 4) for "
-        "most reliable results.", 40
     ))
     print("\n" + wrap_text(
         "Data courtesy of RepeaterBook.com - the "

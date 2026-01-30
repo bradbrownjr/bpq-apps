@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [repeater.py v1.2 - API Authentication Fix] - 2026-01-30
+### Fixed
+- **repeater.py v1.2**: RepeaterBook API authentication
+  - Added proper User-Agent header per RepeaterBook requirements
+  - Format: "BPQ-Repeater-Directory/1.2 (URL, email)"
+  - Resolves 401 Unauthorized errors
+  - No API key required for non-commercial use
+
+### Changed
+- **repeater.py v1.2**: Simplified about text
+  - Removed authentication limitation note
+  - API now works reliably for all search types
+
+## [bpq32.cfg - APPLICATION Renumbering] - 2026-01-30
+### Fixed
+- **WS1EC bpq32.cfg**: Fixed APPLICATION number conflicts
+  - DX: Changed from #8 to #9 (was conflicting with WALL)
+  - REPEATER: Changed from #17 to #16 (alphabetical order)
+  - QRZ: Changed from #16 to #17
+  - WALL: Changed from #9 to #22 (alphabetical order)
+  - WIKI: Changed from #22 to #23
+  - WX: Changed from #23 to #24
+  - All APPLICATION numbers now unique and alphabetical
+
 ## [repeater.py v1.1 - Enhanced Search Features] - 2026-01-30
 ### Added
 - **repeater.py v1.1**: Enhanced search capabilities

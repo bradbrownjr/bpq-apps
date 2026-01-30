@@ -28,3 +28,4 @@ apps/bulletin_board.json
 .github/ect@WS1EC ~utilities.txt
 .github/ws1ec-services.conf
 apps/ai.conf
+apps/eventcal_cache.json
