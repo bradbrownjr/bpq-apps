@@ -648,18 +648,23 @@ class HTMLViewer:
                 print("")
                 prompt_parts = []
                 
-                if has_more:
-                    prompt_parts.append("Enter=more")
+                # Sort by scope: quit, page menu, links, enter more, back, main
+                prompt_parts.append("Q)uit")
                 if has_nav:
                     prompt_parts.append("P)age menu")
                 if has_links:
                     prompt_parts.append("L)inks")
                     prompt_parts.append("#=follow")
+                if has_more:
+                    prompt_parts.append("Enter=more")
                 prompt_parts.append("B)ack")
                 prompt_parts.append("M)ain")
-                prompt_parts.append("Q)uit")
                 
-                status = "({}/{})".format(end_pos, total_lines)
+                # Calculate page numbers instead of line numbers
+                page_size = self.page_size
+                current_page = (current_pos // page_size) + 1
+                total_pages = (total_lines + page_size - 1) // page_size
+                status = "({}/{})".format(current_page, total_pages)
                 prompt = "{} [{}] :> ".format(status, " ".join(prompt_parts))
                 
                 try:
