@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [repeater.py v1.4 - Fix API Field Names] - 2026-01-30
+### Fixed
+- **repeater.py v1.4**: Use correct RepeaterBook API field names
+  - Changed from "Trustee" to "Callsign" field (correct API field name)
+  - Calculate offset direction from "Input Freq" and "Frequency" fields
+  - Display format: "Trustee: CALLSIGN" for clarity
+  - Offset symbols now display correctly (+/- based on frequency difference)
+
 ## [repeater.py v1.3 - Display Formatting Fix] - 2026-01-30
 ### Fixed
 - **repeater.py v1.3**: Repeater display formatting

@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -331,18 +331,22 @@ def format_repeater(rep, index=None, show_distance=True):
         line1 = "{}. ".format(index)
     
     freq = format_frequency(rep.get('Frequency', 'N/A'))
-    offset = rep.get('Offset', 'N/A')
     
-    # Determine offset direction
-    if offset and offset != 'N/A':
-        offset_val = offset.replace('MHz', '').strip()
-        if offset_val.startswith('+') or (offset_val and float(offset_val) > 0):
-            line1 += "{} +".format(freq)
-        elif offset_val.startswith('-') or (offset_val and float(offset_val) < 0):
-            line1 += "{} -".format(freq)
+    # Calculate offset direction from input/output frequencies
+    try:
+        output_freq = float(rep.get('Frequency', 0))
+        input_freq = float(rep.get('Input Freq', 0))
+        if output_freq > 0 and input_freq > 0:
+            diff = output_freq - input_freq
+            if diff > 0.001:  # Output higher than input
+                line1 += "{} -".format(freq)  # Minus offset (reverse of normal convention)
+            elif diff < -0.001:  # Input higher than output
+                line1 += "{} +".format(freq)  # Plus offset
+            else:
+                line1 += freq  # Simplex
         else:
             line1 += freq
-    else:
+    except (ValueError, TypeError):
         line1 += freq
     
     # Add tone if present
@@ -366,10 +370,10 @@ def format_repeater(rep, index=None, show_distance=True):
             loc_line = loc_line[:35] + "..."
         output.append(loc_line)
     
-    # Line 4: Callsign
-    callsign = rep.get('Trustee', '')
+    # Line 4: Callsign (trustee)
+    callsign = rep.get('Callsign', '')
     if callsign:
-        output.append(callsign)
+        output.append("Trustee: {}".format(callsign))
     
     # Line 5: Distance
     if show_distance and 'distance' in rep:
