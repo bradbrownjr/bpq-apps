@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.3"
+VERSION = "1.4"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -455,10 +455,25 @@ class HTMLParser:
     
     def _html_to_text(self, html, number_links=True):
         """Convert HTML to text, optionally numbering links"""
-        # Convert block elements to newlines
-        html = re.sub(r'</(p|div|h[1-6]|li|tr|br|article|section)>', '\n', html, flags=re.IGNORECASE)
+        # First, normalize whitespace (HTML source newlines are just whitespace)
+        html = re.sub(r'\s+', ' ', html)
+        
+        # Now convert paragraph breaks to markers
+        # Double br tags = paragraph break
+        html = re.sub(r'<br\s*/?>\s*<br\s*/?>', '\n\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'<br\s*/?>\s*<span[^>]*>\s*<br\s*/?>', '\n\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'<br\s*/?>\s*</span>\s*<br\s*/?>', '\n\n', html, flags=re.IGNORECASE)
+        
+        # Block elements create paragraph breaks
+        html = re.sub(r'</(p|div|h[1-6]|article|section)>', '\n\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'<(p|div|h[1-6]|article|section)[^>]*>', '\n\n', html, flags=re.IGNORECASE)
+        
+        # List items and table rows are line breaks
+        html = re.sub(r'</(li|tr)>', '\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'<(li|tr)[^>]*>', '\n', html, flags=re.IGNORECASE)
+        
+        # Single br = line break
         html = re.sub(r'<br\s*/?>', '\n', html, flags=re.IGNORECASE)
-        html = re.sub(r'<(p|div|h[1-6]|li|tr|article|section)[^>]*>', '\n', html, flags=re.IGNORECASE)
         
         # Handle lists
         html = re.sub(r'<[ou]l[^>]*>', '\n', html, flags=re.IGNORECASE)
@@ -500,67 +515,60 @@ class HTMLParser:
         return text
     
     def _clean_text(self, text):
-        """Clean up text and split into lines, merging orphan lines"""
-        # Normalize whitespace and split
-        raw_lines = []
+        """Clean up text - preserve paragraph breaks, merge only obvious fragments"""
+        # Split into chunks separated by blank lines (paragraphs)
+        paragraphs = []
+        current_para = []
+        
         for line in text.split('\n'):
             line = re.sub(r'\s+', ' ', line).strip()
             if line:
-                raw_lines.append(line)
+                current_para.append(line)
+            elif current_para:
+                # Blank line = paragraph break
+                paragraphs.append(current_para)
+                current_para = []
+        if current_para:
+            paragraphs.append(current_para)
         
-        # Merge short orphan lines with adjacent lines
-        # Short lines that don't end with strong punctuation are likely orphans
-        lines = []
-        i = 0
-        while i < len(raw_lines):
-            line = raw_lines[i]
-            
-            # Merge short all-caps words into headings (e.g. "OUR" + "STORY")
-            while (len(line) < 15 and line.isupper() and
-                   i + 1 < len(raw_lines) and
-                   len(raw_lines[i + 1]) < 20 and
-                   (raw_lines[i + 1].isupper() or raw_lines[i + 1][0].isupper())):
-                i += 1
-                line = line + ' ' + raw_lines[i]
-            
-            # Check if this line should be merged with the next
-            # Merge conditions: incomplete sentence or fragment
-            while (i + 1 < len(raw_lines) and
-                   (len(line) < 60 or  # Short line - likely fragment
-                    line.endswith(('with', 'and', 'or', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of')) or  # Ends with article/preposition
-                    (not line.endswith(('.', '!', '?', ':', ']')) and len(line) < 100))):
-                next_line = raw_lines[i + 1]
+        # Process each paragraph: merge fragment lines
+        result_lines = []
+        for para in paragraphs:
+            if not para:
+                continue
                 
-                # Stop if next line is clearly a new section (all caps heading)
-                if len(next_line) < 30 and next_line.isupper():
-                    break
-                    
-                # Stop if current line is complete sentence and next is new sentence
-                if line.endswith(('.', '!', '?')) and len(line) > 50:
-                    break
-                    
-                # Merge with next line
+            # Merge lines within paragraph that are fragments
+            merged = []
+            i = 0
+            while i < len(para):
+                line = para[i]
+                
+                # Merge with next if this line ends with dangling word
+                while i + 1 < len(para):
+                    next_line = para[i + 1]
+                    # Only merge if line ends with article/preposition/conjunction
+                    # and next line starts lowercase (continuation)
+                    if (line.endswith(('with', 'and', 'or', 'the', 'a', 'an', 
+                                       'in', 'on', 'at', 'to', 'for', 'of', 'by')) and
+                        next_line and next_line[0].islower()):
+                        i += 1
+                        line = line + ' ' + next_line
+                    else:
+                        break
+                
+                merged.append(line)
                 i += 1
-                line = line + ' ' + next_line
             
-            lines.append(line)
-            i += 1
+            # Add merged paragraph lines
+            result_lines.extend(merged)
+            # Add blank line after paragraph (except last)
+            result_lines.append('')
         
-        # Add paragraph spacing (blank line after complete sentences)
-        spaced_lines = []
-        for i, line in enumerate(lines):
-            spaced_lines.append(line)
-            # Add blank line after complete sentences that are likely paragraph endings
-            if i + 1 < len(lines):
-                next_line = lines[i + 1]
-                # Add space if current line ends sentence and next starts new thought
-                if (line.endswith(('.', '!', '?')) and 
-                    len(line) > 50 and  # Substantial sentence
-                    not line.endswith(']') and  # Not a numbered link
-                    (next_line[0].isupper() or next_line.isupper())):  # Next starts with capital
-                    spaced_lines.append('')
+        # Remove trailing blank line
+        while result_lines and not result_lines[-1]:
+            result_lines.pop()
         
-        return spaced_lines
+        return result_lines
 
 
 class HTMLViewer:
