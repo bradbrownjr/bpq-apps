@@ -798,6 +798,10 @@ class HTMLViewer:
         while current_pos < total_lines:
             end_pos = min(current_pos + self.page_size, total_lines)
             
+            # Add blank line between prompt and next page (but not on first page)
+            if current_pos > 0:
+                print("")
+            
             # Display current page
             for i in range(current_pos, end_pos):
                 print(self.wrapped_lines[i])
