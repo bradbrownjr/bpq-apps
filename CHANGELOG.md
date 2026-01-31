@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.19 - Comprehensive WordPress Footer Removal] - 2026-01-31
+### Fixed
+- **htmlview.py v1.19**: Aggressive WordPress footer/metadata removal
+  - HTML-level: Removes all `<footer>` tags, sharedaddy sharing plugin, jetpack UI
+  - HTML-level: Removes entry-meta, post-meta, wpcom elements, reblog/subscribe divs
+  - Text-level: Filters 20+ WordPress junk patterns (Like Loading, Related, Author, Tags, Post navigation, etc.)
+  - Text-level: Filters WordPress.com prompts (Sign up, Log in, Create a blog, Join X subscribers, etc.)
+  - Result: Winter Field Day article now ends at actual content without any WordPress chrome
+
 ## [htmlview.py v1.18 - Post-Processing Cleanup] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.18**: Enhanced text post-processing to remove junk lines

@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.18
+Version: 1.19
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.18"
+VERSION = "1.19"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -306,6 +306,26 @@ class HTMLParser:
         # Remove "Like Loading..." and other WordPress UI artifacts
         html = re.sub(r'Like Loading\.\.\.', '', html, flags=re.IGNORECASE)
         html = re.sub(r'<div[^>]*class="[^"]*wp-[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove entire footer sections by common WordPress footer patterns
+        # These catch the big footer blocks that contain author, tags, related posts, etc.
+        html = re.sub(r'<footer[^>]*>.*?</footer>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*site-footer[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*entry-meta[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*post-meta[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove WordPress "sharedaddy" (sharing plugin)
+        html = re.sub(r'<div[^>]*class="[^"]*sharedaddy[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*sd-[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove WordPress.com specific elements
+        html = re.sub(r'<div[^>]*id="[^"]*wpcom[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*wpcom[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*id="[^"]*footer[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove reblog/subscribe UI
+        html = re.sub(r'<div[^>]*class="[^"]*reblog[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*jetpack[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
         
         # Remove subscribe widgets and email signup forms
         html = re.sub(r'<div[^>]*class="[^"]*subscribe[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
@@ -768,6 +788,34 @@ class HTMLParser:
         filtered_lines = []
         social_junk = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'pinterest']
         menu_patterns = [r'^menu$', r'^main menu$', r'^navigation$', r'^nav$']
+        wordpress_junk = [
+            r'^like loading',
+            r'^related$',
+            r'^author\s+',
+            r'^posted on\s+',
+            r'^tags?\s+',
+            r'^categories?\s+',
+            r'^post navigation$',
+            r'^reblog$',
+            r'^subscribe$',
+            r'^subscribed$',
+            r'^comment$',
+            r'^already have.*account',
+            r'^sign up$',
+            r'^log in$',
+            r'^sign me up$',
+            r'^join \d+ other',
+            r'^copy shortlink$',
+            r'^report this content$',
+            r'^view post in reader$',
+            r'^manage subscriptions$',
+            r'^collapse this bar$',
+            r'^write a comment',
+            r'^design a site like this',
+            r'^get started$',
+            r'^create a .*blog at wordpress',
+            r'^%d$'
+        ]
         
         for line in result_lines:
             # Skip lines that are JUST social media names (with or without link numbers)
@@ -781,6 +829,10 @@ class HTMLParser:
             
             # Skip "Menu" header lines
             if any(re.match(pattern, clean_line) for pattern in menu_patterns):
+                continue
+            
+            # Skip WordPress junk patterns
+            if any(re.match(pattern, clean_line) for pattern in wordpress_junk):
                 continue
             
             # Skip empty list markers (just dash/bullet)
