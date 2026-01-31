@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.13
+Version: 1.14
 Date: January 2026
 """
 
@@ -54,7 +54,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "1.13"
+VERSION = "1.14"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
@@ -451,8 +451,9 @@ class RSSReader:
             if htmlview:
                 try:
                     # Use HTMLParser directly for fast text extraction (no interactive UI)
+                    # Disable link numbering - we're just reading articles, not navigating
                     parser = htmlview.HTMLParser()
-                    text_lines, nav_links, content_links = parser.parse(html)
+                    text_lines, nav_links, content_links = parser.parse(html, number_links=False)
                     # Join lines and return
                     text = '\n'.join(text_lines)
                     return text

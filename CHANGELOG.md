@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [rss-news.py v1.14 + htmlview.py v1.20 - Clean Articles] - 2026-01-31
+### Fixed
+- **htmlview.py v1.20**: Filter blog title footer references
+  - Added patterns to remove "WS1SM Ham Radio Blog" and similar blog title footers
+  - Added pattern to catch any "...ham radio blog" style footer references
+  
+- **rss-news.py v1.14**: Disable link numbering in articles
+  - Articles are read linearly, not navigated via links
+  - Passes `number_links=False` to HTMLParser.parse()
+  - Result: Clean article text without [1], [2], [3] link numbers
+  - www.py still has numbered links for navigation (uses HTMLViewer, not parser directly)
+
 ## [htmlview.py v1.19 - Comprehensive WordPress Footer Removal] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.19**: Aggressive WordPress footer/metadata removal

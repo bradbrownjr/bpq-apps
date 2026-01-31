@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.19
+Version: 1.20
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.19"
+VERSION = "1.20"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -248,9 +248,13 @@ class HTMLParser:
         self.text_lines = []     # Parsed text content
         self.raw_html = ""
     
-    def parse(self, html):
+    def parse(self, html, number_links=True):
         """
         Parse HTML and separate nav links from content.
+        
+        Args:
+            html: Raw HTML content
+            number_links: If True, add [1], [2] etc to content links
         
         Returns:
             tuple: (text_lines, nav_links, content_links)
@@ -392,7 +396,7 @@ class HTMLParser:
                                  '', content_html, flags=re.DOTALL | re.IGNORECASE)
         
         # Parse content with numbered links
-        text = self._html_to_text(content_html, number_links=True)
+        text = self._html_to_text(content_html, number_links=number_links)
         
         # Wrap and clean text
         self.text_lines = self._clean_text(text)
@@ -814,7 +818,9 @@ class HTMLParser:
             r'^design a site like this',
             r'^get started$',
             r'^create a .*blog at wordpress',
-            r'^%d$'
+            r'^%d$',
+            r'^ws1sm ham radio blog$',
+            r'.*ham radio blog$'
         ]
         
         for line in result_lines:
