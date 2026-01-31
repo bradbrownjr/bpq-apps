@@ -818,9 +818,7 @@ class HTMLParser:
             r'^design a site like this',
             r'^get started$',
             r'^create a .*blog at wordpress',
-            r'^%d$',
-            r'^ws1sm ham radio blog$',
-            r'.*ham radio blog$'
+            r'^%d$'
         ]
         
         for line in result_lines:
