@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.18 - Post-Processing Cleanup] - 2026-01-31
+### Fixed
+- **htmlview.py v1.18**: Enhanced text post-processing to remove junk lines
+  - Filters "Menu", "Main Menu", "Navigation", "Nav" header lines after text extraction
+  - Removes empty list markers (lines with just `-`, `•`, or bullets)
+  - Properly filters social media links ("facebook [1]" style) after HTML parsing
+  - Result: Cleaner output without stray dashes and menu headers
+
 ## [htmlview.py v1.17 - Enhanced WordPress Filtering] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.17**: More aggressive WordPress junk removal

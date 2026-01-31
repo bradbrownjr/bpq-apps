@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.17
+Version: 1.18
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.17"
+VERSION = "1.18"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -767,11 +767,32 @@ class HTMLParser:
         # Filter out social media icons and WordPress junk lines
         filtered_lines = []
         social_junk = ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'pinterest']
+        menu_patterns = [r'^menu$', r'^main menu$', r'^navigation$', r'^nav$']
+        
         for line in result_lines:
             # Skip lines that are JUST social media names (with or without link numbers)
             clean_line = re.sub(r'\s*\[\d+\]\s*$', '', line).strip().lower()
-            if clean_line not in social_junk:
-                filtered_lines.append(line)
+            
+            # Skip social media junk
+            if clean_line in social_junk:
+                continue
+            
+            # Skip "Menu" header lines
+            if any(re.match(pattern, clean_line) for pattern in menu_patterns):
+                continue
+            
+            # Skip empty list markers (just dash/bullet)
+            if re.match(r'^\s*[-–—•*]\s*$', line):
+                continue
+            
+            # Skip lines that are just whitespace
+            if not line.strip():
+                # Only keep blank lines (paragraph breaks), not junk whitespace
+                if line == '':
+                    filtered_lines.append(line)
+                continue
+            
+            filtered_lines.append(line)
         
         return filtered_lines
 
