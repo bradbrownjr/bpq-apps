@@ -9,6 +9,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
   - [callout.py](#calloutpy)
   - [forms.py](#formspy)
   - [ai.py](#aipy)
+  - [antenna.py](#antennapy)
   - [gopher.py](#gopherpy)
   - [hamqsl.py](#hamqslpy)
   - [hamtest.py](#hamtestpy)
@@ -448,6 +449,72 @@ API keys and per-user preferences stored in `ai.conf`:
   "openai_api_key": "your-openai-key-here",
   "default_provider": "gemini",
   "ai_name": "Elmer",
+```
+
+antenna.py
+----------
+**Type**: Python  
+**Purpose**: Antenna calculators and user-contributed configuration database  
+**Information source**: Standard antenna formulas + community database  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Calculators for common antenna types plus a shared database of antenna settings for portable/field antennas.
+
+**Download or update**:  
+```wget -O antenna.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/antenna.py && chmod +x antenna.py```
+
+**Calculators**:
+- Dipole (half-wave, center-fed)
+- End-Fed Half-Wave (EFHW) with 49:1, 64:1, 9:1, 4:1 ratios
+- Off-Center Fed Dipole (OCF/Windom)
+- Folded Dipole
+- Moxon Rectangle (2-element beam)
+- Vertical / Ground Plane (1/4 wave, 5/8 wave, J-pole)
+- NVIS (height and dimension calculator)
+- Loop Antennas (full wave, magnetic)
+- Random Wire Lengths (multiband lengths that avoid resonance)
+
+**Configuration Database**:
+- User-contributed antenna settings
+- Search by band, brand, or type
+- Ideal for portable antennas: Buddipole, Wolf River Coil, Chameleon, etc.
+- Community-shared radiator lengths and tap positions
+- Callsign attribution for each entry
+
+**Features**:
+- Band frequency chart with half-wave lengths
+- Antenna formulas reference
+- ASCII art interface optimized for packet radio
+- Automatic update functionality
+
+**BPQ32 Configuration**:
+```
+APPLICATION X,ANTENNA,C 9 HOST X K
+```
+
+**Usage**:
+- 1: Antenna Calculators submenu
+- 2: Configuration Database (browse/search/add)
+- 3: Band frequency chart
+- 4: Antenna formulas reference
+- A: About, Q: Quit
+
+**Data Storage**:
+Antenna configurations stored in `antenna.json`:
+```json
+{
+  "antennas": [
+    {
+      "brand": "Buddipole",
+      "type": "Portable",
+      "band": "20m",
+      "radiator": "8 ft 2 in",
+      "tap": "tap 3",
+      "notes": "Good SWR at 14.250",
+      "submitter": "KC1JMH",
+      "id": 1
+    }
+  ]
+}
   "user_preferences": {
     "KC1JMH": {
       "provider": "openai",

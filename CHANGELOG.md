@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [antenna.py v1.0 - New App] - 2026-01-31
+### Added
+- **antenna.py v1.0**: New antenna calculator and configuration database app
+  - Calculators: Dipole, EFHW (49:1/64:1/9:1/4:1), OCF, Folded Dipole, Moxon, Vertical/Ground Plane, NVIS, Loop, Random Wire
+  - User-contributed database for portable antenna configurations
+  - Search/browse by band, brand, or antenna type
+  - Band frequency chart with half-wave lengths
+  - Antenna formulas reference
+  - Popular portable antennas info (Buddipole, Wolf River Coil, Chameleon, etc.)
+  - ASCII art logo, standard menu interface
+  - Auto-update functionality
+  - Python 3.5.3 compatible
+
 ## [rss-news.py v1.14 + htmlview.py v1.20 - Clean Articles] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.20**: Filter blog title footer references
