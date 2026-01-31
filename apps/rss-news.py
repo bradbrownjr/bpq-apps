@@ -711,12 +711,9 @@ class RSSReader:
                 
                 command = input(prompt).strip()
                 
-                if not command:
-                    continue
-                    
                 cmd_lower = command.lower()
                 
-                # In article_view state, handle fetch article option
+                # In article_view state, handle fetch article option (including empty input = Yes)
                 if state == 'article_view':
                     if cmd_lower.startswith('y') or cmd_lower == '':
                         # Fetch full article (default action, Enter=yes)
@@ -766,6 +763,9 @@ class RSSReader:
                         print("Article: [Y/N to fetch], B)ack to list, Q)uit :> ", end='')
                         sys.stdout.flush()
                         continue
+                
+                if not command:
+                    continue
                 
                 # Quit - works from anywhere
                 if cmd_lower.startswith('q'):
