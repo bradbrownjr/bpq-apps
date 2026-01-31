@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview Title Width Fix] - 2026-01-31
+### Fixed
+- **htmlview.py v1.14**: Title width now respects terminal width
+  - Previously: titles hardcoded to 40-char width (BPQ mobile standard)
+  - Now: uses terminal width minus 2-char margin (80-char term → 78-char title)
+  - Minimum 40 chars for backward compatibility with narrow terminals
+  - Separator lines match actual title length (no awkward short lines)
+  - Result: titles like "OverbiteWX – Get this Extension for Firefox..." display fully instead of truncated
+
 ## [htmlview/gopher Fixes - Emoji Filtering + Duplicate Message] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.13**: Strip emoji and non-ASCII unicode from text

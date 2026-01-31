@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.13
+Version: 1.14
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.13"
+VERSION = "1.14"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -774,7 +774,10 @@ class HTMLViewer:
         return self.selected_link
     
     def _extract_title(self, html):
-        """Extract page title from HTML, capped at title width"""
+        """Extract page title from HTML, respecting terminal width"""
+        # Use term_width for title sizing (leave 2 chars margin: 80 -> 78)
+        max_title_width = max(40, self.term_width - 2)
+        
         # Try <title> tag first
         match = re.search(r'<title[^>]*>(.*?)</title>', html, flags=re.DOTALL | re.IGNORECASE)
         if match:
@@ -783,9 +786,9 @@ class HTMLViewer:
             title = decode_html_entities(title)
             title = re.sub(r'\s+', ' ', title).strip()
             if title:
-                # Truncate to title width
-                if len(title) > DEFAULT_TITLE_WIDTH:
-                    title = title[:DEFAULT_TITLE_WIDTH - 3] + '...'
+                # Truncate to available width
+                if len(title) > max_title_width:
+                    title = title[:max_title_width - 3] + '...'
                 return title
         
         # Fallback: try first h1 or h2
@@ -798,9 +801,9 @@ class HTMLViewer:
                 title = decode_html_entities(title)
                 title = re.sub(r'\s+', ' ', title).strip()
                 if title and len(title) < 100:  # Reasonable length
-                    # Truncate to title width
-                    if len(title) > DEFAULT_TITLE_WIDTH:
-                        title = title[:DEFAULT_TITLE_WIDTH - 3] + '...'
+                    # Truncate to available width
+                    if len(title) > max_title_width:
+                        title = title[:max_title_width - 3] + '...'
                     return title
         
         return None
@@ -810,11 +813,10 @@ class HTMLViewer:
         total_lines = len(self.wrapped_lines)
         current_pos = 0
         
-        # Display page header with title (capped at title width)
+        # Display page header with title (use full available width)
         if title:
-            # Use actual title length, but cap separator to DEFAULT_TITLE_WIDTH
-            sep_width = min(len(title), DEFAULT_TITLE_WIDTH)
-            sep_line = "-" * sep_width
+            # Separator uses title length (actual, not capped)
+            sep_line = "-" * len(title)
             print(sep_line)
             print(title)
             print(sep_line)
