@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [antenna.py v1.1 - Prompt Ordering Fix] - 2026-01-31
+### Fixed
+- **antenna.py v1.1**: Comply with standard prompt ordering
+  - Main menu: Q)uit before A)bout
+  - Calculator submenu: Q)uit M)ain instead of Q) Back
+  - Database submenu: Q)uit M)ain instead of Q) Back
+  - Pagination: Q)uit first in navigation
+  - Both Q)uit (exit app) and M)ain (return to menu) now available in submenus
+  - Follows standard: Q (exit scope), M (main), B (back), P (page nav), Enter (content)
+
 ## [antenna.py v1.0 - New App] - 2026-01-31
 ### Added
 - **antenna.py v1.0**: New antenna calculator and configuration database app

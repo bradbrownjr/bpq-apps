@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.0
+Version: 1.1
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -24,7 +24,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.0"
+VERSION = "1.1"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -599,10 +599,10 @@ def calculator_menu():
         print("8) Loop Antennas")
         print("9) Random Wire Lengths")
         print("-" * 40)
-        print("Q) Back to Main Menu")
+        print("Q) Quit  M) Main Menu")
         
         try:
-            choice = raw_input("\nSelect [1-9,Q] :> ").strip().upper()
+            choice = raw_input("\nSelect [1-9,Q,M] :> ").strip().upper()
         except NameError:
             choice = input("\nSelect [1-9,Q] :> ").strip().upper()
         
@@ -624,8 +624,11 @@ def calculator_menu():
             calc_loop()
         elif choice == "9":
             calc_longwire()
-        elif choice == "Q":
+        elif choice == "M":
             return
+        elif choice == "Q":
+            print("\nExiting...")
+            sys.exit(0)
         else:
             print("Invalid selection")
 
@@ -863,12 +866,11 @@ def display_entries(entries):
         
         print("-" * 40)
         
-        nav = []
+        nav = ["Q)uit"]
         if page > 0:
             nav.append("P)rev")
         if page < total_pages - 1:
             nav.append("N)ext")
-        nav.append("Q)uit")
         
         try:
             choice = raw_input("[{}] :> ".format(" ".join(nav))).strip().upper()
@@ -927,10 +929,10 @@ def database_menu(callsign):
         print("3) Add your configuration")
         print("4) Popular portable antennas")
         print("-" * 40)
-        print("Q) Back to Main Menu")
+        print("Q) Quit  M) Main Menu")
         
         try:
-            choice = raw_input("\nSelect [1-4,Q] :> ").strip().upper()
+            choice = raw_input("\nSelect [1-4,Q,M] :> ").strip().upper()
         except NameError:
             choice = input("\nSelect [1-4,Q] :> ").strip().upper()
         
@@ -942,8 +944,11 @@ def database_menu(callsign):
             add_antenna_entry(callsign)
         elif choice == "4":
             popular_antennas()
-        elif choice == "Q":
+        elif choice == "M":
             return
+        elif choice == "Q":
+            print("\nExiting...")
+            sys.exit(0)
         else:
             print("Invalid selection")
 
@@ -1031,10 +1036,10 @@ def main_menu(callsign=None):
         print("3) Band Frequency Chart")
         print("4) Antenna Formulas")
         print("")
-        print("A) About  Q) Quit")
+        print("Q) Quit  A) About")
         
         try:
-            choice = raw_input("\nMenu: [1-4,A,Q] :> ").strip().upper()
+            choice = raw_input("\nMenu: [1-4,Q,A] :> ").strip().upper()
         except NameError:
             choice = input("\nMenu: [1-4,A,Q] :> ").strip().upper()
         

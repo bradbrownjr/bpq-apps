@@ -488,8 +488,9 @@ antenna.py
 
 **BPQ32 Configuration**:
 ```
-APPLICATION X,ANTENNA,C 9 HOST X K
+APPLICATION X,ANTENNA,C 9 HOST X NOCALL S K
 ```
+Note: NOCALL flag used - app works standalone without callsign (database submissions optional).
 
 **Usage**:
 - 1: Antenna Calculators submenu
