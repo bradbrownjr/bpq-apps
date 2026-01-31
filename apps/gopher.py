@@ -13,7 +13,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.40
+Version: 1.41
 Date: January 2026
 """
 
@@ -21,7 +21,7 @@ import sys
 import os
 import json
 
-VERSION = "1.40"
+VERSION = "1.41"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -34,6 +34,14 @@ if sys.version_info < (3, 5):
     ))
     print("\nPlease run with: python3 gopher.py")
     sys.exit(1)
+
+def ensure_htmlview_module():
+    """Ensure htmlview module is available and up-to-date"""
+    try:
+        if htmlview:
+            htmlview.ensure_htmlview_available()
+    except:
+        pass
 
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
@@ -133,6 +141,14 @@ import socket
 import textwrap
 import os
 from urllib.parse import urlparse
+
+# Try to import htmlview module (auto-downloaded if needed)
+try:
+    import htmlview
+except ImportError:
+    htmlview = None
+
+# Legacy HTML stripper (fallback if htmlview unavailable)
 from html.parser import HTMLParser
 
 class HTMLStripper(HTMLParser):
@@ -805,7 +821,7 @@ class GopherClient:
                         print("Invalid selection. Choose 1-{}".format(len(selectable)))
             return True
             
-        # HTML - fetch and render as plain text
+        # HTML - fetch and render with htmlview or fallback
         elif item_type == 'h':
             if selector.startswith('URL:'):
                 url = selector[4:]
@@ -817,17 +833,46 @@ class GopherClient:
                     with urllib.request.urlopen(url, timeout=30) as response:
                         html_content = response.read().decode('utf-8', errors='ignore')
                     
-                    # Strip HTML tags and convert to plain text
-                    stripper = HTMLStripper()
-                    stripper.feed(html_content)
-                    text_content = stripper.get_data()
-                    
-                    if not text_content:
-                        print("Error: No text content found in HTML page")
-                        return False
-                    
-                    # Display as article with pagination
-                    result = self.display_article(text_content, paginate=True)
+                    # Use htmlview if available for better rendering
+                    if htmlview:
+                        viewer = htmlview.HTMLViewer(term_width=80, page_size=20)
+                        selected_url = viewer.view(html_content, base_url=url)
+                        
+                        # Handle navigation commands from htmlview
+                        if selected_url == '__EXIT__':
+                            print("\nGoodbye! 73\n")
+                            sys.exit(0)
+                        elif selected_url == '__MAIN__':
+                            self.current_state = 'initial'
+                            self.current_url = None
+                            return True
+                        elif viewer.go_back:
+                            # Back to previous page
+                            if self.history:
+                                prev_url = self.history.pop()
+                                self.current_url = None
+                                self.navigate_to(prev_url)
+                            else:
+                                self.current_state = 'initial'
+                                self.current_url = None
+                            return True
+                        elif selected_url:
+                            # User selected a link - follow it
+                            self.navigate_to(selected_url)
+                            return True
+                        return True
+                    else:
+                        # Fallback: Strip HTML tags and convert to plain text
+                        stripper = HTMLStripper()
+                        stripper.feed(html_content)
+                        text_content = stripper.get_data()
+                        
+                        if not text_content:
+                            print("Error: No text content found in HTML page")
+                            return False
+                        
+                        # Display as article with pagination
+                        result = self.display_article(text_content, paginate=True)
                     self.current_state = 'article'
                     
                     # Handle return commands from article pagination
@@ -1117,6 +1162,8 @@ class GopherClient:
 
 if __name__ == '__main__':
     try:
+        # Ensure htmlview module is available
+        ensure_htmlview_module()
         # Check for app updates
         check_for_app_update(VERSION, APP_NAME)
         

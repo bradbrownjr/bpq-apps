@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 2.4
+Version: 2.5
 Date: January 2026
 """
 
@@ -26,7 +26,13 @@ import re
 import textwrap
 import socket
 
-VERSION = "2.4"
+# Try to import htmlview module (auto-downloaded if needed)
+try:
+    import htmlview
+except ImportError:
+    htmlview = None
+
+VERSION = "2.5"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -39,6 +45,14 @@ if sys.version_info < (3, 5):
     ))
     print("\nPlease run with: python3 wiki.py")
     sys.exit(1)
+
+def ensure_htmlview_module():
+    """Ensure htmlview module is available and up-to-date"""
+    try:
+        if htmlview:
+            htmlview.ensure_htmlview_available()
+    except:
+        pass
 
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
@@ -932,6 +946,7 @@ def main():
             sys.exit(0)
     
     # Check for updates (runs in background, 3-second timeout)
+    ensure_htmlview_module()
     check_for_app_update(VERSION, APP_NAME)
     
     # Run application

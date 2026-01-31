@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App htmlview Integration] - 2026-01-31
+### Added
+- **gopher.py v1.41**: HTML link rendering via htmlview
+  - When Gopher links point to HTML pages, renders with htmlview instead of crude HTML stripping
+  - Intelligent nav menu separation + content links menu
+  - Automatic module download if not available
+  - Falls back to basic HTMLStripper if htmlview unavailable
+  
+- **rss-news.py v1.8**: Full article rendering via htmlview
+  - When fetching full articles from web, uses htmlview for clean rendering
+  - Removes navigation menus and sidebars, surfaces actual article content
+  - Priority: htmlview (best) → w3m (if available) → HTML stripping (fallback)
+  - Automatic module download if not available
+  
+- **wiki.py v2.5**: htmlview auto-update at startup
+  - Ensures htmlview module available before running (silent 3-second check)
+  - Prepared for future external link rendering via htmlview
+
+### Technical Details
+- All three apps now call `ensure_htmlview_module()` at startup
+- Automatic download of htmlview.py from GitHub if missing
+- Silent auto-update check (3-second timeout, no blocking)
+- Graceful fallback if htmlview unavailable (apps continue with basic rendering)
+- No performance impact if htmlview module present (just one import)
+
 ## [htmlview.py v1.11 - Fix Link Following on Wrong Page] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.11**: Link numbers now only followable if visible on current page

@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.7
+Version: 1.8
 Date: January 2026
 """
 
@@ -48,9 +48,23 @@ import json
 import time
 import socket
 
-VERSION = "1.7"
+# Try to import htmlview module (auto-downloaded if needed)
+try:
+    import htmlview
+except ImportError:
+    htmlview = None
+
+VERSION = "1.8"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
+
+def ensure_htmlview_module():
+    """Ensure htmlview module is available and up-to-date"""
+    try:
+        if htmlview:
+            htmlview.ensure_htmlview_available()
+    except:
+        pass
 
 def check_for_app_update(current_version, script_name):
     """Check if app has an update available on GitHub"""
@@ -422,8 +436,45 @@ class RSSReader:
             return None
     
     def fetch_article_text(self, url):
-        """Fetch full article text from URL using w3m for text extraction"""
+        """Fetch full article text from URL using htmlview, w3m, or HTML stripping"""
         try:
+            req = urllib.request.Request(url)
+            req.add_header('User-Agent', 'RSS-Reader/1.0 (Packet Radio)')
+            
+            with urllib.request.urlopen(req, timeout=SOCKET_TIMEOUT) as response:
+                data = response.read()
+            
+            html = data.decode('utf-8', errors='replace')
+            
+            # Use htmlview if available for best rendering
+            if htmlview:
+                # Create temporary file to capture htmlview output
+                text_output = []
+                old_stdout = sys.stdout
+                
+                class StringCapture:
+                    def __init__(self):
+                        self.lines = []
+                    def write(self, text):
+                        self.lines.append(text)
+                    def flush(self):
+                        pass
+                
+                try:
+                    capture = StringCapture()
+                    sys.stdout = capture
+                    
+                    viewer = htmlview.HTMLViewer(term_width=80, page_size=100)
+                    viewer.view(html, base_url=url)
+                    
+                    # Extract rendered text from viewer
+                    text = '\n'.join(viewer.wrapped_lines)
+                    sys.stdout = old_stdout
+                    return text
+                except:
+                    sys.stdout = old_stdout
+                    # Fall through to w3m/strip_html fallback
+            
             # Try using w3m if available for clean text extraction
             try:
                 result = subprocess.run(
@@ -438,18 +489,7 @@ class RSSReader:
             except (FileNotFoundError, subprocess.TimeoutExpired):
                 pass
             
-            # Fallback: fetch HTML and strip tags manually
-            req = urllib.request.Request(url)
-            req.add_header('User-Agent', 'RSS-Reader/1.0 (Packet Radio)')
-            
-            with urllib.request.urlopen(req, timeout=SOCKET_TIMEOUT) as response:
-                data = response.read()
-                
-            # Decode HTML
-            html = data.decode('utf-8', errors='replace')
-            
-            # Try to extract just the body content
-            # Remove script and style tags
+            # Fallback: strip HTML tags manually
             import re
             html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
             html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
@@ -960,6 +1000,7 @@ if __name__ == '__main__':
                 sys.exit(1)
     
     # Check for app updates
+    ensure_htmlview_module()
     check_for_app_update(VERSION, APP_NAME)
     reader = RSSReader()
     try:
