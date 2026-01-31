@@ -876,6 +876,7 @@ class RSSReader:
                                 response = input("\nFetch full article? Y)es, N)o :> ").strip().lower()
                                 if response.startswith('y'):
                                     print("\nFetching full article (this may take a while)...")
+                                    sys.stdout.flush()  # Ensure message appears immediately on slow connections
                                     full_text = self.fetch_article_text(article['link'])
                                     
                                     if full_text:
