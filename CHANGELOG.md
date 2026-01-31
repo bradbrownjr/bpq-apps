@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [rss-news.py v1.10 - Performance Diagnostics] - 2026-01-31
+### Added
+- **rss-news.py v1.10**: Performance timing information
+  - Added fetch time to article fetch results: "Article size: X.X KB (fetched in Y.Ys)"
+  - Added format time tracking for large articles: "[Formatted in Y.Ys]"
+  - Helps diagnose where slowness occurs: network fetch vs text processing
+
+## [rss-news.py v1.9 - Faster Article Fetching] - 2026-01-31
+### Fixed
+- **rss-news.py v1.9**: Much faster HTML article extraction
+  - Previously: Used full interactive HTMLViewer with stdout redirection (slow)
+  - Now: Uses HTMLParser.parse() directly for text extraction only
+  - Result: Article fetching now as fast as other HTML pages (gopher, www)
+  - Also added stdout flush to show "Fetching..." message immediately
+
 ## [htmlview Title Width Fix] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.14**: Title width now respects terminal width

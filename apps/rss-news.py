@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.8
+Version: 1.10
 Date: January 2026
 """
 
@@ -54,7 +54,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "1.8"
+VERSION = "1.10"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
@@ -448,32 +448,16 @@ class RSSReader:
             
             # Use htmlview if available for best rendering
             if htmlview:
-                # Create temporary file to capture htmlview output
-                text_output = []
-                old_stdout = sys.stdout
-                
-                class StringCapture:
-                    def __init__(self):
-                        self.lines = []
-                    def write(self, text):
-                        self.lines.append(text)
-                    def flush(self):
-                        pass
-                
                 try:
-                    capture = StringCapture()
-                    sys.stdout = capture
-                    
-                    viewer = htmlview.HTMLViewer(term_width=80, page_size=100)
-                    viewer.view(html, base_url=url)
-                    
-                    # Extract rendered text from viewer
-                    text = '\n'.join(viewer.wrapped_lines)
-                    sys.stdout = old_stdout
+                    # Use HTMLParser directly for fast text extraction (no interactive UI)
+                    parser = htmlview.HTMLParser()
+                    text_lines, nav_links, content_links = parser.parse(html)
+                    # Join lines and return
+                    text = '\n'.join(text_lines)
                     return text
                 except:
-                    sys.stdout = old_stdout
                     # Fall through to w3m/strip_html fallback
+                    pass
             
             # Try using w3m if available for clean text extraction
             try:
@@ -611,6 +595,7 @@ class RSSReader:
         width = get_line_width()
         
         # Split into lines and wrap long lines intelligently
+        start_wrap = time.time()
         lines = []
         for line in text.split('\n'):
             if len(line) > width:
@@ -619,6 +604,11 @@ class RSSReader:
                 lines.extend(wrapped.split('\n'))
             else:
                 lines.append(line)
+        wrap_time = time.time() - start_wrap
+        
+        if wrap_time > 0.5:
+            print("[Formatted in {:.1f}s]".format(wrap_time))
+            sys.stdout.flush()
         
         if not paginate:
             for line in lines:
@@ -877,11 +867,15 @@ class RSSReader:
                                 if response.startswith('y'):
                                     print("\nFetching full article (this may take a while)...")
                                     sys.stdout.flush()  # Ensure message appears immediately on slow connections
+                                    
+                                    # Time the fetch
+                                    start_time = time.time()
                                     full_text = self.fetch_article_text(article['link'])
+                                    fetch_time = time.time() - start_time
                                     
                                     if full_text:
                                         text_size_kb = len(full_text.encode('utf-8')) / 1024
-                                        print("Article size: {:.1f} KB".format(text_size_kb))
+                                        print("Article size: {:.1f} KB (fetched in {:.1f}s)".format(text_size_kb, fetch_time))
                                         
                                         if text_size_kb > MAX_ARTICLE_SIZE_KB:
                                             print("Warning: Large article ({:.1f} KB)".format(text_size_kb))
