@@ -533,6 +533,9 @@ When adding a new BPQ application, you MUST:
    - HOST 0 = port 63000, HOST 1 = port 63010, HOST 21 = port 63210
    - If HOST number not in CMDPORT: Add port to end of CMDPORT line
    - Missing CMDPORT entry causes "Invalid HOST Port" error
+   - **CRITICAL:** Use the CMDPORT port in /etc/services and inetd.conf (NOT a custom port)
+     - Example: If using HOST 21, configure inetd on port 63210, not a random port like 63015
+     - Mismatch causes "Failed to Connect" errors
 
 3. **Determine APPLICATION number (must be alphabetical):**
    ```bash
@@ -577,6 +580,7 @@ When adding a new BPQ application, you MUST:
 
 **Common Errors:**
 - ❌ "Error - Invalid HOST Port" → CMDPORT missing the HOST number
+- ❌ "Failed to Connect" → inetd listening on wrong port (must use CMDPORT port, not custom port)
 - ❌ Wrong app launches → HOST number conflict with existing app
 - ❌ App not in INFO menu → APPLICATION number not sequential or alphabetical
 
@@ -585,7 +589,9 @@ When adding a new BPQ application, you MUST:
 - [ ] Verify CMDPORT includes that HOST port (add if missing)
 - [ ] Determine correct APPLICATION number (alphabetical order)
 - [ ] Use Python script to insert and renumber APPLICATIONs
-- [ ] Restart linbpq
+- [ ] Configure /etc/services with CMDPORT port (HOST 21 = 63210)
+- [ ] Configure /etc/inetd.conf with same CMDPORT port
+- [ ] Restart inetd and linbpq
 - [ ] Test via BPQ INFO menu and app command
 
 **Auto-Update Implementation:**
@@ -612,13 +618,16 @@ When adding a new BPQ application, you MUST:
 3. Add `check_for_app_update()` and `compare_versions()` functions
 4. Design ASCII logo (lowercase, 5-7 lines, asciiart.eu)
 5. Implement menu structure with compressed prompts
-6. Add to `/etc/services` with new TCP port (63000+ range)
-7. Add to `/etc/inetd.conf` with executable path
-8. **CRITICAL:** Follow "HOST Port and APPLICATION Number Management" section:
+6. **CRITICAL:** Follow "HOST Port and APPLICATION Number Management" section:
    - Check existing HOST assignments, find unused number
    - Verify CMDPORT includes that HOST port (add if missing)
    - Use Python script to insert APPLICATION alphabetically and renumber
-9. Test: `telnet localhost PORT` then live on RF
+7. Add to `/etc/services` using the CMDPORT port (NOT a custom port):
+   - HOST number determines port: HOST 21 = port 63210
+   - Format: `appname        63210/tcp       # Description`
+8. Add to `/etc/inetd.conf` using same CMDPORT port:
+   - Format: `appname  stream  tcp  nowait  ect  /home/ect/apps/appname.py`
+9. Test: `telnet localhost 63210` (use CMDPORT port, not custom port)
 10. Document in apps/README.md and CHANGELOG.md
 
 **Testing Checklist:**
