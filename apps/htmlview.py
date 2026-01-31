@@ -772,6 +772,8 @@ class HTMLParser:
         for line in result_lines:
             # Skip lines that are JUST social media names (with or without link numbers)
             clean_line = re.sub(r'\s*\[\d+\]\s*$', '', line).strip().lower()
+            # Also strip leading dashes/bullets
+            clean_line = re.sub(r'^[-–—•*]\s*', '', clean_line).strip()
             
             # Skip social media junk
             if clean_line in social_junk:
