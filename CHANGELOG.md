@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [antenna.py v1.3 - Enhanced Dipole Calculator] - 2026-01-31
+### Added
+- **antenna.py v1.3**: Show formulas and height recommendations in dipole calculator
+  - Display calculation formula: "468 / freq(MHz)"
+  - Show recommended antenna heights: minimum (0.25λ), good (0.5λ), optimal (1.0λ)
+  - Height recommendations include both feet and meters
+  - Formula display section added before final separator
+
 ## [antenna.py v1.2 - Fix inetd Blocking] - 2026-01-31
 ### Fixed
 - **antenna.py v1.2**: Remove stdin read that blocked inetd connections

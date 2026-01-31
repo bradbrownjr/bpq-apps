@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.2
+Version: 1.3
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -24,7 +24,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.2"
+VERSION = "1.3"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -179,6 +179,12 @@ def calc_dipole():
     total_len = calc_half_wave(freq)
     leg_len = total_len / 2
     
+    # Calculate wavelength and height recommendations
+    wavelength_ft = 984.0 / freq
+    min_height = wavelength_ft * 0.25
+    good_height = wavelength_ft * 0.5
+    opt_height = wavelength_ft
+    
     print("\n" + "-" * 40)
     print("DIPOLE for {:.3f} MHz".format(freq))
     print("-" * 40)
@@ -186,8 +192,18 @@ def calc_dipole():
         total_len, total_len * 0.3048))
     print("Each leg:     {:.1f} ft ({:.2f} m)".format(
         leg_len, leg_len * 0.3048))
+    print("\nHeight above ground:")
+    print("  Minimum:  {:.1f} ft ({:.1f} m)".format(
+        min_height, min_height * 0.3048))
+    print("  Good:     {:.1f} ft ({:.1f} m)".format(
+        good_height, good_height * 0.3048))
+    print("  Optimal:  {:.1f} ft ({:.1f} m)".format(
+        opt_height, opt_height * 0.3048))
     print("\nFeed: Center with balun recommended")
     print("Impedance: ~73 ohms at resonance")
+    print("-" * 40)
+    print("Formula: Length (ft) = 468 / freq(MHz)")
+    print("Height: 0.25-1.0 wavelength")
     print("-" * 40)
     pause()
 
