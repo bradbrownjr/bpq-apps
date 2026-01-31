@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [rss-news.py v1.12 - Article View State Fix] - 2026-01-31
+### Fixed
+- **rss-news.py v1.12**: Article view state now works correctly
+  - Previously: Y/N to fetch article was broken - input went to wrong handler
+  - Now: Y/N is handled properly within article_view state
+  - Default behavior: pressing Enter = fetch article (Y is default)
+  - Prompt now shows: "Fetch full article? Y)es [default], N)o, B)ack..."
+  - B)ack now correctly returns to article list (not feed menu)
+  - Q)uit works from article view to exit app
+
 ## [rss-news.py v1.11 + htmlview.py v1.15 - UX Improvements] - 2026-01-31
 ### Fixed
 - **rss-news.py v1.11**: Back button from article view now returns to article list

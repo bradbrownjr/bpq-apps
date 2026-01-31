@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.11
+Version: 1.12
 Date: January 2026
 """
 
@@ -54,7 +54,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "1.11"
+VERSION = "1.12"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
@@ -233,6 +233,7 @@ class RSSReader:
         self.current_category = None
         self.current_feed = None
         self.current_articles = []
+        self.current_article = None  # Current article being viewed
         self.cache = load_cache()  # Load cache for offline fallback
         self.load_config()
     
@@ -704,7 +705,7 @@ class RSSReader:
                 elif state == 'articles':
                     prompt = "\nArticles: [#] or B)ack, C)ategory list, R)efresh, ?)Help, Q)uit :> "
                 elif state == 'article_view':
-                    prompt = "\nArticle: [Y/N to fetch], B)ack to list, Q)uit :> "
+                    prompt = "\nFetch full article? Y)es [default], N)o, B)ack to list, Q)uit :> "
                 else:
                     prompt = "\nCommand or Q)uit :> "
                 
@@ -714,6 +715,57 @@ class RSSReader:
                     continue
                     
                 cmd_lower = command.lower()
+                
+                # In article_view state, handle fetch article option
+                if state == 'article_view':
+                    if cmd_lower.startswith('y') or cmd_lower == '':
+                        # Fetch full article (default action, Enter=yes)
+                        if self.current_article and self.current_article.get('link'):
+                            print("\nFetching full article (this may take a while)...")
+                            sys.stdout.flush()
+                            
+                            start_time = time.time()
+                            full_text = self.fetch_article_text(self.current_article['link'])
+                            fetch_time = time.time() - start_time
+                            
+                            if full_text:
+                                text_size_kb = len(full_text.encode('utf-8')) / 1024
+                                print("Article size: {:.1f} KB (fetched in {:.1f}s)".format(text_size_kb, fetch_time))
+                                
+                                if text_size_kb > MAX_ARTICLE_SIZE_KB:
+                                    print("Warning: Large article ({:.1f} KB)".format(text_size_kb))
+                                    print("This may take significant time over packet radio.")
+                                
+                                response = input("Display: A)ll at once, P)aginated, C)ancel :> ").strip().lower()
+                                
+                                if response.startswith('c'):
+                                    pass
+                                elif response.startswith('p'):
+                                    self.display_text(full_text, paginate=True)
+                                else:
+                                    self.display_text(full_text, paginate=False)
+                                
+                                print("\n" + "-" * 40)
+                                print("End of article")
+                                print("-" * 40)
+                        continue
+                    elif cmd_lower.startswith('n'):
+                        # Skip fetching, stay in article view
+                        continue
+                    elif cmd_lower.startswith('b'):
+                        # Back to article list
+                        if self.current_feed:
+                            self.display_articles(self.current_feed)
+                            state = 'articles'
+                        continue
+                    elif cmd_lower.startswith('q'):
+                        # Quit from article view
+                        print("\nExiting...")
+                        break
+                    else:
+                        print("Article: [Y/N to fetch], B)ack to list, Q)uit :> ", end='')
+                        sys.stdout.flush()
+                        continue
                 
                 # Quit - works from anywhere
                 if cmd_lower.startswith('q'):
@@ -727,12 +779,7 @@ class RSSReader:
                 
                 # Back
                 elif cmd_lower.startswith('b'):
-                    if state == 'article_view':
-                        # From article view, go back to article list
-                        if self.current_feed:
-                            self.display_articles(self.current_feed)
-                            state = 'articles'
-                    elif state == 'feeds':
+                    if state == 'feeds':
                         categories = self.display_categories()
                         state = 'categories'
                     elif state == 'articles':
@@ -829,6 +876,7 @@ class RSSReader:
                         max_selectable = min(len(self.current_articles), MAX_ARTICLES)
                         if 1 <= item_num <= max_selectable:
                             article = self.current_articles[item_num - 1]
+                            self.current_article = article
                             
                             # Display article description
                             width = get_line_width()
@@ -863,43 +911,11 @@ class RSSReader:
                             else:
                                 print("(No description available)")
                             
-                            # Show link
+                            # Show link and transition to article_view state
                             if article['link']:
                                 print("\n" + "-" * 40)
                                 print("Source: {}".format(article['link']))
                                 print("-" * 40)
-                                
-                                # Offer to fetch full article
-                                response = input("\nFetch full article? Y)es, N)o :> ").strip().lower()
-                                if response.startswith('y'):
-                                    print("\nFetching full article (this may take a while)...")
-                                    sys.stdout.flush()  # Ensure message appears immediately on slow connections
-                                    
-                                    # Time the fetch
-                                    start_time = time.time()
-                                    full_text = self.fetch_article_text(article['link'])
-                                    fetch_time = time.time() - start_time
-                                    
-                                    if full_text:
-                                        text_size_kb = len(full_text.encode('utf-8')) / 1024
-                                        print("Article size: {:.1f} KB (fetched in {:.1f}s)".format(text_size_kb, fetch_time))
-                                        
-                                        if text_size_kb > MAX_ARTICLE_SIZE_KB:
-                                            print("Warning: Large article ({:.1f} KB)".format(text_size_kb))
-                                            print("This may take significant time over packet radio.")
-                                        
-                                        response = input("Display: A)ll at once, P)aginated, C)ancel :> ").strip().lower()
-                                        
-                                        if response.startswith('c'):
-                                            pass
-                                        elif response.startswith('p'):
-                                            self.display_text(full_text, paginate=True)
-                                        else:
-                                            self.display_text(full_text, paginate=False)
-                                        
-                                        print("\n" + "-" * 40)
-                                        print("End of article")
-                                        print("-" * 40)
                             
                             state = 'article_view'
                         else:
