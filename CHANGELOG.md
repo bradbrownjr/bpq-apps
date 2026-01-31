@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [antenna.py v1.2 - Fix inetd Blocking] - 2026-01-31
+### Fixed
+- **antenna.py v1.2**: Remove stdin read that blocked inetd connections
+  - get_callsign() no longer attempts to read from stdin
+  - App uses NOCALL flag so no callsign expected from BPQ
+  - Database submissions work anonymously
+  - Fixes immediate connection closure via inetd/telnet
+
 ## [antenna.py v1.1 - Prompt Ordering Fix] - 2026-01-31
 ### Fixed
 - **antenna.py v1.1**: Comply with standard prompt ordering

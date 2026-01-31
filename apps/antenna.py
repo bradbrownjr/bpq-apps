@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 antenna.py - Antenna Calculator & Configuration Database
@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.1
+Version: 1.2
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -24,7 +24,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.1"
+VERSION = "1.2"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -660,14 +660,8 @@ def save_database(db):
 
 def get_callsign():
     """Get user callsign from stdin or prompt."""
-    # Check if callsign provided via stdin (BPQ mode)
-    if not sys.stdin.isatty():
-        try:
-            first_line = sys.stdin.readline().strip()
-            if first_line and len(first_line) < 15:
-                return first_line.split('-')[0].upper()
-        except Exception:
-            pass
+    # Since we use NOCALL flag in BPQ config, don't try to read from stdin
+    # Database submissions work anonymously or user can manually enter callsign
     return None
 
 
