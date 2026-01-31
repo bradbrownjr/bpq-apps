@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.11 - Fix Link Following on Wrong Page] - 2026-01-31
+### Fixed
+- **htmlview.py v1.11**: Link numbers now only followable if visible on current page
+  - Previously: pressing any link number worked globally across ALL content links
+  - Now: only link numbers actually displayed on current page can be followed
+  - If link is on different page: shows "Link [X] not on this page. Use L)inks to navigate."
+  - Prevents confusion when trying to follow link [4] on page 1 when it's actually on page 3
+  - Directs users to L)inks menu for cross-page navigation
+
 ## [htmlview.py v1.10 - Prompt Ordering and Unicode Fix] - 2026-01-30
 ### Fixed
 - **htmlview.py v1.10**: Proper prompt ordering per standards + unicode-to-ASCII conversion

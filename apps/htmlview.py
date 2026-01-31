@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.10
+Version: 1.11
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.10"
+VERSION = "1.11"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -806,6 +806,16 @@ class HTMLViewer:
             for i in range(current_pos, end_pos):
                 print(self.wrapped_lines[i])
             
+            # Extract visible link numbers from current page display
+            visible_link_numbers = set()
+            for i in range(current_pos, end_pos):
+                matches = re.findall(r'\[(\d+)\]', self.wrapped_lines[i])
+                for match in matches:
+                    try:
+                        visible_link_numbers.add(int(match))
+                    except ValueError:
+                        pass
+            
             # Build prompt based on available options
             has_more = end_pos < total_lines
             has_nav = len(self.nav_links) > 0
@@ -880,12 +890,17 @@ class HTMLViewer:
                         break
                 elif response.isdigit() and has_links:
                     link_num = int(response)
-                    url = self._get_content_link(link_num)
-                    if url:
-                        self.selected_link = self._resolve_url(url)
-                        break
+                    # Only allow following links that are visible on current page
+                    if link_num in visible_link_numbers:
+                        url = self._get_content_link(link_num)
+                        if url:
+                            self.selected_link = self._resolve_url(url)
+                            break
+                        else:
+                            print("Invalid link number.")
+                            continue  # Stay on page and re-prompt
                     else:
-                        print("Invalid link number.")
+                        print("Link [{}] not on this page. Use L)inks to navigate.".format(link_num))
                         continue  # Stay on page and re-prompt
                 elif response == '' and has_more:
                     current_pos = end_pos  # Next page
