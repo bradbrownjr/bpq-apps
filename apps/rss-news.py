@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.12
+Version: 1.13
 Date: January 2026
 """
 
@@ -54,7 +54,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "1.12"
+VERSION = "1.13"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
@@ -733,14 +733,15 @@ class RSSReader:
                                     print("Warning: Large article ({:.1f} KB)".format(text_size_kb))
                                     print("This may take significant time over packet radio.")
                                 
-                                response = input("Display: A)ll at once, P)aginated, C)ancel :> ").strip().lower()
+                                response = input("Display: A)ll at once, P)aginated [default], C)ancel :> ").strip().lower()
                                 
                                 if response.startswith('c'):
                                     pass
-                                elif response.startswith('p'):
-                                    self.display_text(full_text, paginate=True)
-                                else:
+                                elif response.startswith('a'):
                                     self.display_text(full_text, paginate=False)
+                                else:
+                                    # Default to paginated (P or empty)
+                                    self.display_text(full_text, paginate=True)
                                 
                                 print("\n" + "-" * 40)
                                 print("End of article")
@@ -899,13 +900,14 @@ class RSSReader:
                                 
                                 # Offer pagination
                                 if desc_size_kb > 5:
-                                    response = input("Display: A)ll at once, P)aginated, S)kip :> ").strip().lower()
+                                    response = input("Display: A)ll at once, P)aginated [default], S)kip :> ").strip().lower()
                                     if response.startswith('s'):
                                         pass
-                                    elif response.startswith('p'):
-                                        self.display_text(description, paginate=True)
-                                    else:
+                                    elif response.startswith('a'):
                                         self.display_text(description, paginate=False)
+                                    else:
+                                        # Default to paginated (P or empty)
+                                        self.display_text(description, paginate=True)
                                 else:
                                     self.display_text(description, paginate=False)
                             else:

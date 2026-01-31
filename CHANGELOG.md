@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [rss-news.py v1.13 + htmlview.py v1.16 - Pagination & Junk Filtering] - 2026-01-31
+### Changed
+- **rss-news.py v1.13**: Display default changed to paginated
+  - Previously: Default was "all at once" display
+  - Now: Pagination is default (shows [default] in prompt)
+  - Reduces overwhelming output on slow connections (1200 baud packet radio)
+  - Users can still choose A)ll at once if preferred
+  
+- **htmlview.py v1.16**: Aggressive WordPress footer/metadata filtering
+  - Removes post-navigation, comment sections, author boxes, related posts
+  - Removes sharing buttons, tags metadata, tags sections
+  - Removes "Like Loading..." and WP UI artifacts  
+  - Removes entry-footer, author boxes, comment forms
+  - Result: Clean article content without fluff
+  - Example: Winter Field Day article now ends at actual content, not WordPress chrome
+
 ## [rss-news.py v1.12 - Article View State Fix] - 2026-01-31
 ### Fixed
 - **rss-news.py v1.12**: Article view state now works correctly

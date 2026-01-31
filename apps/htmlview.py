@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.15
+Version: 1.16
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.15"
+VERSION = "1.16"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -269,6 +269,41 @@ class HTMLParser:
         html = re.sub(r'<div[^>]*class="[^"]*sidebar[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'<div[^>]*class="[^"]*widget[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'<div[^>]*id="[^"]*sidebar[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove WordPress post-footer junk (everything after main article content)
+        # These patterns match WordPress-specific footer sections that appear after content
+        html = re.sub(r'<div[^>]*class="[^"]*post-navigation[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*entry-footer[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<footer[^>]*class="[^"]*post[^"]*"[^>]*>.*?</footer>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*meta-nav[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*nav-previous[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*nav-next[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove author/author box sections
+        html = re.sub(r'<div[^>]*class="[^"]*author[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*by-author[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove comment sections (includes form)
+        html = re.sub(r'<div[^>]*id="comments"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*comments[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*comment-form[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<section[^>]*class="[^"]*comments[^"]*"[^>]*>.*?</section>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove related posts / suggested articles
+        html = re.sub(r'<div[^>]*class="[^"]*related[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*suggested[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove sharing buttons/sections
+        html = re.sub(r'<div[^>]*class="[^"]*share[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*social[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove tags section (post metadata)
+        html = re.sub(r'<div[^>]*class="[^"]*tags[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<p[^>]*>\s*(?:Tags?|Categories?):[^<]*(?:<[^>]+>[^<]*)*</p>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove "Like Loading..." and other WordPress UI artifacts
+        html = re.sub(r'Like Loading\.\.\.', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*wp-[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
         
         # Remove WordPress skip-to-content and menu helpers
         html = re.sub(r'<a[^>]+class="[^"]*skip-link[^"]*"[^>]*>.*?</a>', '', html, flags=re.DOTALL | re.IGNORECASE)
