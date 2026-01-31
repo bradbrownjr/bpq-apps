@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.12
+Version: 1.13
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.12"
+VERSION = "1.13"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -134,7 +134,22 @@ def _compare_versions(version1, version2):
 
 
 def decode_html_entities(text):
-    """Decode common HTML entities to ASCII"""
+    """Decode common HTML entities to ASCII, strip emoji and non-ASCII"""
+    # First strip emoji and other non-ASCII characters
+    # Keep only ASCII printable characters (32-126)
+    cleaned = []
+    for char in text:
+        code = ord(char)
+        if 32 <= code <= 126 or code in (9, 10, 13):  # ASCII printable + tab/newline/CR
+            cleaned.append(char)
+        elif code > 127:
+            # Skip emoji, unicode, and other non-ASCII
+            pass
+        else:
+            # Skip other control characters
+            pass
+    text = ''.join(cleaned)
+    
     entities = {
         '&nbsp;': ' ',
         '&amp;': '&',
@@ -187,7 +202,7 @@ def decode_html_entities(text):
         elif code < 128:
             return chr(code)
         else:
-            return '?'
+            return ''  # Skip non-ASCII unicode
     
     def decode_hex(match):
         code = int(match.group(1), 16)
@@ -205,7 +220,7 @@ def decode_html_entities(text):
         elif code < 128:
             return chr(code)
         else:
-            return '?'
+            return ''  # Skip non-ASCII unicode
     
     text = re.sub(r'&#(\d+);', decode_numeric, text)
     text = re.sub(r'&#x([0-9a-fA-F]+);', decode_hex, text)

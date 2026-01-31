@@ -13,7 +13,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.42
+Version: 1.43
 Date: January 2026
 """
 
@@ -21,7 +21,7 @@ import sys
 import os
 import json
 
-VERSION = "1.42"
+VERSION = "1.43"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -830,7 +830,7 @@ class GopherClient:
         elif item_type == 'h':
             if selector.startswith('URL:'):
                 url = selector[4:]
-                print("\nFetching HTML from: {}".format(url))
+                # Note: Already printed "Fetching HTML from: {url}" in navigate_to()
                 
                 try:
                     import urllib.request

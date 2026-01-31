@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview/gopher Fixes - Emoji Filtering + Duplicate Message] - 2026-01-31
+### Fixed
+- **htmlview.py v1.13**: Strip emoji and non-ASCII unicode from text
+  - Filters out emoji (🦊 etc), accents, and other unicode characters
+  - Converts to ASCII-only display: "OverbiteWX – Get this Extension for 🦊..." → "OverbiteWX - Get this Extension for ..."
+  - Keeps only ASCII printable characters (32-126) + tab/newline
+  - Essential for 40-char terminal width and packet radio compatibility
+  
+- **gopher.py v1.43**: Remove duplicate "Fetching HTML" message
+  - Was printing message twice (once at navigate_to start, once in HTML handler)
+  - Now prints once only (from navigate_to)
+
 ## [htmlview/gopher Fixes - Link Quality + Display] - 2026-01-31
 ### Fixed
 - **htmlview.py v1.12**: Filter out junk links from content links menu
