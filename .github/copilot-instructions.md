@@ -514,6 +514,80 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 - Path resolution: Use absolute paths in inetd.conf (`/home/ect/apps/wx.py`)
 - **Service naming collision:** Don't name app "dict" (conflicts with standard port 2628). Use "dictionary" or other name in `/etc/services` and inetd.conf. BPQ APPLICATION name can still be DICT, but system service name must differ to avoid port resolution conflicts.
 
+**HOST Port and APPLICATION Number Management** (CRITICAL - prevents conflicts):
+
+When adding a new BPQ application, you MUST:
+
+1. **Check existing HOST assignments:**
+   ```bash
+   ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org "grep 'HOST [0-9]' ~/linbpq/bpq32.cfg | grep -oP 'HOST \K[0-9]+' | sort -n | uniq"
+   ```
+   - Find the lowest unused HOST number
+   - Common issue: Reusing a HOST number causes wrong app to launch
+
+2. **Verify CMDPORT includes the HOST port:**
+   ```bash
+   ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org "grep 'CMDPORT' ~/linbpq/bpq32.cfg"
+   ```
+   - CMDPORT format: `CMDPORT 63000 63010 63020 63030 ...` (increments of 10)
+   - HOST 0 = port 63000, HOST 1 = port 63010, HOST 21 = port 63210
+   - If HOST number not in CMDPORT: Add port to end of CMDPORT line
+   - Missing CMDPORT entry causes "Invalid HOST Port" error
+
+3. **Determine APPLICATION number (must be alphabetical):**
+   ```bash
+   ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org "grep '^APPLICATION' ~/linbpq/bpq32.cfg | sort -t',' -k2"
+   ```
+   - List shows existing apps in alphabetical order
+   - Find where new app fits alphabetically
+   - Use Python script to insert and renumber (see example below)
+
+4. **Insert APPLICATION with Python script:**
+   ```python
+   # Example: Insert ANTENNA (alphabetically after AI, before BANDS)
+   import re
+   with open('/home/ect/linbpq/bpq32.cfg', 'r') as f:
+       lines = f.readlines()
+   
+   new_lines = []
+   for line in lines:
+       # Insert after specific app
+       if line.startswith('APPLICATION 3,AI'):
+           new_lines.append(line)
+           new_lines.append('APPLICATION 4,ANTENNA,C 9 HOST 21 NOCALL K S        ; antenna.py\n')
+           continue
+       
+       # Renumber all apps >= 4 to make room
+       match = re.match(r'^APPLICATION (\d+),', line)
+       if match:
+           num = int(match.group(1))
+           if num >= 4:
+               line = re.sub(r'^APPLICATION \d+,', 'APPLICATION {},'.format(num+1), line)
+       
+       new_lines.append(line)
+   
+   with open('/home/ect/linbpq/bpq32.cfg', 'w') as f:
+       f.writelines(new_lines)
+   ```
+
+5. **Restart linbpq to apply changes:**
+   ```bash
+   ssh -i ~/.ssh/id_rsa -p 4722 -t ect@ws1ec.mainepacketradio.org "sudo systemctl restart linbpq"
+   ```
+
+**Common Errors:**
+- ❌ "Error - Invalid HOST Port" → CMDPORT missing the HOST number
+- ❌ Wrong app launches → HOST number conflict with existing app
+- ❌ App not in INFO menu → APPLICATION number not sequential or alphabetical
+
+**Checklist for new app:**
+- [ ] Find unused HOST number (check existing assignments)
+- [ ] Verify CMDPORT includes that HOST port (add if missing)
+- [ ] Determine correct APPLICATION number (alphabetical order)
+- [ ] Use Python script to insert and renumber APPLICATIONs
+- [ ] Restart linbpq
+- [ ] Test via BPQ INFO menu and app command
+
 **Auto-Update Implementation:**
 - **VERSION variable must match docstring version exactly** - mismatch causes infinite update loop (CRITICAL)
 - Must use atomic writes (write to temp, then rename)
@@ -540,7 +614,10 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 5. Implement menu structure with compressed prompts
 6. Add to `/etc/services` with new TCP port (63000+ range)
 7. Add to `/etc/inetd.conf` with executable path
-8. Add to `bpq32.cfg` APPLICATION line with CMDPORT position
+8. **CRITICAL:** Follow "HOST Port and APPLICATION Number Management" section:
+   - Check existing HOST assignments, find unused number
+   - Verify CMDPORT includes that HOST port (add if missing)
+   - Use Python script to insert APPLICATION alphabetically and renumber
 9. Test: `telnet localhost PORT` then live on RF
 10. Document in apps/README.md and CHANGELOG.md
 
