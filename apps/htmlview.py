@@ -796,7 +796,18 @@ class HTMLParser:
             
             filtered_lines.append(line)
         
-        return filtered_lines
+        # Collapse multiple consecutive blank lines into single blank lines
+        final_lines = []
+        prev_was_blank = False
+        for line in filtered_lines:
+            is_blank = (line == '')
+            if is_blank and prev_was_blank:
+                # Skip consecutive blank lines
+                continue
+            final_lines.append(line)
+            prev_was_blank = is_blank
+        
+        return final_lines
 
 
 class HTMLViewer:
