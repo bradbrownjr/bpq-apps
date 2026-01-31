@@ -886,6 +886,7 @@ class HTMLViewer:
                         break
                     else:
                         print("Invalid link number.")
+                        continue  # Stay on page and re-prompt
                 elif response == '' and has_more:
                     current_pos = end_pos  # Next page
                 else:
