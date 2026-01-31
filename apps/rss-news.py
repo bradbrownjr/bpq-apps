@@ -733,7 +733,7 @@ class RSSReader:
                                     print("Warning: Large article ({:.1f} KB)".format(text_size_kb))
                                     print("This may take significant time over packet radio.")
                                 
-                                response = input("Display: A)ll at once, P)aginated [default], C)ancel :> ").strip().lower()
+                                response = input("Display: P)aginated [default], A)ll at once, C)ancel :> ").strip().lower()
                                 
                                 if response.startswith('c'):
                                     pass
@@ -900,7 +900,7 @@ class RSSReader:
                                 
                                 # Offer pagination
                                 if desc_size_kb > 5:
-                                    response = input("Display: A)ll at once, P)aginated [default], S)kip :> ").strip().lower()
+                                    response = input("Display: P)aginated [default], A)ll at once, S)kip :> ").strip().lower()
                                     if response.startswith('s'):
                                         pass
                                     elif response.startswith('a'):
