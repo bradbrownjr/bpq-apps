@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview/gopher Fixes - Link Quality + Display] - 2026-01-31
+### Fixed
+- **htmlview.py v1.12**: Filter out junk links from content links menu
+  - Skip pure numeric links (rating numbers, review counts, page numbers)
+  - Skip patterns like "5 stars", "15 reviews", "4 votes"
+  - Prevents Mozilla Add-ons pages from showing "1", "2", "3", "4", "5" in links menu
+  - Result: CONTENT LINKS menu shows only meaningful navigation (vs garbage numbers)
+  
+- **gopher.py v1.42**: Cleaner HTML fetch messages
+  - When fetching HTML pages, show actual HTTP URL instead of raw Gopher selector
+  - Before: "Connecting to gopher://gopher.floodgap.com:70/hURL:https://...
+  - After: "Fetching HTML from: https://addons.mozilla.org/..."
+  - Matches what htmlview displays for clarity
+
 ## [Multi-App htmlview Integration] - 2026-01-31
 ### Added
 - **gopher.py v1.41**: HTML link rendering via htmlview

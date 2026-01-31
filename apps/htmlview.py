@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.11
+Version: 1.12
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.11"
+VERSION = "1.12"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -587,6 +587,15 @@ class HTMLParser:
             
             if not text:
                 return ''
+            
+            # Skip junk links: pure numbers, ratings, review counts, etc.
+            # These are extracted from star ratings, counts, page numbers on e-commerce sites
+            if re.match(r'^[\d.,]+$', text):  # Just numbers/commas/dots
+                return text
+            if re.match(r'^(\d+)\s*(reviews?|stars?|votes?|ratings?)$', text, re.IGNORECASE):
+                return text
+            if len(text) <= 2 and text.isdigit():  # Single/double digit numbers
+                return text
             
             if number_links:
                 link_counter[0] += 1
