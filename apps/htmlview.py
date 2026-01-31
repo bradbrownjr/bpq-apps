@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.16
+Version: 1.17
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.16"
+VERSION = "1.17"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -286,8 +286,10 @@ class HTMLParser:
         # Remove comment sections (includes form)
         html = re.sub(r'<div[^>]*id="comments"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'<div[^>]*class="[^"]*comments[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*comment[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'<div[^>]*class="[^"]*comment-form[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'<section[^>]*class="[^"]*comments[^"]*"[^>]*>.*?</section>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<form[^>]*>.*?</form>', '', html, flags=re.DOTALL | re.IGNORECASE)
         
         # Remove related posts / suggested articles
         html = re.sub(r'<div[^>]*class="[^"]*related[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
@@ -304,6 +306,19 @@ class HTMLParser:
         # Remove "Like Loading..." and other WordPress UI artifacts
         html = re.sub(r'Like Loading\.\.\.', '', html, flags=re.IGNORECASE)
         html = re.sub(r'<div[^>]*class="[^"]*wp-[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove subscribe widgets and email signup forms
+        html = re.sub(r'<div[^>]*class="[^"]*subscribe[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*newsletter[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<div[^>]*class="[^"]*email[^"]*signup[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove "Menu" navigation blocks (standalone menus not in nav tag)
+        html = re.sub(r'<h2[^>]*>\s*Menu\s*</h2>', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'<div[^>]*>\s*<h2[^>]*>\s*Menu\s*</h2>.*?</div>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove empty/junk list items (ones with just spaces/dashes)
+        html = re.sub(r'<li[^>]*>\s*[-–—]?\s*</li>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<li[^>]*>\s*</li>', '', html, flags=re.DOTALL | re.IGNORECASE)
         
         # Remove WordPress skip-to-content and menu helpers
         html = re.sub(r'<a[^>]+class="[^"]*skip-link[^"]*"[^>]*>.*?</a>', '', html, flags=re.DOTALL | re.IGNORECASE)

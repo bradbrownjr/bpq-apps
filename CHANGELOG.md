@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [htmlview.py v1.17 - Enhanced WordPress Filtering] - 2026-01-31
+### Fixed
+- **htmlview.py v1.17**: More aggressive WordPress junk removal
+  - Removes "Menu" section headers and standalone menu navigation blocks
+  - Removes empty list items (just dashes/bullets)
+  - Removes subscribe/newsletter widgets and email signup forms
+  - Removes all form elements (not just comment forms)
+  - Removes "Related" post sections more reliably
+  - Result: Winter Field Day article now ends cleanly without author/tags/subscribe/related sections
+
 ## [rss-news.py v1.13 + htmlview.py v1.16 - Pagination & Junk Filtering] - 2026-01-31
 ### Changed
 - **rss-news.py v1.13**: Display default changed to paginated
