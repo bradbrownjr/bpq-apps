@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.10
+Version: 1.11
 Date: January 2026
 """
 
@@ -54,7 +54,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "1.10"
+VERSION = "1.11"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
@@ -688,7 +688,7 @@ class RSSReader:
         print()
         print("RSS v{} - Feed Reader".format(VERSION))
                 
-        state = 'categories'  # categories, feeds, articles, description
+        state = 'categories'  # categories, feeds, articles, article_view
         
         # Display category list on startup
         self.display_categories()
@@ -703,6 +703,8 @@ class RSSReader:
                     prompt = "\nFeeds: [#] or B)ack, C)ategory list, ?)Help, Q)uit :> "
                 elif state == 'articles':
                     prompt = "\nArticles: [#] or B)ack, C)ategory list, R)efresh, ?)Help, Q)uit :> "
+                elif state == 'article_view':
+                    prompt = "\nArticle: [Y/N to fetch], B)ack to list, Q)uit :> "
                 else:
                     prompt = "\nCommand or Q)uit :> "
                 
@@ -725,7 +727,12 @@ class RSSReader:
                 
                 # Back
                 elif cmd_lower.startswith('b'):
-                    if state == 'feeds':
+                    if state == 'article_view':
+                        # From article view, go back to article list
+                        if self.current_feed:
+                            self.display_articles(self.current_feed)
+                            state = 'articles'
+                    elif state == 'feeds':
                         categories = self.display_categories()
                         state = 'categories'
                     elif state == 'articles':
@@ -894,7 +901,7 @@ class RSSReader:
                                         print("End of article")
                                         print("-" * 40)
                             
-                            state = 'articles'
+                            state = 'article_view'
                         else:
                             max_selectable = min(len(self.current_articles), MAX_ARTICLES)
                             print("Invalid selection. Choose 1-{}".format(max_selectable))

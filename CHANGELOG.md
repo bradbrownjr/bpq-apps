@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [rss-news.py v1.11 + htmlview.py v1.15 - UX Improvements] - 2026-01-31
+### Fixed
+- **rss-news.py v1.11**: Back button from article view now returns to article list
+  - Previously: B)ack from article jumped to feed menu (wrong scope)
+  - Now: B)ack goes back to articles list for the current feed (correct scope)
+  - Added 'article_view' state to track when viewing a single article
+  
+- **htmlview.py v1.15**: Proper rendering of HTML lists
+  - Unordered lists (`<ul><li>`) now render with " - " prefix instead of blank lines
+  - Ordered lists (`<ol><li>`) now render with numbers (1. 2. 3. etc)
+  - Lists are processed before other HTML to ensure correct text extraction
+  - Improves readability of structured content from WordPress, blogs, etc.
+
 ## [rss-news.py v1.10 - Performance Diagnostics] - 2026-01-31
 ### Added
 - **rss-news.py v1.10**: Performance timing information

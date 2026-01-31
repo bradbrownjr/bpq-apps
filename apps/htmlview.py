@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.14
+Version: 1.15
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.14"
+VERSION = "1.15"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -565,6 +565,40 @@ class HTMLParser:
         # First, normalize whitespace (HTML source newlines are just whitespace)
         html = re.sub(r'\s+', ' ', html)
         
+        # Handle lists BEFORE other processing
+        # Convert numbered lists (ol/li) to text with numbers
+        ol_counter = [0]  # Use list for closure
+        def replace_ol_item(match):
+            ol_counter[0] += 1
+            content = match.group(1).strip()
+            return '\n{0}. {1}'.format(ol_counter[0], content)
+        
+        # Process each ordered list separately (reset counter for each <ol>)
+        def replace_ol_block(match):
+            ol_content = match.group(1)
+            ol_counter[0] = 0  # Reset counter for this list
+            # Replace li items within this ol
+            result = re.sub(r'<li[^>]*>(.*?)</li>', replace_ol_item, ol_content, 
+                          flags=re.DOTALL | re.IGNORECASE)
+            return '\n' + result + '\n'
+        
+        html = re.sub(r'<ol[^>]*>(.*?)</ol>', replace_ol_block, html, 
+                     flags=re.DOTALL | re.IGNORECASE)
+        
+        # Convert unordered lists (ul/li) to text with " - " prefix
+        def replace_ul_item(match):
+            content = match.group(1).strip()
+            return '\n - {0}'.format(content)
+        
+        def replace_ul_block(match):
+            ul_content = match.group(1)
+            result = re.sub(r'<li[^>]*>(.*?)</li>', replace_ul_item, ul_content,
+                          flags=re.DOTALL | re.IGNORECASE)
+            return '\n' + result + '\n'
+        
+        html = re.sub(r'<ul[^>]*>(.*?)</ul>', replace_ul_block, html,
+                     flags=re.DOTALL | re.IGNORECASE)
+        
         # Now convert paragraph breaks to markers
         # Double br tags = paragraph break
         html = re.sub(r'<br\s*/?>\s*<br\s*/?>', '\n\n', html, flags=re.IGNORECASE)
@@ -575,16 +609,12 @@ class HTMLParser:
         html = re.sub(r'</(p|div|h[1-6]|article|section)>', '\n\n', html, flags=re.IGNORECASE)
         html = re.sub(r'<(p|div|h[1-6]|article|section)[^>]*>', '\n\n', html, flags=re.IGNORECASE)
         
-        # List items and table rows are line breaks
-        html = re.sub(r'</(li|tr)>', '\n', html, flags=re.IGNORECASE)
-        html = re.sub(r'<(li|tr)[^>]*>', '\n', html, flags=re.IGNORECASE)
+        # Table rows are line breaks (but lists already handled)
+        html = re.sub(r'</(tr)>', '\n', html, flags=re.IGNORECASE)
+        html = re.sub(r'<(tr)[^>]*>', '\n', html, flags=re.IGNORECASE)
         
         # Single br = line break
         html = re.sub(r'<br\s*/?>', '\n', html, flags=re.IGNORECASE)
-        
-        # Handle lists
-        html = re.sub(r'<[ou]l[^>]*>', '\n', html, flags=re.IGNORECASE)
-        html = re.sub(r'</[ou]l>', '\n', html, flags=re.IGNORECASE)
         
         # Extract and number content links
         link_counter = [0]  # Use list to allow modification in nested function
