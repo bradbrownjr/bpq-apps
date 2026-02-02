@@ -1,12 +1,6 @@
 {
   "categories": {
-    "Internet": [
-      {
-        "name": "AI",
-        "description": "AI chatbot with multiple models",
-        "executable": "ai.py",
-        "needs_callsign": false
-      },
+    "Browsers": [
       {
         "name": "FEED",
         "description": "RSS news feed reader",
@@ -17,6 +11,26 @@
         "name": "GOPHER",
         "description": "Gopher protocol browser",
         "executable": "gopher.py",
+        "needs_callsign": false
+      },
+      {
+        "name": "WWW",
+        "description": "Web browser (HTTP/HTTPS)",
+        "executable": "www.py",
+        "needs_callsign": false
+      }
+    ],
+    "Reference": [
+      {
+        "name": "AI",
+        "description": "AI chatbot with multiple models",
+        "executable": "ai.py",
+        "needs_callsign": false
+      },
+      {
+        "name": "DICT",
+        "description": "Dictionary lookup",
+        "executable": "dict.py",
         "needs_callsign": false
       },
       {
@@ -36,11 +50,25 @@
         "description": "Wikipedia browser",
         "executable": "wiki.py",
         "needs_callsign": false
+      }
+    ],
+    "Weather": [
+      {
+        "name": "SPACE",
+        "description": "NOAA space weather reports",
+        "executable": "space.py",
+        "needs_callsign": false
       },
       {
-        "name": "WWW",
-        "description": "Web browser (HTTP/HTTPS)",
-        "executable": "www.py",
+        "name": "WX",
+        "description": "Weather alerts and forecasts",
+        "executable": "wx.py",
+        "needs_callsign": true
+      },
+      {
+        "name": "WX-ME",
+        "description": "Weather forecast (Maine zones)",
+        "executable": "wx-me.py",
         "needs_callsign": false
       }
     ],
@@ -49,18 +77,6 @@
         "name": "ANTENNA",
         "description": "Antenna design calculator",
         "executable": "antenna.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "CALLOUT",
-        "description": "Node callsign lookup",
-        "executable": "callout.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "DICT",
-        "description": "Dictionary lookup",
-        "executable": "dict.py",
         "needs_callsign": false
       },
       {
@@ -94,28 +110,10 @@
         "needs_callsign": false
       },
       {
-        "name": "SPACE",
-        "description": "NOAA space weather reports",
-        "executable": "space.py",
-        "needs_callsign": false
-      },
-      {
         "name": "WALL",
         "description": "Bulletin board messages",
         "executable": "wall.py",
         "needs_callsign": true
-      },
-      {
-        "name": "WX",
-        "description": "Weather alerts and forecasts",
-        "executable": "wx.py",
-        "needs_callsign": true
-      },
-      {
-        "name": "WX-ME",
-        "description": "Weather forecast (Maine zones)",
-        "executable": "wx-me.py",
-        "needs_callsign": false
       },
       {
         "name": "YAPP",
