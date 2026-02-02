@@ -749,6 +749,47 @@ Screenshots and example output images for documentation.
 
 **Note**: Sysop utilities for managing the BBS are located in `/utilities` at repository root.
 
+## Quick Start: Using apps.py Menu Launcher
+
+For sysops who want a simple menu-driven interface without configuring individual services:
+
+1. **Download apps.py and apps.json**:
+   ```bash
+   cd ~/apps
+   wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/apps.py
+   wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/apps.json
+   chmod +x apps.py
+   ```
+
+2. **Download apps you want** (only installed apps will appear in menu):
+   ```bash
+   # Example: Install weather, forms, and gopher apps
+   wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/wx.py
+   wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/forms.py
+   wget https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/gopher.py
+   chmod +x *.py
+   ```
+
+3. **Configure BPQ** (add to bpq32.cfg):
+   - Add `63180` to CMDPORT line
+   - Add APPLICATION: `APPLICATION 1,APPS,C 9 HOST 18 K S`
+   - Add to /etc/services: `apps 63180/tcp # Application launcher`
+   - Add to /etc/inetd.conf: `apps stream tcp nowait ect /home/ect/apps/apps.py`
+
+4. **Restart services**:
+   ```bash
+   sudo killall -HUP inetd
+   sudo systemctl restart linbpq
+   ```
+
+5. **Test**: Connect to node and type `APPS`
+
+**Benefits**:
+- No need to create service entries for each app
+- Add new apps by editing apps.json (no BPQ restart needed)
+- Users see only installed apps in organized categories
+- Return to menu after each app exits
+
 # ToDos
 [X] **All** - Update #! to call interpreter regardless of location using env  
 [ ] **qrz3.py** - Add variable check so as to not require sysop to comment lines if used in the mode that requires user login  
