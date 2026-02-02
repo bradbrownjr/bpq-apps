@@ -17,3 +17,4 @@ test            63140/tcp                       # Amateur exam practice (legacy,
 predict         63150/tcp                       # Solar/ionosphere forecasts (HOST 15)
 dict            63160/tcp                       # Dictionary lookup (HOST 16)
 wiki            63170/tcp                       # Wikipedia browser (HOST 17)
+apps            63180/tcp                       # Application menu launcher (HOST 18)

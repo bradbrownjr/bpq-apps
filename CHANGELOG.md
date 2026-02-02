@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [apps.py v1.0 - Application Menu Launcher] - 2026-02-02
+### Added
+- **apps.py v1.0**: Unified application launcher with categorized menu
+  - Displays installed apps organized by category (Internet, Tools, Games)
+  - Only shows apps whose executables exist on the system
+  - Launches apps via subprocess, returns to menu after exit
+  - Passes user callsign via stdin to apps that need it
+  - Configuration via apps.json for easy customization
+  - Sysops can add third-party apps without modifying code
+  - Reduces need for individual inetd service entries per app
+  - Auto-update functionality included
+  - ASCII art logo and 40-char terminal width support
+
+### Added
+- **apps.json**: Configuration file for apps.py menu system
+  - Categories: Internet, Tools, Games
+  - All current BPQ apps pre-configured
+  - Sysops can edit to add/remove apps
+  - Each entry includes name, description, executable path, callsign requirement
+
 ## [antenna.py v1.3 - Enhanced Dipole Calculator] - 2026-01-31
 ### Added
 - **antenna.py v1.3**: Show formulas and height recommendations in dipole calculator

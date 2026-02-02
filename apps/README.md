@@ -4,6 +4,7 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 ## Table of Contents
 - [Features](#features)
 - [Applications](#applications)
+  - [apps.py](#appspy)
   - [feed.py](#feedpy)
   - [calendar.py](#calendarpy)
   - [callout.py](#calloutpy)
@@ -38,6 +39,45 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 - Fast startup and response times
 
 ## Applications
+
+apps.py
+-----------
+**Type**: Python  
+**Purpose**: Unified application launcher with categorized menu  
+**Information source**: Local apps.json configuration  
+**Developer**: Brad Brown KC1JMH  
+**Notes**: Menu-driven launcher for all installed BPQ apps. Displays categorized list (Internet, Tools, Games) and launches selected applications with proper callsign handling. Apps are only shown if their executable exists, making it easy for sysops to install only the apps they want. Configuration via apps.json allows adding third-party applications.
+
+**Download or update**:  
+```bash
+cd ~/apps
+wget -O apps.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/apps.py
+wget -O apps.json https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/apps.json
+chmod +x apps.py
+```
+
+**Configuration**:
+Edit `apps.json` to customize the menu. Each app entry requires:
+- `name`: Display name (shown in menu)
+- `description`: Brief description of functionality
+- `executable`: Path to executable (relative to apps directory)
+- `needs_callsign`: true if app requires user callsign
+
+Example apps.json structure:
+```json
+{
+  "categories": {
+    "Tools": [
+      {
+        "name": "MYAPP",
+        "description": "My custom application",
+        "executable": "myapp.py",
+        "needs_callsign": false
+      }
+    ]
+  }
+}
+```
 
 feed.py
 -----------
