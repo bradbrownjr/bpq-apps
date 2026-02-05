@@ -206,6 +206,7 @@ def display_menu(installed_apps, callsign):
                 else:
                     print(left_line)
             
+            print()
             i += 2
         else:
             # Only left category remains (odd one out)
