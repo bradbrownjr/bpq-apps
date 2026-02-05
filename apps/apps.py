@@ -268,40 +268,26 @@ def launch_app(app, callsign):
     needs_callsign = app.get("needs_callsign", False)
     
     try:
-        # Create subprocess with pipes
-        process = subprocess.Popen(
-            [executable],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=0
-        )
-        
-        # If app needs callsign, write it to stdin (mimicking BPQ behavior)
         if needs_callsign and callsign:
+            # Create subprocess with pipe for stdin only
+            process = subprocess.Popen(
+                [executable],
+                stdin=subprocess.PIPE
+            )
+            
+            # Write callsign to stdin (mimicking BPQ behavior)
             if sys.version_info[0] >= 3:
                 process.stdin.write((callsign + '\n').encode('utf-8'))
             else:
                 process.stdin.write(callsign + '\n')
             process.stdin.flush()
-        
-        # Stream output line by line
-        while True:
-            if sys.version_info[0] >= 3:
-                line = process.stdout.readline().decode('utf-8', errors='replace')
-            else:
-                line = process.stdout.readline()
+            process.stdin.close()
             
-            if not line:
-                break
-            
-            sys.stdout.write(line)
-            sys.stdout.flush()
-        
-        # Wait for completion
-        process.wait()
-        process.stdin.close()
-        process.stdout.close()
+            # Wait for completion (app has full terminal access)
+            process.wait()
+        else:
+            # Run without pipes - fully interactive with terminal
+            subprocess.call([executable])
         
     except Exception as e:
         print("\nError launching {}: {}".format(app["name"], str(e)))
