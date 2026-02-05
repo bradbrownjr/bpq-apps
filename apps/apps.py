@@ -190,6 +190,7 @@ def display_menu(installed_apps, callsign):
             
             # Print apps from both categories
             max_rows = max(len(left_apps), len(right_apps))
+            left_ended_early = len(left_apps) < len(right_apps)
             for row in range(max_rows):
                 left_line = ""
                 if row < len(left_apps):
@@ -206,7 +207,9 @@ def display_menu(installed_apps, callsign):
                 else:
                     print(left_line)
             
-            print()
+            # Only add blank line if left didn't end early (right extended down already provides separation)
+            if not left_ended_early:
+                print()
             i += 2
         else:
             # Only left category remains (odd one out)
