@@ -156,55 +156,68 @@ def display_menu(installed_apps, callsign):
         print()
         return {}
     
-    # Build menu with numbered options (two columns)
+    # Build menu with numbered options
     app_index = {}
     option_num = 1
     
-    # Preserve category order from JSON (Python 3.6+ dict order)
+    # First pass: build app_index and assign numbers
+    category_data = []
     for category in installed_apps.keys():
-        print("{}:".format(category))
-        
-        apps_in_category = installed_apps[category]
-        
-        # Display apps in two columns
-        i = 0
-        while i < len(apps_in_category):
-            left_app = apps_in_category[i]
-            # Truncate description if needed
-            left_desc = left_app["description"]
-            if len(left_desc) > 24:
-                left_desc = left_desc[:21] + "..."
-            left_line = "{:2}) {:9} {}".format(
-                option_num, 
-                left_app["name"], 
-                left_desc
-            )
-            app_index[str(option_num)] = left_app
+        apps_with_nums = []
+        for app in installed_apps[category]:
+            apps_with_nums.append((option_num, app))
+            app_index[str(option_num)] = app
             option_num += 1
-            i += 1
-            
-            # Check if there's a right column app
-            if i < len(apps_in_category):
-                right_app = apps_in_category[i]
-                right_desc = right_app["description"]
-                if len(right_desc) > 24:
-                    right_desc = right_desc[:21] + "..."
-                right_line = "{:2}) {:9} {}".format(
-                    option_num,
-                    right_app["name"],
-                    right_desc
-                )
-                app_index[str(option_num)] = right_app
-                option_num += 1
-                i += 1
-                
-                # Print both columns (pad left to 40 chars)
-                print("{:<40}{}".format(left_line, right_line))
-            else:
-                # Only left column
-                print(left_line)
+        category_data.append((category, apps_with_nums))
+    
+    # Display categories in vertical columns, two categories side-by-side
+    i = 0
+    while i < len(category_data):
+        left_category, left_apps = category_data[i]
         
-        print()
+        # Check if there's a right category
+        if i + 1 < len(category_data):
+            right_category, right_apps = category_data[i + 1]
+            
+            # Print category headers side-by-side
+            print("{:<40}{}".format(left_category + ":", right_category + ":"))
+            
+            # Print apps from both categories
+            max_rows = max(len(left_apps), len(right_apps))
+            for row in range(max_rows):
+                left_line = ""
+                if row < len(left_apps):
+                    num, app = left_apps[row]
+                    desc = app["description"]
+                    if len(desc) > 17:
+                        desc = desc[:14] + "..."
+                    left_line = "{:2}) {:9} {}".format(num, app["name"], desc)
+                
+                right_line = ""
+                if row < len(right_apps):
+                    num, app = right_apps[row]
+                    desc = app["description"]
+                    if len(desc) > 17:
+                        desc = desc[:14] + "..."
+                    right_line = "{:2}) {:9} {}".format(num, app["name"], desc)
+                
+                if right_line:
+                    print("{:<40}{}".format(left_line, right_line))
+                else:
+                    print(left_line)
+            
+            print()
+            i += 2
+        else:
+            # Only left category remains
+            print("{}:".format(left_category))
+            for num, app in left_apps:
+                desc = app["description"]
+                if len(desc) > 24:
+                    desc = desc[:21] + "..."
+                print("{:2}) {:9} {}".format(num, app["name"], desc))
+            print()
+            i += 1
     
     print("-" * 40)
     return app_index
