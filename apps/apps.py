@@ -160,33 +160,46 @@ def display_menu(installed_apps, callsign):
     app_index = {}
     option_num = 1
     
-    # First pass: build app_index and assign numbers
-    category_data = []
+    # First pass: build app_index and assign numbers, separate Main from others
+    main_category_data = None
+    other_category_data = []
+    
+    # Process Main first to ensure low numbers
+    if "Main" in installed_apps:
+        apps_with_nums = []
+        for app in installed_apps["Main"]:
+            apps_with_nums.append((option_num, app))
+            app_index[str(option_num)] = app
+            option_num += 1
+        main_category_data = ("Main", apps_with_nums)
+    
+    # Then process all other categories
     for category in installed_apps.keys():
+        if category == "Main":
+            continue
         apps_with_nums = []
         for app in installed_apps[category]:
             apps_with_nums.append((option_num, app))
             app_index[str(option_num)] = app
             option_num += 1
-        category_data.append((category, apps_with_nums))
+        other_category_data.append((category, apps_with_nums))
     
-    # Display categories - Main first, then others side-by-side
+    # Display Main category first at the top
+    if main_category_data:
+        category, apps = main_category_data
+        print("{}:".format(category))
+        for num, app in apps:
+            print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
+        print()
+    
+    # Display remaining categories side-by-side
     i = 0
-    while i < len(category_data):
-        left_category, left_apps = category_data[i]
-        
-        # Main category gets displayed alone at the top
-        if left_category == "Main":
-            print("{}:".format(left_category))
-            for num, app in left_apps:
-                print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
-            print()
-            i += 1
-            continue
+    while i < len(other_category_data):
+        left_category, left_apps = other_category_data[i]
         
         # Check if there's a right category
-        if i + 1 < len(category_data):
-            right_category, right_apps = category_data[i + 1]
+        if i + 1 < len(other_category_data):
+            right_category, right_apps = other_category_data[i + 1]
             
             # Print category headers side-by-side
             print("{:<35}{}".format(left_category + ":", right_category + ":"))
