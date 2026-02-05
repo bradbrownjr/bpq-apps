@@ -156,16 +156,54 @@ def display_menu(installed_apps, callsign):
         print()
         return {}
     
-    # Build menu with numbered options
+    # Build menu with numbered options (two columns)
     app_index = {}
     option_num = 1
     
-    for category in sorted(installed_apps.keys()):
+    # Preserve category order from JSON (Python 3.6+ dict order)
+    for category in installed_apps.keys():
         print("{}:".format(category))
-        for app in installed_apps[category]:
-            print("{:2}) {} - {}".format(option_num, app["name"], app["description"]))
-            app_index[str(option_num)] = app
+        
+        apps_in_category = installed_apps[category]
+        
+        # Display apps in two columns
+        i = 0
+        while i < len(apps_in_category):
+            left_app = apps_in_category[i]
+            # Truncate description if needed
+            left_desc = left_app["description"]
+            if len(left_desc) > 24:
+                left_desc = left_desc[:21] + "..."
+            left_line = "{:2}) {:9} {}".format(
+                option_num, 
+                left_app["name"], 
+                left_desc
+            )
+            app_index[str(option_num)] = left_app
             option_num += 1
+            i += 1
+            
+            # Check if there's a right column app
+            if i < len(apps_in_category):
+                right_app = apps_in_category[i]
+                right_desc = right_app["description"]
+                if len(right_desc) > 24:
+                    right_desc = right_desc[:21] + "..."
+                right_line = "{:2}) {:9} {}".format(
+                    option_num,
+                    right_app["name"],
+                    right_desc
+                )
+                app_index[str(option_num)] = right_app
+                option_num += 1
+                i += 1
+                
+                # Print both columns (pad left to 40 chars)
+                print("{:<40}{}".format(left_line, right_line))
+            else:
+                # Only left column
+                print(left_line)
+        
         print()
     
     print("-" * 40)

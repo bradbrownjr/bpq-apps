@@ -1,48 +1,42 @@
 {
   "categories": {
+    "Main": [
+      {
+        "name": "CALENDAR",
+        "description": "Event calendar",
+        "executable": "eventcal.py",
+        "needs_callsign": false
+      },
+      {
+        "name": "FORMS",
+        "description": "Message forms",
+        "executable": "forms.py",
+        "needs_callsign": true
+      },
+      {
+        "name": "WALL",
+        "description": "Leave your mark!",
+        "executable": "wall.py",
+        "needs_callsign": true
+      } 
+    ],
     "Browsers": [
       {
         "name": "FEED",
-        "description": "RSS news feed reader",
+        "description": "News feeds",
         "executable": "feed.py",
         "needs_callsign": false
       },
       {
         "name": "GOPHER",
-        "description": "Gopher protocol browser",
+        "description": "Gopher browser",
         "executable": "gopher.py",
         "needs_callsign": false
       },
       {
         "name": "WWW",
-        "description": "Web browser (HTTP/HTTPS)",
+        "description": "Web browser",
         "executable": "www.py",
-        "needs_callsign": false
-      }
-    ],
-    "Reference": [
-      {
-        "name": "AI",
-        "description": "AI chatbot with multiple models",
-        "executable": "ai.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "DICT",
-        "description": "Dictionary lookup",
-        "executable": "dict.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "HAMQSL",
-        "description": "QSL card lookup service",
-        "executable": "hamqsl.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "QRZ",
-        "description": "Callsign lookup (QRZ.com)",
-        "executable": "qrz3.py",
         "needs_callsign": false
       },
       {
@@ -50,24 +44,56 @@
         "description": "Wikipedia browser",
         "executable": "wiki.py",
         "needs_callsign": false
+      }      
+    ],
+    "Reference": [
+      {
+        "name": "AI",
+        "description": "AI chatbot",
+        "executable": "ai.py",
+        "needs_callsign": false
+      },
+      {
+        "name": "DICT",
+        "description": "Dictionary",
+        "executable": "dict.py",
+        "needs_callsign": false
+      },
+      {
+        "name": "HAMQSL",
+        "description": "Band conditions",
+        "executable": "hamqsl.py",
+        "needs_callsign": false
+      },
+      {
+        "name": "QRZ",
+        "description": "Callsign lookup",
+        "executable": "qrz3.py",
+        "needs_callsign": false
+      },
+      {
+        "name": "REPEATER",
+        "description": "Repeater search",
+        "executable": "repeater.py",
+        "needs_callsign": false
       }
     ],
     "Weather": [
       {
         "name": "SPACE",
-        "description": "NOAA space weather reports",
+        "description": "Space weather",
         "executable": "space.py",
         "needs_callsign": false
       },
       {
         "name": "WX",
-        "description": "Weather alerts and forecasts",
+        "description": "Weather reports",
         "executable": "wx.py",
         "needs_callsign": true
       },
       {
         "name": "WX-ME",
-        "description": "Weather forecast (Maine zones)",
+        "description": "ME weather",
         "executable": "wx-me.py",
         "needs_callsign": false
       }
@@ -75,57 +101,27 @@
     "Tools": [
       {
         "name": "ANTENNA",
-        "description": "Antenna design calculator",
+        "description": "Antenna calculator",
         "executable": "antenna.py",
         "needs_callsign": false
       },
       {
-        "name": "EVENTCAL",
-        "description": "Amateur radio event calendar",
-        "executable": "eventcal.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "FORMS",
-        "description": "Message forms (bulletin, ICS-213, radiogram)",
-        "executable": "forms.py",
-        "needs_callsign": true
-      },
-      {
         "name": "HAMTEST",
-        "description": "Amateur radio license exam practice",
+        "description": "License exam practice",
         "executable": "hamtest.py",
         "needs_callsign": false
       },
       {
         "name": "PREDICT",
-        "description": "Ionospheric propagation forecasting",
+        "description": "Propagation forecast",
         "executable": "predict.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "REPEATER",
-        "description": "Repeater directory search",
-        "executable": "repeater.py",
-        "needs_callsign": false
-      },
-      {
-        "name": "WALL",
-        "description": "Bulletin board messages",
-        "executable": "wall.py",
-        "needs_callsign": true
-      },
-      {
-        "name": "YAPP",
-        "description": "File transfer (YAPP protocol)",
-        "executable": "yapp.py",
         "needs_callsign": false
       }
     ],
     "Games": [
       {
         "name": "BATTLESHIP",
-        "description": "Multiplayer battleship game",
+        "description": "Battleship game",
         "executable": "../games/battleship.py",
         "needs_callsign": false
       }
