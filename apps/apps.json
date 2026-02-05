@@ -116,6 +116,12 @@
         "description": "QSO planning",
         "executable": "predict.py",
         "needs_callsign": false
+      },
+      {
+        "name": "SYSOP",
+        "description": "Sysop console",
+        "executable": "sysop.py",
+        "needs_callsign": true
       }
     ],
     "Games": [

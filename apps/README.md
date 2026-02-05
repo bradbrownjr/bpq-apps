@@ -48,6 +48,15 @@ apps.py
 **Developer**: Brad Brown KC1JMH  
 **Notes**: Menu-driven launcher for all installed BPQ apps. Displays categorized list (Internet, Tools, Games) and launches selected applications with proper callsign handling. Apps are only shown if their executable exists, making it easy for sysops to install only the apps they want. Configuration via apps.json allows adding third-party applications.
 
+**Features**:
+- **About Screen**: Explains the bpq-apps project, key features (self-updating, offline-first, bandwidth optimized), and provides GitHub repository URL
+- **Sysop Menu**: Available only to sysops defined in bpq32.cfg USER lines with SYSOP privilege
+  - System status: CPU load, memory, disk usage, uptime
+  - Process monitoring: LinBPQ and Direwolf status
+  - App management: List and install apps from GitHub repository
+  - Log viewing: System log (/var/log/syslog) and BPQ debug log with pagination
+  - Service control: Restart LinBPQ service (requires sudo access)
+
 **Download or update**:  
 ```bash
 cd ~/apps
@@ -78,6 +87,18 @@ Example apps.json structure:
   }
 }
 ```
+
+**Sysop Access**:
+The Sysop menu is only visible to users whose callsign matches a USER line in bpq32.cfg with SYSOP privilege:
+```
+USER=KC1JMH,password,KC1JMH-8,"",SYSOP
+```
+
+Sysop features include:
+1. **List/Install Apps**: Browse GitHub repository and install/update apps directly
+2. **View Logs**: Paginated view of system and BPQ logs (20 lines per page)
+3. **System Stats**: Real-time monitoring of system resources
+4. **Service Control**: Restart LinBPQ (requires sudo passwordless access or interactive password entry)
 
 feed.py
 -----------

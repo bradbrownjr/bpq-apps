@@ -3,9 +3,9 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 1.0
+Version: 1.1
 Author: Brad Brown Jr (KC1JMH)
-Date: 2026-02-02
+Date: 2026-02-05
 """
 
 import os
@@ -13,12 +13,13 @@ import sys
 import json
 import subprocess
 import tempfile
+import re
 try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -87,6 +88,38 @@ def extract_base_call(callsign):
     if not callsign:
         return ""
     return callsign.split('-')[0]
+
+def get_sysop_callsigns():
+    """Parse bpq32.cfg to extract sysop callsigns."""
+    config_paths = [
+        "/home/ect/linbpq/bpq32.cfg",
+        "/home/pi/linbpq/bpq32.cfg",
+        os.path.expanduser("~/linbpq/bpq32.cfg")
+    ]
+    
+    sysops = []
+    for config_path in config_paths:
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    for line in f:
+                        # Match USER=CALLSIGN,password,call,"",SYSOP
+                        match = re.match(r'\s*USER=([A-Z0-9]+),.*,.*,.*,SYSOP', line, re.IGNORECASE)
+                        if match:
+                            sysops.append(match.group(1))
+            except Exception:
+                pass
+            break
+    
+    return sysops
+
+def is_sysop(callsign):
+    """Check if callsign is a sysop."""
+    if not callsign:
+        return False
+    base_call = extract_base_call(callsign).upper()
+    sysops = get_sysop_callsigns()
+    return base_call in sysops
 
 def load_apps_config():
     """Load apps.json configuration file."""
@@ -160,7 +193,7 @@ def display_menu(installed_apps, callsign):
     app_index = {}
     
     # Define left and right column categories
-    left_categories = ["Main", "Weather", "Tools"]
+    left_categories = ["Info", "Main", "Weather", "Tools"]
     right_categories = ["Reference", "Browsers"]
     
     # Build left column data (numbered first)
@@ -274,6 +307,412 @@ def launch_app(app, callsign):
         print("\nError launching {}: {}".format(app["name"], str(e)))
         print()
 
+def show_about():
+    """Display About screen with project info."""
+    os.system('clear' if os.name != 'nt' else 'cls')
+    
+    print()
+    print("=" * 67)
+    print("ABOUT BPQ-APPS")
+    print("=" * 67)
+    print()
+    print("BPQ-Apps is a collection of packet radio applications designed for")
+    print("AX.25 networks via LinBPQ BBS. These apps run on Raspberry Pi nodes")
+    print("and provide enhanced functionality for emergency communications,")
+    print("ham radio operators, and packet radio enthusiasts.")
+    print()
+    print("KEY FEATURES:")
+    print()
+    print("  * Self-Updating: Apps automatically check GitHub for updates")
+    print("    and download new versions when available (3-second timeout)")
+    print()
+    print("  * Offline-First: All apps work without internet connectivity")
+    print("    Apps cache data locally and gracefully handle network failures")
+    print()
+    print("  * Bandwidth Optimized: Designed for 1200 baud packet radio")
+    print("    - ASCII text only (no Unicode, ANSI, or control codes)")
+    print("    - 40-character width for mobile/older terminals")
+    print("    - Compressed menus and prompts")
+    print()
+    print("  * Emergency Ready: Forms for ICS-213, radiograms, severe weather")
+    print("    reports, ARRL bulletins, and MARS/SHARES formats")
+    print()
+    print("  * Open Source: MIT License, contributions welcome")
+    print()
+    print("REPOSITORY:")
+    print()
+    print("  https://github.com/bradbrownjr/bpq-apps")
+    print()
+    print("  - Full documentation and installation guide")
+    print("  - Example configurations for BPQ32, inetd, services")
+    print("  - Utilities for node management and monitoring")
+    print()
+    print("DEVELOPED BY:")
+    print()
+    print("  Brad Brown Jr, KC1JMH")
+    print("  Wireless Society of Southern Maine - Emergency Comms Team")
+    print()
+    print("=" * 67)
+    print()
+    try:
+        raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+def get_system_stats():
+    """Retrieve system statistics."""
+    stats = {}
+    
+    try:
+        # CPU Load Average
+        with open('/proc/loadavg', 'r') as f:
+            load = f.read().split()[:3]
+            stats['load_avg'] = "{} {} {}".format(load[0], load[1], load[2])
+    except Exception:
+        stats['load_avg'] = "N/A"
+    
+    try:
+        # Memory
+        with open('/proc/meminfo', 'r') as f:
+            meminfo = {}
+            for line in f:
+                parts = line.split(':')
+                if len(parts) == 2:
+                    key = parts[0].strip()
+                    value = parts[1].strip().split()[0]
+                    meminfo[key] = int(value)
+        
+        total = meminfo.get('MemTotal', 0) / 1024
+        available = meminfo.get('MemAvailable', meminfo.get('MemFree', 0)) / 1024
+        used = total - available
+        stats['mem_total'] = "{:.1f}M".format(total)
+        stats['mem_used'] = "{:.1f}M".format(used)
+        stats['mem_percent'] = "{:.0f}%".format((used / total * 100) if total > 0 else 0)
+    except Exception:
+        stats['mem_total'] = "N/A"
+        stats['mem_used'] = "N/A"
+        stats['mem_percent'] = "N/A"
+    
+    try:
+        # Disk Usage
+        stat = os.statvfs('/')
+        total = (stat.f_blocks * stat.f_frsize) / (1024**3)
+        available = (stat.f_bavail * stat.f_frsize) / (1024**3)
+        used = total - available
+        stats['disk_total'] = "{:.1f}G".format(total)
+        stats['disk_used'] = "{:.1f}G".format(used)
+        stats['disk_percent'] = "{:.0f}%".format((used / total * 100) if total > 0 else 0)
+    except Exception:
+        stats['disk_total'] = "N/A"
+        stats['disk_used'] = "N/A"
+        stats['disk_percent'] = "N/A"
+    
+    try:
+        # Uptime
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.read().split()[0])
+            days = int(uptime_seconds // 86400)
+            hours = int((uptime_seconds % 86400) // 3600)
+            minutes = int((uptime_seconds % 3600) // 60)
+            if days > 0:
+                stats['uptime'] = "{}d {}h {}m".format(days, hours, minutes)
+            elif hours > 0:
+                stats['uptime'] = "{}h {}m".format(hours, minutes)
+            else:
+                stats['uptime'] = "{}m".format(minutes)
+    except Exception:
+        stats['uptime'] = "N/A"
+    
+    # Process status
+    try:
+        linbpq_running = subprocess.call(['pgrep', '-x', 'linbpq'], stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+        stats['linbpq'] = "Running" if linbpq_running else "Stopped"
+    except Exception:
+        stats['linbpq'] = "Unknown"
+    
+    try:
+        direwolf_running = subprocess.call(['pgrep', '-x', 'direwolf'], stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+        stats['direwolf'] = "Running" if direwolf_running else "Stopped"
+    except Exception:
+        stats['direwolf'] = "Unknown"
+    
+    return stats
+
+def view_log_paginated(log_path, title):
+    """View log file with pagination."""
+    if not os.path.exists(log_path):
+        print("Log file not found: {}".format(log_path))
+        return
+    
+    try:
+        with open(log_path, 'r') as f:
+            lines = f.readlines()
+        
+        if not lines:
+            print("Log file is empty.")
+            return
+        
+        # Start from end of file
+        page_size = 20
+        total_lines = len(lines)
+        start_idx = max(0, total_lines - page_size)
+        
+        while True:
+            os.system('clear' if os.name != 'nt' else 'cls')
+            print()
+            print("=" * 67)
+            print(title)
+            print("=" * 67)
+            print()
+            
+            end_idx = min(start_idx + page_size, total_lines)
+            for i in range(start_idx, end_idx):
+                line = lines[i].rstrip()
+                if len(line) > 65:
+                    line = line[:62] + "..."
+                print(line)
+            
+            print()
+            print("-" * 67)
+            print("Lines {}-{} of {}".format(start_idx + 1, end_idx, total_lines))
+            
+            if start_idx > 0 and end_idx < total_lines:
+                prompt = "[N)ext P)rev Q)uit] :> "
+            elif start_idx > 0:
+                prompt = "[P)rev Q)uit] :> "
+            elif end_idx < total_lines:
+                prompt = "[N)ext Q)uit] :> "
+            else:
+                prompt = "[Q)uit] :> "
+            
+            try:
+                choice = (raw_input(prompt) if sys.version_info[0] < 3 else input(prompt)).strip().upper()
+            except (EOFError, KeyboardInterrupt):
+                break
+            
+            if choice == 'Q':
+                break
+            elif choice == 'N' and end_idx < total_lines:
+                start_idx = min(start_idx + page_size, total_lines - page_size)
+            elif choice == 'P' and start_idx > 0:
+                start_idx = max(0, start_idx - page_size)
+    
+    except Exception as e:
+        print("Error reading log: {}".format(str(e)))
+
+def list_available_apps_github():
+    """Fetch list of available apps from GitHub."""
+    try:
+        url = "https://api.github.com/repos/bradbrownjr/bpq-apps/contents/apps"
+        response = urlopen(url, timeout=5)
+        content = response.read()
+        if sys.version_info[0] >= 3:
+            content = content.decode('utf-8')
+        
+        files = json.loads(content)
+        python_apps = []
+        for item in files:
+            if item.get('type') == 'file' and item.get('name', '').endswith('.py'):
+                name = item['name']
+                if name not in ['__init__.py', 'config.py']:
+                    python_apps.append({
+                        'name': name,
+                        'download_url': item.get('download_url', ''),
+                        'size': item.get('size', 0)
+                    })
+        
+        return sorted(python_apps, key=lambda x: x['name'])
+    
+    except Exception as e:
+        print("Error fetching app list: {}".format(str(e)))
+        return []
+
+def install_app_from_github(app_info):
+    """Download and install an app from GitHub."""
+    try:
+        app_name = app_info['name']
+        url = app_info['download_url']
+        
+        print("Downloading {}...".format(app_name))
+        sys.stdout.flush()
+        
+        response = urlopen(url, timeout=10)
+        content = response.read()
+        
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        app_path = os.path.join(app_dir, app_name)
+        
+        # Write file
+        with open(app_path, 'wb') as f:
+            f.write(content)
+        
+        # Make executable
+        os.chmod(app_path, 0o755)
+        
+        print("Installed {} successfully.".format(app_name))
+        return True
+    
+    except Exception as e:
+        print("Error installing {}: {}".format(app_info['name'], str(e)))
+        return False
+
+def sysop_menu(callsign):
+    """Sysop-only menu for system management."""
+    while True:
+        os.system('clear' if os.name != 'nt' else 'cls')
+        
+        print()
+        print("=" * 67)
+        print("SYSOP MENU - {}".format(extract_base_call(callsign)))
+        print("=" * 67)
+        print()
+        
+        stats = get_system_stats()
+        
+        print("SYSTEM STATUS:")
+        print()
+        print("  Uptime:     {}".format(stats['uptime']))
+        print("  Load Avg:   {}".format(stats['load_avg']))
+        print("  Memory:     {} / {} ({})".format(stats['mem_used'], stats['mem_total'], stats['mem_percent']))
+        print("  Disk:       {} / {} ({})".format(stats['disk_used'], stats['disk_total'], stats['disk_percent']))
+        print()
+        print("PROCESSES:")
+        print()
+        print("  LinBPQ:     {}".format(stats['linbpq']))
+        print("  Direwolf:   {}".format(stats['direwolf']))
+        print()
+        print("-" * 67)
+        print()
+        print("1) List/Install Apps from GitHub")
+        print("2) View System Log (/var/log/syslog)")
+        print("3) View BPQ Log (~/linbpq/debug.log)")
+        print("4) Refresh Status")
+        print()
+        print("R) Restart LinBPQ Service")
+        print("Q) Return to Main Menu")
+        print()
+        
+        try:
+            choice = (raw_input("Select [1-4 R Q] :> ") if sys.version_info[0] < 3 else input("Select [1-4 R Q] :> ")).strip().upper()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+        
+        if choice == 'Q':
+            break
+        elif choice == '1':
+            sysop_manage_apps()
+        elif choice == '2':
+            view_log_paginated('/var/log/syslog', 'SYSTEM LOG')
+        elif choice == '3':
+            log_paths = [
+                os.path.expanduser('~/linbpq/debug.log'),
+                '/home/ect/linbpq/debug.log',
+                '/home/pi/linbpq/debug.log'
+            ]
+            for log_path in log_paths:
+                if os.path.exists(log_path):
+                    view_log_paginated(log_path, 'BPQ DEBUG LOG')
+                    break
+            else:
+                print("BPQ log not found.")
+                try:
+                    raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+                except (EOFError, KeyboardInterrupt):
+                    pass
+        elif choice == '4':
+            continue
+        elif choice == 'R':
+            print()
+            print("Restarting LinBPQ service...")
+            try:
+                result = subprocess.call(['sudo', 'systemctl', 'restart', 'linbpq'])
+                if result == 0:
+                    print("Service restarted successfully.")
+                else:
+                    print("Failed to restart service (may require password).")
+            except Exception as e:
+                print("Error: {}".format(str(e)))
+            print()
+            try:
+                raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+def sysop_manage_apps():
+    """List and install apps from GitHub."""
+    os.system('clear' if os.name != 'nt' else 'cls')
+    
+    print()
+    print("=" * 67)
+    print("MANAGE APPS FROM GITHUB")
+    print("=" * 67)
+    print()
+    print("Fetching app list...")
+    sys.stdout.flush()
+    
+    apps = list_available_apps_github()
+    
+    if not apps:
+        print("No apps found or network error.")
+        print()
+        try:
+            raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+        except (EOFError, KeyboardInterrupt):
+            pass
+        return
+    
+    # Check which are installed
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    for app in apps:
+        app_path = os.path.join(app_dir, app['name'])
+        app['installed'] = os.path.exists(app_path)
+    
+    while True:
+        os.system('clear' if os.name != 'nt' else 'cls')
+        
+        print()
+        print("=" * 67)
+        print("AVAILABLE APPS FROM GITHUB")
+        print("=" * 67)
+        print()
+        
+        for i, app in enumerate(apps, 1):
+            status = "[INSTALLED]" if app['installed'] else ""
+            print("{:2}) {:20} {:>8} bytes {}".format(i, app['name'], app['size'], status))
+        
+        print()
+        print("-" * 67)
+        print()
+        print("Enter number to install/reinstall, or Q to return")
+        print()
+        
+        try:
+            choice = (raw_input("Select [1-{} Q] :> ".format(len(apps))) if sys.version_info[0] < 3 else input("Select [1-{} Q] :> ".format(len(apps)))).strip().upper()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+        
+        if choice == 'Q':
+            break
+        
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(apps):
+                print()
+                if install_app_from_github(apps[idx]):
+                    apps[idx]['installed'] = True
+                print()
+                try:
+                    raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+                except (EOFError, KeyboardInterrupt):
+                    pass
+            else:
+                print("Invalid selection.")
+        except ValueError:
+            print("Invalid input.")
+
+
 def main():
     """Main application loop."""
     check_for_app_update(VERSION, "apps.py")
@@ -290,6 +729,9 @@ def main():
     config = load_apps_config()
     installed_apps = get_installed_apps(config)
     
+    # Check if user is sysop
+    user_is_sysop = is_sysop(callsign)
+    
     while True:
         app_index = display_menu(installed_apps, callsign)
         
@@ -301,20 +743,30 @@ def main():
                 pass
             break
         
-        print("Q)uit")
+        # Build options string
+        if user_is_sysop:
+            print("A)bout S)ysop Q)uit")
+            options_str = "Select [1-{} A S Q] :> ".format(len(app_index))
+        else:
+            print("A)bout Q)uit")
+            options_str = "Select [1-{} A Q] :> ".format(len(app_index))
+        
         try:
             if sys.version_info[0] < 3:
-                choice = raw_input("Select [1-{} Q] :> ".format(len(app_index))).strip().upper()
+                choice = raw_input(options_str).strip().upper()
             else:
-                choice = input("Select [1-{} Q] :> ".format(len(app_index))).strip().upper()
+                choice = input(options_str).strip().upper()
         except (EOFError, KeyboardInterrupt):
             print()
             break
         
         if choice == 'Q':
             break
-        
-        if choice in app_index:
+        elif choice == 'A':
+            show_about()
+        elif choice == 'S' and user_is_sysop:
+            sysop_menu(callsign)
+        elif choice in app_index:
             print()
             print("Launching {}...".format(app_index[choice]["name"]))
             print("-" * 40)

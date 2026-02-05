@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [apps.py v1.1 - About Screen and Sysop Menu] - 2026-02-05
+### Added
+- **About Screen**: Explains the bpq-apps project, highlighting key features:
+  - Self-updating functionality with 3-second timeout
+  - Offline-first design with local caching
+  - Bandwidth optimization for 1200 baud packet radio
+  - Emergency communications ready (ICS forms, MARS/SHARES, etc.)
+  - Provides GitHub repository URL for documentation
+- **Sysop Menu**: Only visible to sysops defined in bpq32.cfg with SYSOP privilege
+  - **System Status**: Real-time display of CPU load, memory, disk, and uptime
+  - **Process Monitoring**: Shows LinBPQ and Direwolf running status
+  - **App Management**: Browse and install apps from GitHub repository
+  - **Log Viewing**: Paginated system log and BPQ debug log (20 lines per page)
+  - **Service Control**: Restart LinBPQ service (requires sudo access)
+- Helper functions for parsing bpq32.cfg to extract sysop callsigns
+- System statistics gathering from /proc filesystem
+- GitHub API integration for listing available apps
+
+### Changed
+- Main menu now includes "A)bout" option for all users
+- Main menu includes "S)ysop" option for authorized sysops only
+- Version bumped from 1.0 to 1.1 (docstring and VERSION variable match)
+
 ## [apps.py v1.0 - Application Menu Launcher] - 2026-02-02
 ### Added
 - **apps.py v1.0**: Unified application launcher with categorized menu
