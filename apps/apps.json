@@ -107,13 +107,13 @@
       },
       {
         "name": "HAMTEST",
-        "description": "License exam practice",
+        "description": "Exam practice",
         "executable": "hamtest.py",
         "needs_callsign": false
       },
       {
         "name": "PREDICT",
-        "description": "Propagation forecast",
+        "description": "QSO planning",
         "executable": "predict.py",
         "needs_callsign": false
       }
