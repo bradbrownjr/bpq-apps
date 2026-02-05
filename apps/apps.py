@@ -148,7 +148,7 @@ def display_menu(installed_apps, callsign):
     print("APPS v{} - Application Launcher".format(VERSION))
     if callsign:
         print("User: {}".format(extract_base_call(callsign)))
-    print("-" * 40)
+    print("-" * 67)
     print()
     
     if not installed_apps:
@@ -158,67 +158,61 @@ def display_menu(installed_apps, callsign):
     
     # Build menu with numbered options
     app_index = {}
+    
+    # Define left and right column categories
+    left_categories = ["Main", "Weather", "Tools"]
+    right_categories = ["Reference", "Browsers"]
+    
+    # Build left column data (numbered first)
     option_num = 1
-    
-    # Define category order from JSON (Python 3.5 doesn't preserve dict order)
-    category_order = ["Main", "Reference", "Weather", "Browsers", "Tools", "Games"]
-    
-    # Build category data in JSON order
-    category_data = []
-    for category in category_order:
+    left_lines = []
+    for category in left_categories:
         if category not in installed_apps:
             continue
-        apps_with_nums = []
+        left_lines.append(("header", category + ":"))
         for app in installed_apps[category]:
-            apps_with_nums.append((option_num, app))
+            left_lines.append(("app", option_num, app))
             app_index[str(option_num)] = app
             option_num += 1
-        category_data.append((category, apps_with_nums))
     
-    # Display categories side-by-side (pair them as they come)
-    i = 0
-    while i < len(category_data):
-        left_category, left_apps = category_data[i]
+    # Build right column data (numbered after left)
+    right_lines = []
+    for category in right_categories:
+        if category not in installed_apps:
+            continue
+        right_lines.append(("header", category + ":"))
+        for app in installed_apps[category]:
+            right_lines.append(("app", option_num, app))
+            app_index[str(option_num)] = app
+            option_num += 1
+    
+    # Display both columns side by side
+    max_rows = max(len(left_lines), len(right_lines))
+    for row in range(max_rows):
+        left_text = ""
+        if row < len(left_lines):
+            item = left_lines[row]
+            if item[0] == "header":
+                left_text = item[1]
+            else:
+                num, app = item[1], item[2]
+                left_text = "{:2}) {:9} {}".format(num, app["name"], app["description"])
         
-        # Check if there's a right category to pair with
-        # Check if there's a right category to pair with
-        if i + 1 < len(category_data):
-            right_category, right_apps = category_data[i + 1]
-            
-            # Print category headers side-by-side
-            print("{:<35}{}".format(left_category + ":", right_category + ":"))
-            
-            # Print apps from both categories
-            max_rows = max(len(left_apps), len(right_apps))
-            left_ended_early = len(left_apps) < len(right_apps)
-            for row in range(max_rows):
-                left_line = ""
-                if row < len(left_apps):
-                    num, app = left_apps[row]
-                    left_line = "{:2}) {:9} {}".format(num, app["name"], app["description"])
-                
-                right_line = ""
-                if row < len(right_apps):
-                    num, app = right_apps[row]
-                    right_line = "{:2}) {:9} {}".format(num, app["name"], app["description"])
-                
-                if right_line:
-                    print("{:<35}{}".format(left_line, right_line))
-                else:
-                    print(left_line)
-            
-            # Only add blank line if left didn't end early (right extended down already provides separation)
-            if not left_ended_early:
-                print()
-            i += 2
+        right_text = ""
+        if row < len(right_lines):
+            item = right_lines[row]
+            if item[0] == "header":
+                right_text = item[1]
+            else:
+                num, app = item[1], item[2]
+                right_text = "{:2}) {:9} {}".format(num, app["name"], app["description"])
+        
+        if right_text:
+            print("{:<36}{}".format(left_text, right_text))
         else:
-            # Only left category remains (odd one out)
-            print("{}:".format(left_category))
-            for num, app in left_apps:
-                print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
-            i += 1
+            print(left_text)
     
-    print("-" * 40)
+    print("-" * 67)
     return app_index
 
 def launch_app(app, callsign):
