@@ -166,7 +166,7 @@ def display_menu(installed_apps, callsign):
     # Build left column data (numbered first)
     option_num = 1
     left_lines = []
-    for category in left_categories:
+    for i, category in enumerate(left_categories):
         if category not in installed_apps:
             continue
         left_lines.append(("header", category + ":"))
@@ -174,10 +174,13 @@ def display_menu(installed_apps, callsign):
             left_lines.append(("app", option_num, app))
             app_index[str(option_num)] = app
             option_num += 1
+        # Add blank line between categories (except after last)
+        if i < len(left_categories) - 1 and category in installed_apps:
+            left_lines.append(("blank",))
     
     # Build right column data (numbered after left)
     right_lines = []
-    for category in right_categories:
+    for i, category in enumerate(right_categories):
         if category not in installed_apps:
             continue
         right_lines.append(("header", category + ":"))
@@ -185,23 +188,32 @@ def display_menu(installed_apps, callsign):
             right_lines.append(("app", option_num, app))
             app_index[str(option_num)] = app
             option_num += 1
+        # Add blank line between categories (except after last)
+        if i < len(right_categories) - 1 and category in installed_apps:
+            right_lines.append(("blank",))
     
     # Display both columns side by side
     max_rows = max(len(left_lines), len(right_lines))
     for row in range(max_rows):
         left_text = ""
+        left_is_blank = False
         if row < len(left_lines):
             item = left_lines[row]
-            if item[0] == "header":
+            if item[0] == "blank":
+                left_is_blank = True
+            elif item[0] == "header":
                 left_text = item[1]
             else:
                 num, app = item[1], item[2]
                 left_text = "{:2}) {:9} {}".format(num, app["name"], app["description"])
         
         right_text = ""
+        right_is_blank = False
         if row < len(right_lines):
             item = right_lines[row]
-            if item[0] == "header":
+            if item[0] == "blank":
+                right_is_blank = True
+            elif item[0] == "header":
                 right_text = item[1]
             else:
                 num, app = item[1], item[2]
@@ -209,7 +221,9 @@ def display_menu(installed_apps, callsign):
         
         if right_text:
             print("{:<36}{}".format(left_text, right_text))
-        else:
+        elif left_is_blank and right_is_blank:
+            print("")
+        elif left_text or not left_is_blank:
             print(left_text)
     
     print("-" * 67)
