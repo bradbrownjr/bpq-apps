@@ -160,47 +160,30 @@ def display_menu(installed_apps, callsign):
     app_index = {}
     option_num = 1
     
-    # First pass: build app_index and assign numbers, separate Main from others
-    main_category_data = None
-    other_category_data = []
+    # Define category order from JSON (Python 3.5 doesn't preserve dict order)
+    category_order = ["Main", "Reference", "Weather", "Browsers", "Tools", "Games"]
     
-    # Process Main first to ensure low numbers
-    if "Main" in installed_apps:
-        apps_with_nums = []
-        for app in installed_apps["Main"]:
-            apps_with_nums.append((option_num, app))
-            app_index[str(option_num)] = app
-            option_num += 1
-        main_category_data = ("Main", apps_with_nums)
-    
-    # Then process all other categories in desired order
-    category_order = ["Tools", "Reference", "Browsers", "Weather", "Games"]
+    # Build category data in JSON order
+    category_data = []
     for category in category_order:
-        if category not in installed_apps or category == "Main":
+        if category not in installed_apps:
             continue
         apps_with_nums = []
         for app in installed_apps[category]:
             apps_with_nums.append((option_num, app))
             app_index[str(option_num)] = app
             option_num += 1
-        other_category_data.append((category, apps_with_nums))
+        category_data.append((category, apps_with_nums))
     
-    # Display Main category first at the top
-    if main_category_data:
-        category, apps = main_category_data
-        print("{}:".format(category))
-        for num, app in apps:
-            print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
-        print()
-    
-    # Display remaining categories side-by-side
+    # Display categories side-by-side (pair them as they come)
     i = 0
-    while i < len(other_category_data):
-        left_category, left_apps = other_category_data[i]
+    while i < len(category_data):
+        left_category, left_apps = category_data[i]
         
-        # Check if there's a right category
-        if i + 1 < len(other_category_data):
-            right_category, right_apps = other_category_data[i + 1]
+        # Check if there's a right category to pair with
+        # Check if there's a right category to pair with
+        if i + 1 < len(category_data):
+            right_category, right_apps = category_data[i + 1]
             
             # Print category headers side-by-side
             print("{:<35}{}".format(left_category + ":", right_category + ":"))
@@ -226,7 +209,7 @@ def display_menu(installed_apps, callsign):
             print()
             i += 2
         else:
-            # Only left category remains
+            # Only left category remains (odd one out)
             print("{}:".format(left_category))
             for num, app in left_apps:
                 print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
