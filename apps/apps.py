@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 1.1
+Version: 1.2
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-05
 """
@@ -19,7 +19,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "1.1"
+VERSION = "1.2"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -439,7 +439,7 @@ def get_system_stats():
     return stats
 
 def view_log_paginated(log_path, title):
-    """View log file with pagination."""
+    """View log file with pagination in reverse chronological order."""
     if not os.path.exists(log_path):
         print("Log file not found: {}".format(log_path))
         return
@@ -452,21 +452,23 @@ def view_log_paginated(log_path, title):
             print("Log file is empty.")
             return
         
-        # Start from end of file
+        # Start from end of file, show newest first (reverse order)
         page_size = 20
         total_lines = len(lines)
-        start_idx = max(0, total_lines - page_size)
+        end_idx = total_lines  # Start at the very end
         
         while True:
             os.system('clear' if os.name != 'nt' else 'cls')
             print()
             print("=" * 67)
-            print(title)
+            print(title + " (Newest First)")
             print("=" * 67)
             print()
             
-            end_idx = min(start_idx + page_size, total_lines)
-            for i in range(start_idx, end_idx):
+            start_idx = max(0, end_idx - page_size)
+            
+            # Display lines in REVERSE order (newest first)
+            for i in range(end_idx - 1, start_idx - 1, -1):
                 line = lines[i].rstrip()
                 if len(line) > 65:
                     line = line[:62] + "..."
@@ -474,14 +476,15 @@ def view_log_paginated(log_path, title):
             
             print()
             print("-" * 67)
-            print("Lines {}-{} of {}".format(start_idx + 1, end_idx, total_lines))
+            print("Showing lines {}-{} of {} (newest first)".format(start_idx + 1, end_idx, total_lines))
             
+            # O)lder goes back in time, N)ewer goes forward in time
             if start_idx > 0 and end_idx < total_lines:
-                prompt = "[N)ext P)rev Q)uit] :> "
+                prompt = "[O)lder N)ewer Q)uit] :> "
             elif start_idx > 0:
-                prompt = "[P)rev Q)uit] :> "
+                prompt = "[O)lder Q)uit] :> "
             elif end_idx < total_lines:
-                prompt = "[N)ext Q)uit] :> "
+                prompt = "[N)ewer Q)uit] :> "
             else:
                 prompt = "[Q)uit] :> "
             
@@ -492,10 +495,12 @@ def view_log_paginated(log_path, title):
             
             if choice == 'Q':
                 break
+            elif choice == 'O' and start_idx > 0:
+                # Go back in time (older entries)
+                end_idx = start_idx
             elif choice == 'N' and end_idx < total_lines:
-                start_idx = min(start_idx + page_size, total_lines - page_size)
-            elif choice == 'P' and start_idx > 0:
-                start_idx = max(0, start_idx - page_size)
+                # Go forward in time (newer entries)
+                end_idx = min(end_idx + page_size, total_lines)
     
     except Exception as e:
         print("Error reading log: {}".format(str(e)))

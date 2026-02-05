@@ -96,7 +96,10 @@ USER=KC1JMH,password,KC1JMH-8,"",SYSOP
 
 Sysop features include:
 1. **List/Install Apps**: Browse GitHub repository and install/update apps directly
-2. **View Logs**: Paginated view of system and BPQ logs (20 lines per page)
+2. **View Logs**: Paginated view of system and BPQ logs (20 lines per page, newest first)
+   - Reverse chronological order optimized for 1200 baud
+   - Most recent entries appear first on screen
+   - Navigate with O)lder (back in time) and N)ewer (forward in time)
 3. **System Stats**: Real-time monitoring of system resources
 4. **Service Control**: Restart LinBPQ (requires sudo passwordless access or interactive password entry)
 

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [apps.py v1.2 - Reverse Chronological Log Viewing] - 2026-02-05
+### Changed
+- **Log Viewing**: Logs now display in reverse chronological order (newest first)
+  - Most recent log entries appear first on screen - critical for 1200 baud efficiency
+  - Users can immediately see latest activity without loading old data
+  - Changed navigation: O)lder goes back in time, N)ewer goes forward in time
+  - Header shows "(Newest First)" to clarify display order
+  - Status line updated: "Showing lines X-Y of Z (newest first)"
+
+### Technical Details
+- Displays lines in reverse order within each page
+- Starts at end of file (most recent entries)
+- Single iteration through file, minimal memory overhead
+- Works efficiently even with large log files (syslog can be hundreds of MB)
+
 ## [apps.py v1.1 - About Screen and Sysop Menu] - 2026-02-05
 ### Added
 - **About Screen**: Explains the bpq-apps project, highlighting key features:
