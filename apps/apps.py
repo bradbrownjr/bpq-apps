@@ -173,9 +173,10 @@ def display_menu(installed_apps, callsign):
             option_num += 1
         main_category_data = ("Main", apps_with_nums)
     
-    # Then process all other categories
-    for category in installed_apps.keys():
-        if category == "Main":
+    # Then process all other categories in desired order
+    category_order = ["Tools", "Reference", "Browsers", "Weather", "Games"]
+    for category in category_order:
+        if category not in installed_apps or category == "Main":
             continue
         apps_with_nums = []
         for app in installed_apps[category]:
