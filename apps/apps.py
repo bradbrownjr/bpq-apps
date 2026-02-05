@@ -206,14 +206,12 @@ def display_menu(installed_apps, callsign):
                 else:
                     print(left_line)
             
-            print()
             i += 2
         else:
             # Only left category remains (odd one out)
             print("{}:".format(left_category))
             for num, app in left_apps:
                 print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
-            print()
             i += 1
     
     print("-" * 40)
