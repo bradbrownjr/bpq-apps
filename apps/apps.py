@@ -170,10 +170,19 @@ def display_menu(installed_apps, callsign):
             option_num += 1
         category_data.append((category, apps_with_nums))
     
-    # Display categories in vertical columns, two categories side-by-side
+    # Display categories - Main first, then others side-by-side
     i = 0
     while i < len(category_data):
         left_category, left_apps = category_data[i]
+        
+        # Main category gets displayed alone at the top
+        if left_category == "Main":
+            print("{}:".format(left_category))
+            for num, app in left_apps:
+                print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
+            print()
+            i += 1
+            continue
         
         # Check if there's a right category
         if i + 1 < len(category_data):
