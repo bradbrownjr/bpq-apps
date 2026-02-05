@@ -180,7 +180,7 @@ def display_menu(installed_apps, callsign):
             right_category, right_apps = category_data[i + 1]
             
             # Print category headers side-by-side
-            print("{:<40}{}".format(left_category + ":", right_category + ":"))
+            print("{:<35}{}".format(left_category + ":", right_category + ":"))
             
             # Print apps from both categories
             max_rows = max(len(left_apps), len(right_apps))
@@ -188,21 +188,15 @@ def display_menu(installed_apps, callsign):
                 left_line = ""
                 if row < len(left_apps):
                     num, app = left_apps[row]
-                    desc = app["description"]
-                    if len(desc) > 17:
-                        desc = desc[:14] + "..."
-                    left_line = "{:2}) {:9} {}".format(num, app["name"], desc)
+                    left_line = "{:2}) {:9} {}".format(num, app["name"], app["description"])
                 
                 right_line = ""
                 if row < len(right_apps):
                     num, app = right_apps[row]
-                    desc = app["description"]
-                    if len(desc) > 17:
-                        desc = desc[:14] + "..."
-                    right_line = "{:2}) {:9} {}".format(num, app["name"], desc)
+                    right_line = "{:2}) {:9} {}".format(num, app["name"], app["description"])
                 
                 if right_line:
-                    print("{:<40}{}".format(left_line, right_line))
+                    print("{:<35}{}".format(left_line, right_line))
                 else:
                     print(left_line)
             
@@ -212,10 +206,7 @@ def display_menu(installed_apps, callsign):
             # Only left category remains
             print("{}:".format(left_category))
             for num, app in left_apps:
-                desc = app["description"]
-                if len(desc) > 24:
-                    desc = desc[:21] + "..."
-                print("{:2}) {:9} {}".format(num, app["name"], desc))
+                print("{:2}) {:9} {}".format(num, app["name"], app["description"]))
             print()
             i += 1
     
