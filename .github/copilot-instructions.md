@@ -186,7 +186,9 @@ SEE ALSO
   - Separator lines: Fixed 40-character width using dash character: `print("-" * 40)`
   - Longform text (descriptions, content): Adjust dynamically to terminal width with word wrapping
   - Paginate long output (20 lines per page) with prompt
-  - Fallback: 80-character width for piped/non-TTY input: `os.get_terminal_size(fallback=(80, 24)).columns`
+  - Fallback: 80-character width for piped/non-TTY input: `shutil.get_terminal_size(fallback=(80, 24)).columns`
+  - **CRITICAL:** Use `shutil.get_terminal_size()` NOT `os.get_terminal_size()` — only `shutil` has `fallback=` parameter
+  - **No screen clearing:** Never use `os.system('clear')` — sends ANSI escape codes (violates ASCII-only rule) and fails when `TERM` env var is unset (inetd/BPQ sessions). Use print separators instead.
 - **Output buffering**: Flush stdout after status messages that precede blocking operations
   - Pattern: `print("Loading..."); sys.stdout.flush()` then network call
   - Ensures user sees "Loading..." immediately, not after fetch completes
@@ -499,6 +501,24 @@ curl -d "Brief message about what's ready" https://notify.lynwood.us/copilot
 - ❌ `async def` / `await` → ✅ Synchronous I/O only
 - ❌ `typing.List[str]` → ✅ `# type: List[str]` (comment-style type hints)
 - ❌ `subprocess.run()` → ✅ `subprocess.Popen()` or `subprocess.check_output()`
+- ❌ `os.get_terminal_size(fallback=...)` → ✅ `shutil.get_terminal_size(fallback=(80, 24))`
+- ❌ `os.system('clear')` → ✅ `print()` separators (no TERM dependency)
+
+**Terminal Width Standard Pattern** (use in all apps):
+```python
+import shutil
+
+def get_terminal_width():
+    """Get terminal width, fallback to 80 for non-TTY/inetd."""
+    try:
+        return shutil.get_terminal_size(fallback=(80, 24)).columns
+    except Exception:
+        return 80
+```
+- `os.get_terminal_size()` does NOT accept `fallback=` param (only takes `fd` int)
+- `shutil.get_terminal_size()` checks ioctl, then COLUMNS env, then fallback
+- Works over inetd/BPQ (no TERM variable needed)
+- Fallback 80 is standard terminal width; apps cap to 40 for packet radio content
 
 **Bandwidth Traps:**
 - ❌ Word wrapping at 80 chars → ✅ 40 chars for mobile/old terminals

@@ -21,6 +21,7 @@ Date: January 2026
 import sys
 import os
 import json
+import shutil
 import time
 import re
 import textwrap
@@ -138,9 +139,9 @@ def is_internet_available():
 def get_line_width():
     """Get current terminal width dynamically"""
     try:
-        columns = os.get_terminal_size().columns
+        columns = shutil.get_terminal_size(fallback=(80, 24)).columns
         return columns if columns > 0 else 80
-    except (ValueError, OSError, AttributeError):
+    except Exception:
         return 80
 
 def sanitize_for_ascii(text):

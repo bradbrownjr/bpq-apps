@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App Fix - Terminal Width & Screen Clear] - 2026-02-06
+### Fixed
+- **TERM variable error**: Removed all `os.system('clear')` calls from apps.py
+  - `clear` command fails with "TERM environment variable not set" over inetd/BPQ
+  - Replaced with print separators (ASCII-only, no ANSI escape codes)
+  - Affected: display_menu, show_about, sysop_menu, sysop_manage_apps, log viewer
+- **Terminal width detection**: Replaced `os.get_terminal_size()` with `shutil.get_terminal_size(fallback=(80, 24))` across all apps
+  - `os.get_terminal_size()` does NOT accept `fallback=` parameter (only `shutil` does)
+  - `os.get_terminal_size(fallback=(80, 24))` was silently passing tuple as fd argument
+  - Fixed in: apps.py, antenna.py, eventcal.py, www.py, ai.py, dict.py, wiki.py
+  - `shutil.get_terminal_size()` gracefully handles missing TERM, no-TTY, and inetd sessions
+
+### Changed
+- **copilot-instructions.md**: Added terminal width standard pattern, screen clearing prohibition, and `shutil` vs `os` API clarification
+
 ## [apps.py v1.2 - Reverse Chronological Log Viewing] - 2026-02-05
 ### Changed
 - **Log Viewing**: Logs now display in reverse chronological order (newest first)

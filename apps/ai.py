@@ -22,6 +22,7 @@ Date: January 29, 2026
 import sys
 import os
 import json
+import shutil
 import socket
 import re
 import readline
@@ -545,7 +546,7 @@ def wrap_text(text, width=None):
     """Wrap text to fit terminal width"""
     if width is None:
         try:
-            width = os.get_terminal_size().columns
+            width = shutil.get_terminal_size(fallback=(80, 24)).columns
         except Exception:
             width = 80  # Fallback for piped/non-TTY
     

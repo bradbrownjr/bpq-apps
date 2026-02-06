@@ -11,6 +11,7 @@ Date: 2026-02-05
 import os
 import sys
 import json
+import shutil
 import subprocess
 import tempfile
 import re
@@ -73,13 +74,9 @@ def check_for_app_update(current_version, script_name):
         pass
 
 def get_terminal_width():
-    """Get terminal width, fallback to 80 for non-TTY."""
+    """Get terminal width, fallback to 80 for non-TTY/inetd."""
     try:
-        import fcntl
-        import struct
-        import termios
-        data = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, '1234')
-        return struct.unpack('hh', data)[1]
+        return shutil.get_terminal_size(fallback=(80, 24)).columns
     except Exception:
         return 80
 
@@ -175,8 +172,8 @@ def display_logo():
 
 def display_menu(installed_apps, callsign):
     """Display categorized app menu."""
-    os.system('clear' if os.name != 'nt' else 'cls')
-    
+    print()
+    print()
     display_logo()
     print("APPS v{} - Application Launcher".format(VERSION))
     if callsign:
@@ -295,8 +292,7 @@ def launch_app(app, callsign):
 
 def show_about():
     """Display About screen with project info."""
-    os.system('clear' if os.name != 'nt' else 'cls')
-    
+    print()
     print()
     print("=" * 67)
     print("ABOUT BPQ-APPS")
@@ -444,7 +440,6 @@ def view_log_paginated(log_path, title):
         end_idx = total_lines  # Start at the very end
         
         while True:
-            os.system('clear' if os.name != 'nt' else 'cls')
             print()
             print("=" * 67)
             print(title + " (Newest First)")
@@ -550,8 +545,6 @@ def install_app_from_github(app_info):
 def sysop_menu(callsign):
     """Sysop-only menu for system management."""
     while True:
-        os.system('clear' if os.name != 'nt' else 'cls')
-        
         print()
         print("=" * 67)
         print("SYSOP MENU - {}".format(extract_base_call(callsign)))
@@ -632,8 +625,6 @@ def sysop_menu(callsign):
 
 def sysop_manage_apps():
     """List and install apps from GitHub."""
-    os.system('clear' if os.name != 'nt' else 'cls')
-    
     print()
     print("=" * 67)
     print("MANAGE APPS FROM GITHUB")
@@ -660,8 +651,6 @@ def sysop_manage_apps():
         app['installed'] = os.path.exists(app_path)
     
     while True:
-        os.system('clear' if os.name != 'nt' else 'cls')
-        
         print()
         print("=" * 67)
         print("AVAILABLE APPS FROM GITHUB")

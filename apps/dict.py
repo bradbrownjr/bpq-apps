@@ -11,6 +11,7 @@ Date: January 24, 2026
 """
 
 import sys
+import shutil
 import subprocess
 import os
 import tempfile
@@ -224,11 +225,9 @@ def main():
         return
     
     # Get terminal width (Python 3.5.3 compatible)
-    # get_terminal_size() doesn't accept fallback parameter in 3.5.3
     try:
-        width = os.get_terminal_size().columns
-    except (OSError, AttributeError):
-        # No TTY or method doesn't exist - use 80 for inetd/telnet
+        width = shutil.get_terminal_size(fallback=(80, 24)).columns
+    except Exception:
         width = 80
     
     # Ensure minimum 40-char width for packet radio

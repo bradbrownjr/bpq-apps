@@ -20,6 +20,7 @@ BPQ32 APPLICATION line:
 import sys
 import os
 import json
+import shutil
 import socket
 import subprocess
 import time
@@ -506,11 +507,9 @@ def wrap_text(text, width):
 
 
 def get_terminal_width():
-    """Get terminal width with fallback (40-char for packet radio)"""
+    """Get terminal width, fallback to 40 for packet radio."""
     try:
-        # Force 40-char width for packet radio compatibility
-        # Even if terminal reports larger, keep it narrow for 1200 baud
-        width = os.get_terminal_size(fallback=(40, 24)).columns
+        width = shutil.get_terminal_size(fallback=(40, 24)).columns
         return min(width, 40)  # Never exceed 40 chars
     except Exception:
         return 40

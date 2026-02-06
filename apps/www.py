@@ -23,6 +23,7 @@ Date: January 2026
 import sys
 import os
 import json
+import shutil
 import time
 import re
 import socket
@@ -180,19 +181,11 @@ def is_internet_available():
 
 
 def get_terminal_width():
-    """Get terminal width with fallback to 80 chars"""
+    """Get terminal width, fallback to 80 for non-TTY/inetd."""
     try:
-        return os.get_terminal_size().columns
-    except (AttributeError, OSError):
-        pass
-    try:
-        if 'COLUMNS' in os.environ:
-            width = int(os.environ['COLUMNS'])
-            if width > 0:
-                return width
-    except (ValueError, KeyError, TypeError):
-        pass
-    return 80
+        return shutil.get_terminal_size(fallback=(80, 24)).columns
+    except Exception:
+        return 80
 
 
 def load_config():

@@ -14,6 +14,7 @@ Date: 2026-01-31
 
 import json
 import os
+import shutil
 import sys
 import math
 import textwrap
@@ -93,10 +94,10 @@ def check_for_app_update(current_version, script_name):
 
 
 def get_terminal_width():
-    """Get terminal width with fallback."""
+    """Get terminal width, fallback to 80 for non-TTY/inetd."""
     try:
-        return os.get_terminal_size(fallback=(80, 24)).columns
-    except (AttributeError, ValueError, OSError):
+        return shutil.get_terminal_size(fallback=(80, 24)).columns
+    except Exception:
         return 80
 
 
