@@ -82,6 +82,10 @@ def check_for_app_update(current_version, script_name):
         if version_match:
             remote_version = version_match.group(1)
             if compare_versions(remote_version, current_version) > 0:
+                print("\nUpdate available: v{} -> v{}".format(current_version, remote_version))
+                print("Downloading new version...")
+                sys.stdout.flush()
+                
                 script_path = os.path.abspath(__file__)
                 temp_path = script_path + ".tmp"
                 try:
@@ -93,8 +97,9 @@ def check_for_app_update(current_version, script_name):
                         os.chmod(temp_path, os.stat(script_path).st_mode)
                     
                     os.replace(temp_path, script_path)
-                    print("Updated to version {}".format(remote_version))
-                    print("Please restart the app.")
+                    print("\nUpdate installed successfully!")
+                    print("Please re-run this command to use the updated version.")
+                    print("\nQuitting...")
                     sys.exit(0)
                 except Exception:
                     if os.path.exists(temp_path):

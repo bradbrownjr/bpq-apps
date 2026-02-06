@@ -76,6 +76,11 @@ def check_for_app_update(current_version, script_name):
             if line.strip().startswith('VERSION'):
                 remote_version = line.split('=')[1].strip().strip('"\'')
                 if compare_versions(current_version, remote_version):
+                    # Notify user of update
+                    print("\nUpdate available: v{} -> v{}".format(current_version, remote_version))
+                    print("Downloading new version...")
+                    sys.stdout.flush()
+                    
                     script_path = os.path.abspath(__file__)
                     current_mode = os.stat(script_path).st_mode
                     
@@ -85,9 +90,15 @@ def check_for_app_update(current_version, script_name):
                         os.close(fd)
                         os.rename(temp_path, script_path)
                         os.chmod(script_path, current_mode)
-                    except Exception:
+                        
+                        print("\nUpdate installed successfully!")
+                        print("Please re-run this command to use the updated version.")
+                        print("\nQuitting...")
+                        sys.exit(0)
+                    except Exception as e:
                         if os.path.exists(temp_path):
                             os.remove(temp_path)
+                        print("Error installing update: {}".format(str(e)))
                 break
     except Exception:
         pass
