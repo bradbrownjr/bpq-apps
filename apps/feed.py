@@ -121,6 +121,7 @@ def get_callsign():
     if env_call:
         call = extract_base_call(env_call)
         if is_valid_callsign(call):
+            print("Callsign: {}".format(call))
             return call
 
     # Try piped input from BPQ (stdin is not a terminal)
@@ -133,6 +134,7 @@ def get_callsign():
                     sys.stdin = open('/dev/tty', 'r')
                 except (OSError, IOError):
                     pass
+                print("Callsign: {}".format(call))
                 return call
         except (EOFError, KeyboardInterrupt):
             pass

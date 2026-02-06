@@ -539,6 +539,14 @@ def main():
     if solar_warning:
         print(solar_warning)
     
+    # Show callsign detection result if available
+    if my_callsign:
+        print("\nCallsign detected: {}".format(my_callsign))
+        if my_location:
+            print("Location auto-detected: {}".format(my_location))
+        else:
+            print("(Location lookup failed - will prompt when needed)")
+    
     # Main loop
     while True:
         print_menu()

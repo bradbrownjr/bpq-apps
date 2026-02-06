@@ -2090,6 +2090,12 @@ def main():
     # Print header first so user sees output immediately
     print_header()
     
+    # Show detected callsign if available
+    if my_callsign:
+        print("Callsign: {}".format(my_callsign))
+        if my_grid:
+            print("Location: {}".format(my_grid))
+    
     # Check for updates (non-blocking)
     check_for_app_update(VERSION, APP_NAME)
     

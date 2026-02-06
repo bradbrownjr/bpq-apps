@@ -935,6 +935,7 @@ def main():
     env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
     if env_call and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', env_call):
         callsign = env_call
+        print("Callsign: {}".format(callsign))
         operator_name = lookup_operator_name(callsign)
     else:
         try:
@@ -945,6 +946,7 @@ def main():
                     force_menu = True
                 elif first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
                     callsign = first_line
+                    print("Callsign: {}".format(callsign))
                     operator_name = lookup_operator_name(callsign)
         except Exception:
             pass
