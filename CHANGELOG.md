@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [CRITICAL FIX - Infinite Update Loop in PREDICT] - 2026-02-06
+### Fixed
+- **Infinite update loop in predict.py**: Duplicate VERSION assignment caused mismatch
+  - predict.py had two VERSION variable assignments: `VERSION = "1.11"` (line 33) then `VERSION = "1.10"` (line 39)
+  - Second assignment overwrote the first, creating mismatch between docstring (1.11) and actual VERSION (1.10)
+  - Auto-update always detected 1.11 as "newer" than 1.10, causing infinite loop
+  - Users would download update, run app, see update available again, repeat forever
+  - Fixed by removing duplicate `VERSION = "1.10"` assignment
+  - Per copilot-instructions.md: VERSION variable must EXACTLY match docstring or infinite loops result
+
 ## [Multi-App Fix - Callsign Detection Feedback Version Bump] - 2026-02-06
 ### Fixed
 - **Version bumps missing from callsign feedback commit**: 6 apps with callsign detection improvements didn't have version bumps
