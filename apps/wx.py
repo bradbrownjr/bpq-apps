@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.6
+Version: 4.7
 Date: January 2026
 
 NWS API Documentation:
@@ -43,7 +43,7 @@ import time
 import json
 from datetime import datetime
 
-VERSION = "4.6"
+VERSION = "4.7"
 APP_NAME = "wx.py"
 
 # Cache file path (alongside script)
