@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App Fix - Callsign Detection Feedback] - 2026-02-06
+### Fixed
+- **Silent callsign detection left users unsure**: All callsign-using apps silently detected callsigns
+  but never confirmed it to the user, causing confusion like "I don't think PREDICT detected my callsign"
+  - Users had no feedback that their callsign was recognized or what happened with location lookup
+  - All 7 callsign-using apps now display detected callsign immediately:
+    - predict.py: Shows "Callsign detected: {call}" and "(Location auto-detected: {grid})" or "(Location lookup failed)" at startup
+    - wall.py, feed.py: Show "Callsign: {call}" when detected and confirmed
+    - forms.py: Already had "Callsign from BPQ: {call}" feedback
+    - wx.py: Shows "Callsign: {call}" and "Location: {grid}" after header
+    - repeater.py: Shows "Callsign: {call}" before displaying main menu
+    - ai.py: Shows "Callsign: {call}" before provider selection
+  - Provides transparency: users know what was detected and can verify
+
 ## [Multi-App Fix - Auto-Update Notification Standardization] - 2026-02-06
 ### Fixed
 - **Silent auto-updates broke user expectations**: antenna.py, ai.py, eventcal.py silently downloaded and exited
