@@ -115,20 +115,25 @@ def is_valid_callsign(callsign):
     return bool(re.match(pattern, callsign.upper().strip()))
 
 def get_callsign():
-    """Get callsign from BPQ32 or prompt user"""
-    # Only try piped input if stdin is not a terminal (i.e., piped from BPQ)
+    """Get callsign from env var, BPQ32 stdin, or prompt user."""
+    # Check environment variable first (set by apps.py launcher)
+    env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
+    if env_call:
+        call = extract_base_call(env_call)
+        if is_valid_callsign(call):
+            return call
+
+    # Try piped input from BPQ (stdin is not a terminal)
     if not sys.stdin.isatty():
         try:
-            # Try to read callsign from stdin (BPQ32 passes it, may include SSID)
             call = input().strip().upper()
-            # Strip SSID if present (e.g., KC1JMH-8 -> KC1JMH)
             call = extract_base_call(call)
             if is_valid_callsign(call):
                 # Reopen stdin for interactive use after piped input
                 try:
                     sys.stdin = open('/dev/tty', 'r')
                 except (OSError, IOError):
-                    pass  # Continue with current stdin if /dev/tty unavailable
+                    pass
                 return call
         except (EOFError, KeyboardInterrupt):
             pass

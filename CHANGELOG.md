@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App Fix - Callsign Passing via Environment Variable] - 2026-02-06
+### Fixed
+- **Child apps exit immediately**: apps.py was piping callsign via stdin then closing pipe
+  - Over inetd, `/dev/tty` unavailable so child stdin stays closed = EOF on all `input()` calls
+  - Fix: Pass callsign via `BPQ_CALLSIGN` environment variable instead
+  - Child process inherits real stdin (user's socket), stays interactive
+  - Updated: apps.py (launcher), wall.py, forms.py, wx.py (callsign readers)
+  - Apps still fall back to stdin pipe for direct BPQ launch (without apps.py)
+
 ## [Multi-App Fix - Terminal Width & Screen Clear] - 2026-02-06
 ### Fixed
 - **TERM variable error**: Removed all `os.system('clear')` calls from apps.py

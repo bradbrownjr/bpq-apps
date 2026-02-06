@@ -2061,12 +2061,17 @@ def show_coastal_flood_info(coastal_info):
 
 def main():
     """Main program loop"""
-    # Try to read callsign from BPQ32 (if piped via S flag)
+    # Try to read callsign - env var first (apps.py), then stdin (BPQ direct)
     my_callsign = None
     my_grid = None
-    if not sys.stdin.isatty():
+    
+    env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
+    if env_call:
+        my_callsign = env_call.split('-')[0] if env_call else None
+        if my_callsign:
+            my_grid = lookup_callsign(my_callsign)
+    elif not sys.stdin.isatty():
         try:
-            # Use select for non-blocking read with 0.5s timeout
             import select
             if select.select([sys.stdin], [], [], 0.5)[0]:
                 line = sys.stdin.readline().strip().upper()

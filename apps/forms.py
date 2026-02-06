@@ -1003,19 +1003,19 @@ def main():
     """Main entry point"""
     app = FormsApp()
     
-    # Try to capture callsign from BPQ (passed via stdin)
-    # BPQ sends the callsign on first line when connecting
-    try:
-        # Check if stdin has data available (non-blocking check)
-        if not sys.stdin.isatty():
-            # Read first line which should contain the callsign (may include SSID)
-            first_line = sys.stdin.readline().strip()
-            if first_line:
-                app.bpq_callsign = first_line.upper()
-                # SSID will be stripped by extract_base_call() in get_user_callsign()
-    except Exception:
-        # If we can't read from stdin, that's okay - we'll prompt later
-        pass
+    # Try to capture callsign from env var (set by apps.py launcher)
+    env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
+    if env_call:
+        app.bpq_callsign = env_call.upper()
+    else:
+        # Fall back to stdin pipe (direct BPQ launch)
+        try:
+            if not sys.stdin.isatty():
+                first_line = sys.stdin.readline().strip()
+                if first_line:
+                    app.bpq_callsign = first_line.upper()
+        except Exception:
+            pass
     
     app.run()
 

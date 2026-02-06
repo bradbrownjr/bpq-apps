@@ -260,31 +260,17 @@ def display_menu(installed_apps, callsign):
     return app_index
 
 def launch_app(app, callsign):
-    """Launch selected app with callsign passed via stdin."""
+    """Launch selected app with callsign via environment variable."""
     executable = app["executable"]
     needs_callsign = app.get("needs_callsign", False)
     
     try:
+        env = os.environ.copy()
         if needs_callsign and callsign:
-            # Create subprocess with pipe for stdin only
-            process = subprocess.Popen(
-                [executable],
-                stdin=subprocess.PIPE
-            )
-            
-            # Write callsign to stdin (mimicking BPQ behavior)
-            if sys.version_info[0] >= 3:
-                process.stdin.write((callsign + '\n').encode('utf-8'))
-            else:
-                process.stdin.write(callsign + '\n')
-            process.stdin.flush()
-            process.stdin.close()
-            
-            # Wait for completion (app has full terminal access)
-            process.wait()
-        else:
-            # Run without pipes - fully interactive with terminal
-            subprocess.call([executable])
+            env["BPQ_CALLSIGN"] = callsign
+        
+        # Run fully interactive - child inherits stdin/stdout/stderr
+        subprocess.call([executable], env=env)
         
     except Exception as e:
         print("\nError launching {}: {}".format(app["name"], str(e)))
