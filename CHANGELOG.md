@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App Fix - Auto-Update Notification Standardization] - 2026-02-06
+### Fixed
+- **Silent auto-updates broke user expectations**: antenna.py, ai.py, eventcal.py silently downloaded and exited
+  - Users had no idea an update happened or why the app quit
+  - Fix: Standardized transparent notification pattern across all 21 apps with auto-update
+  - All apps now display: "Update available → Downloading → Success → Please re-run"
+  - Includes `sys.stdout.flush()` for immediate feedback on slow connections
+  - Meets copilot-instructions.md protocol: apps never modify themselves silently
+  - Affected: antenna.py (1.4), ai.py (1.15), eventcal.py (2.7)
+
+## [Multi-App Fix - Version Consistency for Auto-Update Detection] - 2026-02-06
+### Fixed
+- **Version mismatches prevent auto-update**: wall.py, forms.py, wx.py had docstring Version ≠ VERSION variable
+  - Version mismatches cause infinite update loops (protocol validates BOTH are identical)
+  - Bumped all 13 modified apps to ensure docstring Version matches VERSION variable
+  - Affected apps: wall.py (1.3→1.4), forms.py (1.10→1.11), wx.py (4.5→4.6)
+  - Validated with: `grep "Version:" appname.py` matches `grep "^VERSION = " appname.py`
+
 ## [Multi-App Fix - BPQ_CALLSIGN Support for All Apps] - 2026-02-06
 ### Fixed
 - **Missing BPQ_CALLSIGN support**: predict.py, repeater.py, feed.py, ai.py also use callsign
