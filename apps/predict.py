@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.9
+Version: 1.10
 Date: January 2026
 """
 
@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from predict import geo, solar, ionosphere
 
 # App version
-VERSION = "1.9"
+VERSION = "1.10"
 APP_NAME = "predict.py"
 
 # Display width

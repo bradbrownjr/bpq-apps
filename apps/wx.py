@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.5
+Version: 4.6
 Date: January 2026
 
 NWS API Documentation:

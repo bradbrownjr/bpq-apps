@@ -16,7 +16,7 @@ Features:
 - Smart word wrapping for terminal width
 
 Author: Brad Brown KC1JMH
-Version: 1.5
+Version: 1.6
 Date: January 2026
 """
 
@@ -32,7 +32,7 @@ try:
 except ImportError:
     from urlparse import urljoin, urlparse
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "www.py"
 
 # Check Python version

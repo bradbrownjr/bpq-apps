@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.10
+Version: 1.11
 Date: January 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.10"
+VERSION = "1.11"
 APP_NAME = "forms.py"
 
 import os

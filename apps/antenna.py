@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.3
+Version: 1.4
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -25,7 +25,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.3"
+VERSION = "1.4"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")

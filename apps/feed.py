@@ -20,7 +20,7 @@ The 'S' flag passes the callsign to the app. The app must handle SSID stripping
 for cleaner display. This script automatically removes SSID (e.g., KC1JMH-8 -> KC1JMH).
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -30,7 +30,7 @@ import json
 import re
 from datetime import datetime, timedelta
 
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "feed.py"
 
 def check_for_app_update(current_version, script_name):
