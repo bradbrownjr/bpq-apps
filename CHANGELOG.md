@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App Fix - Callsign Detection Feedback Version Bump] - 2026-02-06
+### Fixed
+- **Version bumps missing from callsign feedback commit**: 6 apps with callsign detection improvements didn't have version bumps
+  - Code changes require BOTH docstring Version AND VERSION variable to match (copilot-instructions.md protocol)
+  - Without version bumps, auto-update won't trigger on user systems
+  - Bumped all 6 apps: predict.py (1.10→1.11), wall.py (1.4→1.5), feed.py (1.4→1.5), wx.py (4.6→4.7), repeater.py (1.8→1.9), ai.py (1.15→1.16)
+
 ## [Multi-App Fix - Callsign Detection Feedback] - 2026-02-06
 ### Fixed
 - **Silent callsign detection left users unsure**: All callsign-using apps silently detected callsigns
