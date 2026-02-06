@@ -25,7 +25,7 @@
         "name": "FEED",
         "description": "News feeds",
         "executable": "feed.py",
-        "needs_callsign": false
+        "needs_callsign": true
       },
       {
         "name": "GOPHER",
@@ -51,7 +51,7 @@
         "name": "AI",
         "description": "AI chatbot",
         "executable": "ai.py",
-        "needs_callsign": false
+        "needs_callsign": true
       },
       {
         "name": "DICT",
@@ -75,7 +75,7 @@
         "name": "REPEATER",
         "description": "Repeater search",
         "executable": "repeater.py",
-        "needs_callsign": false
+        "needs_callsign": true
       }
     ],
     "Weather": [
@@ -115,7 +115,7 @@
         "name": "PREDICT",
         "description": "QSO planning",
         "executable": "predict.py",
-        "needs_callsign": false
+        "needs_callsign": true
       }
     ],
     "Games": [

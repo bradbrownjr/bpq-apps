@@ -922,27 +922,27 @@ def main():
         print("")
         return
     
-    # Try to get callsign from stdin (BPQ sends it if no NOCALL flag)
+    # Try to get callsign - env var first (apps.py), then stdin (BPQ direct)
     callsign = None
     operator_name = None
     force_menu = False
     
-    # BPQ sends callsign as first line when no NOCALL flag
-    # Use input() like callout.py - simpler and works in both scenarios
-    try:
-        # Set a short timeout to avoid hanging if no callsign is sent
-        import select
-        if select.select([sys.stdin], [], [], 0.1)[0]:
-            first_line = input().strip()
-            if first_line.lower() == 'switch':
-                # User wants to switch providers
-                force_menu = True
-            elif first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
-                callsign = first_line
-                # Lookup operator name
-                operator_name = lookup_operator_name(callsign)
-    except Exception:
-        pass
+    env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
+    if env_call and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', env_call):
+        callsign = env_call
+        operator_name = lookup_operator_name(callsign)
+    else:
+        try:
+            import select
+            if select.select([sys.stdin], [], [], 0.1)[0]:
+                first_line = input().strip()
+                if first_line.lower() == 'switch':
+                    force_menu = True
+                elif first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
+                    callsign = first_line
+                    operator_name = lookup_operator_name(callsign)
+        except Exception:
+            pass
     
     # Select provider
     provider = select_provider(config, callsign, force_menu=force_menu)

@@ -494,37 +494,30 @@ def show_about():
 
 def main():
     """Main program loop."""
-    # Ensure stdin is opened from terminal for interactive input
-    try:
-        sys.stdin = open('/dev/tty', 'r')
-    except (OSError, IOError):
-        # Continue if /dev/tty unavailable (running in non-terminal context)
-        pass
-    
-    # Try to read callsign from BPQ32 (if piped via S flag)
+    # Try to read callsign - env var first (apps.py), then stdin (BPQ direct)
     my_callsign = None
     my_location = None
-    if not sys.stdin.isatty():
+    
+    env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
+    if env_call:
+        my_callsign = env_call.split('-')[0] if env_call else None
+        if my_callsign:
+            my_location = lookup_callsign(my_callsign)
+    elif not sys.stdin.isatty():
         try:
-            # Use select for non-blocking read with timeout
             import select
             if select.select([sys.stdin], [], [], 0.5)[0]:
                 line = sys.stdin.readline().strip().upper()
                 if line:
-                    # Strip SSID if present (e.g., KC1JMH-8 -> KC1JMH)
                     my_callsign = line.split('-')[0] if line else None
-            
-            # Reopen stdin for interactive use immediately
+            # Reopen stdin for interactive use
             try:
                 sys.stdin = open('/dev/tty', 'r')
             except (OSError, IOError):
                 pass
-            
-            # Try to get location from callsign (after stdin reopened)
             if my_callsign:
                 my_location = lookup_callsign(my_callsign)
         except (EOFError, KeyboardInterrupt, ImportError):
-            # ImportError if select not available, continue without callsign
             try:
                 sys.stdin = open('/dev/tty', 'r')
             except (OSError, IOError):

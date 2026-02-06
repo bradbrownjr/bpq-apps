@@ -1044,15 +1044,19 @@ def main():
     """Main entry point"""
     check_for_app_update(VERSION, APP_NAME)
     
-    # Read callsign from stdin (sent by BPQ if S flag not NOCALL)
+    # Read callsign - env var first (apps.py), then stdin (BPQ direct)
     user_callsign = None
-    try:
-        if not sys.stdin.isatty():
-            first_line = sys.stdin.readline().strip()
-            if first_line and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', first_line):
-                user_callsign = first_line
-    except Exception:
-        pass
+    env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
+    if env_call and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', env_call):
+        user_callsign = env_call
+    else:
+        try:
+            if not sys.stdin.isatty():
+                first_line = sys.stdin.readline().strip()
+                if first_line and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', first_line):
+                    user_callsign = first_line
+        except Exception:
+            pass
     
     try:
         main_menu(user_callsign)

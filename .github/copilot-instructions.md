@@ -128,15 +128,45 @@ APPLICATION 5,APPNAME,C 9 HOST # NOCALL S K,CALLSIGN,FLAGS
 - **Critical:** BPQ32 passes callsign WITH SSID (e.g., `KC1JMH-8`)
 
 **Callsign Handling in Apps:**
-- Apps that need callsign: Omit `NOCALL` flag, read callsign from first line of stdin
+- **When launched via apps.py**: Callsign passed via `BPQ_CALLSIGN` environment variable
+  - apps.py sets `env["BPQ_CALLSIGN"] = callsign` before launching child
+  - Child inherits real stdin (user's socket) — stays fully interactive
+- **When launched directly by BPQ**: Callsign read from first line of stdin (omit `NOCALL` flag)
+  - Must reopen stdin from `/dev/tty` after reading (may fail over inetd)
+- **Priority order in apps**: env var → stdin pipe → prompt user
+  ```python
+  def get_callsign():
+      """Get callsign from env var, BPQ32 stdin, or prompt."""
+      env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
+      if env_call:
+          call = extract_base_call(env_call)
+          if is_valid_callsign(call):
+              return call
+      # Fall back to stdin pipe (direct BPQ launch)
+      if not sys.stdin.isatty():
+          try:
+              call = input().strip().upper()
+              call = extract_base_call(call)
+              if is_valid_callsign(call):
+                  try:
+                      sys.stdin = open('/dev/tty', 'r')
+                  except (OSError, IOError):
+                      pass
+                  return call
+          except (EOFError, KeyboardInterrupt):
+              pass
+      # Prompt user as last resort
+      ...
+  ```
 - Apps must strip SSID if cleaner display needed:
   ```python
   def extract_base_call(callsign):
       """Remove SSID from callsign"""
       return callsign.split('-')[0] if callsign else ""
   ```
-- Apps using callsign: wall.py (bulletin board authors), forms.py (form submitter), wx.py (location lookup)
+- Apps using callsign: wall.py, forms.py, wx.py, predict.py, repeater.py, feed.py, ai.py
 - Apps with `NOCALL`: All others that don't need user identification
+- **apps.json**: Set `"needs_callsign": true` for apps that use callsign (apps.py passes env var)
 
 ## CLI Design Standards
 **All command-line options must have both long and short forms:**

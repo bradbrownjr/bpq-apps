@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App Fix - BPQ_CALLSIGN Support for All Apps] - 2026-02-06
+### Fixed
+- **Missing BPQ_CALLSIGN support**: predict.py, repeater.py, feed.py, ai.py also use callsign
+  for location lookup / user identification but were not updated in previous fix
+  - All four now check `BPQ_CALLSIGN` env var first, then stdin pipe, then prompt
+  - Updated apps.json: `needs_callsign: true` for predict, repeater, feed, ai
+- **copilot-instructions.md**: Documented full callsign handling pattern (env var → stdin → prompt)
+
 ## [Multi-App Fix - Callsign Passing via Environment Variable] - 2026-02-06
 ### Fixed
 - **Child apps exit immediately**: apps.py was piping callsign via stdin then closing pipe
