@@ -42,8 +42,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from predict import geo, solar, ionosphere
 
-# App version
-VERSION = "1.10"
 APP_NAME = "predict.py"
 
 # Display width
