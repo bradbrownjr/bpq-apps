@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.7
+Version: 4.8
 Date: January 2026
 
 NWS API Documentation:
@@ -43,7 +43,7 @@ import time
 import json
 from datetime import datetime
 
-VERSION = "4.7"
+VERSION = "4.8"
 APP_NAME = "wx.py"
 
 # Cache file path (alongside script)
@@ -2061,31 +2061,43 @@ def show_coastal_flood_info(coastal_info):
 
 def main():
     """Main program loop"""
-    # Try to read callsign - env var first (apps.py), then stdin (BPQ direct)
+    # Try to read callsign - CLI arg first (apps.py), env var, then stdin (BPQ direct)
     my_callsign = None
     my_grid = None
     
-    env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
-    if env_call:
-        my_callsign = env_call.split('-')[0] if env_call else None
+    # Check --callsign CLI argument (from apps.py launcher)
+    arg_call = ""
+    for i in range(len(sys.argv) - 1):
+        if sys.argv[i] == "--callsign":
+            arg_call = sys.argv[i + 1].strip().upper()
+            break
+    
+    if arg_call:
+        my_callsign = arg_call.split('-')[0] if arg_call else None
         if my_callsign:
             my_grid = lookup_callsign(my_callsign)
-    elif not sys.stdin.isatty():
-        try:
-            import select
-            if select.select([sys.stdin], [], [], 0.5)[0]:
-                line = sys.stdin.readline().strip().upper()
-                if line:
-                    my_callsign = line.split('-')[0] if line else None
-                    if my_callsign:
-                        my_grid = lookup_callsign(my_callsign)
-            # Reopen stdin from terminal for interactive use
+    else:
+        env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
+        if env_call:
+            my_callsign = env_call.split('-')[0] if env_call else None
+            if my_callsign:
+                my_grid = lookup_callsign(my_callsign)
+        elif not sys.stdin.isatty():
             try:
-                sys.stdin = open('/dev/tty', 'r')
-            except (OSError, IOError):
+                import select
+                if select.select([sys.stdin], [], [], 0.5)[0]:
+                    line = sys.stdin.readline().strip().upper()
+                    if line:
+                        my_callsign = line.split('-')[0] if line else None
+                        if my_callsign:
+                            my_grid = lookup_callsign(my_callsign)
+                # Reopen stdin from terminal for interactive use
+                try:
+                    sys.stdin = open('/dev/tty', 'r')
+                except (OSError, IOError):
+                    pass
+            except (EOFError, KeyboardInterrupt, ImportError):
                 pass
-        except (EOFError, KeyboardInterrupt, ImportError):
-            pass
     
     # Print header first so user sees output immediately
     print_header()

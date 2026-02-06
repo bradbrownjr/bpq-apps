@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.9
+Version: 1.10
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.9"
+VERSION = "1.10"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -1044,21 +1044,33 @@ def main():
     """Main entry point"""
     check_for_app_update(VERSION, APP_NAME)
     
-    # Read callsign - env var first (apps.py), then stdin (BPQ direct)
+    # Read callsign - CLI arg first (apps.py), env var, then stdin (BPQ direct)
     user_callsign = None
-    env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
-    if env_call and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', env_call):
-        user_callsign = env_call
+    
+    # Check --callsign CLI argument (from apps.py launcher)
+    arg_call = ""
+    for i in range(len(sys.argv) - 1):
+        if sys.argv[i] == "--callsign":
+            arg_call = sys.argv[i + 1].strip().upper()
+            break
+    
+    if arg_call and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', arg_call):
+        user_callsign = arg_call
         print("Callsign: {}".format(user_callsign))
     else:
-        try:
-            if not sys.stdin.isatty():
-                first_line = sys.stdin.readline().strip()
-                if first_line and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', first_line):
-                    user_callsign = first_line
-                    print("Callsign: {}".format(user_callsign))
-        except Exception:
-            pass
+        env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
+        if env_call and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', env_call):
+            user_callsign = env_call
+            print("Callsign: {}".format(user_callsign))
+        else:
+            try:
+                if not sys.stdin.isatty():
+                    first_line = sys.stdin.readline().strip()
+                    if first_line and re.match(r'^[A-Z0-9]{3,7}(-\d{1,2})?$', first_line):
+                        user_callsign = first_line
+                        print("Callsign: {}".format(user_callsign))
+            except Exception:
+                pass
     
     try:
         main_menu(user_callsign)

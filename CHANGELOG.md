@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Multi-App Fix - Callsign Passing via CLI Argument] - 2026-02-06
+### Fixed
+- **Callsign not reaching child apps via apps.py**: The BPQ_CALLSIGN environment variable
+  mechanism was not reliably propagating callsigns from apps.py to child applications
+  in production (inetd + BPQ + Python 3.5.3 environment)
+  - Symptom: apps.py showed "User: KC1JMH" but child apps (e.g. PREDICT) did not detect callsign
+  - Direct BPQ launch (bypassing apps.py) worked correctly via stdin
+  - Root cause: env var inheritance through subprocess.call() unreliable in inetd context
+  - Fix: apps.py now passes `--callsign CALL` as CLI argument (most reliable IPC mechanism)
+  - All 7 callsign apps now check: CLI arg first, then env var, then stdin (triple fallback)
+  - Updated: apps.py (1.4), predict.py (1.12), wall.py (1.6), forms.py (1.12),
+    wx.py (4.8), repeater.py (1.10), feed.py (1.6), ai.py (1.17)
+
 ## [CRITICAL FIX - Infinite Update Loop in PREDICT] - 2026-02-06
 ### Fixed
 - **Infinite update loop in predict.py**: Duplicate VERSION assignment caused mismatch

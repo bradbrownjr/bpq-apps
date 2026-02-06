@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 1.3
+Version: 1.4
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-05
 """
@@ -20,7 +20,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "1.3"
+VERSION = "1.4"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -260,17 +260,19 @@ def display_menu(installed_apps, callsign):
     return app_index
 
 def launch_app(app, callsign):
-    """Launch selected app with callsign via environment variable."""
+    """Launch selected app with callsign via CLI arg and env var."""
     executable = app["executable"]
     needs_callsign = app.get("needs_callsign", False)
     
     try:
         env = os.environ.copy()
+        args = [executable]
         if needs_callsign and callsign:
             env["BPQ_CALLSIGN"] = callsign
+            args.extend(["--callsign", callsign])
         
         # Run fully interactive - child inherits stdin/stdout/stderr
-        subprocess.call([executable], env=env)
+        subprocess.call(args, env=env)
         
     except Exception as e:
         print("\nError launching {}: {}".format(app["name"], str(e)))

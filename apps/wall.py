@@ -20,7 +20,7 @@ The 'S' flag passes the callsign to the app. The app must handle SSID stripping
 for cleaner display. This script automatically removes SSID (e.g., KC1JMH-8 -> KC1JMH).
 
 Author: Brad Brown KC1JMH
-Version: 1.5
+Version: 1.6
 Date: January 2026
 """
 
@@ -30,7 +30,7 @@ import json
 import re
 from datetime import datetime, timedelta
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "wall.py"
 
 def check_for_app_update(current_version, script_name):
@@ -115,8 +115,17 @@ def is_valid_callsign(callsign):
     return bool(re.match(pattern, callsign.upper().strip()))
 
 def get_callsign():
-    """Get callsign from env var, BPQ32 stdin, or prompt user."""
-    # Check environment variable first (set by apps.py launcher)
+    """Get callsign from CLI arg, env var, BPQ32 stdin, or prompt user."""
+    # Check --callsign CLI argument (from apps.py launcher)
+    for i in range(len(sys.argv) - 1):
+        if sys.argv[i] == "--callsign":
+            call = extract_base_call(sys.argv[i + 1].strip().upper())
+            if is_valid_callsign(call):
+                print("Callsign: {}".format(call))
+                return call
+            break
+
+    # Check environment variable (also set by apps.py launcher)
     env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
     if env_call:
         call = extract_base_call(env_call)

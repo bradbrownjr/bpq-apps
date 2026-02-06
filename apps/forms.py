@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.11
+Version: 1.12
 Date: January 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.11"
+VERSION = "1.12"
 APP_NAME = "forms.py"
 
 import os
@@ -1003,19 +1003,28 @@ def main():
     """Main entry point"""
     app = FormsApp()
     
-    # Try to capture callsign from env var (set by apps.py launcher)
-    env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
-    if env_call:
-        app.bpq_callsign = env_call.upper()
+    # Try to capture callsign: CLI arg first, then env var, then stdin
+    arg_call = ""
+    for i in range(len(sys.argv) - 1):
+        if sys.argv[i] == "--callsign":
+            arg_call = sys.argv[i + 1].strip().upper()
+            break
+    
+    if arg_call:
+        app.bpq_callsign = arg_call
     else:
-        # Fall back to stdin pipe (direct BPQ launch)
-        try:
-            if not sys.stdin.isatty():
-                first_line = sys.stdin.readline().strip()
-                if first_line:
-                    app.bpq_callsign = first_line.upper()
-        except Exception:
-            pass
+        env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
+        if env_call:
+            app.bpq_callsign = env_call.upper()
+        else:
+            # Fall back to stdin pipe (direct BPQ launch)
+            try:
+                if not sys.stdin.isatty():
+                    first_line = sys.stdin.readline().strip()
+                    if first_line:
+                        app.bpq_callsign = first_line.upper()
+            except Exception:
+                pass
     
     app.run()
 

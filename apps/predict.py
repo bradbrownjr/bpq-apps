@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.11
+Version: 1.12
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ import sys
 import os
 
 # Version check for Python 3.5+
-VERSION = "1.11"
+VERSION = "1.12"
 
 if sys.version_info < (3, 5):
     print("Error: Python 3.5 or higher required.")
@@ -494,34 +494,46 @@ def show_about():
 
 def main():
     """Main program loop."""
-    # Try to read callsign - env var first (apps.py), then stdin (BPQ direct)
+    # Try to read callsign - CLI arg first (apps.py), env var, then stdin (BPQ direct)
     my_callsign = None
     my_location = None
     
-    env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
-    if env_call:
-        my_callsign = env_call.split('-')[0] if env_call else None
+    # Check --callsign CLI argument (from apps.py launcher)
+    arg_call = ""
+    for i in range(len(sys.argv) - 1):
+        if sys.argv[i] == "--callsign":
+            arg_call = sys.argv[i + 1].strip().upper()
+            break
+    
+    if arg_call:
+        my_callsign = arg_call.split('-')[0] if arg_call else None
         if my_callsign:
             my_location = lookup_callsign(my_callsign)
-    elif not sys.stdin.isatty():
-        try:
-            import select
-            if select.select([sys.stdin], [], [], 0.5)[0]:
-                line = sys.stdin.readline().strip().upper()
-                if line:
-                    my_callsign = line.split('-')[0] if line else None
-            # Reopen stdin for interactive use
-            try:
-                sys.stdin = open('/dev/tty', 'r')
-            except (OSError, IOError):
-                pass
+    else:
+        env_call = os.environ.get("BPQ_CALLSIGN", "").strip().upper()
+        if env_call:
+            my_callsign = env_call.split('-')[0] if env_call else None
             if my_callsign:
                 my_location = lookup_callsign(my_callsign)
-        except (EOFError, KeyboardInterrupt, ImportError):
+        elif not sys.stdin.isatty():
             try:
-                sys.stdin = open('/dev/tty', 'r')
-            except (OSError, IOError):
-                pass
+                import select
+                if select.select([sys.stdin], [], [], 0.5)[0]:
+                    line = sys.stdin.readline().strip().upper()
+                    if line:
+                        my_callsign = line.split('-')[0] if line else None
+                # Reopen stdin for interactive use
+                try:
+                    sys.stdin = open('/dev/tty', 'r')
+                except (OSError, IOError):
+                    pass
+                if my_callsign:
+                    my_location = lookup_callsign(my_callsign)
+            except (EOFError, KeyboardInterrupt, ImportError):
+                try:
+                    sys.stdin = open('/dev/tty', 'r')
+                except (OSError, IOError):
+                    pass
     
     # Check for updates
     check_for_app_update(VERSION, APP_NAME)

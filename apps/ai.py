@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.16
+Version: 1.17
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -29,7 +29,7 @@ import readline
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.16"
+VERSION = "1.17"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -927,29 +927,41 @@ def main():
         print("")
         return
     
-    # Try to get callsign - env var first (apps.py), then stdin (BPQ direct)
+    # Try to get callsign - CLI arg first (apps.py), env var, then stdin (BPQ direct)
     callsign = None
     operator_name = None
     force_menu = False
     
-    env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
-    if env_call and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', env_call):
-        callsign = env_call
+    # Check --callsign CLI argument (from apps.py launcher)
+    arg_call = ""
+    for i in range(len(sys.argv) - 1):
+        if sys.argv[i] == "--callsign":
+            arg_call = sys.argv[i + 1].strip().upper()
+            break
+    
+    if arg_call and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', arg_call):
+        callsign = arg_call
         print("Callsign: {}".format(callsign))
         operator_name = lookup_operator_name(callsign)
     else:
-        try:
-            import select
-            if select.select([sys.stdin], [], [], 0.1)[0]:
-                first_line = input().strip()
-                if first_line.lower() == 'switch':
-                    force_menu = True
-                elif first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
-                    callsign = first_line
-                    print("Callsign: {}".format(callsign))
-                    operator_name = lookup_operator_name(callsign)
-        except Exception:
-            pass
+        env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
+        if env_call and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', env_call):
+            callsign = env_call
+            print("Callsign: {}".format(callsign))
+            operator_name = lookup_operator_name(callsign)
+        else:
+            try:
+                import select
+                if select.select([sys.stdin], [], [], 0.1)[0]:
+                    first_line = input().strip()
+                    if first_line.lower() == 'switch':
+                        force_menu = True
+                    elif first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
+                        callsign = first_line
+                        print("Callsign: {}".format(callsign))
+                        operator_name = lookup_operator_name(callsign)
+            except Exception:
+                pass
     
     # Select provider
     provider = select_provider(config, callsign, force_menu=force_menu)
