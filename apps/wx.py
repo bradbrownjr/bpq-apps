@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.9
+Version: 4.10
 Date: January 2026
 
 NWS API Documentation:
@@ -43,7 +43,7 @@ import time
 import json
 from datetime import datetime
 
-VERSION = "4.9"
+VERSION = "4.10"
 APP_NAME = "wx.py"
 
 # Cache file path (alongside script)
@@ -111,6 +111,18 @@ def compare_versions(version1, version2):
         return 0
     except (ValueError, AttributeError):
         return 0
+
+
+def continue_prompt():
+    """Show continue prompt with Q)uit escape option."""
+    try:
+        resp = input("\n[Q)uit Enter=continue] :> ").strip().upper()
+        if resp == 'Q':
+            print("\nExiting...")
+            sys.exit(0)
+    except (EOFError, KeyboardInterrupt):
+        print("\nExiting...")
+        sys.exit(0)
 
 
 # ============= Cache Functions =============
@@ -1393,7 +1405,7 @@ def print_reports_menu(location_desc, is_coastal, alerts=None, has_winter=False,
     print()
     if alerts and len(alerts) > 0:
         print("* Alert details may be found here")
-    print("1-16) B)ack Q)uit :>")
+    print("Q)uit B)ack [1-16] :>")
 
 
 def show_7day_forecast(latlon):
@@ -1421,7 +1433,7 @@ def show_7day_forecast(latlon):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1433,7 +1445,7 @@ def show_hourly_forecast(latlon):
     if not forecast:
         print("No hourly forecast available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1458,7 +1470,7 @@ def show_hourly_forecast(latlon):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1470,7 +1482,7 @@ def show_climate_report(wfo):
     if not report:
         print("No climate report available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1499,7 +1511,7 @@ def show_climate_report(wfo):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1511,7 +1523,7 @@ def show_zone_forecast(wfo):
     if not report:
         print("No zone forecast available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1539,7 +1551,7 @@ def show_zone_forecast(wfo):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1551,7 +1563,7 @@ def show_winter_weather(wfo):
     if not report:
         print("No winter weather advisories.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1588,7 +1600,7 @@ def show_winter_weather(wfo):
             if line_count >= 20:
                 print()
                 try:
-                    response = input("Press enter for more, Q to quit: ").strip().upper()
+                    response = input("[Q)uit Enter=more] :> ").strip().upper()
                     if response == 'Q':
                         user_quit = True
                         break
@@ -1601,7 +1613,7 @@ def show_winter_weather(wfo):
     print("-" * 40)
     if not user_quit:
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
 
@@ -1682,7 +1694,7 @@ def show_current_observations(latlon):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1696,7 +1708,7 @@ def show_fire_weather(wfo):
         print("\nNo fire weather outlook available.")
         print("(No active fire weather concerns)")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1711,7 +1723,7 @@ def show_fire_weather(wfo):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1723,7 +1735,7 @@ def show_hazardous_weather_outlook(wfo):
     if not hwo:
         print("No hazardous weather outlook available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1745,7 +1757,7 @@ def show_hazardous_weather_outlook(wfo):
         if line_count >= 20:
             print()
             try:
-                response = input("Press ENTER to continue or Q to quit: ").strip().upper()
+                response = input("[Q)uit Enter=more] :> ").strip().upper()
                 if response == 'Q':
                     user_quit = True
                     break
@@ -1758,7 +1770,7 @@ def show_hazardous_weather_outlook(wfo):
     print("-" * 40)
     if not user_quit:
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
 
@@ -1770,7 +1782,7 @@ def show_regional_weather_summary(wfo):
     if not rws:
         print("No regional weather summary available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1792,7 +1804,7 @@ def show_regional_weather_summary(wfo):
         if line_count >= 20:
             print()
             try:
-                response = input("Press ENTER to continue or Q to quit: ").strip().upper()
+                response = input("[Q)uit Enter=more] :> ").strip().upper()
                 if response == 'Q':
                     user_quit = True
                     break
@@ -1805,7 +1817,7 @@ def show_regional_weather_summary(wfo):
     print("-" * 40)
     if not user_quit:
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
 
@@ -1816,7 +1828,7 @@ def show_heat_cold(alerts):
     if not adv:
         print("No advisories.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1832,7 +1844,7 @@ def show_heat_cold(alerts):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1844,7 +1856,7 @@ def show_river_flood(alerts):
         print("\nNo river or flood alerts.")
         print("(No active flood warnings)")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1860,7 +1872,7 @@ def show_river_flood(alerts):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1872,7 +1884,7 @@ def show_afd_report(wfo):
     if not afd:
         print("No discussion available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1887,7 +1899,7 @@ def show_afd_report(wfo):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1899,7 +1911,7 @@ def show_pop_report(gridpoint):
     if not pop:
         print("No precipitation data available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1913,7 +1925,7 @@ def show_pop_report(gridpoint):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1925,7 +1937,7 @@ def show_uv_report(latlon):
     if uv is None:
         print("No UV index available.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1938,7 +1950,7 @@ def show_uv_report(latlon):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -1956,7 +1968,7 @@ def show_dust_alerts(alerts):
     if not dust:
         print("No dust alerts.")
         try:
-            input("\nPress enter to continue...")
+            continue_prompt()
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -1972,7 +1984,7 @@ def show_dust_alerts(alerts):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -2026,7 +2038,7 @@ def show_alerts(alerts, skywarn_status, skywarn_active):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -2055,7 +2067,7 @@ def show_coastal_flood_info(coastal_info):
     print()
     print("-" * 40)
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -2510,7 +2522,7 @@ def show_cached_local_weather():
     print("location lookup.")
     
     try:
-        input("\nPress enter to continue...")
+        continue_prompt()
     except (EOFError, KeyboardInterrupt):
         pass
     

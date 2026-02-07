@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 2.8
+Version: 2.9
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
@@ -30,7 +30,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.8"
+VERSION = "2.9"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eventcal_cache.json')
 
@@ -685,8 +685,8 @@ def display_events(events, show_all=False, page=0, page_size=5, start_at_today=F
             prompt_parts.append("P)rev")
         if has_next:
             prompt_parts.append("N)ext")
-        prompt_parts.append("B)ack")
         prompt_parts.append("Q)uit")
+        prompt_parts.append("B)ack")
         
         try:
             response = input("{} :> ".format(" ".join(prompt_parts))).strip().upper()
@@ -706,7 +706,7 @@ def display_events(events, show_all=False, page=0, page_size=5, start_at_today=F
         # Main upcoming view - allow event selection
         print("")
         try:
-            response = input("#)Detail M)ore A)bout Q)uit :> ").strip().upper()
+            response = input("Q)uit A)bout M)ore #)Detail :> ").strip().upper()
             if response.isdigit():
                 return ('detail', int(response), display_list, page)
             elif response == 'M':
@@ -813,7 +813,10 @@ def show_event_detail(event):
     
     print("-" * 40)
     try:
-        input("Press ENTER to continue...")
+        resp = input("[Q)uit Enter=continue] :> ").strip().upper()
+        if resp == 'Q':
+            print("\nExiting...")
+            sys.exit(0)
     except (EOFError, KeyboardInterrupt):
         pass
 

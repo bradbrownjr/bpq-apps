@@ -14,7 +14,7 @@ Features:
 - Link to ARRL test session locator for successful candidates
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 hamtest.py")
     sys.exit(1)
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "hamtest.py"
 
 import os
@@ -383,8 +383,10 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         for line in about_text.split('\n'):
             print(line)
         
-        print("\nPress Enter to return to main menu...")
-        input()
+        resp = input("\n[Q)uit Enter=menu] :> ").strip().upper()
+        if resp == 'Q':
+            print("\nExiting...")
+            sys.exit(0)
     
     def update_question_pools(self):
         """Force update of all question pools from GitHub"""
@@ -407,7 +409,10 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         else:
             print("\nNo question pools were updated")
         
-        input("\nPress Enter to continue...")
+        resp = input("\n[Q)uit Enter=continue] :> ").strip().upper()
+        if resp == "Q":
+            print("\nExiting...")
+            sys.exit(0)
     
     def select_exam(self):
         """Allow user to select an exam type"""
@@ -445,7 +450,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
                             else:
                                 print("Download failed. Please check your internet connection.")
                         
-                        input("Press Enter to continue...")
+                        resp = input("[Q)uit Enter=continue] :> ").strip().upper()
                         return 'menu'
                     
                     return selected_exam
@@ -532,7 +537,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
         print("\nPreparing {} Practice Exam...".format(spec['name']))
         print("This exam has {} questions.".format(spec['questions']))
         print("You need {} correct answers to pass (74%).".format(spec['pass_score']))
-        print("\nPress Enter to begin, or 'q' to return to menu...")
+        print("\nQ)uit or Enter=begin :> ")
         
         user_input = input().strip().lower()
         if user_input == 'q':
@@ -576,7 +581,7 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
             print("Score so far: {}/{} ({:.1f}%)".format(correct_count, i, correct_count/i*100))
             
             if i < len(exam_questions):
-                continue_input = input("\nPress Enter for next question, or Q to quit.").strip().upper()
+                continue_input = input("\nQ)uit or Enter=next :> ").strip().upper()
                 if continue_input == 'Q':
                     print("\nExam stopped. Returning to main menu...")
                     return
@@ -640,8 +645,10 @@ Question pools courtesy of: https://github.com/russolsen/ham_radio_question_pool
             print()
             print("Don't give up! Many successful hams needed multiple attempts.")
         
-        print("\nPress Enter to return to main menu...")
-        input()
+        resp = input("\n[Q)uit Enter=menu] :> ").strip().upper()
+        if resp == 'Q':
+            print("\nExiting...")
+            sys.exit(0)
     
     def run(self):
         """Main application loop"""

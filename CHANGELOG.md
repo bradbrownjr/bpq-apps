@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Prompt Standardization - All Apps] - 2026-02-07
+### Changed
+- **Holistic prompt ordering standardization across all 18 apps**
+  - Standard order: Q)uit → M)ain → B)ack → Page navigation → Enter=more
+  - Consistent muscle memory across entire application suite
+- **wx.py v4.9→4.10**: Added `continue_prompt()` helper; replaced 31 bare
+  "Press enter to continue" with Q)uit escape; fixed reports menu and 3
+  pagination prompts
+- **gopher.py v1.44→1.45**: Reordered all 12 pagination prompts (Q first);
+  replaced M)enu→M)ain; Q)uit escape on W)here prompts; reordered help
+  and startup banner; fixed 3 main loop prompts
+- **antenna.py v1.5→1.6**: Q first in calculator/database/main menus;
+  added M to Py3 branches; `pause()` now has Q)uit escape
+- **wiki.py v2.7→2.8**: M)enu→M)ain in all 9 prompts; Q first in
+  pagination, search results, and article menus
+- **rss-news.py v1.15→1.16**: Q first in all 4 main loop state prompts;
+  fixed pagination and article fetch prompts
+- **htmlview.py v1.20→1.21**: Q first in nav menu and content links;
+  removed parentheses from prompt; Q)uit escape on W)here prompts
+- **apps.py v1.8→1.9**: Q first in log paginator, sysop menu, app
+  install menu, main menu; replaced 7 "Press Enter" with Q)uit escape
+- **eventcal.py v2.8→2.9**: Swapped B)ack/Q)uit order; Q first in
+  detail prompt; Q)uit escape on ENTER continue
+- **feed.py v1.7→1.8**: Q first in menu prompt and error text
+- **wall.py v1.7→1.8**: Q first in menu prompt and error text
+- **forms.py v1.13→1.14**: Q first in choice/select prompts; added
+  `_continue_prompt()` method; replaced 5 "Press Enter" patterns
+- **hamtest.py v1.4→1.5**: Q first in exam begin/continue prompts;
+  replaced 4 "Press Enter" patterns with Q)uit escape
+- **repeater.py v1.11→1.12**: Q first; M)enu→M)ain; Q)uit escape on
+  about page continue prompt
+- **space.py v1.4→1.5**: Q first in main menu prompt
+- **wx-me.py v1.4→1.5**: Q first in main menu prompt
+- **www.py v1.7→1.8**: M)enu→M)ain in bookmark menu; Q)uit escape on
+  about page and fetch error prompts
+- **qrz3.py v1.3→1.4**: Removed ANSI color code wrapping from prompt
+- **dict.py v1.12→1.13**: Q first in pagination prompt
+
 ## [AI Pagination and Word Wrapping] - 2026-02-07
 ### Changed
 - **ai.py v1.19→1.20**: Added pagination and proper word wrapping for AI responses

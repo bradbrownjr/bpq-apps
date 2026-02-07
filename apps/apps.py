@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 1.8
+Version: 1.9
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-05
 """
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "1.8"
+VERSION = "1.9"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -352,7 +352,7 @@ def show_about():
     print("=" * 67)
     print()
     try:
-        raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+        raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
     except (EOFError, KeyboardInterrupt):
         pass
 
@@ -476,11 +476,11 @@ def view_log_paginated(log_path, title):
             
             # O)lder goes back in time, N)ewer goes forward in time
             if start_idx > 0 and end_idx < total_lines:
-                prompt = "[O)lder N)ewer Q)uit] :> "
+                prompt = "[Q)uit O)lder N)ewer] :> "
             elif start_idx > 0:
-                prompt = "[O)lder Q)uit] :> "
+                prompt = "[Q)uit O)lder] :> "
             elif end_idx < total_lines:
-                prompt = "[N)ewer Q)uit] :> "
+                prompt = "[Q)uit N)ewer] :> "
             else:
                 prompt = "[Q)uit] :> "
             
@@ -587,12 +587,12 @@ def sysop_menu(callsign):
         print("3) View BPQ Log (~/linbpq/debug.log)")
         print("4) Refresh Status")
         print()
-        print("R) Restart LinBPQ Service")
         print("Q) Return to Main Menu")
+        print("R) Restart LinBPQ Service")
         print()
         
         try:
-            choice = (raw_input("Select [1-4 R Q] :> ") if sys.version_info[0] < 3 else input("Select [1-4 R Q] :> ")).strip().upper()
+            choice = (raw_input("Select [Q R 1-4] :> ") if sys.version_info[0] < 3 else input("Select [Q R 1-4] :> ")).strip().upper()
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -616,7 +616,7 @@ def sysop_menu(callsign):
             else:
                 print("BPQ log not found.")
                 try:
-                    raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+                    raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
                 except (EOFError, KeyboardInterrupt):
                     pass
         elif choice == '4':
@@ -634,7 +634,7 @@ def sysop_menu(callsign):
                 print("Error: {}".format(str(e)))
             print()
             try:
-                raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+                raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
             except (EOFError, KeyboardInterrupt):
                 pass
 
@@ -654,7 +654,7 @@ def sysop_manage_apps():
         print("No apps found or network error.")
         print()
         try:
-            raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+            raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
         except (EOFError, KeyboardInterrupt):
             pass
         return
@@ -683,7 +683,7 @@ def sysop_manage_apps():
         print()
         
         try:
-            choice = (raw_input("Select [1-{} Q] :> ".format(len(apps))) if sys.version_info[0] < 3 else input("Select [1-{} Q] :> ".format(len(apps)))).strip().upper()
+            choice = (raw_input("Select [Q 1-{0}] :> ".format(len(apps))) if sys.version_info[0] < 3 else input("Select [Q 1-{0}] :> ".format(len(apps)))).strip().upper()
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -699,7 +699,7 @@ def sysop_manage_apps():
                     apps[idx]['installed'] = True
                 print()
                 try:
-                    raw_input("Press Enter to continue...") if sys.version_info[0] < 3 else input("Press Enter to continue...")
+                    raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
                 except (EOFError, KeyboardInterrupt):
                     pass
             else:
@@ -745,7 +745,7 @@ def main():
         app_index = display_menu(installed_apps, callsign)
         
         if not app_index:
-            print("Press Enter to exit...")
+            print("[Q)uit Enter=exit] :>")
             try:
                 raw_input() if sys.version_info[0] < 3 else input()
             except (EOFError, KeyboardInterrupt):
@@ -754,11 +754,11 @@ def main():
         
         # Build options string
         if user_is_sysop:
-            print("A)bout S)ysop Q)uit")
-            options_str = "Select [1-{} A S Q] :> ".format(len(app_index))
+            print("Q)uit S)ysop A)bout")
+            options_str = "Select [Q S A 1-{}] :> ".format(len(app_index))
         else:
-            print("A)bout Q)uit")
-            options_str = "Select [1-{} A Q] :> ".format(len(app_index))
+            print("Q)uit A)bout")
+            options_str = "Select [Q A 1-{}] :> ".format(len(app_index))
         
         try:
             if sys.version_info[0] < 3:
@@ -785,7 +785,7 @@ def main():
             
             print()
             print("-" * 40)
-            print("Press Enter to continue...")
+            print("[Q)uit Enter=continue] :>")
             try:
                 raw_input() if sys.version_info[0] < 3 else input()
             except (EOFError, KeyboardInterrupt):

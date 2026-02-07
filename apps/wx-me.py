@@ -5,7 +5,7 @@ Weather Reports for Southern Maine and New Hampshire
 Local weather reports from National Weather Service Gray Office.
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -13,7 +13,7 @@ import requests
 import sys
 import os
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "wx-me.py"
 
 def check_for_app_update(current_version, script_name):
@@ -127,7 +127,7 @@ def pullthis(url):
 try:
     print (menu)
     while True:
-            selected = str(input("Menu: [1-5] R)elist A)bout Q)uit :> "))
+            selected = str(input("Menu: Q)uit R)elist A)bout [1-5] :> "))
             if "1" in selected:
                     pullthis("https://tgftp.nws.noaa.gov/data/raw/aw/awus81.kgyx.rws.gyx.txt")
             elif "2" in selected:

@@ -16,7 +16,7 @@ Features:
 - Smart word wrapping for terminal width
 
 Author: Brad Brown KC1JMH
-Version: 1.7
+Version: 1.8
 Date: January 2026
 """
 
@@ -32,7 +32,7 @@ try:
 except ImportError:
     from urlparse import urljoin, urlparse
 
-VERSION = "1.7"
+VERSION = "1.8"
 APP_NAME = "www.py"
 
 # Check Python version
@@ -345,7 +345,10 @@ class WebBrowser:
         if not html:
             # Fetch failed - return to previous page if available
             if len(self.history) > 0:
-                input("\nPress Enter to return to previous page...")
+                resp = input("\n[Q)uit Enter=back] :> ").strip().lower()
+                if resp.startswith('q'):
+                    print("\nExiting...")
+                    sys.exit(0)
                 prev_url = self.history[-1] if self.history else None
                 return prev_url
             return None
@@ -419,8 +422,10 @@ def show_about():
     print("  B = back, Q = quit to menu")
     print("\nAuthor: Brad Brown KC1JMH")
     print("License: MIT")
-    print("\nPress Enter to continue...")
-    input()
+    resp = input("\n[Q)uit Enter=continue] :> ").strip().upper()
+    if resp == 'Q':
+        print("\nExiting...")
+        sys.exit(0)
 
 
 def main():
@@ -463,7 +468,7 @@ def main():
             for i, (name, url) in enumerate(BOOKMARKS, 1):
                 print("{}. {}".format(i, name))
             
-            bookmark_choice = input("\nSelect [1-{}], M)enu, Q)uit :> ".format(len(BOOKMARKS))).strip().lower()
+            bookmark_choice = input("\nQ)uit M)ain [1-{}] :> ".format(len(BOOKMARKS))).strip().lower()
             if bookmark_choice == 'q':
                 print("\nExiting...")
                 sys.exit(0)

@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.13
+Version: 1.14
 Date: January 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.13"
+VERSION = "1.14"
 APP_NAME = "forms.py"
 
 import os
@@ -123,6 +123,11 @@ class FormsApp:
         except (EOFError, KeyboardInterrupt):
             print("\n\nQuitting...")
             sys.exit(0)
+
+    def _continue_prompt(self):
+        """Show continue prompt with Q)uit escape option."""
+        resp = self.get_input("\n[Q)uit Enter=continue] :> ")
+        # Q handled by get_input
     
     def check_for_app_update(self):
         """Check if forms.py has an update available on GitHub"""
@@ -509,7 +514,7 @@ class FormsApp:
             print("  2. Paste custom strip")
             print()
             
-            choice = self.get_input("Enter choice (1 or 2, B)ack, Q)uit): ").strip().upper()
+            choice = self.get_input("Q)uit B)ack 1)Template 2)Custom :> ").strip().upper()
             
             if choice == '1':
                 # Use the template
@@ -539,8 +544,10 @@ class FormsApp:
         
         if len(fields) < 2:
             print("\nError: Strip must have at least 2 fields (title and one data field)")
-            print("Press Enter to return to menu...")
-            self.get_input("")
+            resp = self.get_input("[Q)uit Enter=menu] :> ").strip().upper()
+            if resp == "Q":
+                print("\nExiting...")
+                sys.exit(0)
             return None
         
         # First field is the strip title/name
@@ -564,8 +571,10 @@ class FormsApp:
             # Check for EXIT command
             if response.upper() == 'EXIT':
                 print("\nForm cancelled.")
-                print("Press Enter to return to menu...")
-                self.get_input("")
+                resp = self.get_input("[Q)uit Enter=menu] :> ").strip().upper()
+                if resp == "Q":
+                    print("\nExiting...")
+                    sys.exit(0)
                 return None
             # If empty, use three spaces as placeholder (MARS convention)
             if not response:
@@ -926,7 +935,7 @@ class FormsApp:
             self.display_menu()
             
             # Get form selection
-            selection = self.get_input("Select form number (or Q to quit): ")
+            selection = self.get_input("Q)uit or select [1-N] :> ")
             
             try:
                 form_num = int(selection)
@@ -959,7 +968,7 @@ class FormsApp:
                     
                     if submit_choice.upper() not in ['Y', 'YES']:
                         print("\nForm cancelled. Returning to menu.")
-                        self.get_input("\nPress Enter to continue...")
+                        self._continue_prompt()
                         continue
                     
                     # Get recipient - always prompt user
@@ -994,11 +1003,11 @@ class FormsApp:
                         break
                 else:
                     print("\nInvalid selection. Please try again.")
-                    self.get_input("\nPress Enter to continue...")
+                    self._continue_prompt()
                     
             except ValueError:
                 print("\nInvalid input. Please enter a number.")
-                self.get_input("\nPress Enter to continue...")
+                self._continue_prompt()
 
 def main():
     """Main entry point"""

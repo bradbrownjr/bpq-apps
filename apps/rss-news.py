@@ -15,7 +15,7 @@ Features:
 - Default feeds when config unavailable
 
 Author: Brad Brown KC1JMH
-Version: 1.15
+Version: 1.16
 Date: January 2026
 """
 
@@ -54,7 +54,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "1.15"
+VERSION = "1.16"
 APP_NAME = "rss-news.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rss_cache.json')
 
@@ -635,7 +635,7 @@ class RSSReader:
             page_num += 1
             
             if i + PAGE_SIZE < len(lines):
-                response = input("\n[Enter]=Next page, Q)uit :> ").strip().lower()
+                response = input("\nQ)uit Enter=more :> ").strip().lower()
                 if response.startswith('q'):
                     break
     
@@ -701,13 +701,13 @@ class RSSReader:
             try:
                 # Context-aware prompt
                 if state == 'categories':
-                    prompt = "\nCategories: [#] or C)ategory list, A)bout RSS, ?)Help, Q)uit :> "
+                    prompt = "\nCategories: Q)uit C)ats A)bout ?)Help [#] :> "
                 elif state == 'feeds':
-                    prompt = "\nFeeds: [#] or B)ack, C)ategory list, ?)Help, Q)uit :> "
+                    prompt = "\nFeeds: Q)uit B)ack C)ats ?)Help [#] :> "
                 elif state == 'articles':
-                    prompt = "\nArticles: [#] or B)ack, C)ategory list, R)efresh, ?)Help, Q)uit :> "
+                    prompt = "\nArticles: Q)uit B)ack C)ats R)efresh ?)Help [#] :> "
                 elif state == 'article_view':
-                    prompt = "\nFetch full article? Y)es [default], N)o, B)ack to list, Q)uit :> "
+                    prompt = "\nFetch article? Q)uit B)ack Y)es N)o :> "
                 else:
                     prompt = "\nCommand or Q)uit :> "
                 
@@ -763,7 +763,7 @@ class RSSReader:
                         print("\nExiting...")
                         break
                     else:
-                        print("Article: [Y/N to fetch], B)ack to list, Q)uit :> ", end='')
+                        print("Q)uit B)ack Y/N :> ", end='')
                         sys.stdout.flush()
                         continue
                 

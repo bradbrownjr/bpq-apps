@@ -14,7 +14,7 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.20
+Version: 1.21
 Date: January 2026
 """
 
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.20"
+VERSION = "1.21"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -1050,7 +1050,10 @@ class HTMLViewer:
                 if response == 'w':
                     # Show current URL
                     print("\nCurrent URL: {}".format(self.base_url))
-                    input("Press Enter to continue...")
+                    resp = input("[Q)uit Enter=continue] :> ").strip().lower()
+                    if resp.startswith("q"):
+                        self.selected_link = "__EXIT__"
+                        break
                     # Redisplay current page
                     continue
                 elif response == 'q':
@@ -1128,9 +1131,9 @@ class HTMLViewer:
             
             # Build prompt based on position (furthest to closest)
             if end < total_links:
-                prompt = "Select [1-{}] W)here Q)uit M)ain B)ack Enter=more :> ".format(total_links)
+                prompt = "Q)uit M)ain B)ack W)here [1-{}] Enter=more :> ".format(total_links)
             else:
-                prompt = "Select [1-{}] W)here Q)uit M)ain B)ack :> ".format(total_links)
+                prompt = "Q)uit M)ain B)ack W)here [1-{}] :> ".format(total_links)
             
             try:
                 response = input(prompt).strip().lower()
@@ -1146,7 +1149,9 @@ class HTMLViewer:
             elif response == 'w':
                 # Show current URL
                 print("\nCurrent URL: {}".format(self.base_url))
-                input("Press Enter to continue...")
+                resp = input("[Q)uit Enter=continue] :> ").strip().lower()
+                if resp.startswith("q"):
+                    return '__EXIT__'
                 continue
             elif response == '' and end < total_links:
                 start = end  # Next page
@@ -1182,7 +1187,7 @@ class HTMLViewer:
             
             if end < total_links:
                 try:
-                    response = input("\n(Q)uit M)ain B)ack W)here #=select Enter=more) :> ").strip().lower()
+                    response = input("\nQ)uit M)ain B)ack W)here #=select Enter=more :> ").strip().lower()
                 except EOFError:
                     return None
                 
@@ -1195,7 +1200,9 @@ class HTMLViewer:
                 elif response == 'w':
                     # Show current URL
                     print("\nCurrent URL: {}".format(self.base_url))
-                    input("Press Enter to continue...")
+                    resp = input("[Q)uit Enter=continue] :> ").strip().lower()
+                    if resp.startswith("q"):
+                        return '__EXIT__'
                     continue
                 elif response == '':
                     start = end
@@ -1204,7 +1211,7 @@ class HTMLViewer:
                     return self._get_content_link(int(response))
             else:
                 try:
-                    response = input("\nSelect [1-{}] Q)uit M)ain B)ack W)here :> ".format(total_links)).strip().lower()
+                    response = input("\nQ)uit M)ain B)ack W)here [1-{}] :> ".format(total_links)).strip().lower()
                 except EOFError:
                     return None
                 
@@ -1217,7 +1224,9 @@ class HTMLViewer:
                 elif response == 'w':
                     # Show current URL
                     print("\nCurrent URL: {}".format(self.base_url))
-                    input("Press Enter to continue...")
+                    resp = input("[Q)uit Enter=continue] :> ").strip().lower()
+                    if resp.startswith("q"):
+                        return '__EXIT__'
                     continue
                 elif response.isdigit():
                     return self._get_content_link(int(response))

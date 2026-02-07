@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.5
+Version: 1.6
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -25,7 +25,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.5"
+VERSION = "1.6"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -631,9 +631,9 @@ def calculator_menu():
         print("Q) Quit  M) Main Menu")
         
         try:
-            choice = raw_input("\nSelect [1-9,Q,M] :> ").strip().upper()
+            choice = raw_input("\nSelect [Q,M,1-9] :> ").strip().upper()
         except NameError:
-            choice = input("\nSelect [1-9,Q] :> ").strip().upper()
+            choice = input("\nSelect [Q,M,1-9] :> ").strip().upper()
         
         if choice == "1":
             calc_dipole()
@@ -781,12 +781,12 @@ def browse_database():
         print("{:2}) {} ({})".format(i, brand[:30], count))
     
     print("-" * 40)
-    print("A) Show all  Q) Back")
+    print("Q) Back  A) Show all")
     
     try:
-        choice = raw_input("\nSelect :> ").strip().upper()
+        choice = raw_input("\nSelect [Q,A,1-N] :> ").strip().upper()
     except NameError:
-        choice = input("\nSelect :> ").strip().upper()
+        choice = input("\nSelect [Q,A,1-N] :> ").strip().upper()
     
     if choice == "Q":
         return
@@ -955,9 +955,9 @@ def database_menu(callsign):
         print("Q) Quit  M) Main Menu")
         
         try:
-            choice = raw_input("\nSelect [1-4,Q,M] :> ").strip().upper()
+            choice = raw_input("\nSelect [Q,M,1-4] :> ").strip().upper()
         except NameError:
-            choice = input("\nSelect [1-4,Q] :> ").strip().upper()
+            choice = input("\nSelect [Q,M,1-4] :> ").strip().upper()
         
         if choice == "1":
             browse_database()
@@ -1042,11 +1042,14 @@ def show_about():
 
 
 def pause():
-    """Pause for user input."""
+    """Pause for user input with Q)uit escape."""
     try:
-        raw_input("\n[Press Enter to continue]")
+        resp = raw_input("\n[Q)uit Enter=continue] :> ").strip().upper()
     except NameError:
-        input("\n[Press Enter to continue]")
+        resp = input("\n[Q)uit Enter=continue] :> ").strip().upper()
+    if resp == 'Q':
+        print("\nExiting...")
+        sys.exit(0)
 
 
 def main_menu(callsign=None):
@@ -1062,9 +1065,9 @@ def main_menu(callsign=None):
         print("Q) Quit  A) About")
         
         try:
-            choice = raw_input("\nMenu: [1-4,Q,A] :> ").strip().upper()
+            choice = raw_input("\nMenu: [Q,A,1-4] :> ").strip().upper()
         except NameError:
-            choice = input("\nMenu: [1-4,A,Q] :> ").strip().upper()
+            choice = input("\nMenu: [Q,A,1-4] :> ").strip().upper()
         
         if choice == "1":
             calculator_menu()

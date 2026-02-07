@@ -4,9 +4,9 @@ QRZ Callsign Lookup for Packet Radio
 ------------------------------------
 Query QRZ XML API for amateur radio operator information.
 
-Version: 1.3
+Version: 1.4
 """
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "qrz3.py"
 
 # Original script acquired from https://github.com/hink/qrzpy/blob/master/qrz3.py
@@ -298,7 +298,7 @@ def main():
 
     ## User Input
     while True:
-        callsign = input(Colors.BLUE + '\nCallsign (Q to quit): ' + Colors.END).strip()
+        callsign = input('\nCallsign (Q to quit): ').strip()
         if "" == callsign or "?" == callsign or "h" == callsign.lower() or "help" == callsign.lower():
             print("Enter callsign or enter 'q' to quit")
         elif "q" == callsign.lower() or "quit" == callsign.lower() or "x" == callsign.lower():

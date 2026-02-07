@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.11
+Version: 1.12
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.11"
+VERSION = "1.12"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -566,7 +566,10 @@ def show_about():
     print("Version: {}".format(VERSION))
     print("-" * 40)
     try:
-        input("\nPress Enter to continue...")
+        resp = input("\n[Q)uit Enter=continue] :> ").strip().upper()
+        if resp == "Q":
+            print("\nExiting...")
+            sys.exit(0)
     except EOFError:
         pass
 
@@ -1022,9 +1025,9 @@ def browse_results(repeaters):
         display_repeaters(repeaters, page, per_page)
         
         if total_pages > 1:
-            prompt = "N)ext P)rev M)enu Q :> "
+            prompt = "Q)uit M)ain N)ext P)rev :> "
         else:
-            prompt = "M)enu Q :> "
+            prompt = "Q)uit M)ain :> "
         
         try:
             choice = input(prompt).strip().upper()

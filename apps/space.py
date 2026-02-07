@@ -8,7 +8,7 @@ and more right from NOAA. Supports offline operation with cached data.
 This script pulls data from https://services.swpc.noaa.gov/text/.
 
 Author: Brad Brown KC1JMH
-Version: 1.4
+Version: 1.5
 Date: January 2026
 """
 
@@ -19,7 +19,7 @@ import json
 import time
 import socket
 
-VERSION = "1.4"
+VERSION = "1.5"
 APP_NAME = "space.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'space_cache.json')
 
@@ -332,7 +332,7 @@ def main():
     show_menu()
     
     while True:
-        selected = str(input("Menu: [1-7] R)elist A)bout Q)uit :> ")).strip()
+        selected = str(input("Menu: Q)uit R)elist A)bout [1-7] :> ")).strip()
         
         if selected in ['1', '2', '3', '4', '5', '6', '7']:
             # Try to fetch fresh data

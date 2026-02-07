@@ -13,7 +13,7 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.44
+Version: 1.45
 Date: January 2026
 """
 
@@ -21,7 +21,7 @@ import sys
 import os
 import json
 
-VERSION = "1.44"
+VERSION = "1.45"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -458,26 +458,26 @@ class GopherClient:
                 # More pages available
                 if selectable_count > 0:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next Page P)rev [1-{}] W)here B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\nQ)uit H)ome B)ack P)rev W)here M)arks [1-{}] Enter=more :> ".format(selectable_count)
                     else:
-                        prompt = "\n[Enter]=Next Page [1-{}] W)here B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\nQ)uit H)ome B)ack W)here M)arks [1-{}] Enter=more :> ".format(selectable_count)
                 else:
                     if current_page > 0:
-                        prompt = "\n[Enter]=Next Page P)rev W)here B)ack H)ome M)arks Q)uit :> "
+                        prompt = "\nQ)uit H)ome B)ack P)rev W)here M)arks Enter=more :> "
                     else:
-                        prompt = "\n[Enter]=Next Page W)here B)ack H)ome M)arks Q)uit :> "
+                        prompt = "\nQ)uit H)ome B)ack W)here M)arks Enter=more :> "
             else:
                 # Last page
                 if selectable_count > 0:
                     if current_page > 0:
-                        prompt = "\nP)rev [1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\nQ)uit H)ome B)ack P)rev M)arks [1-{}] :> ".format(selectable_count)
                     else:
-                        prompt = "\n[1-{}] B)ack H)ome M)arks Q)uit :> ".format(selectable_count)
+                        prompt = "\nQ)uit H)ome B)ack M)arks [1-{}] :> ".format(selectable_count)
                 else:
                     if current_page > 0:
-                        prompt = "\nP)rev B)ack H)ome M)arks Q)uit :> "
+                        prompt = "\nQ)uit H)ome B)ack P)rev M)arks :> "
                     else:
-                        prompt = "\nB)ack H)ome M)arks Q)uit :> "
+                        prompt = "\nQ)uit H)ome B)ack M)arks :> "
             
             response = input(prompt).strip().lower()
             
@@ -492,7 +492,10 @@ class GopherClient:
             elif response.startswith('w'):
                 # Show current URL and wait for acknowledgment
                 print("\nCurrent URL: {}".format(self.current_url))
-                input("\nPress Enter to continue...")
+                resp = input("\n[Q)uit Enter=continue] :> ").strip().lower()
+                if resp.startswith('q'):
+                    print("\nGoodbye! 73\n")
+                    sys.exit(0)
                 # Don't continue - will redisplay page after break from loop
             elif response.startswith('b'):
                 # Back - navigate to previous page in history
@@ -568,15 +571,15 @@ class GopherClient:
             if end < len(lines):
                 # More pages available
                 if current_page > 0:
-                    prompt = "\n[Enter]=Next Page P)rev W)here B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\nQ)uit H)ome B)ack P)rev W)here M)arks Enter=more :> "
                 else:
-                    prompt = "\n[Enter]=Next Page W)here B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\nQ)uit H)ome B)ack W)here M)arks Enter=more :> "
             else:
                 # Last page
                 if current_page > 0:
-                    prompt = "\nP)rev W)here B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\nQ)uit H)ome B)ack P)rev W)here M)arks :> "
                 else:
-                    prompt = "\nW)here B)ack H)ome M)arks Q)uit :> "
+                    prompt = "\nQ)uit H)ome B)ack W)here M)arks :> "
             
             response = input(prompt).strip().lower()
             
@@ -593,7 +596,10 @@ class GopherClient:
             elif response.startswith('w'):
                 # Show current URL and wait for acknowledgment
                 print("\nCurrent URL: {}".format(self.current_url))
-                input("\nPress Enter to continue...")
+                resp = input("\n[Q)uit Enter=continue] :> ").strip().lower()
+                if resp.startswith('q'):
+                    print("\nGoodbye! 73\n")
+                    sys.exit(0)
                 # Don't continue - will redisplay page after break from loop
             elif response.startswith('p'):
                 # Previous page
@@ -650,7 +656,7 @@ class GopherClient:
                 self.current_url = saved_url
             else:
                 self.current_url = None
-            print("\nPress Enter to continue, or Q to quit")
+            print("\nQ)uit or Enter=continue")
             resp = input(":> ").strip().lower()
             if resp.startswith('q'):
                 print("\nGoodbye! 73\n")
@@ -936,17 +942,17 @@ class GopherClient:
         print("\n" + "-" * 40)
         print("COMMANDS")
         print("-" * 40)
-        print("  [number] - Select menu item by number")
-        print("  M)enu    - Redisplay current menu")
+        print("  Q)uit    - Exit (works from any menu)")
         print("  H)ome    - Go to home page")
+        print("  M)ain    - Redisplay current menu")
+        print("  B)ack    - Back to previous view")
         print("  P)rev    - Previous page (within results)")
         print("  W)here   - Show current URL")
-        print("  B)ack    - Back to previous view")
         print("  M)arks   - Show bookmarks")
         print("  G)o URL  - Go to specific Gopher URL")
         print("  A)bout   - About Gopher protocol")
         print("  ?)       - Show this help")
-        print("  Q)uit    - Exit (works from any menu)")
+        print("  [number] - Select menu item by number")
         print("\nWhen viewing files:")
         print("  V)iew    - Display text in terminal")
         print("\nPrompts are context-aware and show available commands.")
@@ -1012,24 +1018,24 @@ class GopherClient:
         print("GOPHER v{} - Gopher Protocol Client".format(VERSION))
         print("Designed for AX.25 packet radio terminals.")
         print("\nCommands:")
+        print("  Q)uit    - Exit the client")
         print("  H)ome    - Go to home page")
         print("  M)arks   - Show bookmarks")
         print("  S)earch  - Search Gopherspace (Veronica-2)")
         print("  A)bout   - About Gopher protocol")
         print("  G)o URL  - Go to specific Gopher URL")
         print("  ?)       - Show help")
-        print("  Q)uit    - Exit the client")
         
         # Main command loop
         while True:
             try:
                 # Context-aware prompt
                 if self.current_state == 'menu':
-                    prompt = "\nMenu: [#] or H)ome, B)ack, M)enu, G)o, ?)Help, Q)uit :> "
+                    prompt = "\nMenu: Q)uit H)ome B)ack M)ain G)o [#] ?)Help :> "
                 elif self.current_state == 'article':
-                    prompt = "\nArticle: B)ack, H)ome, M)arks, G)o, ?)Help, Q)uit :> "
+                    prompt = "\nArticle: Q)uit H)ome B)ack M)arks G)o ?)Help :> "
                 else:
-                    prompt = "\nGopher: H)ome, M)arks, S)earch, A)bout, G)o, ?)Help, Q)uit :> "
+                    prompt = "\nGopher: Q)uit H)ome M)arks S)earch A)bout G)o ?)Help :> "
                 
                 command = input(prompt).strip()
                 

@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 2.7
+Version: 2.8
 Date: January 2026
 """
 
@@ -33,7 +33,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "2.7"
+VERSION = "2.8"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -574,9 +574,9 @@ class WikiClient:
             if i + PAGE_SIZE < len(lines):
                 # Show link navigation prompt during pagination
                 if self.current_links:
-                    prompt = "\n[Enter]=Next [1-{}] M)enu Q)uit :> ".format(len(self.current_links))
+                    prompt = "\nQ)uit M)ain [1-{}] Enter=more :> ".format(len(self.current_links))
                 else:
-                    prompt = "\n[Enter]=Next M)enu Q)uit :> "
+                    prompt = "\nQ)uit M)ain Enter=more :> "
                 
                 response = input(prompt).strip()
                 
@@ -592,7 +592,10 @@ class WikiClient:
                         return ('link', link_num - 1)
                     else:
                         print("Invalid link number.")
-                        input("Press Enter to continue...")
+                        resp = input("[Q)uit Enter=continue] :> ").strip().upper()
+                        if resp == 'Q':
+                            self.should_quit = True
+                            break
     
     def display_links(self, links, max_display=MAX_LINKS):
         """Display numbered list of links"""
@@ -657,9 +660,9 @@ class WikiClient:
             # Build prompt
             has_next = end < total
             if has_next:
-                prompt = "\n[1-{}] or N)ext M)enu Q)uit :> ".format(total)
+                prompt = "\nQ)uit M)ain N)ext [1-{}] :> ".format(total)
             else:
-                prompt = "\n[1-{}] M)enu Q)uit :> ".format(total)
+                prompt = "\nQ)uit M)ain [1-{}] :> ".format(total)
             
             choice = input(prompt).strip().upper()
             
@@ -745,15 +748,15 @@ class WikiClient:
             if self.current_links:
                 can_back = self.history_index > 0
                 if can_back:
-                    prompt = "[F]ull [L]inks [1-{}] B)ack M)enu Q)uit :> ".format(len(self.current_links))
+                    prompt = "Q)uit M)ain B)ack [F]ull [L]inks [1-{}] :> ".format(len(self.current_links))
                 else:
-                    prompt = "[F]ull [L]inks [1-{}] M)enu Q)uit :> ".format(len(self.current_links))
+                    prompt = "Q)uit M)ain [F]ull [L]inks [1-{}] :> ".format(len(self.current_links))
             else:
                 can_back = self.history_index > 0
                 if can_back:
-                    prompt = "[F]ull article B)ack M)enu Q)uit :> "
+                    prompt = "Q)uit M)ain B)ack [F]ull :> "
                 else:
-                    prompt = "[F]ull article M)enu Q)uit :> "
+                    prompt = "Q)uit M)ain [F]ull :> "
             
             choice = input(prompt).strip().upper()
             
