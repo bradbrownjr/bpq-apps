@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.16
+Version: 1.17
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ import sys
 import os
 
 # Version check for Python 3.5+
-VERSION = "1.16"
+VERSION = "1.17"
 
 if sys.version_info < (3, 5):
     print("Error: Python 3.5 or higher required.")
@@ -573,9 +573,9 @@ def main():
     
     # Reload modules in case they were updated
     import importlib
-    importlib.reload(geo)
-    importlib.reload(solar)
-    importlib.reload(ionosphere)
+    geo = importlib.reload(geo)
+    solar = importlib.reload(solar)
+    ionosphere = importlib.reload(ionosphere)
     
     # Print header
     print_header()

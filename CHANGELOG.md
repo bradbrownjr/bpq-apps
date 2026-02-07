@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Critical Fix - Module Reload Not Assigning] - 2026-02-07
+### Fixed
+- **Module reload broken**: v1.16 added importlib.reload() calls but didn't assign
+  the return value back to variables, causing NameError "name 'geo' is not defined"
+- **Fix**: Changed `importlib.reload(geo)` to `geo = importlib.reload(geo)` etc.
+  - reload() returns the reloaded module, must be assigned to be used
+- predict.py v1.16 → v1.17
+
 ## [Critical Fix - Module Files Not Actually Reloading] - 2026-02-07
 ### Fixed
 - **Module files downloaded but not reloaded**: predict.py v1.15 added version-checking
