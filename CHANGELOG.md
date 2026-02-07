@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Fix - UTC Time Label Format in PREDICT] - 2026-02-07
+### Fixed
+- **UTC time label format**: Changed from "UTC: HH:MM" to "Current time: HH:MM UTC"
+  - More natural phrasing, consistent with apps.py welcome message
+  - predict.py v1.13 → v1.14, ionosphere.py v1.3 → v1.4
+
 ## [Feature - Welcome Header with UTC Time in APPS Menu] - 2026-02-07
 ### Changed
 - **Apps menu header**: Updated from "User: KC1JMH" to "Welcome KC1JMH, the current time is HH:MM UTC"
