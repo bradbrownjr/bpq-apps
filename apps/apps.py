@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 1.5
+Version: 1.6
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-05
 """
@@ -15,12 +15,13 @@ import shutil
 import subprocess
 import tempfile
 import re
+from datetime import datetime
 try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "1.5"
+VERSION = "1.6"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -177,7 +178,8 @@ def display_menu(installed_apps, callsign):
     display_logo()
     print("APPS v{} - Application Launcher".format(VERSION))
     if callsign:
-        print("User: {}".format(extract_base_call(callsign)))
+        utc_time = datetime.utcnow().strftime("%H:%M")
+        print("Welcome {}, the current time is {} UTC".format(extract_base_call(callsign), utc_time))
     print("-" * 67)
     print()
     

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Feature - Welcome Header with UTC Time in APPS Menu] - 2026-02-07
+### Changed
+- **Apps menu header**: Updated from "User: KC1JMH" to "Welcome KC1JMH, the current time is HH:MM UTC"
+  - Shows current UTC time at login, helping users coordinate digital modes and band changes
+  - Time format: HH:MM UTC (24-hour, matching international standard)
+  - apps.py v1.5 → v1.6
+
+## [Feature - Current UTC Time in PREDICT Recommendations] - 2026-02-07
+### Added
+- **UTC time display**: PREDICT band recommendations now include current UTC time
+  - Shows time in HHMM UTC format under the recommended band
+  - Example: "Recommended: 20m (Excellent, 0200-2200 UTC)\n  UTC: 1245 UTC"
+  - helps users know exactly when this recommendation was generated
+  - predict.py v1.12 → v1.13, ionosphere.py v1.2 → v1.3
+
 ## [Fix - Callsign Not Reaching PREDICT and Other Apps] - 2026-02-07
 ### Fixed
 - **Root cause found**: apps.json has no auto-update mechanism, so `needs_callsign: true`

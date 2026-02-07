@@ -18,7 +18,7 @@ Limitations:
 - No multi-hop optimization
 
 Author: Brad Brown KC1JMH
-Version: 1.2
+Version: 1.3
 Date: January 2026
 """
 
@@ -464,7 +464,7 @@ def get_recommendation(predictions):
         predictions: List from predict_bands()
         
     Returns:
-        String with recommendation
+        String with recommendation and current UTC time
     """
     # Find best band by reliability
     usable = [p for p in predictions if p['usable']]
@@ -475,8 +475,13 @@ def get_recommendation(predictions):
     # Sort by reliability, prefer higher frequencies if equal
     best = sorted(usable, key=lambda p: (-p['reliability'], -p['freq']))[0]
     
-    return "Recommended: {} ({}, {})".format(
+    # Get current UTC time
+    utc_now = datetime.utcnow()
+    utc_str = utc_now.strftime("%H%M UTC")
+    
+    return "Recommended: {} ({}, {})\n  UTC: {}".format(
         best['band'], 
         best['rel_label'],
-        best['best_hours']
+        best['best_hours'],
+        utc_str
     )
