@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Fix - Module Files Not Auto-Updating] - 2026-02-07
+### Fixed
+- **Module files (geo.py, solar.py, ionosphere.py) not updating**: predict.py only checked
+  for MISSING module files, not updated ones. When ionosphere.py was updated with UTC time
+  feature, existing installations never re-downloaded the new version.
+- **Solution**: Added version-checking for Python module files. predict.py now:
+  1. Extracts "Version: X.Y" from remote module file docstring
+  2. Compares with local version
+  3. Re-downloads if remote version is newer
+  - Non-Python files (regions.json) still check for existence only
+- predict.py v1.14 → v1.15
+
 ## [Fix - UTC Time Label Format in PREDICT] - 2026-02-07
 ### Fixed
 - **UTC time label format**: Changed from "UTC: HH:MM" to "Current time: HH:MM UTC"

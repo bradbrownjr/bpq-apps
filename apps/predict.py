@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.14
+Version: 1.15
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ import sys
 import os
 
 # Version check for Python 3.5+
-VERSION = "1.14"
+VERSION = "1.15"
 
 if sys.version_info < (3, 5):
     print("Error: Python 3.5 or higher required.")
@@ -100,23 +100,53 @@ def check_for_app_update(current_version, script_name):
                         except:
                             pass
         
-        # Check for missing predict module files and download them
+        # Check for missing or outdated predict module files and download them
         script_dir = os.path.dirname(os.path.abspath(__file__))
         predict_dir = os.path.join(script_dir, 'predict')
         module_files = ['__init__.py', 'geo.py', 'solar.py', 'ionosphere.py', 'regions.json']
         
-        missing_files = []
+        files_to_download = []
         for filename in module_files:
-            if not os.path.exists(os.path.join(predict_dir, filename)):
-                missing_files.append(filename)
+            file_path = os.path.join(predict_dir, filename)
+            if not os.path.exists(file_path):
+                # Missing file
+                files_to_download.append(filename)
+            elif filename.endswith('.py'):
+                # Check if module file has a newer version on GitHub
+                try:
+                    file_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/{}".format(filename)
+                    with urllib.request.urlopen(file_url, timeout=2) as response:
+                        remote_content = response.read().decode('utf-8')
+                    
+                    # Extract version from remote file
+                    remote_version = None
+                    for line in remote_content.split('\n'):
+                        if 'Version:' in line:
+                            remote_version = line.split('Version:')[1].strip()
+                            break
+                    
+                    # Extract version from local file
+                    local_version = None
+                    with open(file_path, 'r') as f:
+                        for line in f:
+                            if 'Version:' in line:
+                                local_version = line.split('Version:')[1].strip()
+                                break
+                    
+                    # Compare versions
+                    if remote_version and local_version and compare_versions(remote_version, local_version) > 0:
+                        files_to_download.append(filename)
+                except:
+                    # Silently skip version check on error
+                    pass
         
-        if missing_files:
+        if files_to_download:
             try:
                 # Create predict directory if it doesn't exist
                 if not os.path.exists(predict_dir):
                     os.makedirs(predict_dir)
                 
-                for filename in missing_files:
+                for filename in files_to_download:
                     file_url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/predict/{}".format(filename)
                     with urllib.request.urlopen(file_url, timeout=3) as response:
                         file_content = response.read()
