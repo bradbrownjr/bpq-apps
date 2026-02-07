@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Fix - Callsign Not Reaching PREDICT and Other Apps] - 2026-02-07
+### Fixed
+- **Root cause found**: apps.json has no auto-update mechanism, so `needs_callsign: true`
+  added for PREDICT/REPEATER/FEED/AI in commit 357eeed never reached the production server
+  - Only WALL, FORMS, WX had `needs_callsign: true` in the deployed apps.json (from Phase 2)
+  - apps.py gated callsign passing on `needs_callsign` flag → PREDICT never received it
+- **Fix**: Removed `needs_callsign` gate from `launch_app()` — apps.py now ALWAYS passes
+  `--callsign` and `BPQ_CALLSIGN` env var when it has a callsign, regardless of apps.json flag
+  - Child apps that don't need callsign simply ignore the extra CLI arg
+  - Eliminates dependency on apps.json being up-to-date on production servers
+  - apps.py v1.4 → v1.5
+
 ## [Multi-App Fix - Callsign Passing via CLI Argument] - 2026-02-06
 ### Fixed
 - **Callsign not reaching child apps via apps.py**: The BPQ_CALLSIGN environment variable
