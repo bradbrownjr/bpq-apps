@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.19
+Version: 1.20
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -26,10 +26,11 @@ import shutil
 import socket
 import re
 import readline
+import textwrap
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.19"
+VERSION = "1.20"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -127,6 +128,65 @@ def compare_versions(v1, v2):
 def extract_base_call(callsign):
     """Remove SSID from callsign"""
     return callsign.split('-')[0] if callsign else ""
+
+
+def get_terminal_width():
+    """Get terminal width, fallback to 80 for non-TTY."""
+    try:
+        return shutil.get_terminal_size(fallback=(80, 24)).columns
+    except Exception:
+        return 80
+
+
+def paginate_response(text, prefix="AI: "):
+    """Display AI response with word wrapping and pagination.
+    
+    Returns True if user wants to continue (pressed Enter or reached end),
+    False if user wants to quit (pressed Q).
+    """
+    term_width = get_terminal_width()
+    page_size = 20  # Lines per page
+    
+    # Word wrap the response
+    lines = []
+    for line in text.split('\n'):
+        if line.strip():
+            wrapped = textwrap.wrap(line, width=term_width)
+            lines.extend(wrapped if wrapped else [''])
+        else:
+            lines.append('')  # Preserve blank lines
+    
+    # Add prefix to first line only
+    if lines:
+        lines[0] = prefix + lines[0]
+    
+    total_lines = len(lines)
+    current_pos = 0
+    
+    while current_pos < total_lines:
+        # Display current page
+        end_pos = min(current_pos + page_size, total_lines)
+        for i in range(current_pos, end_pos):
+            print(lines[i])
+        
+        current_pos = end_pos
+        
+        # Check if there's more content
+        if current_pos < total_lines:
+            print()
+            try:
+                response = input("[Q)uit Enter=more] :> ").strip().lower()
+                if response == 'q':
+                    print()
+                    return False
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return False
+        else:
+            # Reached end of content
+            break
+    
+    return True
 
 
 def load_config():
@@ -617,7 +677,7 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
         sys.stdout.flush()
         
         if error:
-            print("AI: {}".format(error))
+            paginate_response(error)
             if "API key" in error or "Rate limit" in error:
                 new_provider = offer_provider_switch(config, provider, callsign)
                 if new_provider:
@@ -627,7 +687,7 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                 return
             print("")
         elif greeting:
-            print("AI: {}".format(greeting))
+            paginate_response(greeting)
             print("")
             # Don't add greeting to history - let conversation start fresh
         
@@ -739,7 +799,9 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                 sys.stdout.flush()
                 
                 if error:
-                    print("AI: {}".format(error))
+                    if not paginate_response(error):
+                        print("Exiting...")
+                        return
                     if "API key" in error or "Rate limit" in error:
                         new_provider = offer_provider_switch(config, provider, callsign)
                         if new_provider:
@@ -755,7 +817,9 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
                     if len(conversation_history) > 20:
                         conversation_history = conversation_history[-20:]
                     
-                    print("AI: {}".format(response))
+                    if not paginate_response(response):
+                        print("Exiting...")
+                        return
                 
                 print("")
                 

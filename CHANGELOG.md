@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [AI Pagination and Word Wrapping] - 2026-02-07
+### Changed
+- **ai.py v1.19→1.20**: Added pagination and proper word wrapping for AI responses
+  - Long responses now display with 20 lines per page
+  - Proper word wrapping using textwrap at terminal width (no more broken words)
+  - Pagination prompt: `[Q)uit Enter=more] :>`
+  - User can quit mid-response (Q) or continue reading (Enter)
+  - Saves bandwidth on 1200 baud connections — user controls flow
+
 ## [AI Display - Strip SSID from Callsign] - 2026-02-07
 ### Changed
 - **ai.py v1.18→1.19**: Strip SSID from callsign display (show "KC1JMH" not "KC1JMH-8")
