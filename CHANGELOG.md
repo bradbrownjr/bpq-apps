@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Fix - Update Check Before Menu Display] - 2026-02-07
+### Fixed
+- **Double menu load on 1200 baud**: apps.py displayed the full menu, then discovered
+  an update, restarted, and displayed the full menu again — wasting bandwidth on slow
+  packet radio connections
+- **Fix**: Reordered startup: read callsign from stdin → set BPQ_CALLSIGN env var
+  → check for updates (may os.execv restart) → display menu
+  - Callsign preserved across os.execv restarts via env var inheritance
+  - On restart, callsign recovered from BPQ_CALLSIGN env var (stdin already consumed)
+  - Menu only displayed once, after all updates complete
+- apps.py v1.7 → v1.8
+
 ## [Fix - Callsign Arg Breaking Non-Callsign Apps] - 2026-02-07
 ### Fixed
 - **--callsign arg sent to ALL apps broke QRZ and others**: v1.5 removed the
