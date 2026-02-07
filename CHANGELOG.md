@@ -11,10 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Double menu load on 1200 baud**: apps.py displayed the full menu, then discovered
   an update, restarted, and displayed the full menu again — wasting bandwidth on slow
   packet radio connections
-- **Fix**: Reordered startup: read callsign from stdin → set BPQ_CALLSIGN env var
-  → check for updates (may os.execv restart) → display menu
-  - Callsign preserved across os.execv restarts via env var inheritance
-  - On restart, callsign recovered from BPQ_CALLSIGN env var (stdin already consumed)
+- **Fix**: Reordered startup: read callsign from stdin → inject --callsign into
+  sys.argv → check for updates (may os.execv restart) → display menu
+  - Callsign preserved across os.execv restarts via CLI arg (NOT env var)
+  - On restart, callsign recovered from --callsign arg (stdin already consumed)
+  - Uses CLI args because env vars don't reliably propagate in inetd/BPQ environment
   - Menu only displayed once, after all updates complete
 - apps.py v1.7 → v1.8
 

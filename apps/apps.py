@@ -65,7 +65,9 @@ def check_for_app_update(current_version, script_name):
                         print("Updated to v{}. Restarting...".format(latest_version))
                         print()
                         sys.stdout.flush()
-                        os.execv(script_path, [script_path] + sys.argv[1:])
+                        # Preserve any --callsign arg across restart
+                        restart_args = [script_path] + sys.argv[1:]
+                        os.execv(script_path, restart_args)
                     except Exception:
                         if os.path.exists(temp_path):
                             os.remove(temp_path)
@@ -717,13 +719,17 @@ def main():
         except Exception:
             pass
     
-    # Recover callsign from env var (set before os.execv restart)
+    # Recover callsign from CLI arg (set before os.execv restart)
     if not callsign:
-        callsign = os.environ.get("BPQ_CALLSIGN", "")
+        for i in range(len(sys.argv) - 1):
+            if sys.argv[i] == "--callsign":
+                callsign = sys.argv[i + 1].strip()
+                break
     
-    # Preserve callsign across os.execv restarts via env var
-    if callsign:
-        os.environ["BPQ_CALLSIGN"] = callsign
+    # Inject --callsign into argv so os.execv restart preserves it
+    has_callsign_arg = "--callsign" in sys.argv
+    if callsign and not has_callsign_arg:
+        sys.argv.extend(["--callsign", callsign])
     
     # Check for updates (may restart via os.execv)
     check_for_app_update(VERSION, "apps.py")
