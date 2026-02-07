@@ -477,9 +477,9 @@ def get_recommendation(predictions):
     
     # Get current UTC time
     utc_now = datetime.utcnow()
-    utc_str = utc_now.strftime("%H%M UTC")
+    utc_str = utc_now.strftime("%H:%M")
     
-    return "Recommended: {} ({}, {})\n  UTC: {}".format(
+    return "Recommended: {} ({}, {})\nCurrent time: {} UTC".format(
         best['band'], 
         best['rel_label'],
         best['best_hours'],
