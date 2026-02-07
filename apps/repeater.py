@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.10
+Version: 1.11
 Date: January 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.10"
+VERSION = "1.11"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -79,10 +79,11 @@ def check_for_app_update(current_version, script_name):
                     os.chmod(temp_path, current_mode)
                     os.replace(temp_path, script_path)
                     
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run to use updated version.")
-                    print("\nQuitting...")
-                    sys.exit(0)
+                    print("Updated to v{}. Restarting...".format(github_version))
+                    print()
+                    sys.stdout.flush()
+                    restart_args = [script_path] + sys.argv[1:]
+                    os.execv(script_path, restart_args)
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     if os.path.exists(temp_path):

@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.4
+Version: 1.5
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -25,7 +25,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.4"
+VERSION = "1.5"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -91,10 +91,11 @@ def check_for_app_update(current_version, script_name):
                         os.rename(temp_path, script_path)
                         os.chmod(script_path, current_mode)
                         
-                        print("\nUpdate installed successfully!")
-                        print("Please re-run this command to use the updated version.")
-                        print("\nQuitting...")
-                        sys.exit(0)
+                        print("Updated to v{}. Restarting...".format(remote_version))
+                        print()
+                        sys.stdout.flush()
+                        restart_args = [script_path] + sys.argv[1:]
+                        os.execv(script_path, restart_args)
                     except Exception as e:
                         if os.path.exists(temp_path):
                             os.remove(temp_path)

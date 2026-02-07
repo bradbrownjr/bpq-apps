@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Club Calendar - Display ham radio club events from iCal feed
-Version: 2.7
+Version: 2.8
 
 Fetches and displays upcoming events from an iCalendar (.ics) URL.
 Designed for BPQ32 packet radio networks with ASCII-only output.
@@ -30,7 +30,7 @@ from urllib.error import URLError
 import re
 
 
-VERSION = "2.7"
+VERSION = "2.8"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "eventcal.conf")
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eventcal_cache.json')
 
@@ -120,10 +120,11 @@ def check_for_app_update(current_version, script_name):
                         os.chmod(temp_path, os.stat(script_path).st_mode)
                     
                     os.replace(temp_path, script_path)
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nQuitting...")
-                    sys.exit(0)
+                    print("Updated to v{}. Restarting...".format(remote_version))
+                    print()
+                    sys.stdout.flush()
+                    restart_args = [script_path] + sys.argv[1:]
+                    os.execv(script_path, restart_args)
                 except Exception:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)

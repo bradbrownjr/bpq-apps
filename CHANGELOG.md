@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Auto-Restart After Update - All Apps] - 2026-02-07
+### Changed
+- **All 20 apps now auto-restart after update** via `os.execv()` instead of
+  printing "Please re-run" and exiting. User sees "Updated to vX.Y. Restarting..."
+  and the app immediately relaunches with the new version.
+- Works in both launch modes:
+  - **From apps.py menu**: `--callsign` arg in argv survives os.execv; subprocess
+    returns normally when updated app finishes
+  - **Direct from BPQ node**: stdin (TCP socket fd) preserved across os.execv;
+    callsign still in buffer for new process to read
+- Saves users from navigating back through menus on 1200 baud connections
+- dict.py: Removed dead `return True` / caller check pattern (os.execv never returns)
+
+### Version Bumps
+- ai.py 1.17→1.18, antenna.py 1.4→1.5, callout.py 1.1→1.2,
+  dict.py 1.11→1.12, eventcal.py 2.7→2.8, feed.py 1.6→1.7,
+  forms.py 1.12→1.13, gopher.py 1.43→1.44, hamqsl.py 1.2→1.3,
+  hamtest.py 1.3→1.4, predict.py 1.17→1.18, qrz3.py 1.2→1.3,
+  repeater.py 1.10→1.11, rss-news.py 1.14→1.15, space.py 1.3→1.4,
+  wall.py 1.6→1.7, wiki.py 2.6→2.7, www.py 1.6→1.7,
+  wx.py 4.8→4.9, wx-me.py 1.3→1.4
+
 ## [Fix - Update Check Before Menu Display] - 2026-02-07
 ### Fixed
 - **Double menu load on 1200 baud**: apps.py displayed the full menu, then discovered

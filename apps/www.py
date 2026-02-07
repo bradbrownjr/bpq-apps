@@ -16,7 +16,7 @@ Features:
 - Smart word wrapping for terminal width
 
 Author: Brad Brown KC1JMH
-Version: 1.6
+Version: 1.7
 Date: January 2026
 """
 
@@ -32,7 +32,7 @@ try:
 except ImportError:
     from urlparse import urljoin, urlparse
 
-VERSION = "1.6"
+VERSION = "1.7"
 APP_NAME = "www.py"
 
 # Check Python version
@@ -75,10 +75,11 @@ def check_for_app_update(current_version, script_name):
                              stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                     os.replace(temp_path, script_path)
                     
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nExiting...")
-                    sys.exit(0)
+                    print("Updated to v{}. Restarting...".format(github_version))
+                    print()
+                    sys.stdout.flush()
+                    restart_args = [script_path] + sys.argv[1:]
+                    os.execv(script_path, restart_args)
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     if os.path.exists(temp_path):

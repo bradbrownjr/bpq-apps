@@ -14,7 +14,7 @@ Features:
 - Link to ARRL test session locator for successful candidates
 
 Author: Brad Brown KC1JMH
-Version: 1.3
+Version: 1.4
 Date: January 2026
 """
 
@@ -31,7 +31,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 hamtest.py")
     sys.exit(1)
 
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "hamtest.py"
 
 import os
@@ -76,10 +76,11 @@ def check_for_app_update(current_version, script_name):
                     # Replace old file with new one
                     os.replace(temp_path, script_path)
                     
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nQuitting...")
-                    sys.exit(0)
+                    print("Updated to v{}. Restarting...".format(github_version))
+                    print()
+                    sys.stdout.flush()
+                    restart_args = [script_path] + sys.argv[1:]
+                    os.execv(script_path, restart_args)
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     # Clean up temp file if it exists

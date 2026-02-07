@@ -4,9 +4,9 @@ QRZ Callsign Lookup for Packet Radio
 ------------------------------------
 Query QRZ XML API for amateur radio operator information.
 
-Version: 1.2
+Version: 1.3
 """
-VERSION = "1.2"
+VERSION = "1.3"
 APP_NAME = "qrz3.py"
 
 # Original script acquired from https://github.com/hink/qrzpy/blob/master/qrz3.py
@@ -71,10 +71,11 @@ def check_for_app_update(current_version, script_name):
                     # Replace old file with new one
                     os.replace(temp_path, script_path)
                     
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nQuitting...")
-                    sys.exit(0)
+                    print("Updated to v{}. Restarting...".format(github_version))
+                    print()
+                    sys.stdout.flush()
+                    restart_args = [script_path] + sys.argv[1:]
+                    os.execv(script_path, restart_args)
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     # Clean up temp file if it exists

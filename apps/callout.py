@@ -15,14 +15,14 @@ This demonstrates the callsign capture mechanism that can be used
 in other applications like forms.py.
 
 Author: Brad Brown KC1JMH
-Version: 1.1
+Version: 1.2
 Date: October 2025
 """
 
 import sys
 import os
 
-VERSION = "1.1"
+VERSION = "1.2"
 APP_NAME = "callout.py"
 
 def check_for_app_update(current_version, script_name):
@@ -60,10 +60,11 @@ def check_for_app_update(current_version, script_name):
                     # Replace old file with new one
                     os.replace(temp_path, script_path)
                     
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nQuitting...")
-                    sys.exit(0)
+                    print("Updated to v{}. Restarting...".format(github_version))
+                    print()
+                    sys.stdout.flush()
+                    restart_args = [script_path] + sys.argv[1:]
+                    os.execv(script_path, restart_args)
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     # Clean up temp file if it exists

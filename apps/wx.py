@@ -19,7 +19,7 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.8
+Version: 4.9
 Date: January 2026
 
 NWS API Documentation:
@@ -43,7 +43,7 @@ import time
 import json
 from datetime import datetime
 
-VERSION = "4.8"
+VERSION = "4.9"
 APP_NAME = "wx.py"
 
 # Cache file path (alongside script)
@@ -79,10 +79,11 @@ def check_for_app_update(current_version, script_name):
                              stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                     os.replace(temp_path, script_path)
                     
-                    print("\nUpdate installed successfully!")
-                    print("Please re-run this command to use the updated version.")
-                    print("\nQuitting...")
-                    sys.exit(0)
+                    print("Updated to v{}. Restarting...".format(github_version))
+                    print()
+                    sys.stdout.flush()
+                    restart_args = [script_path] + sys.argv[1:]
+                    os.execv(script_path, restart_args)
                 except Exception as e:
                     print("\nError installing update: {}".format(e))
                     if os.path.exists(temp_path):
