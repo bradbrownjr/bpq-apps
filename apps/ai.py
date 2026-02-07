@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chat Assistant for Amateur Radio Operators
-Version: 1.18
+Version: 1.19
 
 Interactive AI chat using Google Gemini API.
 Designed for BPQ32 packet radio with ham radio context and etiquette.
@@ -29,7 +29,7 @@ import readline
 from urllib.request import urlopen, Request, HTTPError, URLError
 from urllib.parse import urlencode
 
-VERSION = "1.18"
+VERSION = "1.19"
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ai.conf")
 
 # Ham Radio Ten Commandments for system prompt
@@ -605,9 +605,9 @@ Goodbye: Use ham sign-offs (73!, Good DX!, See you down the log!, Keep the shack
 """.format(ai_name, ai_name)
         
         if operator_name:
-            system_context += "Operator: {} {}".format(operator_name, callsign if callsign else "")
+            system_context += "Operator: {} {}".format(operator_name, extract_base_call(callsign) if callsign else "")
         elif callsign:
-            system_context += "Callsign: {}".format(callsign)
+            system_context += "Callsign: {}".format(extract_base_call(callsign))
         
         greeting_prompt = system_context + "\n\nGreet the operator. Keep it brief and friendly."
         
@@ -942,13 +942,13 @@ def main():
     
     if arg_call and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', arg_call):
         callsign = arg_call
-        print("Callsign: {}".format(callsign))
+        print("Callsign: {}".format(extract_base_call(callsign)))
         operator_name = lookup_operator_name(callsign)
     else:
         env_call = os.environ.get("BPQ_CALLSIGN", "").strip()
         if env_call and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', env_call):
             callsign = env_call
-            print("Callsign: {}".format(callsign))
+            print("Callsign: {}".format(extract_base_call(callsign)))
             operator_name = lookup_operator_name(callsign)
         else:
             try:
@@ -959,7 +959,7 @@ def main():
                         force_menu = True
                     elif first_line and re.match(r'^[A-Z]{1,2}\d[A-Z]{1,3}(-\d{1,2})?$', first_line):
                         callsign = first_line
-                        print("Callsign: {}".format(callsign))
+                        print("Callsign: {}".format(extract_base_call(callsign)))
                         operator_name = lookup_operator_name(callsign)
             except Exception:
                 pass

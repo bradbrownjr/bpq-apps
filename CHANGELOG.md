@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [AI Display - Strip SSID from Callsign] - 2026-02-07
+### Changed
+- **ai.py v1.18→1.19**: Strip SSID from callsign display (show "KC1JMH" not "KC1JMH-8")
+  - Updated all callsign display prints to use `extract_base_call()`
+  - Updated AI system context to use base call for cleaner operator identification
+  - Internal callsign variable still includes SSID for proper routing/logging
+
 ## [Auto-Restart After Update - All Apps] - 2026-02-07
 ### Changed
 - **All 20 apps now auto-restart after update** via `os.execv()` instead of
