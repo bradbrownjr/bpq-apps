@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 1.6
+Version: 1.7
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-05
 """
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "1.6"
+VERSION = "1.7"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -71,6 +71,29 @@ def check_for_app_update(current_version, script_name):
                             os.remove(temp_path)
                         raise
                 break
+    except Exception:
+        pass
+    
+    # Also update apps.json if newer version available
+    try:
+        apps_json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apps.json")
+        url = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/apps.json"
+        response = urlopen(url, timeout=3)
+        remote_content = response.read()
+        if sys.version_info[0] >= 3:
+            remote_content = remote_content.decode('utf-8')
+        
+        # Compare with local file
+        update_needed = True
+        if os.path.exists(apps_json_path):
+            with open(apps_json_path, 'r') as f:
+                local_content = f.read()
+            if local_content.strip() == remote_content.strip():
+                update_needed = False
+        
+        if update_needed:
+            with open(apps_json_path, 'w') as f:
+                f.write(remote_content)
     except Exception:
         pass
 
@@ -264,11 +287,12 @@ def display_menu(installed_apps, callsign):
 def launch_app(app, callsign):
     """Launch selected app with callsign via CLI arg and env var."""
     executable = app["executable"]
+    needs_callsign = app.get("needs_callsign", False)
     
     try:
         env = os.environ.copy()
         args = [executable]
-        if callsign:
+        if needs_callsign and callsign:
             env["BPQ_CALLSIGN"] = callsign
             args.extend(["--callsign", callsign])
         

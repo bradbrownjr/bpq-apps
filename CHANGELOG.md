@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Fix - Callsign Arg Breaking Non-Callsign Apps] - 2026-02-07
+### Fixed
+- **--callsign arg sent to ALL apps broke QRZ and others**: v1.5 removed the
+  `needs_callsign` gate so all apps received `--callsign CALL` as argv. Apps like
+  qrz3.py interpreted this as a callsign to look up, showing "No data found on --callsign"
+- **Root cause recap**: The gate was removed because apps.json doesn't auto-update,
+  so new `needs_callsign: true` flags never reached production
+- **Real fix**: Two-part solution:
+  1. Restored `needs_callsign` gate in `launch_app()` — only apps flagged in apps.json get the arg
+  2. Added **apps.json auto-update** — apps.py now downloads latest apps.json from GitHub
+     on every startup (compares content, only writes if different)
+- This ensures new `needs_callsign` flags reach production without manual deployment
+- apps.py v1.6 → v1.7
+
 ## [Critical Fix - Module Reload Not Assigning] - 2026-02-07
 ### Fixed
 - **Module reload broken**: v1.16 added importlib.reload() calls but didn't assign
