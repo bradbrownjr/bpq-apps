@@ -32,6 +32,10 @@ Packet radio apps for AX.25 networks via linbpq BBS. Target: RPi 3B, Raspbian 9,
   - 3-second timeout for GitHub checks (silent failure if no internet)
   - Atomic updates with executable permission preservation
   - Clean error handling with temporary file cleanup
+  - **Auto-restart via `os.execv()`**: After successful update, apps restart themselves
+    - User sees "Updated to vX.Y. Restarting..." and app relaunches immediately
+    - Works from both apps.py menu (argv preserved) and direct BPQ launch (TCP socket fd preserved)
+    - Never use `sys.exit(0)` + "Please re-run" pattern anymore
 - **README Documentation:** All README.md files longer than one paragraph must include table of contents
 - **Version bumping protocol:**
   - **CRITICAL: Both docstring AND VERSION variable must be updated together**
@@ -651,6 +655,18 @@ When adding a new BPQ application, you MUST:
 - Must cleanup temp files on failure: `try/finally` with `os.remove(temp_path)`
 - Version comparison: Parse as tuples `(1, 2, 3)` for proper numeric comparison
 - Timeout: Hardcode to 3 seconds (never configurable - user frustration)
+- **Auto-restart pattern** (required in all apps):
+  ```python
+  print("Updated to v{}. Restarting...".format(github_version))
+  print()
+  sys.stdout.flush()
+  restart_args = [script_path] + sys.argv[1:]
+  os.execv(script_path, restart_args)
+  ```
+  - `os.execv()` preserves TCP socket file descriptors (stdin/stdout)
+  - Works from apps.py menu: `--callsign` arg in argv survives restart
+  - Works direct from BPQ: callsign still in stdin buffer for new process
+  - Never returns - no need for `sys.exit(0)` after
 - **Before committing version bumps, verify:** `grep "Version:" appname.py` matches `grep "^VERSION = " appname.py`
 
 **Network Resilience:**
