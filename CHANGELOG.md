@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Critical Fix - Module Files Not Actually Reloading] - 2026-02-07
+### Fixed
+- **Module files downloaded but not reloaded**: predict.py v1.15 added version-checking
+  for module files and downloaded them, but Python had already imported the old versions
+  into memory during startup. Modules were updated on disk but never reloaded.
+- **Solution**: After check_for_app_update() call, added `importlib.reload()` for
+  geo, solar, and ionosphere modules. Ensures fresh versions are used immediately.
+  - Modules now: import → update check → reload → execute
+- predict.py v1.15 → v1.16
+
 ## [Fix - Module Files Not Auto-Updating] - 2026-02-07
 ### Fixed
 - **Module files (geo.py, solar.py, ionosphere.py) not updating**: predict.py only checked
