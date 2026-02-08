@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.13
+Version: 1.14
 Date: February 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.13"
+VERSION = "1.14"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -419,6 +419,7 @@ def display_repeaters(repeaters, page=1, per_page=4):
 def filter_by_band(repeaters, band):
     """Filter repeaters by band"""
     band_filters = {
+        '10': (28.0, 29.7),
         '6': (50.0, 54.0),
         '2': (144.0, 148.0),
         '1.25': (219.0, 225.0),
@@ -612,7 +613,7 @@ def search_by_gridsquare():
         radius = 25
     
     try:
-        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [10,6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -720,7 +721,7 @@ def search_by_callsign(default_callsign=None):
         radius = 25
     
     try:
-        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [10,6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -857,7 +858,7 @@ def search_my_location():
         radius = 25
     
     try:
-        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [10,6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -937,7 +938,7 @@ def search_by_state():
         radius = 25
     
     try:
-        band_input = input("Band [6,2,1.25,70,33,23] or Enter for all: ").strip()
+        band_input = input("Band [10,6,2,1.25,70,33,23] or Enter for all: ").strip()
     except EOFError:
         band_input = ""
     
@@ -1035,9 +1036,10 @@ def browse_results(repeaters):
             return
         
         if choice == 'Q':
-            return
+            print("\nExiting...")
+            sys.exit(0)
         elif choice == 'M':
-            display_repeaters(repeaters, page, per_page)
+            break  # Return to main menu
         elif choice == 'N' and page < total_pages:
             page += 1
         elif choice == 'P' and page > 1:
