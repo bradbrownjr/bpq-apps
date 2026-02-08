@@ -1403,10 +1403,10 @@ def show_formulas():
 
 def show_band_plans():
     """Band plan country selector."""
-    # Check if default country is configured
+    # Check if default country is configured - show it first
     if DEFAULT_COUNTRY and DEFAULT_COUNTRY in BAND_PLANS:
         show_country_plan(BAND_PLANS[DEFAULT_COUNTRY], DEFAULT_COUNTRY)
-        return
+        # After viewing default, fall through to country selector
     
     while True:
         print("\n" + "-" * 40)
@@ -1468,8 +1468,8 @@ def show_country_plan(plan, country_key):
         max_range = max(len(b["range"]) for b in bands)
 
         # Print header
-        print(" {:{}} {:{}}  {}".format(
-            "#", 3, "Band", max_band,
+        print(" {:2} {:{}}  {}".format(
+            "#", "Band", max_band,
             "Range".ljust(max_range) + "  " + cls_hdr))
 
         for i, band in enumerate(bands, 1):
