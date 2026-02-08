@@ -5,9 +5,9 @@ Dictionary Lookup Application for BPQ32 Packet Radio
 Uses the Linux 'dict' command to query dictd servers for word definitions.
 Provides simple interface for amateur radio operators to look up word meanings.
 
-Version: 1.13
+Version: 1.14
 Author: Brad Brown, KC1JMH
-Date: January 24, 2026
+Date: February 8, 2026
 """
 
 import sys
@@ -17,7 +17,7 @@ import os
 import tempfile
 import stat
 
-VERSION = "1.13"
+VERSION = "1.14"
 
 # ASCII Art Logo (lowercase "dict" from asciiart.eu)
 LOGO = r"""
@@ -197,7 +197,7 @@ def format_output(text, width):
 def paginate_output(lines):
     """
     Display lines with pagination (20 lines per page).
-    Returns True if user quit, False if completed normally.
+    Returns True if user quit app, False if returned to menu/completed.
     """
     line_count = 0
     for line in lines:
@@ -208,14 +208,16 @@ def paginate_output(lines):
         # Paginate every 20 lines
         if line_count % 20 == 0 and line_count < len(lines):
             try:
-                sys.stdout.write("(Q to quit, Enter=more) ")
+                sys.stdout.write("[Q)uit M)enu Enter=more] :> ")
                 sys.stdout.flush()
                 response = sys.stdin.readline().strip().upper()
                 if response == 'Q':
                     return True
+                elif response == 'M':
+                    return False  # Return to menu
             except (EOFError, KeyboardInterrupt):
                 return True
-    return False
+    return False  # Completed normally
 
 
 def main():
@@ -279,14 +281,14 @@ def main():
             lines = format_output(output, width)
             user_quit = paginate_output(lines)
             
-            print("-" * 40)
-            sys.stdout.flush()
-            
             if user_quit:
                 print("")
                 print("Exiting...")
                 sys.stdout.flush()
                 break
+            
+            print("-" * 40)
+            sys.stdout.flush()
         
         except KeyboardInterrupt:
             print("")
