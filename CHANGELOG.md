@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [M)ain → M)enu Rename] - 2026-02-08
+### Changed
+- Renamed M)ain to M)enu in all app prompts to avoid confusion with
+  apps.py main menu. M)enu clearly refers to the current app's menu.
+- **wx.py v4.11→4.12**: All pagination and report menu prompts
+- **wiki.py v2.8→2.9**: All 8 pagination/search/article prompts
+- **gopher.py v1.45→1.46**: Help text and main navigation prompt
+- **htmlview.py v1.21→1.22**: All 5 navigation and content prompts
+- **www.py v1.8→1.9**: Bookmark menu and comment
+- **repeater.py v1.12→1.13**: Detail view prompts
+- Updated copilot-instructions.md: M)enu standard, removed deprecated
+  M)ain historical context section
+
+## [Post-Exit Prompt Fix] - 2026-02-08
+### Changed
+- **apps.py v1.9→2.0**: Removed redundant Q)uit from post-exit prompt.
+  After child app exits, shows `[Enter=continue]` instead of
+  `[Q)uit Enter=continue]`.
+
 ## [Prompt Standardization - All Apps] - 2026-02-07
 ### Changed
 - **Holistic prompt ordering standardization across all 18 apps**

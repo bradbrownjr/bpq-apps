@@ -269,14 +269,14 @@ Menu: [options] :>
 **Standard Prompt Ordering** (REQUIRED - consistent design across all apps):
 Order commands from furthest to closest scope relative to current page:
 1. **Exit scope**: Q)uit (exit app entirely)
-2. **Main menu scope**: M)ain (return to main menu)
+2. **Menu scope**: M)enu (return to app's main menu)
 3. **Parent scope**: B)ack (return to previous page/menu)
 4. **Page navigation**: P)age, L)inks, #=follow (navigate within document)
 5. **Current content**: Enter=more (advance on current page)
 
 Example pagination prompt:
 ```
-(1/5) [Q)uit M)ain B)ack P)age L)inks #=follow Enter=more] :>
+(1/5) [Q)uit M)enu B)ack P)age L)inks #=follow Enter=more] :>
 ```
 
 Benefits:
@@ -289,14 +289,10 @@ Implementation notes:
 - Apply to ALL interactive prompts in pagination, menus, and dialogs
 - Disable unavailable options (e.g., omit Enter=more if at end)
 - Maintain ordering even when some options absent (don't rearrange)
-- Page menu example: `Select [1-50] Q)uit M)ain B)ack Enter=more :>`
-- Content links example: `(#=select Q)uit M)ain B)ack Enter=more) :>`
+- Page menu example: `Select [1-50] Q)uit M)enu B)ack Enter=more :>`
+- Content links example: `(#=select Q)uit M)enu B)ack Enter=more) :>`
 
-Historical context:
-- **M)enu command** (deprecated - use M)ain instead): When displaying paginated results/menus, include M)enu to redisplay current page
-  - Example: `[1-10] M)enu Q)uit :>` allows user to see menu again without navigating
-  - Reduces frustration from scrollback limitations on packet radio terminals
-  - See wiki.py and gopher.py for reference implementation (legacy pattern - update to M)ain for consistency)
+**Why M)enu not M)ain**: Avoids confusion with apps.py main menu. M)enu clearly refers to the current app's menu.
 
 ## Amateur Radio Formats
 **Callsigns**: 1-2 prefix letters, digit, 1-3 suffix letters, optional -SSID (0-15)

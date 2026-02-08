@@ -13,15 +13,15 @@ Features:
 - Simple command-based navigation
 
 Author: Brad Brown KC1JMH
-Version: 1.45
-Date: January 2026
+Version: 1.46
+Date: February 2026
 """
 
 import sys
 import os
 import json
 
-VERSION = "1.45"
+VERSION = "1.46"
 APP_NAME = "gopher.py"
 
 # Check Python version
@@ -944,7 +944,7 @@ class GopherClient:
         print("-" * 40)
         print("  Q)uit    - Exit (works from any menu)")
         print("  H)ome    - Go to home page")
-        print("  M)ain    - Redisplay current menu")
+        print("  M)enu    - Redisplay current menu")
         print("  B)ack    - Back to previous view")
         print("  P)rev    - Previous page (within results)")
         print("  W)here   - Show current URL")
@@ -1031,7 +1031,7 @@ class GopherClient:
             try:
                 # Context-aware prompt
                 if self.current_state == 'menu':
-                    prompt = "\nMenu: Q)uit H)ome B)ack M)ain G)o [#] ?)Help :> "
+                    prompt = "\nMenu: Q)uit H)ome B)ack M)enu G)o [#] ?)Help :> "
                 elif self.current_state == 'article':
                     prompt = "\nArticle: Q)uit H)ome B)ack M)arks G)o ?)Help :> "
                 else:

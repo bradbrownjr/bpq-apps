@@ -16,8 +16,8 @@ Features:
 - Smart word wrapping for terminal width
 
 Author: Brad Brown KC1JMH
-Version: 1.8
-Date: January 2026
+Version: 1.9
+Date: February 2026
 """
 
 import sys
@@ -32,7 +32,7 @@ try:
 except ImportError:
     from urlparse import urljoin, urlparse
 
-VERSION = "1.8"
+VERSION = "1.9"
 APP_NAME = "www.py"
 
 # Check Python version
@@ -468,7 +468,7 @@ def main():
             for i, (name, url) in enumerate(BOOKMARKS, 1):
                 print("{}. {}".format(i, name))
             
-            bookmark_choice = input("\nQ)uit M)ain [1-{}] :> ".format(len(BOOKMARKS))).strip().lower()
+            bookmark_choice = input("\nQ)uit M)enu [1-{}] :> ".format(len(BOOKMARKS))).strip().lower()
             if bookmark_choice == 'q':
                 print("\nExiting...")
                 sys.exit(0)
@@ -522,7 +522,7 @@ def main():
                 print("\nExiting...")
                 sys.exit(0)
             elif next_url == '__MAIN__':
-                # User pressed M)ain - return to main menu
+                # User pressed M)enu - return to main menu
                 current_url = None
             elif next_url:
                 print("\nLoading...")

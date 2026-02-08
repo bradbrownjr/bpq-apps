@@ -14,8 +14,8 @@ Features:
 - Importable by other apps (www.py, gopher.py, wiki.py, rss-news.py)
 
 Author: Brad Brown KC1JMH
-Version: 1.21
-Date: January 2026
+Version: 1.22
+Date: February 2026
 """
 
 import sys
@@ -23,7 +23,7 @@ import os
 import re
 import textwrap
 
-VERSION = "1.21"
+VERSION = "1.22"
 MODULE_NAME = "htmlview.py"
 
 # Default settings (can be overridden)
@@ -1024,7 +1024,7 @@ class HTMLViewer:
                 # Prompt order: furthest to closest from current page
                 # Exit/Nav (furthest) -> Local content (closest)
                 prompt_parts.append("Q)uit")
-                prompt_parts.append("M)ain")
+                prompt_parts.append("M)enu")
                 prompt_parts.append("B)ack")
                 prompt_parts.append("W)here")
                 if has_nav:
@@ -1131,9 +1131,9 @@ class HTMLViewer:
             
             # Build prompt based on position (furthest to closest)
             if end < total_links:
-                prompt = "Q)uit M)ain B)ack W)here [1-{}] Enter=more :> ".format(total_links)
+                prompt = "Q)uit M)enu B)ack W)here [1-{}] Enter=more :> ".format(total_links)
             else:
-                prompt = "Q)uit M)ain B)ack W)here [1-{}] :> ".format(total_links)
+                prompt = "Q)uit M)enu B)ack W)here [1-{}] :> ".format(total_links)
             
             try:
                 response = input(prompt).strip().lower()
@@ -1187,7 +1187,7 @@ class HTMLViewer:
             
             if end < total_links:
                 try:
-                    response = input("\nQ)uit M)ain B)ack W)here #=select Enter=more :> ").strip().lower()
+                    response = input("\nQ)uit M)enu B)ack W)here #=select Enter=more :> ").strip().lower()
                 except EOFError:
                     return None
                 
@@ -1211,7 +1211,7 @@ class HTMLViewer:
                     return self._get_content_link(int(response))
             else:
                 try:
-                    response = input("\nQ)uit M)ain B)ack W)here [1-{}] :> ".format(total_links)).strip().lower()
+                    response = input("\nQ)uit M)enu B)ack W)here [1-{}] :> ".format(total_links)).strip().lower()
                 except EOFError:
                     return None
                 

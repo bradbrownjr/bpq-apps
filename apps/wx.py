@@ -19,8 +19,8 @@ Features:
 - Graceful offline fallback
 
 Author: Brad Brown KC1JMH
-Version: 4.10
-Date: January 2026
+Version: 4.12
+Date: February 2026
 
 NWS API Documentation:
 - Service overview: https://www.weather.gov/documentation/services-web-api
@@ -43,7 +43,7 @@ import time
 import json
 from datetime import datetime
 
-VERSION = "4.10"
+VERSION = "4.12"
 APP_NAME = "wx.py"
 
 # Cache file path (alongside script)
@@ -113,13 +113,20 @@ def compare_versions(version1, version2):
         return 0
 
 
+class ReturnToMenu(Exception):
+    """Signal to return to reports menu."""
+    pass
+
+
 def continue_prompt():
-    """Show continue prompt with Q)uit escape option."""
+    """Show continue prompt with Q)uit and M)enu options."""
     try:
-        resp = input("\n[Q)uit Enter=continue] :> ").strip().upper()
+        resp = input("\n[Q)uit M)enu Enter=continue] :> ").strip().upper()
         if resp == 'Q':
             print("\nExiting...")
             sys.exit(0)
+        elif resp == 'M':
+            raise ReturnToMenu()
     except (EOFError, KeyboardInterrupt):
         print("\nExiting...")
         sys.exit(0)
@@ -1405,7 +1412,7 @@ def print_reports_menu(location_desc, is_coastal, alerts=None, has_winter=False,
     print()
     if alerts and len(alerts) > 0:
         print("* Alert details may be found here")
-    print("Q)uit B)ack [1-16] :>")
+    print("Q)uit M)enu B)ack [1-16] :>")
 
 
 def show_7day_forecast(latlon):
@@ -1600,10 +1607,12 @@ def show_winter_weather(wfo):
             if line_count >= 20:
                 print()
                 try:
-                    response = input("[Q)uit Enter=more] :> ").strip().upper()
+                    response = input("[Q)uit M)enu Enter=more] :> ").strip().upper()
                     if response == 'Q':
                         user_quit = True
                         break
+                    elif response == 'M':
+                        raise ReturnToMenu()
                 except (EOFError, KeyboardInterrupt):
                     user_quit = True
                     break
@@ -1757,10 +1766,12 @@ def show_hazardous_weather_outlook(wfo):
         if line_count >= 20:
             print()
             try:
-                response = input("[Q)uit Enter=more] :> ").strip().upper()
+                response = input("[Q)uit M)enu Enter=more] :> ").strip().upper()
                 if response == 'Q':
                     user_quit = True
                     break
+                elif response == 'M':
+                    raise ReturnToMenu()
             except (EOFError, KeyboardInterrupt):
                 user_quit = True
                 break
@@ -1804,10 +1815,12 @@ def show_regional_weather_summary(wfo):
         if line_count >= 20:
             print()
             try:
-                response = input("[Q)uit Enter=more] :> ").strip().upper()
+                response = input("[Q)uit M)enu Enter=more] :> ").strip().upper()
                 if response == 'Q':
                     user_quit = True
                     break
+                elif response == 'M':
+                    raise ReturnToMenu()
             except (EOFError, KeyboardInterrupt):
                 user_quit = True
                 break
@@ -2304,66 +2317,74 @@ def main():
                 print("\nExiting...")
                 sys.exit(0)
             
-            elif choice == 'B':
-                # Back to main menu
+            elif choice == 'M':
+                # Return to location selection menu
                 break
             
-            # Immediate conditions (1-3)
-            elif choice == '1':
-                show_current_observations(selected_latlon)
+            elif choice == 'B':
+                # Back to location selection menu (same as M)enu here)
+                break
             
-            elif choice == '2':
-                show_hourly_forecast(selected_latlon)
+            try:
+                # Immediate conditions (1-3)
+                if choice == '1':
+                    show_current_observations(selected_latlon)
+                
+                elif choice == '2':
+                    show_hourly_forecast(selected_latlon)
+                
+                elif choice == '3':
+                    show_7day_forecast(selected_latlon)
+                
+                # Safety & alerts (4-5)
+                elif choice == '4':
+                    show_alerts(alerts, skywarn_status, skywarn_active) if alerts else print("No active alerts.")
+                
+                elif choice == '5':
+                    show_hazardous_weather_outlook(wfo) if wfo else print("No outlook available.")
+                
+                # Detailed forecasts (6-8)
+                elif choice == '6':
+                    show_zone_forecast(wfo) if wfo else print("No zone forecast available.")
+                
+                elif choice == '7':
+                    show_regional_weather_summary(wfo) if wfo else print("No weather summary available.")
+                
+                elif choice == '8':
+                    show_pop_report(selected_latlon)
+                
+                # Seasonal/situational hazards (9-14)
+                elif choice == '9':
+                    show_winter_weather(wfo) if wfo else print("No winter weather data.")
+                
+                elif choice == '10':
+                    show_heat_cold(alerts) if alerts else print("No advisories.")
+                
+                elif choice == '11':
+                    show_fire_weather(wfo) if wfo else print("No forecast data available.")
+                
+                elif choice == '12':
+                    show_river_flood(alerts) if alerts else print("No flood alerts.")
+                
+                elif choice == '13':
+                    coastal_info = get_coastal_flood_info(selected_latlon) if is_coastal_area else None
+                    show_coastal_flood_info(coastal_info)
+                
+                elif choice == '14':
+                    show_dust_alerts(alerts) if alerts else print("No dust alerts.")
+                
+                # Reference (15-16)
+                elif choice == '15':
+                    show_uv_report(selected_latlon)
+                
+                elif choice == '16':
+                    show_climate_report(wfo) if wfo else print("No climate report available.")
+                
+                else:
+                    print("\nInvalid choice.")
             
-            elif choice == '3':
-                show_7day_forecast(selected_latlon)
-            
-            # Safety & alerts (4-5)
-            elif choice == '4':
-                show_alerts(alerts, skywarn_status, skywarn_active) if alerts else print("No active alerts.")
-            
-            elif choice == '5':
-                show_hazardous_weather_outlook(wfo) if wfo else print("No outlook available.")
-            
-            # Detailed forecasts (6-8)
-            elif choice == '6':
-                show_zone_forecast(wfo) if wfo else print("No zone forecast available.")
-            
-            elif choice == '7':
-                show_regional_weather_summary(wfo) if wfo else print("No weather summary available.")
-            
-            elif choice == '8':
-                show_pop_report(selected_latlon)
-            
-            # Seasonal/situational hazards (9-14)
-            elif choice == '9':
-                show_winter_weather(wfo) if wfo else print("No winter weather data.")
-            
-            elif choice == '10':
-                show_heat_cold(alerts) if alerts else print("No advisories.")
-            
-            elif choice == '11':
-                show_fire_weather(wfo) if wfo else print("No forecast data available.")
-            
-            elif choice == '12':
-                show_river_flood(alerts) if alerts else print("No flood alerts.")
-            
-            elif choice == '13':
-                coastal_info = get_coastal_flood_info(selected_latlon) if is_coastal_area else None
-                show_coastal_flood_info(coastal_info)
-            
-            elif choice == '14':
-                show_dust_alerts(alerts) if alerts else print("No dust alerts.")
-            
-            # Reference (15-16)
-            elif choice == '15':
-                show_uv_report(selected_latlon)
-            
-            elif choice == '16':
-                show_climate_report(wfo) if wfo else print("No climate report available.")
-            
-            else:
-                print("\nInvalid choice.")
+            except ReturnToMenu:
+                continue
 
 
 def update_cache():
