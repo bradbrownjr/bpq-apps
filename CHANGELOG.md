@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [FEED Configuration Fix] - 2026-02-08
+### Fixed
+- **apps.json**: FEED now correctly points to rss-news.py (RSS feed reader)
+  instead of obsolete feed.py (old wall.py duplicate)
+- **wall.py v1.8→1.9**: Changed prompt from "Q" to "Q)uit" for consistency
+- Removed obsolete feed.py file (duplicate of old wall.py message board)
+
 ## [M)ain → M)enu Rename] - 2026-02-08
 ### Changed
 - Renamed M)ain to M)enu in all app prompts to avoid confusion with
