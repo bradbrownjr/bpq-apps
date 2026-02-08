@@ -785,7 +785,7 @@ def main():
             
             print()
             print("-" * 40)
-            print("[Q)uit Enter=continue] :>")
+            print("[Enter=continue] :>")
             try:
                 raw_input() if sys.version_info[0] < 3 else input()
             except (EOFError, KeyboardInterrupt):
