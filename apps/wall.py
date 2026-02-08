@@ -20,7 +20,7 @@ The 'S' flag passes the callsign to the app. The app must handle SSID stripping
 for cleaner display. This script automatically removes SSID (e.g., KC1JMH-8 -> KC1JMH).
 
 Author: Brad Brown KC1JMH
-Version: 1.8
+Version: 1.9
 Date: January 2026
 """
 
@@ -30,7 +30,7 @@ import json
 import re
 from datetime import datetime, timedelta
 
-VERSION = "1.8"
+VERSION = "1.9"
 APP_NAME = "wall.py"
 
 def check_for_app_update(current_version, script_name):
@@ -387,7 +387,7 @@ def main_loop(callsign):
     while True:
         try:
             # Compressed prompt for bandwidth efficiency
-            choice = input("\nMenu: Q P)ost D)el S)tat N)ext Pr)ev :> ").strip().upper()
+            choice = input("\nMenu: Q)uit P)ost D)el S)tat N)ext Pr)ev :> ").strip().upper()
             
             if choice.startswith('Q'):
                 print("\nExiting...")

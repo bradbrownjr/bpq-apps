@@ -24,8 +24,8 @@
       {
         "name": "FEED",
         "description": "News feeds",
-        "executable": "feed.py",
-        "needs_callsign": true
+        "executable": "rss-news.py",
+        "needs_callsign": false
       },
       {
         "name": "GOPHER",
