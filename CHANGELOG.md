@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Band Plans UI Fix] - 2026-02-08
+### Fixed
+- **antenna.py v1.7**: Fixed band plan column alignment - header
+  columns now properly align with data rows (# column reduced
+  from width 3 to 2)
+- **antenna.py v1.7**: Pressing B)ack from default country band
+  plan now shows country selector instead of exiting to main menu
+  (allows access to other countries when DEFAULT_COUNTRY is set)
+
 ## [Band Plans Feature] - 2026-02-08
 ### Added
 - **antenna.py v1.6→1.7**: Comprehensive band plan reference
