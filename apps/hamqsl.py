@@ -6,8 +6,8 @@ Retrieves solar data from hamqsl.com for propagation prediction.
 Supports offline operation with cached data.
 
 Author: Brad Brown KC1JMH
-Version: 1.3
-Date: January 2026
+Version: 1.4
+Date: February 2026
 """
 
 import requests
@@ -18,7 +18,7 @@ import json
 import time
 import socket
 
-VERSION = "1.3"
+VERSION = "1.4"
 APP_NAME = "hamqsl.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hamqsl_cache.json')
 
@@ -244,8 +244,6 @@ def display_solar_data(data, from_cache=False, cache_timestamp=None):
     print('Max Usable Freq: ', data['muf'], end="\t\t")
     print('MUF Factor: ', data['muffactor'])
     print('Crit foF2 Freq: ', data['fof2'])
-    
-    print(lr)
 
 
 def update_cache():
