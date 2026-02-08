@@ -1612,9 +1612,9 @@ def show_country_plan(plan, country_key):
         max_range = max(len(b["range"]) for b in bands)
 
         # Print header
-        print(" {:2} {:{}}  {}".format(
+        print("{:2}) {:{}} {:{}}  {}".format(
             "#", "Band", max_band,
-            "Range".ljust(max_range) + "  " + cls_hdr))
+            "Range", max_range, cls_hdr))
 
         for i, band in enumerate(bands, 1):
             ov = band["overview"]
