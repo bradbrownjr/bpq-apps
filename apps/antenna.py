@@ -1702,12 +1702,12 @@ def show_band_detail(plan, band):
         # Sub-band segment table
         segments = band.get("segments", [])
         if segments:
-            lines.append("{:14} {:7} {}".format(
+            lines.append("{:14} {:10} {}".format(
                 "Segment", "Mode", cls_hdr))
             for seg in segments:
                 freq, modes, access = seg
                 acc = " ".join(access)
-                lines.append("{:14} {:7} {}".format(
+                lines.append("{:14} {:10} {}".format(
                     freq, modes, acc))
 
     # Notes
