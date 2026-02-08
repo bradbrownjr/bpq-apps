@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - US plan includes per-band detail view with sub-band mode
   restrictions, 60m channelized display, calling frequencies
 - ITU Region band width differences reference data
+- DEFAULT_COUNTRY config variable allows sysops to set default
+  country band plan (skips country selector menu)
 
 ## [FEED Configuration Fix] - 2026-02-08
 ### Fixed

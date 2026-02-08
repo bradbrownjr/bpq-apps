@@ -30,6 +30,10 @@ SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
 
+# Default country band plan (US, CA, UK, DE, AU, JP)
+# Set to None or empty string to show country selector menu
+DEFAULT_COUNTRY = "US"
+
 # Speed of light factor for antenna calculations (468 for feet, 143 for meters)
 SPEED_FACTOR_FT = 468
 SPEED_FACTOR_M = 142.65
@@ -1399,6 +1403,11 @@ def show_formulas():
 
 def show_band_plans():
     """Band plan country selector."""
+    # Check if default country is configured
+    if DEFAULT_COUNTRY and DEFAULT_COUNTRY in BAND_PLANS:
+        show_country_plan(BAND_PLANS[DEFAULT_COUNTRY], DEFAULT_COUNTRY)
+        return
+    
     while True:
         print("\n" + "-" * 40)
         print("BAND PLANS")
@@ -1698,6 +1707,13 @@ BAND PLANS
        Germany (BNetzA/CEPT), Australia (ACMA),
        Japan (MIC). Includes sub-band segments,
        mode restrictions, and power limits.
+
+CONFIGURATION
+       DEFAULT_COUNTRY
+              Set default country band plan (US, CA,
+              UK, DE, AU, JP). Set to None or empty
+              string to show country selector menu.
+              Default: US
 """.format(VERSION)
     print(help_text)
 
