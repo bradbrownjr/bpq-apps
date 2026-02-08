@@ -22,8 +22,8 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.18
-Date: January 2026
+Version: 1.19
+Date: February 2026
 """
 
 from __future__ import print_function
@@ -31,7 +31,7 @@ import sys
 import os
 
 # Version check for Python 3.5+
-VERSION = "1.18"
+VERSION = "1.19"
 
 if sys.version_info < (3, 5):
     print("Error: Python 3.5 or higher required.")
@@ -40,7 +40,8 @@ if sys.version_info < (3, 5):
 # Add predict module to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Note: Modules imported after update check, near main()
+# Import predict modules (will be reloaded after update check)
+from predict import geo, solar, ionosphere
 
 APP_NAME = "predict.py"
 
@@ -525,9 +526,6 @@ def show_about():
 
 def main():
     """Main program loop."""
-    # Import modules (may be old version)
-    from predict import geo, solar, ionosphere
-    
     # Try to read callsign - CLI arg first (apps.py), env var, then stdin (BPQ direct)
     my_callsign = None
     my_location = None
@@ -573,6 +571,7 @@ def main():
     check_for_app_update(VERSION, APP_NAME)
     
     # Reload modules in case they were updated
+    global geo, solar, ionosphere
     import importlib
     geo = importlib.reload(geo)
     solar = importlib.reload(solar)
