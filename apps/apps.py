@@ -3,9 +3,9 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 1.9
+Version: 2.0
 Author: Brad Brown Jr (KC1JMH)
-Date: 2026-02-05
+Date: 2026-02-08
 """
 
 import os
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "1.9"
+VERSION = "2.0"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
