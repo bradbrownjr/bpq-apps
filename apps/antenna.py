@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.7
+Version: 1.8
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -25,7 +25,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.7"
+VERSION = "1.8"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -81,6 +81,17 @@ BAND_PLANS = {
                 "segments": [
                     ("1.800-2.000", "All", "YYY.."),
                 ],
+                "key_freqs": [
+                    ("1.800-1.810", "Digital modes"),
+                    ("1.810", "CW QRP calling"),
+                    ("1.838", "PSK31"),
+                    ("1.840", "FT8"),
+                    ("1.842", "JS8Call"),
+                    ("1.845", "SSTV"),
+                    ("1.850", "CW/Phone boundary*"),
+                    ("1.885", "AM calling"),
+                    ("1.900", "SSB activity center"),
+                ],
             },
             {
                 "band": "80m",
@@ -94,6 +105,20 @@ BAND_PLANS = {
                     ("3.800-4.000", "Ph/Im", "YYY.."),
                 ],
                 "notes": ["c=CW only, 200W max"],
+                "key_freqs": [
+                    ("3.560", "CW QRP calling"),
+                    ("3.573", "FT8"),
+                    ("3.575", "FT4"),
+                    ("3.578", "JS8Call"),
+                    ("3.580", "PSK31"),
+                    ("3.583-3.600", "Winlink gateways"),
+                    ("3.585-3.600", "RTTY"),
+                    ("3.790-3.800", "DX window*"),
+                    ("3.845", "SSTV"),
+                    ("3.860", "ARES/Emerg nets"),
+                    ("3.880", "AM calling"),
+                    ("3.985", "SSB QRP calling"),
+                ],
             },
             {
                 "band": "60m",
@@ -111,6 +136,10 @@ BAND_PLANS = {
                     "100W ERP max, USB/CW/Digital",
                     "2.8 kHz bandwidth per channel",
                 ],
+                "key_freqs": [
+                    ("5.357 (Ch3)", "FT8"),
+                    ("5.371 (Ch4)", "Winlink/SHARES"),
+                ],
             },
             {
                 "band": "40m",
@@ -123,6 +152,19 @@ BAND_PLANS = {
                     ("7.175-7.300", "Ph/Im", "YYY.."),
                 ],
                 "notes": ["c=CW only, 200W max"],
+                "key_freqs": [
+                    ("7.030", "CW QRP calling"),
+                    ("7.040", "RTTY DX"),
+                    ("7.047.5", "FT4"),
+                    ("7.070", "PSK31"),
+                    ("7.074", "FT8"),
+                    ("7.078", "JS8Call"),
+                    ("7.080-7.100", "RTTY"),
+                    ("7.083-7.101", "Winlink gateways"),
+                    ("7.171", "SSTV"),
+                    ("7.285", "SSB QRP calling"),
+                    ("7.290", "AM calling"),
+                ],
             },
             {
                 "band": "30m",
@@ -133,6 +175,14 @@ BAND_PLANS = {
                 ],
                 "notes": ["200W PEP all classes",
                            "No phone permitted"],
+                "key_freqs": [
+                    ("10.106", "CW QRP calling"),
+                    ("10.130", "JS8Call"),
+                    ("10.136", "FT8"),
+                    ("10.140", "FT4"),
+                    ("10.141-10.145", "Winlink gateways"),
+                    ("10.142", "PSK31"),
+                ],
             },
             {
                 "band": "20m",
@@ -145,6 +195,20 @@ BAND_PLANS = {
                     ("14.175-14.225", "Ph/Im", "YY..."),
                     ("14.225-14.35", "Ph/Im", "YYY.."),
                 ],
+                "key_freqs": [
+                    ("14.060", "CW QRP calling"),
+                    ("14.070", "PSK31"),
+                    ("14.074", "FT8"),
+                    ("14.078", "JS8Call"),
+                    ("14.080", "FT4"),
+                    ("14.085-14.099", "RTTY"),
+                    ("14.095-14.101", "Winlink gateways"),
+                    ("14.100", "IARU Beacon [AVOID]"),
+                    ("14.230", "SSTV calling"),
+                    ("14.285", "SSB QRP calling"),
+                    ("14.286", "AM calling"),
+                    ("14.300", "Maritime/Emergency"),
+                ],
             },
             {
                 "band": "17m",
@@ -153,6 +217,14 @@ BAND_PLANS = {
                 "segments": [
                     ("18.068-18.11", "CW/D", "YYY.."),
                     ("18.11-18.168", "Ph/Im", "YYY.."),
+                ],
+                "notes": ["WARC band: no contests"],
+                "key_freqs": [
+                    ("18.095", "CW DX window"),
+                    ("18.100", "FT8 / PSK31"),
+                    ("18.103-18.105", "Winlink gateways"),
+                    ("18.104", "FT4 / JS8Call"),
+                    ("18.110", "IARU Beacon [AVOID]"),
                 ],
             },
             {
@@ -167,6 +239,18 @@ BAND_PLANS = {
                     ("21.275-21.45", "Ph/Im", "YYY.."),
                 ],
                 "notes": ["c=CW only, 200W max"],
+                "key_freqs": [
+                    ("21.060", "CW QRP calling"),
+                    ("21.070", "PSK31"),
+                    ("21.074", "FT8"),
+                    ("21.078", "JS8Call"),
+                    ("21.080-21.100", "RTTY"),
+                    ("21.095-21.101", "Winlink gateways"),
+                    ("21.140", "FT4"),
+                    ("21.150", "IARU Beacon [AVOID]"),
+                    ("21.285", "SSB QRP calling"),
+                    ("21.340", "SSTV"),
+                ],
             },
             {
                 "band": "12m",
@@ -175,6 +259,16 @@ BAND_PLANS = {
                 "segments": [
                     ("24.89-24.93", "CW/D", "YYY.."),
                     ("24.93-24.99", "Ph/Im", "YYY.."),
+                ],
+                "notes": ["WARC band: no contests"],
+                "key_freqs": [
+                    ("24.910", "CW QRP calling"),
+                    ("24.915", "FT8"),
+                    ("24.919", "FT4"),
+                    ("24.920", "PSK31"),
+                    ("24.922", "JS8Call"),
+                    ("24.925", "Winlink gateways"),
+                    ("24.930", "IARU Beacon [AVOID]"),
                 ],
             },
             {
@@ -188,7 +282,24 @@ BAND_PLANS = {
                 ],
                 "notes": [
                     "T/N: 28.0-28.5 only, 200W",
-                    "29.60: FM simplex calling",
+                ],
+                "key_freqs": [
+                    ("28.060", "CW QRP calling"),
+                    ("28.074", "FT8"),
+                    ("28.078", "JS8Call"),
+                    ("28.080-28.100", "RTTY"),
+                    ("28.095-28.101", "Winlink gateways"),
+                    ("28.120", "PSK31"),
+                    ("28.180", "FT4"),
+                    ("28.190-28.225", "Beacon sub-band"),
+                    ("28.200", "IARU Beacon [AVOID]"),
+                    ("28.360", "SSB QRP calling"),
+                    ("28.680", "SSTV"),
+                    ("29.00-29.20", "AM sub-band*"),
+                    ("29.30-29.51", "Satellite sub-band*"),
+                    ("29.52-29.58", "FM repeater inputs"),
+                    ("29.600", "FM simplex calling"),
+                    ("29.62-29.68", "FM repeater outputs"),
                 ],
             },
             {
@@ -196,11 +307,21 @@ BAND_PLANS = {
                 "range": "50.00-54.00",
                 "overview": "YYYY.",
                 "segments": [
-                    ("50.00-54.00", "All", "YYYY."),
+                    ("50.00-50.10", "CW", "YYYY."),
+                    ("50.10-50.30", "SSB/CW", "YYYY."),
+                    ("50.30-50.60", "All", "YYYY."),
+                    ("51.00-54.00", "FM/Rpt", "YYYY."),
                 ],
-                "notes": [
-                    "50.125: SSB calling",
-                    "52.525: FM simplex calling",
+                "key_freqs": [
+                    ("50.060-50.080", "Beacon sub-band"),
+                    ("50.090", "CW calling"),
+                    ("50.110", "DX CW/SSB calling"),
+                    ("50.125", "SSB calling"),
+                    ("50.260", "Meteor scatter MSK"),
+                    ("50.313", "FT8"),
+                    ("50.318", "FT4 / JS8Call"),
+                    ("50.680", "SSTV"),
+                    ("52.525", "FM simplex calling"),
                 ],
             },
             {
@@ -208,11 +329,24 @@ BAND_PLANS = {
                 "range": "144.0-148.0",
                 "overview": "YYYY.",
                 "segments": [
-                    ("144.0-148.0", "All", "YYYY."),
+                    ("144.00-144.10", "CW/EME", "YYYY."),
+                    ("144.10-144.30", "SSB/CW", "YYYY."),
+                    ("144.30-144.50", "Sat/OSCAR", "YYYY."),
+                    ("144.50-145.50", "Rpt/Digi", "YYYY."),
+                    ("145.50-146.00", "Sat/Misc", "YYYY."),
+                    ("146.01-148.00", "FM/Rpt", "YYYY."),
                 ],
-                "notes": [
-                    "144.200: SSB calling",
-                    "146.520: FM simplex calling",
+                "key_freqs": [
+                    ("144.174", "FT8"),
+                    ("144.178", "JS8Call"),
+                    ("144.200", "SSB calling"),
+                    ("144.275-144.300", "Beacons only"),
+                    ("144.390", "APRS"),
+                    ("145.800", "ISS voice downlink"),
+                    ("145.825", "ISS packet/APRS"),
+                    ("146.520", "FM simplex calling"),
+                    ("146.535", "ARES simplex"),
+                    ("147.555", "ARES backup simplex"),
                 ],
             },
             {
@@ -220,11 +354,21 @@ BAND_PLANS = {
                 "range": "420.0-450.0",
                 "overview": "YYYY.",
                 "segments": [
-                    ("420.0-450.0", "All", "YYYY."),
+                    ("420.0-432.0", "ATV", "YYYY."),
+                    ("432.0-432.10", "EME/CW", "YYYY."),
+                    ("432.10-433.0", "SSB/Digi", "YYYY."),
+                    ("435.0-438.0", "Sat only*", "YYYY."),
+                    ("442.0-445.0", "FM rptrs", "YYYY."),
+                    ("447.0-450.0", "FM inputs", "YYYY."),
                 ],
                 "notes": [
-                    "446.000: FM simplex calling",
                     "Shared w/ govt radiolocation",
+                ],
+                "key_freqs": [
+                    ("432.100", "SSB/CW calling"),
+                    ("432.174", "FT8"),
+                    ("435.0-438.0", "Satellite [AVOID]"),
+                    ("446.000", "FM simplex calling"),
                 ],
             },
         ],
@@ -1498,11 +1642,11 @@ def show_country_plan(plan, country_key):
 
         has_det = plan.get("has_detail", False)
         if has_det:
-            prompt = ("#=Detail  Q)uit M)enu B)ack"
+            prompt = ("#=Detail  Q)uit M)enu C)ountry"
                        "\nSelect [1-{}] :> ".format(
                            len(bands)))
         else:
-            prompt = "\n[Q)uit M)enu B)ack] :> "
+            prompt = "\n[Q)uit M)enu C)ountry] :> "
 
         try:
             resp = input("\n" + prompt).strip().upper()
@@ -1512,7 +1656,7 @@ def show_country_plan(plan, country_key):
         if resp == 'Q':
             print("\nExiting...")
             sys.exit(0)
-        if resp in ('M', 'B'):
+        if resp in ('M', 'C'):
             return
 
         if has_det:
@@ -1535,53 +1679,89 @@ def show_country_plan(plan, country_key):
 def show_band_detail(plan, band):
     """Show detailed sub-band segments (US)."""
     classes = plan["classes"]
-
-    # Build class header
     cls_hdr = " ".join(c for c in classes)
+    lines = []
 
-    print("\n" + "-" * 40)
-    print("{} {} ({})".format(
+    lines.append("")
+    lines.append("-" * 40)
+    lines.append("{} {} ({})".format(
         "US", band["band"], band["range"]))
-    print(plan["class_labels"])
-    print("-" * 40)
+    lines.append(plan["class_labels"])
+    lines.append("-" * 40)
 
     # Check for channelized band (60m)
     channels = band.get("channels")
     if channels:
-        print("Channelized - 5 USB channels")
-        print("")
-        print(" Ch  Center(kHz)  Dial(kHz)")
+        lines.append("Channelized - 5 USB channels")
+        lines.append("")
+        lines.append(" Ch  Center(kHz)  Dial(kHz)")
         for ch in channels:
-            print(" {}   {:>8}     {:>7}".format(
+            lines.append(" {}   {:>8}     {:>7}".format(
                 ch[0], ch[1], ch[2]))
     else:
         # Sub-band segment table
         segments = band.get("segments", [])
         if segments:
-            print("{:14} {:5} {}".format(
+            lines.append("{:14} {:7} {}".format(
                 "Segment", "Mode", cls_hdr))
             for seg in segments:
                 freq, modes, access = seg
                 acc = " ".join(access)
-                print("{:14} {:5} {}".format(
+                lines.append("{:14} {:7} {}".format(
                     freq, modes, acc))
 
-    print("-" * 40)
-
-    # Print notes
+    # Notes
     notes = band.get("notes", [])
-    for note in notes:
-        print(note)
+    if notes:
+        lines.append("-" * 40)
+        for note in notes:
+            lines.append(note)
 
-    try:
-        resp = input(
-            "\n[Q)uit B)ack Enter=continue] :> "
-        ).strip().upper()
-    except (EOFError, KeyboardInterrupt):
-        return
-    if resp == 'Q':
-        print("\nExiting...")
-        sys.exit(0)
+    # Key frequencies
+    key_freqs = band.get("key_freqs", [])
+    if key_freqs:
+        lines.append("-" * 40)
+        lines.append("KEY FREQUENCIES")
+        lines.append("{:14} {}".format("MHz", "Usage"))
+        for freq, desc in key_freqs:
+            lines.append("{:14} {}".format(freq, desc))
+
+    lines.append("-" * 40)
+    lines.append("*=ARRL voluntary band plan")
+
+    # Paginate output
+    page_size = 20
+    total = len(lines)
+    pos = 0
+
+    while pos < total:
+        end = min(pos + page_size, total)
+        for line in lines[pos:end]:
+            print(line)
+        pos = end
+
+        if pos < total:
+            try:
+                resp = input(
+                    "\n[Q)uit B)ack Enter=more] :> "
+                ).strip().upper()
+            except (EOFError, KeyboardInterrupt):
+                return
+            if resp == 'Q':
+                print("\nExiting...")
+                sys.exit(0)
+            if resp == 'B':
+                return
+        else:
+            try:
+                resp = input(
+                    "\n[Q)uit B)ack Enter=continue] :> "
+                ).strip().upper()
+            except (EOFError, KeyboardInterrupt):
+                return
+            if resp == 'Q':
+                print("\nExiting...")
+                sys.exit(0)
 
 
 def show_band_notes(plan, band):

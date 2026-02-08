@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Band Plans Key Frequencies] - 2026-02-08
+### Added
+- **antenna.py v1.7→1.8**: Key frequencies and calling frequencies
+  for all 13 US bands (FT8, FT4, JS8Call, PSK31, CW QRP, SSB QRP,
+  SSTV, Winlink, APRS, IARU beacons, ISS, maritime/emergency, etc.)
+- Expanded VHF/UHF sub-band segments: 6m (4 segments), 2m (6
+  segments), 70cm (6 segments) with mode/usage labels
+- Paginated detail view (20 lines/page) for bands with many
+  segments and key frequencies
+
+### Changed
+- B)ack renamed to C)ountry in band plan overview (clearer
+  navigation when DEFAULT_COUNTRY is set)
+- Mode column widened from 5 to 7 characters for longer labels
+
 ## [Band Plans UI Fix] - 2026-02-08
 ### Fixed
 - **antenna.py v1.7**: Fixed band plan column alignment - header
