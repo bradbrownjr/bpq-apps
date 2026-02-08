@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 2.0
+Version: 2.1
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-08
 """
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "2.0"
+VERSION = "2.1"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -710,21 +710,19 @@ def sysop_manage_apps():
 
 def main():
     """Main application loop."""
-    # Read callsign from stdin FIRST (BPQ passes it as first line)
-    # Must happen before update check since os.execv() restarts process
+    # Recover callsign from CLI arg FIRST (survives os.execv restart)
     callsign = ""
-    if not sys.stdin.isatty():
+    for i in range(len(sys.argv) - 1):
+        if sys.argv[i] == "--callsign":
+            callsign = sys.argv[i + 1].strip()
+            break
+    
+    # If no CLI arg, read from stdin (BPQ passes callsign as first line)
+    if not callsign and not sys.stdin.isatty():
         try:
             callsign = sys.stdin.readline().strip()
         except Exception:
             pass
-    
-    # Recover callsign from CLI arg (set before os.execv restart)
-    if not callsign:
-        for i in range(len(sys.argv) - 1):
-            if sys.argv[i] == "--callsign":
-                callsign = sys.argv[i + 1].strip()
-                break
     
     # Inject --callsign into argv so os.execv restart preserves it
     has_callsign_arg = "--callsign" in sys.argv
