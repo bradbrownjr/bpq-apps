@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.6
+Version: 1.7
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -25,7 +25,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.6"
+VERSION = "1.7"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -50,6 +50,402 @@ HAM_BANDS = {
     "2m": 146.0,
     "70cm": 445.0
 }
+
+# =====================================================================
+# BAND PLAN DATA
+# =====================================================================
+# Access key: Y=Full  .=None  c=CW only  p=Partial (overview)
+# Segment tuple: (freq_range, modes, access_per_class)
+
+BAND_PLAN_ORDER = ["US", "CA", "UK", "DE", "AU", "JP"]
+
+BAND_PLANS = {
+    # -----------------------------------------------------------------
+    # UNITED STATES (FCC Part 97)
+    # -----------------------------------------------------------------
+    "US": {
+        "name": "United States (FCC)",
+        "classes": ["E", "A", "G", "T", "N"],
+        "class_labels": "E=Extra A=Adv G=Gen T=Tech N=Nov",
+        "power": "1500W PEP (T/N HF: 200W)",
+        "has_detail": True,
+        "bands": [
+            {
+                "band": "160m",
+                "range": "1.800-2.000",
+                "overview": "YYY..",
+                "segments": [
+                    ("1.800-2.000", "All", "YYY.."),
+                ],
+            },
+            {
+                "band": "80m",
+                "range": "3.500-4.000",
+                "overview": "YYYpp",
+                "segments": [
+                    ("3.500-3.525", "CW/D", "Y...."),
+                    ("3.525-3.600", "CW/D", "YYYcc"),
+                    ("3.600-3.700", "Ph/Im", "Y...."),
+                    ("3.700-3.800", "Ph/Im", "YY..."),
+                    ("3.800-4.000", "Ph/Im", "YYY.."),
+                ],
+                "notes": ["c=CW only, 200W max"],
+            },
+            {
+                "band": "60m",
+                "range": "5 MHz",
+                "overview": "YYY..",
+                "segments": [],
+                "channels": [
+                    ("1", "5332.0", "5330.5"),
+                    ("2", "5348.0", "5346.5"),
+                    ("3", "5358.5", "5357.0"),
+                    ("4", "5373.0", "5371.5"),
+                    ("5", "5405.0", "5403.5"),
+                ],
+                "notes": [
+                    "100W ERP max, USB/CW/Digital",
+                    "2.8 kHz bandwidth per channel",
+                ],
+            },
+            {
+                "band": "40m",
+                "range": "7.000-7.300",
+                "overview": "YYYpp",
+                "segments": [
+                    ("7.000-7.025", "CW/D", "Y...."),
+                    ("7.025-7.125", "CW/D", "YYYcc"),
+                    ("7.125-7.175", "Ph/Im", "Y...."),
+                    ("7.175-7.300", "Ph/Im", "YYY.."),
+                ],
+                "notes": ["c=CW only, 200W max"],
+            },
+            {
+                "band": "30m",
+                "range": "10.10-10.15",
+                "overview": "YYY..",
+                "segments": [
+                    ("10.10-10.15", "CW/D", "YYY.."),
+                ],
+                "notes": ["200W PEP all classes",
+                           "No phone permitted"],
+            },
+            {
+                "band": "20m",
+                "range": "14.00-14.35",
+                "overview": "YYY..",
+                "segments": [
+                    ("14.00-14.025", "CW/D", "Y...."),
+                    ("14.025-14.15", "CW/D", "YYY.."),
+                    ("14.15-14.175", "Ph/Im", "Y...."),
+                    ("14.175-14.225", "Ph/Im", "YY..."),
+                    ("14.225-14.35", "Ph/Im", "YYY.."),
+                ],
+            },
+            {
+                "band": "17m",
+                "range": "18.07-18.17",
+                "overview": "YYY..",
+                "segments": [
+                    ("18.068-18.11", "CW/D", "YYY.."),
+                    ("18.11-18.168", "Ph/Im", "YYY.."),
+                ],
+            },
+            {
+                "band": "15m",
+                "range": "21.00-21.45",
+                "overview": "YYYpp",
+                "segments": [
+                    ("21.00-21.025", "CW/D", "Y...."),
+                    ("21.025-21.20", "CW/D", "YYYcc"),
+                    ("21.20-21.225", "Ph/Im", "Y...."),
+                    ("21.225-21.275", "Ph/Im", "YY..."),
+                    ("21.275-21.45", "Ph/Im", "YYY.."),
+                ],
+                "notes": ["c=CW only, 200W max"],
+            },
+            {
+                "band": "12m",
+                "range": "24.89-24.99",
+                "overview": "YYY..",
+                "segments": [
+                    ("24.89-24.93", "CW/D", "YYY.."),
+                    ("24.93-24.99", "Ph/Im", "YYY.."),
+                ],
+            },
+            {
+                "band": "10m",
+                "range": "28.00-29.70",
+                "overview": "YYYPP",
+                "segments": [
+                    ("28.00-28.30", "CW/D", "YYYYY"),
+                    ("28.30-28.50", "CW/Ph", "YYYYY"),
+                    ("28.50-29.70", "All", "YYY.."),
+                ],
+                "notes": [
+                    "T/N: 28.0-28.5 only, 200W",
+                    "29.60: FM simplex calling",
+                ],
+            },
+            {
+                "band": "6m",
+                "range": "50.00-54.00",
+                "overview": "YYYY.",
+                "segments": [
+                    ("50.00-54.00", "All", "YYYY."),
+                ],
+                "notes": [
+                    "50.125: SSB calling",
+                    "52.525: FM simplex calling",
+                ],
+            },
+            {
+                "band": "2m",
+                "range": "144.0-148.0",
+                "overview": "YYYY.",
+                "segments": [
+                    ("144.0-148.0", "All", "YYYY."),
+                ],
+                "notes": [
+                    "144.200: SSB calling",
+                    "146.520: FM simplex calling",
+                ],
+            },
+            {
+                "band": "70cm",
+                "range": "420.0-450.0",
+                "overview": "YYYY.",
+                "segments": [
+                    ("420.0-450.0", "All", "YYYY."),
+                ],
+                "notes": [
+                    "446.000: FM simplex calling",
+                    "Shared w/ govt radiolocation",
+                ],
+            },
+        ],
+    },
+    # -----------------------------------------------------------------
+    # CANADA (ISED)
+    # -----------------------------------------------------------------
+    "CA": {
+        "name": "Canada (ISED)",
+        "classes": ["A", "H", "B"],
+        "class_labels": "A=Advanced H=Basic+Hon B=Basic",
+        "power": "Varies by band (up to 1000W)",
+        "has_detail": False,
+        "note": "Basic: VHF/UHF only. Basic w/ Honours: all bands.",
+        "bands": [
+            {"band": "160m", "range": "1.800-2.000",
+             "overview": "YY."},
+            {"band": "80m", "range": "3.500-4.000",
+             "overview": "YY."},
+            {"band": "60m", "range": "5 MHz chans",
+             "overview": "YY."},
+            {"band": "40m", "range": "7.000-7.300",
+             "overview": "YY."},
+            {"band": "30m", "range": "10.10-10.15",
+             "overview": "YY."},
+            {"band": "20m", "range": "14.00-14.35",
+             "overview": "YY."},
+            {"band": "17m", "range": "18.07-18.17",
+             "overview": "YY."},
+            {"band": "15m", "range": "21.00-21.45",
+             "overview": "YY."},
+            {"band": "12m", "range": "24.89-24.99",
+             "overview": "YY."},
+            {"band": "10m", "range": "28.00-29.70",
+             "overview": "YY."},
+            {"band": "6m", "range": "50.00-54.00",
+             "overview": "YYY"},
+            {"band": "2m", "range": "144.0-148.0",
+             "overview": "YYY"},
+            {"band": "70cm", "range": "430.0-450.0",
+             "overview": "YYY"},
+        ],
+    },
+    # -----------------------------------------------------------------
+    # UNITED KINGDOM (Ofcom)
+    # -----------------------------------------------------------------
+    "UK": {
+        "name": "United Kingdom (Ofcom)",
+        "classes": ["F", "I", "Fn"],
+        "class_labels": "F=Full I=Intermed Fn=Foundation",
+        "power": "F=400W I=50W Fn=10W",
+        "has_detail": False,
+        "bands": [
+            {"band": "160m", "range": "1.810-2.000",
+             "overview": "YYY"},
+            {"band": "80m", "range": "3.500-3.800",
+             "overview": "YYp",
+             "notes": ["Fn: 3.520-3.600 only"]},
+            {"band": "60m", "range": "5 MHz segs",
+             "overview": "Y..",
+             "notes": ["Multiple narrow segments",
+                        "100W EIRP max"]},
+            {"band": "40m", "range": "7.000-7.200",
+             "overview": "YYY"},
+            {"band": "30m", "range": "10.10-10.15",
+             "overview": "YYY"},
+            {"band": "20m", "range": "14.00-14.35",
+             "overview": "YYp",
+             "notes": ["Fn: 14.00-14.25 only"]},
+            {"band": "17m", "range": "18.07-18.17",
+             "overview": "YYY"},
+            {"band": "15m", "range": "21.00-21.45",
+             "overview": "YYY"},
+            {"band": "12m", "range": "24.89-24.99",
+             "overview": "YY."},
+            {"band": "10m", "range": "28.00-29.70",
+             "overview": "YYY"},
+            {"band": "6m", "range": "50.00-52.00",
+             "overview": "YYY"},
+            {"band": "2m", "range": "144.0-146.0",
+             "overview": "YYY"},
+            {"band": "70cm", "range": "430.0-440.0",
+             "overview": "YYY"},
+        ],
+    },
+    # -----------------------------------------------------------------
+    # GERMANY (BNetzA / CEPT Region 1)
+    # -----------------------------------------------------------------
+    "DE": {
+        "name": "Germany (BNetzA/CEPT)",
+        "classes": ["A", "E"],
+        "class_labels": "A=Class A  E=Class E (Novice)",
+        "power": "A=750W  E=100W",
+        "has_detail": False,
+        "bands": [
+            {"band": "160m", "range": "1.810-2.000",
+             "overview": "Yp",
+             "notes": ["E: 1.810-1.850 only"]},
+            {"band": "80m", "range": "3.500-3.800",
+             "overview": "YY"},
+            {"band": "60m", "range": "5.352-5.367",
+             "overview": "Y.",
+             "notes": ["15W EIRP max"]},
+            {"band": "40m", "range": "7.000-7.200",
+             "overview": "YY"},
+            {"band": "30m", "range": "10.10-10.15",
+             "overview": "Y."},
+            {"band": "20m", "range": "14.00-14.35",
+             "overview": "Y."},
+            {"band": "17m", "range": "18.07-18.17",
+             "overview": "Y."},
+            {"band": "15m", "range": "21.00-21.45",
+             "overview": "YY"},
+            {"band": "12m", "range": "24.89-24.99",
+             "overview": "Y."},
+            {"band": "10m", "range": "28.00-29.70",
+             "overview": "YY"},
+            {"band": "6m", "range": "50.00-52.00",
+             "overview": "YY"},
+            {"band": "2m", "range": "144.0-146.0",
+             "overview": "YY"},
+            {"band": "70cm", "range": "430.0-440.0",
+             "overview": "YY"},
+        ],
+    },
+    # -----------------------------------------------------------------
+    # AUSTRALIA (ACMA)
+    # -----------------------------------------------------------------
+    "AU": {
+        "name": "Australia (ACMA)",
+        "classes": ["A", "S", "F"],
+        "class_labels": "A=Advanced S=Standard F=Foundation",
+        "power": "A=400W S=100W F=10W",
+        "has_detail": False,
+        "bands": [
+            {"band": "160m", "range": "1.800-1.875",
+             "overview": "YY."},
+            {"band": "80m", "range": "3.500-3.800",
+             "overview": "YYY",
+             "notes": ["3.500-3.700 + 3.776-3.800"]},
+            {"band": "40m", "range": "7.000-7.300",
+             "overview": "YYY"},
+            {"band": "30m", "range": "10.10-10.15",
+             "overview": "YY."},
+            {"band": "20m", "range": "14.00-14.35",
+             "overview": "YY."},
+            {"band": "17m", "range": "18.07-18.17",
+             "overview": "YY."},
+            {"band": "15m", "range": "21.00-21.45",
+             "overview": "YYY"},
+            {"band": "12m", "range": "24.89-24.99",
+             "overview": "YY."},
+            {"band": "10m", "range": "28.00-29.70",
+             "overview": "YYY"},
+            {"band": "6m", "range": "50.00-54.00",
+             "overview": "YYY"},
+            {"band": "2m", "range": "144.0-148.0",
+             "overview": "YYY"},
+            {"band": "70cm", "range": "430.0-450.0",
+             "overview": "YYY"},
+        ],
+    },
+    # -----------------------------------------------------------------
+    # JAPAN (MIC)
+    # -----------------------------------------------------------------
+    "JP": {
+        "name": "Japan (MIC)",
+        "classes": ["1", "2", "3", "4"],
+        "class_labels": "1=1st 2=2nd 3=3rd 4=4th Class",
+        "power": "1/2=200W 3=50W 4=10-20W",
+        "has_detail": False,
+        "note": "1st class may apply for >200W.",
+        "bands": [
+            {"band": "160m", "range": "1.810-1.913",
+             "overview": "YYY.",
+             "notes": ["Narrow segments only"]},
+            {"band": "80m", "range": "3.500-3.805",
+             "overview": "YYYp",
+             "notes": ["4th: CW only, narrow segs",
+                        "Heavily fragmented band"]},
+            {"band": "40m", "range": "7.000-7.200",
+             "overview": "YYYp",
+             "notes": ["Region 3: 7.0-7.2 only",
+                        "4th: 7.0-7.1 CW/Digi"]},
+            {"band": "30m", "range": "10.10-10.15",
+             "overview": "YYY."},
+            {"band": "20m", "range": "14.00-14.35",
+             "overview": "YYY."},
+            {"band": "17m", "range": "18.07-18.17",
+             "overview": "YYY."},
+            {"band": "15m", "range": "21.00-21.45",
+             "overview": "YYYp",
+             "notes": ["4th: CW/Digi only"]},
+            {"band": "12m", "range": "24.89-24.99",
+             "overview": "YYY."},
+            {"band": "10m", "range": "28.00-29.70",
+             "overview": "YYYp",
+             "notes": ["4th: 28.0-28.3 CW/Digi"]},
+            {"band": "6m", "range": "50.00-54.00",
+             "overview": "YYYY"},
+            {"band": "2m", "range": "144.0-146.0",
+             "overview": "YYYY"},
+            {"band": "70cm", "range": "430.0-440.0",
+             "overview": "YYYY"},
+        ],
+    },
+}
+
+# US Novice/Tech HF privilege summary
+US_NOVICE_TECH_HF = [
+    ("80m", "3.525-3.600", "CW only", "200W"),
+    ("40m", "7.025-7.125", "CW only", "200W"),
+    ("15m", "21.025-21.200", "CW only", "200W"),
+    ("10m", "28.000-28.300", "CW/Data", "200W"),
+    ("10m", "28.300-28.500", "CW/Phone", "200W"),
+]
+
+# ITU Region band width differences
+ITU_REGION_DIFFS = [
+    ("Band", "Region 2 (US)", "Region 1 (EU)", "Region 3 (Asia)"),
+    ("80m", "3.5-4.0", "3.5-3.8", "3.5-3.9"),
+    ("40m", "7.0-7.3", "7.0-7.2", "7.0-7.2"),
+    ("2m", "144-148", "144-146", "144-148"),
+    ("70cm", "420-450", "430-440", "430-450"),
+]
 
 
 def compare_versions(v1, v2):
@@ -1001,21 +1397,198 @@ def show_formulas():
     pause()
 
 
-def show_band_chart():
-    """Display ham band frequencies."""
+def show_band_plans():
+    """Band plan country selector."""
+    while True:
+        print("\n" + "-" * 40)
+        print("BAND PLANS")
+        print("-" * 40)
+        for i, key in enumerate(BAND_PLAN_ORDER, 1):
+            plan = BAND_PLANS[key]
+            print(" {}) {}  {}".format(
+                i, key.ljust(4), plan["name"]))
+        print("-" * 40)
+
+        try:
+            resp = input(
+                "\nQ)uit M)enu Select [1-{}] :> ".format(
+                    len(BAND_PLAN_ORDER))
+            ).strip().upper()
+        except (EOFError, KeyboardInterrupt):
+            return
+
+        if resp == 'Q':
+            print("\nExiting...")
+            sys.exit(0)
+        if resp == 'M':
+            return
+        try:
+            idx = int(resp) - 1
+            if 0 <= idx < len(BAND_PLAN_ORDER):
+                key = BAND_PLAN_ORDER[idx]
+                show_country_plan(BAND_PLANS[key], key)
+        except ValueError:
+            print("Invalid selection")
+
+
+def show_country_plan(plan, country_key):
+    """Show band overview for a country."""
+    while True:
+        classes = plan["classes"]
+        bands = plan["bands"]
+
+        # Build class header with proper spacing
+        # For 2-char class names (Fn), adjust spacing
+        cls_hdr = ""
+        for c in classes:
+            if len(c) == 1:
+                cls_hdr += c + " "
+            else:
+                cls_hdr += c
+        cls_hdr = cls_hdr.rstrip()
+
+        print("\n" + "-" * 40)
+        print("{} BAND PLAN".format(
+            plan["name"]))
+        print(plan["class_labels"])
+        print("Power: {}".format(plan["power"]))
+        print("-" * 40)
+
+        # Calculate column widths
+        max_band = max(len(b["band"]) for b in bands)
+        max_range = max(len(b["range"]) for b in bands)
+
+        # Print header
+        print(" {:{}} {:{}}  {}".format(
+            "#", 3, "Band", max_band,
+            "Range".ljust(max_range) + "  " + cls_hdr))
+
+        for i, band in enumerate(bands, 1):
+            ov = band["overview"]
+            # Format access chars with spaces
+            acc = ""
+            for j, ch in enumerate(ov):
+                if j < len(classes):
+                    clen = len(classes[j])
+                    if clen == 1:
+                        acc += ch + " "
+                    else:
+                        # Pad to match class name width
+                        acc += ch + " " * (clen - 1)
+            acc = acc.rstrip()
+
+            print("{:2}) {:{}} {:{}}  {}".format(
+                i, band["band"], max_band,
+                band["range"], max_range, acc))
+
+        print("-" * 40)
+        print("Y=Full p=Partial .=No access")
+
+        if plan.get("note"):
+            print(plan["note"])
+
+        has_det = plan.get("has_detail", False)
+        if has_det:
+            prompt = ("#=Detail  Q)uit M)enu B)ack"
+                       "\nSelect [1-{}] :> ".format(
+                           len(bands)))
+        else:
+            prompt = "\n[Q)uit M)enu B)ack] :> "
+
+        try:
+            resp = input("\n" + prompt).strip().upper()
+        except (EOFError, KeyboardInterrupt):
+            return
+
+        if resp == 'Q':
+            print("\nExiting...")
+            sys.exit(0)
+        if resp in ('M', 'B'):
+            return
+
+        if has_det:
+            try:
+                idx = int(resp) - 1
+                if 0 <= idx < len(bands):
+                    show_band_detail(plan, bands[idx])
+            except ValueError:
+                pass
+        else:
+            # Non-detail countries: show band notes
+            try:
+                idx = int(resp) - 1
+                if 0 <= idx < len(bands):
+                    show_band_notes(plan, bands[idx])
+            except ValueError:
+                pass
+
+
+def show_band_detail(plan, band):
+    """Show detailed sub-band segments (US)."""
+    classes = plan["classes"]
+
+    # Build class header
+    cls_hdr = " ".join(c for c in classes)
+
     print("\n" + "-" * 40)
-    print("HAM BAND FREQUENCIES")
+    print("{} {} ({})".format(
+        "US", band["band"], band["range"]))
+    print(plan["class_labels"])
     print("-" * 40)
-    print("Band   Freq(MHz)  Half-Wave(ft)")
+
+    # Check for channelized band (60m)
+    channels = band.get("channels")
+    if channels:
+        print("Channelized - 5 USB channels")
+        print("")
+        print(" Ch  Center(kHz)  Dial(kHz)")
+        for ch in channels:
+            print(" {}   {:>8}     {:>7}".format(
+                ch[0], ch[1], ch[2]))
+    else:
+        # Sub-band segment table
+        segments = band.get("segments", [])
+        if segments:
+            print("{:14} {:5} {}".format(
+                "Segment", "Mode", cls_hdr))
+            for seg in segments:
+                freq, modes, access = seg
+                acc = " ".join(access)
+                print("{:14} {:5} {}".format(
+                    freq, modes, acc))
+
     print("-" * 40)
-    
-    for band, freq in sorted(HAM_BANDS.items(), 
-                             key=lambda x: x[1]):
-        hw = calc_half_wave(freq)
-        print("{:6} {:9.3f}  {:7.1f}".format(band, freq, hw))
-    
-    print("-" * 40)
-    pause()
+
+    # Print notes
+    notes = band.get("notes", [])
+    for note in notes:
+        print(note)
+
+    try:
+        resp = input(
+            "\n[Q)uit B)ack Enter=continue] :> "
+        ).strip().upper()
+    except (EOFError, KeyboardInterrupt):
+        return
+    if resp == 'Q':
+        print("\nExiting...")
+        sys.exit(0)
+
+
+def show_band_notes(plan, band):
+    """Show notes for a specific band (non-US)."""
+    notes = band.get("notes", [])
+    if not notes:
+        return
+
+    print("\n{} {}".format(band["band"], band["range"]))
+    for note in notes:
+        print("  {}".format(note))
+
+    try:
+        input("\n[Enter=continue] :> ")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_about():
@@ -1059,7 +1632,7 @@ def main_menu(callsign=None):
         print("\nMain Menu:")
         print("1) Antenna Calculators")
         print("2) Configuration Database")
-        print("3) Band Frequency Chart")
+        print("3) Band Plans")
         print("4) Antenna Formulas")
         print("")
         print("Q) Quit  A) About")
@@ -1074,7 +1647,7 @@ def main_menu(callsign=None):
         elif choice == "2":
             database_menu(callsign)
         elif choice == "3":
-            show_band_chart()
+            show_band_plans()
         elif choice == "4":
             show_formulas()
         elif choice == "A":
@@ -1118,6 +1691,13 @@ CALCULATORS
 DATABASE
        User-contributed configurations for:
        Buddipole, Wolf River Coil, Chameleon, etc.
+
+BAND PLANS
+       License class privileges by country:
+       US (FCC), Canada (ISED), UK (Ofcom),
+       Germany (BNetzA/CEPT), Australia (ACMA),
+       Japan (MIC). Includes sub-band segments,
+       mode restrictions, and power limits.
 """.format(VERSION)
     print(help_text)
 

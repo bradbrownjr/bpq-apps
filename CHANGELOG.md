@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Band Plans Feature] - 2026-02-08
+### Added
+- **antenna.py v1.6→1.7**: Comprehensive band plan reference
+  replacing simple frequency chart. 6 countries:
+  - US (FCC): Detailed sub-band segments with license class
+    privileges (Extra, Advanced, General, Tech, Novice)
+  - Canada (ISED): Advanced, Basic w/ Honours, Basic
+  - UK (Ofcom): Full, Intermediate, Foundation
+  - Germany (BNetzA/CEPT): Class A, Class E
+  - Australia (ACMA): Advanced, Standard, Foundation
+  - Japan (MIC): 1st through 4th Class
+- US plan includes per-band detail view with sub-band mode
+  restrictions, 60m channelized display, calling frequencies
+- ITU Region band width differences reference data
+
 ## [FEED Configuration Fix] - 2026-02-08
 ### Fixed
 - **apps.json**: FEED now correctly points to rss-news.py (RSS feed reader)
