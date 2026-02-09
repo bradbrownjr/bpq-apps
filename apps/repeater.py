@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.14
+Version: 1.15
 Date: February 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.14"
+VERSION = "1.15"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -358,10 +358,18 @@ def format_repeater(rep, index=None, show_distance=True):
     
     output.append(line1)
     
-    # Line 2: Use status
-    use = rep.get('Use', 'N/A')
+    # Line 2: Mode and Use status
+    line2_parts = []
+    mode = rep.get('FM Analog', '')
+    if mode:
+        line2_parts.append(mode)
+    
+    use = rep.get('Use', '')
     if use and use != 'N/A':
-        output.append(use)
+        line2_parts.append(use)
+    
+    if line2_parts:
+        output.append(' - '.join(line2_parts))
     
     # Line 3: Location
     location = rep.get('Nearest City', '')
@@ -456,6 +464,44 @@ def filter_by_frequency(repeaters, target_freq, tolerance=0.5):
                 filtered.append(rep)
         except (ValueError, TypeError):
             continue
+    
+    return filtered
+
+
+def filter_by_mode(repeaters, mode_input):
+    """Filter repeaters by mode (comma-delimited: FM,DMR,DStar,etc)"""
+    if not mode_input:
+        return repeaters
+    
+    # Parse comma-delimited modes
+    modes = [m.strip().upper() for m in mode_input.split(',')]
+    
+    # Mode aliases for matching
+    mode_map = {
+        'FM': ['FM', 'ANALOG', 'FM ANALOG'],
+        'DMR': ['DMR', 'MOTOTRBO'],
+        'DSTAR': ['D-STAR', 'DSTAR'],
+        'YSF': ['YSF', 'SYSTEM FUSION', 'C4FM'],
+        'NXDN': ['NXDN'],
+        'P25': ['P25', 'APCO-25'],
+        'TETRA': ['TETRA'],
+        'ALLSTAR': ['ALLSTAR', 'APP_RPT'],
+        'ECHOLINK': ['ECHOLINK']
+    }
+    
+    # Build list of acceptable modes
+    acceptable = set()
+    for mode in modes:
+        if mode in mode_map:
+            acceptable.update(mode_map[mode])
+        else:
+            acceptable.add(mode)
+    
+    filtered = []
+    for rep in repeaters:
+        rep_mode = rep.get('FM Analog', '').strip().upper()
+        if rep_mode in acceptable:
+            filtered.append(rep)
     
     return filtered
 
@@ -617,6 +663,11 @@ def search_by_gridsquare():
     except EOFError:
         band_input = ""
     
+    try:
+        mode_input = input("Mode [FM,DMR,DStar,YSF] or Enter for all: ").strip()
+    except EOFError:
+        mode_input = ""
+    
     print("\nSearching...")
     
     cache = load_cache()
@@ -659,6 +710,9 @@ def search_by_gridsquare():
     
     if band_input:
         repeaters = filter_by_band(repeaters, band_input)
+    
+    if mode_input:
+        repeaters = filter_by_mode(repeaters, mode_input)
     
     if not repeaters:
         print("\nNo repeaters found.")
@@ -725,6 +779,11 @@ def search_by_callsign(default_callsign=None):
     except EOFError:
         band_input = ""
     
+    try:
+        mode_input = input("Mode [FM,DMR,DStar,YSF] or Enter for all: ").strip()
+    except EOFError:
+        mode_input = ""
+    
     print("\nSearching...")
     
     cache = load_cache()
@@ -758,6 +817,9 @@ def search_by_callsign(default_callsign=None):
     
     if band_input:
         repeaters = filter_by_band(repeaters, band_input)
+    
+    if mode_input:
+        repeaters = filter_by_mode(repeaters, mode_input)
     
     if not repeaters:
         print("\nNo repeaters found.")
@@ -862,6 +924,11 @@ def search_my_location():
     except EOFError:
         band_input = ""
     
+    try:
+        mode_input = input("Mode [FM,DMR,DStar,YSF] or Enter for all: ").strip()
+    except EOFError:
+        mode_input = ""
+    
     print("\nSearching...")
     
     cache = load_cache()
@@ -904,6 +971,9 @@ def search_my_location():
     if band_input:
         repeaters = filter_by_band(repeaters, band_input)
     
+    if mode_input:
+        repeaters = filter_by_mode(repeaters, mode_input)
+    
     if not repeaters:
         print("\nNo repeaters found.")
         return
@@ -942,6 +1012,11 @@ def search_by_state():
     except EOFError:
         band_input = ""
     
+    try:
+        mode_input = input("Mode [FM,DMR,DStar,YSF] or Enter for all: ").strip()
+    except EOFError:
+        mode_input = ""
+    
     print("\nSearching...")
     
     if not is_internet_available():
@@ -954,6 +1029,9 @@ def search_by_state():
         
         if band_input:
             repeaters = filter_by_band(repeaters, band_input)
+        
+        if mode_input:
+            repeaters = filter_by_mode(repeaters, mode_input)
         
         if not repeaters:
             print("\nNo repeaters found.")
