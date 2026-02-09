@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 2.4
+Version: 2.5
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-09
 """
@@ -22,7 +22,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "2.4"
+VERSION = "2.5"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -612,10 +612,6 @@ def sysop_menu(callsign):
             sysop_manage_apps()
         elif choice == '2':
             view_log_paginated('/var/log/syslog', 'SYSTEM LOG')
-            try:
-                raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
-            except (EOFError, KeyboardInterrupt):
-                pass
         elif choice == '3':
             # Find most recent BPQ BBS log file
             log_dir = os.path.expanduser('~/linbpq/logs')
@@ -629,10 +625,10 @@ def sysop_menu(callsign):
                 view_log_paginated(log_path, 'BPQ BBS LOG')
             else:
                 print("BPQ BBS log not found in {}".format(log_dir))
-            
-            try:
-                raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
-            except (EOFError, KeyboardInterrupt):
+                try:
+                    raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
+                except (EOFError, KeyboardInterrupt):
+                    pass
                 pass
         elif choice == '4':
             continue

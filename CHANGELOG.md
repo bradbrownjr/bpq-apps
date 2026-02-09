@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Apps.py Remove Redundant Prompt] - 2026-02-09
+### Changed
+- **apps.py v2.4→2.5**: Removed redundant "[Q)uit Enter=continue]"
+  prompt after viewing logs in sysop menu
+- Log viewer already has built-in Q)uit option
+- Now returns directly to menu after user quits from log viewer
+- Pause prompt only shown for error case (log not found)
+
 ## [Apps.py BPQ Log Path Fix] - 2026-02-09
 ### Fixed
 - **apps.py v2.3→2.4**: Fixed BPQ log viewer (option 3) to find actual
