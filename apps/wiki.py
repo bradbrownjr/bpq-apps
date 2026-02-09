@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 3.0
+Version: 2.10
 Date: February 2026
 """
 
@@ -33,7 +33,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "3.0"
+VERSION = "2.10"
 APP_NAME = "wiki.py"
 
 # Check Python version

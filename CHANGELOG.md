@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Wiki Enter Key Pagination] - 2026-02-08
 ### Changed
-- **wiki.py v2.9→3.0**: Enter key now advances to next page in search
+- **wiki.py v2.9→2.10**: Enter key now advances to next page in search
   results (same as N)ext command)
 - Prompt shows "Enter=next" when more results available
 - Standardizes pagination navigation across all apps
