@@ -270,13 +270,15 @@ Menu: [options] :>
 Order commands from furthest to closest scope relative to current page:
 1. **Exit scope**: Q)uit (exit app entirely)
 2. **Menu scope**: M)enu (return to app's main menu)
-3. **Parent scope**: B)ack (return to previous page/menu)
-4. **Page navigation**: P)age, L)inks, #=follow (navigate within document)
+3. **Parent scope**: B)ack (return to previous page/menu) or P)rev (previous page in list)
+4. **Page navigation**: N)ext (next page), P)age, L)inks, #=follow (navigate within document)
 5. **Current content**: Enter=more (advance on current page)
 
-Example pagination prompt:
+Example prompts by context:
 ```
-(1/5) [Q)uit M)enu B)ack P)age L)inks #=follow Enter=more] :>
+Document pagination (wx-me, space): (1/5) [Q)uit M)enu B)ack N)ext Enter=more] :>
+List pagination (repeater): Q)uit M)enu P)rev N)ext Enter=next :>
+Single page: Q)uit M)enu :>
 ```
 
 Benefits:
@@ -287,8 +289,9 @@ Benefits:
 
 Implementation notes:
 - Apply to ALL interactive prompts in pagination, menus, and dialogs
-- Disable unavailable options (e.g., omit Enter=more if at end)
+- Disable unavailable options (e.g., omit Enter=more if at end, omit P)rev on first page)
 - Maintain ordering even when some options absent (don't rearrange)
+- **Critical:** Always Q)uit M)enu first, then P)rev/B)ack before N)ext
 - Page menu example: `Select [1-50] Q)uit M)enu B)ack Enter=more :>`
 - Content links example: `(#=select Q)uit M)enu B)ack Enter=more) :>`
 
