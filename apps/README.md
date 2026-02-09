@@ -5,7 +5,6 @@ Applications designed to run via BPQ BBS APPLICATION commands or standalone.
 - [Features](#features)
 - [Applications](#applications)
   - [apps.py](#appspy)
-  - [feed.py](#feedpy)
   - [calendar.py](#calendarpy)
   - [callout.py](#calloutpy)
   - [forms.py](#formspy)
@@ -102,22 +101,6 @@ Sysop features include:
    - Navigate with O)lder (back in time) and N)ewer (forward in time)
 3. **System Stats**: Real-time monitoring of system resources
 4. **Service Control**: Restart LinBPQ (requires sudo passwordless access or interactive password entry)
-
-feed.py
------------
-**Type**: Python  
-**Purpose**: Community message feed for posting and viewing one-liner messages  
-**Information source**: User submissions stored locally  
-**Developer**: Brad Brown KC1JMH  
-**Notes**: Twitter-style message feed door application. Messages stored in JSON format with callsign, timestamp, and message text. Automatically captures user callsign from BPQ32.
-
-**Download or update**:  
-```wget -O feed.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/feed.py && chmod +x feed.py```
-
-**Features**:
-- Post one-liner messages (up to 80 characters)
-- View recent messages with pagination (10 messages per page)
-- Delete your own messages
 
 calendar.py
 -----------

@@ -22,7 +22,7 @@
     ],
     "Browsers": [
       {
-        "name": "FEED",
+        "name": "NEWS",
         "description": "News feeds",
         "executable": "rss-news.py",
         "needs_callsign": false
