@@ -22,7 +22,7 @@ Supports location input as:
 - Callsign lookup via QRZ/HamDB
 
 Author: Brad Brown KC1JMH
-Version: 1.19
+Version: 1.20
 Date: February 2026
 """
 
@@ -31,7 +31,7 @@ import sys
 import os
 
 # Version check for Python 3.5+
-VERSION = "1.19"
+VERSION = "1.20"
 
 if sys.version_info < (3, 5):
     print("Error: Python 3.5 or higher required.")
@@ -487,6 +487,10 @@ def run_prediction(from_loc, to_loc, solar_data, solar_status, solar_warning):
     print("For precise predictions: voacap.com")
 
     print("-" * 40)
+    try:
+        input("\nPress Enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def show_about():
