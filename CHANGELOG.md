@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Apps.py BPQ Log Path Fix] - 2026-02-09
+### Fixed
+- **apps.py v2.3→2.4**: Fixed BPQ log viewer (option 3) to find actual
+  BBS log files in ~/linbpq/logs/ directory
+- Previously looked for debug.log which doesn't exist
+- Now finds and displays most recent log_YYMMDD_BBS.txt file
+- Updated menu text to clarify "BPQ BBS Log" vs "System Log"
+
 ## [Apps.py Log Viewer Enter Key] - 2026-02-09
 ### Changed
 - **apps.py v2.2→2.3**: Enter key now advances pages in log viewer

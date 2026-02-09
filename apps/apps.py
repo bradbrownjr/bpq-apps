@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 2.3
+Version: 2.4
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-09
 """
@@ -15,13 +15,14 @@ import shutil
 import subprocess
 import tempfile
 import re
+import glob
 from datetime import datetime
 try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "2.3"
+VERSION = "2.4"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -592,7 +593,7 @@ def sysop_menu(callsign):
         print()
         print("1) List/Install Apps from GitHub")
         print("2) View System Log (/var/log/syslog)")
-        print("3) View BPQ Log (~/linbpq/debug.log)")
+        print("3) View BPQ BBS Log (~/linbpq/logs/)")
         print("4) Refresh Status")
         print()
         print("Q) Return to Main Menu")
@@ -616,17 +617,19 @@ def sysop_menu(callsign):
             except (EOFError, KeyboardInterrupt):
                 pass
         elif choice == '3':
-            log_paths = [
-                os.path.expanduser('~/linbpq/debug.log'),
-                '/home/ect/linbpq/debug.log',
-                '/home/pi/linbpq/debug.log'
-            ]
-            for log_path in log_paths:
-                if os.path.exists(log_path):
-                    view_log_paginated(log_path, 'BPQ DEBUG LOG')
-                    break
+            # Find most recent BPQ BBS log file
+            log_dir = os.path.expanduser('~/linbpq/logs')
+            log_pattern = os.path.join(log_dir, 'log_*_BBS.txt')
+            log_files = glob.glob(log_pattern)
+            
+            if log_files:
+                # Sort by modification time, newest first
+                log_files.sort(key=os.path.getmtime, reverse=True)
+                log_path = log_files[0]
+                view_log_paginated(log_path, 'BPQ BBS LOG')
             else:
-                print("BPQ log not found.")
+                print("BPQ BBS log not found in {}".format(log_dir))
+            
             try:
                 raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
             except (EOFError, KeyboardInterrupt):
