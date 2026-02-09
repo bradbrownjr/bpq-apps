@@ -14,7 +14,7 @@ Features:
 - Random articles
 
 Author: Brad Brown KC1JMH
-Version: 2.9
+Version: 3.0
 Date: February 2026
 """
 
@@ -33,7 +33,7 @@ try:
 except ImportError:
     htmlview = None
 
-VERSION = "2.9"
+VERSION = "3.0"
 APP_NAME = "wiki.py"
 
 # Check Python version
@@ -660,7 +660,7 @@ class WikiClient:
             # Build prompt
             has_next = end < total
             if has_next:
-                prompt = "\nQ)uit M)enu N)ext [1-{}] :> ".format(total)
+                prompt = "\nQ)uit M)enu N)ext [1-{}] Enter=next :> ".format(total)
             else:
                 prompt = "\nQ)uit M)enu [1-{}] :> ".format(total)
             
@@ -671,6 +671,8 @@ class WikiClient:
             elif choice == 'M':
                 return None
             elif choice == 'N' and has_next:
+                page += 1
+            elif choice == '' and has_next:
                 page += 1
             elif choice.isdigit():
                 num = int(choice)
