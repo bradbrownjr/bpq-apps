@@ -8,8 +8,8 @@ and more right from NOAA. Supports offline operation with cached data.
 This script pulls data from https://services.swpc.noaa.gov/text/.
 
 Author: Brad Brown KC1JMH
-Version: 1.5
-Date: January 2026
+Version: 1.6
+Date: February 2026
 """
 
 import requests
@@ -19,7 +19,7 @@ import json
 import time
 import socket
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "space.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'space_cache.json')
 
@@ -199,9 +199,13 @@ def fetch_single_report(key):
         return None
 
 
-def display_report(content, name=None, from_cache=False, cache_timestamp=None):
-    """Display a space weather report"""
+def paginate_content(content, name=None, from_cache=False, cache_timestamp=None):
+    """Display content with pagination (20 lines per page)"""
+    # Show header info first if from cache
     if from_cache:
+        if name:
+            print("\n{}".format(name))
+            print("=" * 40)
         print("\n** OFFLINE: Internet unavailable **")
         if cache_timestamp:
             print("Cached: {}".format(format_cache_timestamp(cache_timestamp)))
@@ -210,12 +214,63 @@ def display_report(content, name=None, from_cache=False, cache_timestamp=None):
                 print("WARNING: Data over 24 hours old may be")
                 print("         inaccurate.")
         print("-" * 40)
-    
-    if name:
+        print()
+    elif name:
         print("\n{}".format(name))
         print("=" * 40)
+        print()
     
-    print("\n{}\n".format(content))
+    lines = content.split('\n')
+    page_size = 20
+    total_pages = (len(lines) + page_size - 1) // page_size
+    
+    if total_pages <= 1:
+        # Content fits on one page
+        print("{}".format(content))
+        print()
+        return
+    
+    # Paginated display
+    current_page = 0
+    while True:
+        start_idx = current_page * page_size
+        end_idx = min(start_idx + page_size, len(lines))
+        page_content = '\n'.join(lines[start_idx:end_idx])
+        
+        print("{}".format(page_content))
+        print("-" * 40)
+        
+        # Build prompt based on available actions
+        prompt_parts = ["({}/{})".format(current_page + 1, total_pages)]
+        prompt_parts.append("[Q)uit M)enu")
+        
+        if current_page > 0:
+            prompt_parts.append("B)ack")
+        
+        if current_page < total_pages - 1:
+            prompt_parts.append("N)ext")
+        
+        prompt_parts.append("] :>")
+        prompt = " ".join(prompt_parts)
+        
+        selected = str(input(prompt)).strip().lower()
+        
+        if selected == 'q':
+            return 'quit'
+        elif selected == 'm':
+            return 'menu'
+        elif selected == 'b' and current_page > 0:
+            current_page -= 1
+        elif selected == 'n' and current_page < total_pages - 1:
+            current_page += 1
+        elif selected == '':
+            # Enter key - go to next page
+            if current_page < total_pages - 1:
+                current_page += 1
+
+def display_report(content, name=None, from_cache=False, cache_timestamp=None):
+    """Display a space weather report (with pagination)"""
+    return paginate_content(content, name, from_cache, cache_timestamp)
 
 
 def update_cache():
@@ -350,17 +405,27 @@ def main():
                 cache['cache_timestamp'] = time.time()
                 save_cache(cache)
                 
-                display_report(content, SPACE_URLS[selected]['name'])
+                result = display_report(content, SPACE_URLS[selected]['name'])
+                if result == 'quit':
+                    print("\nExiting...\n")
+                    break
+                elif result == 'menu':
+                    show_menu()
             else:
                 # Fetch failed - try cache
                 if cache and selected in cache.get('reports', {}):
                     report = cache['reports'][selected]
-                    display_report(
+                    result = display_report(
                         report['content'],
                         report['name'],
                         from_cache=True,
                         cache_timestamp=report.get('fetched', cache.get('cache_timestamp'))
                     )
+                    if result == 'quit':
+                        print("\nExiting...\n")
+                        break
+                    elif result == 'menu':
+                        show_menu()
                 else:
                     if is_internet_available():
                         print("\nError fetching report.")

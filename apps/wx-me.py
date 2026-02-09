@@ -5,15 +5,15 @@ Weather Reports for Southern Maine and New Hampshire
 Local weather reports from National Weather Service Gray Office.
 
 Author: Brad Brown KC1JMH
-Version: 1.5
-Date: January 2026
+Version: 1.6
+Date: February 2026
 """
 
 import requests
 import sys
 import os
 
-VERSION = "1.5"
+VERSION = "1.6"
 APP_NAME = "wx-me.py"
 
 def check_for_app_update(current_version, script_name):
@@ -119,25 +119,96 @@ https://www.maine.gov/mema/weather/general-information
 Script developed by Brad Brown KC1JMH
 """
 
+def paginate_content(content, title=""):
+    """Display content with pagination (20 lines per page)"""
+    lines = content.split('\n')
+    page_size = 20
+    total_pages = (len(lines) + page_size - 1) // page_size
+    
+    if total_pages <= 1:
+        # Content fits on one page
+        if title:
+            print("\n{}\n".format(title))
+        print("{}\n".format(content))
+        return
+    
+    # Paginated display
+    current_page = 0
+    while True:
+        start_idx = current_page * page_size
+        end_idx = min(start_idx + page_size, len(lines))
+        page_content = '\n'.join(lines[start_idx:end_idx])
+        
+        print("\n{}\n".format(page_content))
+        print("-" * 40)
+        
+        # Build prompt based on available actions
+        prompt_parts = ["({}/{})".format(current_page + 1, total_pages)]
+        prompt_parts.append("[Q)uit M)enu")
+        
+        if current_page > 0:
+            prompt_parts.append("B)ack")
+        
+        if current_page < total_pages - 1:
+            prompt_parts.append("N)ext")
+        
+        prompt_parts.append("] :>")
+        prompt = " ".join(prompt_parts)
+        
+        selected = str(input(prompt)).strip().lower()
+        
+        if selected == 'q':
+            return 'quit'
+        elif selected == 'm':
+            return 'menu'
+        elif selected == 'b' and current_page > 0:
+            current_page -= 1
+        elif selected == 'n' and current_page < total_pages - 1:
+            current_page += 1
+        elif selected == '':
+            # Enter key - go to next page
+            if current_page < total_pages - 1:
+                current_page += 1
+
 def pullthis(url):
         response = requests.get(url)
         data = response.text
-        print("\n{}\n".format(data))
+        return paginate_content(data)
 
 try:
     print (menu)
     while True:
             selected = str(input("Menu: Q)uit R)elist A)bout [1-5] :> "))
             if "1" in selected:
-                    pullthis("https://tgftp.nws.noaa.gov/data/raw/aw/awus81.kgyx.rws.gyx.txt")
+                    result = pullthis("https://tgftp.nws.noaa.gov/data/raw/aw/awus81.kgyx.rws.gyx.txt")
+                    if result == 'quit':
+                            raise KeyboardInterrupt()
+                    elif result == 'menu':
+                            print(menu)
             elif "2" in selected:
-                    pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus41.kgyx.rwr.gyx.txt")
+                    result = pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus41.kgyx.rwr.gyx.txt")
+                    if result == 'quit':
+                            raise KeyboardInterrupt()
+                    elif result == 'menu':
+                            print(menu)
             elif "3" in selected:
-                    pullthis("https://tgftp.nws.noaa.gov/data/forecasts/state/nh/nhz010.txt")
+                    result = pullthis("https://tgftp.nws.noaa.gov/data/forecasts/state/nh/nhz010.txt")
+                    if result == 'quit':
+                            raise KeyboardInterrupt()
+                    elif result == 'menu':
+                            print(menu)
             elif "4" in selected:
-                    pullthis("https://tgftp.nws.noaa.gov/data/raw/fp/fpus61.kcar.sft.car.txt")
+                    result = pullthis("https://tgftp.nws.noaa.gov/data/raw/fp/fpus61.kcar.sft.car.txt")
+                    if result == 'quit':
+                            raise KeyboardInterrupt()
+                    elif result == 'menu':
+                            print(menu)
             elif "5" in selected:
-                    pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus61.kgyx.rtp.gyx.txt")
+                    result = pullthis("https://tgftp.nws.noaa.gov/data/raw/as/asus61.kgyx.rtp.gyx.txt")
+                    if result == 'quit':
+                            raise KeyboardInterrupt()
+                    elif result == 'menu':
+                            print(menu)
             elif "a" in selected.lower():
                     print (about)
             elif "r" in selected.lower():
