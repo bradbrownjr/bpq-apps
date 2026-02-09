@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Apps.py Log Viewer Enter Key] - 2026-02-09
+### Changed
+- **apps.py v2.2→2.3**: Enter key now advances pages in log viewer
+- Press Enter to go O)lder (back in time) or N)ewer (forward in time)
+- Prompt shows "Enter=older" or "Enter=newer" depending on position
+- Standardizes pagination navigation across all apps
+
 ## [Apps.py Log Viewer Fix] - 2026-02-09
 ### Fixed
 - **apps.py v2.1→2.2**: Added pause prompt after viewing system log

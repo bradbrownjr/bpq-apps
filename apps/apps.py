@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 2.2
+Version: 2.3
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-09
 """
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "2.2"
+VERSION = "2.3"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -476,11 +476,11 @@ def view_log_paginated(log_path, title):
             
             # O)lder goes back in time, N)ewer goes forward in time
             if start_idx > 0 and end_idx < total_lines:
-                prompt = "[Q)uit O)lder N)ewer] :> "
+                prompt = "[Q)uit O)lder N)ewer Enter=older] :> "
             elif start_idx > 0:
-                prompt = "[Q)uit O)lder] :> "
+                prompt = "[Q)uit O)lder Enter=older] :> "
             elif end_idx < total_lines:
-                prompt = "[Q)uit N)ewer] :> "
+                prompt = "[Q)uit N)ewer Enter=newer] :> "
             else:
                 prompt = "[Q)uit] :> "
             
@@ -497,6 +497,14 @@ def view_log_paginated(log_path, title):
             elif choice == 'N' and end_idx < total_lines:
                 # Go forward in time (newer entries)
                 end_idx = min(end_idx + page_size, total_lines)
+            elif choice == '':
+                # Enter key - advance in available direction
+                if start_idx > 0:
+                    # O)lder is available - go back in time
+                    end_idx = start_idx
+                elif end_idx < total_lines:
+                    # N)ewer is available - go forward in time
+                    end_idx = min(end_idx + page_size, total_lines)
     
     except Exception as e:
         print("Error reading log: {}".format(str(e)))
