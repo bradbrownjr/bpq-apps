@@ -3,9 +3,9 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 2.1
+Version: 2.2
 Author: Brad Brown Jr (KC1JMH)
-Date: 2026-02-08
+Date: 2026-02-09
 """
 
 import os
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "2.1"
+VERSION = "2.2"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -603,6 +603,10 @@ def sysop_menu(callsign):
             sysop_manage_apps()
         elif choice == '2':
             view_log_paginated('/var/log/syslog', 'SYSTEM LOG')
+            try:
+                raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
+            except (EOFError, KeyboardInterrupt):
+                pass
         elif choice == '3':
             log_paths = [
                 os.path.expanduser('~/linbpq/debug.log'),
@@ -615,10 +619,10 @@ def sysop_menu(callsign):
                     break
             else:
                 print("BPQ log not found.")
-                try:
-                    raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
-                except (EOFError, KeyboardInterrupt):
-                    pass
+            try:
+                raw_input("[Q)uit Enter=continue] :> ") if sys.version_info[0] < 3 else input("[Q)uit Enter=continue] :> ")
+            except (EOFError, KeyboardInterrupt):
+                pass
         elif choice == '4':
             continue
         elif choice == 'R':

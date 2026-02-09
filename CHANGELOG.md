@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Apps.py Log Viewer Fix] - 2026-02-09
+### Fixed
+- **apps.py v2.1→2.2**: Added pause prompt after viewing system log
+  and BPQ log in sysop menu
+- Log viewer now waits for Enter key before redisplaying menu
+- Prevents jarring immediate menu redisplay after exiting log viewer
+
 ## [Wiki Enter Key Pagination] - 2026-02-08
 ### Changed
 - **wiki.py v2.9→2.10**: Enter key now advances to next page in search
