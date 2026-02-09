@@ -3,7 +3,7 @@
 Application Menu Launcher for BPQ Packet Radio
 Displays categorized menu of installed applications and launches them.
 
-Version: 2.5
+Version: 2.6
 Author: Brad Brown Jr (KC1JMH)
 Date: 2026-02-09
 """
@@ -22,7 +22,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-VERSION = "2.5"
+VERSION = "2.6"
 
 def compare_versions(v1, v2):
     """Compare two version strings. Returns True if v2 > v1."""
@@ -477,11 +477,11 @@ def view_log_paginated(log_path, title):
             
             # O)lder goes back in time, N)ewer goes forward in time
             if start_idx > 0 and end_idx < total_lines:
-                prompt = "[Q)uit O)lder N)ewer Enter=older] :> "
+                prompt = "[Q)uit N)ewer Enter=older] :> "
             elif start_idx > 0:
-                prompt = "[Q)uit O)lder Enter=older] :> "
+                prompt = "[Q)uit Enter=older] :> "
             elif end_idx < total_lines:
-                prompt = "[Q)uit N)ewer Enter=newer] :> "
+                prompt = "[Q)uit Enter=newer] :> "
             else:
                 prompt = "[Q)uit] :> "
             

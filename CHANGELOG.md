@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Pagination Prompt Optimization] - 2026-02-09
+### Changed
+- **Multiple apps**: Removed redundant options from pagination prompts
+  when Enter key duplicates another action - saves bandwidth at 1200 baud
+- **apps.py v2.5→2.6**: Log viewer prompts now show only alternative
+  option (e.g., "[Q)uit N)ewer Enter=older]" instead of listing O)lder
+  separately)
+- **wiki.py v2.10→2.11**: Search results prompt now "[Q)uit M)enu [1-X]
+  Enter=next]" (removed redundant "N)ext")
+- **repeater.py v1.18→1.19**: Browse results prompt now "[Q)uit M)enu
+  Enter=next]" and "[Q)uit M)enu P)rev Enter=next]" (removed redundant
+  "N)ext")
+- Bandwidth savings: 7-13 characters per prompt at 1200 baud
+
 ## [Apps.py Remove Redundant Prompt] - 2026-02-09
 ### Changed
 - **apps.py v2.4→2.5**: Removed redundant "[Q)uit Enter=continue]"
