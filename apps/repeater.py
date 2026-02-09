@@ -9,7 +9,7 @@ operation with cached data.
 Data from https://www.repeaterbook.com/
 
 Author: Brad Brown KC1JMH
-Version: 1.15
+Version: 1.16
 Date: February 2026
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     print("Error: urllib not available")
     sys.exit(1)
 
-VERSION = "1.15"
+VERSION = "1.16"
 APP_NAME = "repeater.py"
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeater_cache.json')
 CACHE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
@@ -358,18 +358,25 @@ def format_repeater(rep, index=None, show_distance=True):
     
     output.append(line1)
     
-    # Line 2: Mode and Use status
-    line2_parts = []
-    mode = rep.get('FM Analog', '')
-    if mode:
-        line2_parts.append(mode)
+    # Line 2: Modes (check boolean fields from RepeaterBook)
+    modes = []
+    if rep.get('FM Analog', '').strip().upper() == 'YES':
+        modes.append('FM')
+    if rep.get('DMR', '').strip().upper() == 'YES':
+        modes.append('DMR')
+    if rep.get('D-Star', '').strip().upper() == 'YES':
+        modes.append('DStar')
+    if rep.get('Fusion', '').strip().upper() == 'YES':
+        modes.append('YSF')
+    if rep.get('NXDN', '').strip().upper() == 'YES':
+        modes.append('NXDN')
+    if rep.get('P25 Phase I', '').strip().upper() == 'YES':
+        modes.append('P25')
+    if rep.get('TETRA', '').strip().upper() == 'YES':
+        modes.append('TETRA')
     
-    use = rep.get('Use', '')
-    if use and use != 'N/A':
-        line2_parts.append(use)
-    
-    if line2_parts:
-        output.append(' - '.join(line2_parts))
+    if modes:
+        output.append(', '.join(modes))
     
     # Line 3: Location
     location = rep.get('Nearest City', '')
@@ -473,35 +480,42 @@ def filter_by_mode(repeaters, mode_input):
     if not mode_input:
         return repeaters
     
-    # Parse comma-delimited modes
-    modes = [m.strip().upper() for m in mode_input.split(',')]
+    # Parse comma-delimited modes and normalize
+    requested_modes = [m.strip().upper() for m in mode_input.split(',')]
     
-    # Mode aliases for matching
-    mode_map = {
-        'FM': ['FM', 'ANALOG', 'FM ANALOG'],
-        'DMR': ['DMR', 'MOTOTRBO'],
-        'DSTAR': ['D-STAR', 'DSTAR'],
-        'YSF': ['YSF', 'SYSTEM FUSION', 'C4FM'],
-        'NXDN': ['NXDN'],
-        'P25': ['P25', 'APCO-25'],
-        'TETRA': ['TETRA'],
-        'ALLSTAR': ['ALLSTAR', 'APP_RPT'],
-        'ECHOLINK': ['ECHOLINK']
+    # Map field names to mode aliases
+    mode_field_map = {
+        'FM': 'FM Analog',
+        'ANALOG': 'FM Analog',
+        'DMR': 'DMR',
+        'MOTOTRBO': 'DMR',
+        'DSTAR': 'D-Star',
+        'D-STAR': 'D-Star',
+        'YSF': 'Fusion',
+        'FUSION': 'Fusion',
+        'C4FM': 'Fusion',
+        'NXDN': 'NXDN',
+        'P25': 'P25 Phase I',
+        'APCO-25': 'P25 Phase I',
+        'TETRA': 'TETRA'
     }
     
-    # Build list of acceptable modes
-    acceptable = set()
-    for mode in modes:
-        if mode in mode_map:
-            acceptable.update(mode_map[mode])
-        else:
-            acceptable.add(mode)
+    # Get field names to check
+    fields_to_check = set()
+    for mode in requested_modes:
+        if mode in mode_field_map:
+            fields_to_check.add(mode_field_map[mode])
     
+    if not fields_to_check:
+        return repeaters
+    
+    # Filter repeaters that support at least one requested mode
     filtered = []
     for rep in repeaters:
-        rep_mode = rep.get('FM Analog', '').strip().upper()
-        if rep_mode in acceptable:
-            filtered.append(rep)
+        for field in fields_to_check:
+            if rep.get(field, '').strip().upper() == 'YES':
+                filtered.append(rep)
+                break
     
     return filtered
 
