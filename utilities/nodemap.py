@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.85
+Version: 1.7.86
 """
 
-__version__ = '1.7.85'
+__version__ = '1.7.86'
 
 import sys
 import socket
@@ -139,7 +139,8 @@ class NodeCrawler:
         self.nodes = {}  # Node data: {callsign: {info, neighbors, location, type}}
         self.connections = []  # List of [node1, node2, port] connections
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
-        self.route_ports = {}  # Port numbers for direct neighbors: {callsign: port_number}
+        self.route_ports = {}  # Port numbers for direct neighbors of LOCAL node: {callsign: port_number}
+        self.node_route_ports = {}  # Per-node port maps: {node_base: {neighbor_base: port}}
         self.shortest_paths = {}  # Shortest discovered path to each node: {callsign: [path]}
         self.netrom_ssid_map = {}  # Global NetRom SSID mapping: {base_callsign: 'CALLSIGN-SSID'}
         self.ssid_source = {}  # Track SSID source: {base_callsign: ('routes'|'mheard', timestamp)}
@@ -600,7 +601,14 @@ class NodeCrawler:
                 # Extract base callsign for lookups (route_ports and netrom_ssid_map are keyed by base call)
                 lookup_call = callsign.split('-')[0] if '-' in callsign else callsign
                 
-                port_num = self.route_ports.get(lookup_call)
+                # Determine port from current node's perspective.
+                # At hop i we're physically connected to path[i-1] (or local node if i==0).
+                # C PORT uses the CURRENT node's port numbering, not localhost's.
+                current_node = path[i-1] if i > 0 else self.callsign
+                current_node_base = current_node.split('-')[0] if '-' in current_node else current_node
+                port_num = self.node_route_ports.get(current_node_base, {}).get(lookup_call)
+                if not port_num:
+                    port_num = self.route_ports.get(lookup_call)  # Fallback to local node's map
                 # CLI-forced SSIDs always take precedence over discovered SSIDs
                 full_callsign = self.cli_forced_ssids.get(lookup_call) or self.netrom_ssid_map.get(lookup_call, callsign)
                 
@@ -1510,9 +1518,9 @@ class NodeCrawler:
         
         # Note: netrom_ssids already processed via ROUTES consensus above
         
-        # Restore route_ports ONLY from LOCAL node's heard_on_ports
-        # route_ports tells us which port on OUR node to use to reach a neighbor
-        # Other nodes' heard_on_ports are their port numbers, not ours
+        # Restore route_ports from LOCAL node's heard_on_ports (for first-hop fallback)
+        # Also build node_route_ports for ALL nodes (needed for direct port connections
+        # at intermediate hops: C PORT uses the CURRENT node's port numbering, not localhost)
         local_base = self.callsign.split('-')[0] if '-' in self.callsign else self.callsign
         local_node_data = None
         
@@ -1536,6 +1544,19 @@ class NodeCrawler:
                 if neighbor not in self.route_ports and quality > 0:
                     # Use port 1 as fallback if no MHEARD data available
                     self.route_ports[neighbor] = 1
+        
+        # Build per-node port map from ALL nodes (for multi-hop direct port connections)
+        for node_key, node_data in nodes_data.items():
+            node_b = node_key.split('-')[0] if '-' in node_key else node_key
+            hp = node_data.get('heard_on_ports', [])
+            if hp:
+                ports = {}
+                for call, port in hp:
+                    if port is not None:
+                        cb = call.split('-')[0] if '-' in call else call
+                        ports[cb] = port
+                if ports:
+                    self.node_route_ports[node_b] = ports
         
         # Restore CLI-forced SSIDs (these override anything from JSON)
         for base_call, forced_ssid in self.cli_forced_ssids.items():
@@ -2548,6 +2569,17 @@ class NodeCrawler:
                 'commands': commands  # From ? command (all available commands)
             }
             
+            # Update node_route_ports with freshly crawled port data
+            node_b = callsign.split('-')[0] if '-' in callsign else callsign
+            fresh_ports = {}
+            for call in all_neighbors:
+                port = mheard_ports.get(call)
+                if port is not None:
+                    cb = call.split('-')[0] if '-' in call else call
+                    fresh_ports[cb] = port
+            if fresh_ports:
+                self.node_route_ports[node_b] = fresh_ports
+            
             # If this node was crawled with a CLI-forced SSID, update its netrom_ssids entry
             # This ensures the corrected SSID persists in the JSON for future crawls
             base_call = callsign.split('-')[0] if '-' in callsign else callsign
@@ -2826,9 +2858,10 @@ class NodeCrawler:
                             if alias not in self.alias_to_call:
                                 self.alias_to_call[alias] = full_call
                     
-                    # Restore route_ports ONLY from LOCAL node's heard_on_ports
-                    # route_ports tells us which port on OUR node to use to reach a neighbor
-                    # Other nodes' heard_on_ports are their port numbers, not ours
+                    # Restore route_ports from LOCAL node's heard_on_ports (first-hop fallback)
+                    # Also build node_route_ports for ALL nodes (needed for direct port
+                    # connections at intermediate hops: C PORT uses the CURRENT node's port
+                    # numbering, not localhost's)
                     local_base = self.callsign.split('-')[0] if '-' in self.callsign else self.callsign
                     local_node_data = None
                     
@@ -2849,6 +2882,19 @@ class NodeCrawler:
                         for neighbor, quality in routes.items():
                             if neighbor not in self.route_ports and quality > 0:
                                 self.route_ports[neighbor] = 1
+                    
+                    # Build per-node port map from ALL nodes (for multi-hop direct port connections)
+                    for node_key, node_info in nodes_data.items():
+                        node_b = node_key.split('-')[0] if '-' in node_key else node_key
+                        hp = node_info.get('heard_on_ports', [])
+                        if hp:
+                            ports = {}
+                            for call, port in hp:
+                                if port is not None:
+                                    cb = call.split('-')[0] if '-' in call else call
+                                    ports[cb] = port
+                            if ports:
+                                self.node_route_ports[node_b] = ports
                     
                     if self.route_ports:
                         if self.verbose:

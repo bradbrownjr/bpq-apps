@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Nodemap Per-Node Port Lookup] - 2026-02-22
+### Fixed
+- **nodemap.py v1.7.85→1.7.86**: Direct port connections (`C PORT CALL-SSID`)
+  now work correctly at intermediate hops, not just the first hop.
+  Root cause: `self.route_ports` was a flat dict keyed by neighbor, populated
+  only from the LOCAL node's (WS1EC) MHEARD data. When at hop 2 (e.g., KC1JMH),
+  the lookup returned None, so the crawler fell back to NetRom alias (BURG).
+  BPQ docs confirm: `C PORT` uses the CURRENT node's port numbering. Port 1 at
+  KC1JMH is KC1JMH's RF port, not WS1EC's.
+- Added `self.node_route_ports = {}` — a per-node dict
+  `{node_base: {neighbor_base: port}}` loaded from all nodes'
+  `heard_on_ports` in nodemap.json and updated live as nodes are crawled.
+- Connection loop now determines the current relay node (`path[i-1]` or
+  local callsign at i==0) and looks up its port for the next hop.
+  Falls back to `route_ports` if not found.
+
 ## [Nodemap Alternate Path Fix] - 2026-02-10
 ### Fixed
 - **nodemap.py v1.7.84→1.7.85**: `_find_alternate_path()` BFS now
