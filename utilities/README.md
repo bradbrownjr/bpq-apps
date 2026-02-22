@@ -124,7 +124,8 @@ Crawls BPQ nodes via RF to discover network topology. Creates comprehensive maps
 **Common Options:**
 - `-h`, `--help`, `/?` - Show all options
 - `-y`, `--yes` - Silent mode for cron (requires `-u` and `-p`)
-- `-c`, `--callsign CALL-SSID` - Force specific node SSID
+- `-c`, `--callsign CALL-SSID` - Force connection to specific SSID (single node)
+- `--force-ssid BASE FULL` - Force SSID mapping (multiple, resolves ties)
 - `-q`, `--query CALL` - Query node info without crawling
 - `-d`, `--display-nodes` - Show nodes table and exit
 - `-x`, `--exclude [FILE|CALLS]` - Skip callsigns (file or comma-separated)
@@ -161,8 +162,19 @@ Crawls BPQ nodes via RF to discover network topology. Creates comprehensive maps
 0 2 * * 0 cd ~/nodemap && ./nodemap.py 15 -y -u USER -p PASS --mode reaudit
 ```
 
-**Fix bad SSID:**
+**Resolve SSID conflicts (tied votes):**
 ```bash
+# Single conflict: use --force-ssid
+./nodemap.py 4 AB1KI-15 --force-ssid W1DTX W1DTX-7 --verbose
+
+# Multiple conflicts: chain --force-ssid arguments
+./nodemap.py 4 AB1KI-15 \
+    --force-ssid W1DTX W1DTX-7 \
+    --force-ssid N1LJK N1LJK-5 \
+    --force-ssid WD1F WD1F-1 \
+    --verbose
+
+# Legacy: Force connection to single node
 ./nodemap.py --callsign NG1P-4    # Corrects SSID, updates JSON
 ```
 
@@ -208,12 +220,12 @@ AB1KI, N1REX  # commas work too
 
 ### How It Works
 
-**SSID Selection** (connects to node port, not BBS/RMS/CHAT):
-1. CLI override (`--callsign CALL-SSID`) - user knows best
+**SSID Selection Priority** (connects to node port, not BBS/RMS/CHAT):
+1. CLI override (`--force-ssid BASE FULL` or `--callsign CALL-SSID`) - user knows best
 2. ROUTES consensus - aggregated from all nodes' routing tables
 3. MHEARD data - fallback for new discoveries
 
-SSIDs like `-2` (BBS), `-10` (RMS), `-4` (CHAT) vary by sysop. The script uses ROUTES tables from neighboring nodes to find the actual node SSID.
+SSIDs like `-2` (BBS), `-10` (RMS), `-4` (CHAT) vary by sysop. When crawl encounters tied votes (e.g., W1DTX-4, W1DTX-7, W1DTX-15), use `--force-ssid W1DTX W1DTX-7` to break the tie and complete the crawl. The script uses ROUTES tables from neighboring nodes to find the actual node SSID.
 
 **Port Filtering:**
 - Default: VHF/UHF packet only (skips HF and IP)

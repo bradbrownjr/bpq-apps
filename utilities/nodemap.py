@@ -4273,6 +4273,11 @@ def main():
         print("       -c, --callsign CALL")
         print("              Force specific SSID for connection (e.g., -c NG1P-4).")
         print("")
+        print("       --force-ssid BASE FULL")
+        print("              Force SSID mapping (can be used multiple times).")
+        print("              Example: --force-ssid W1DTX W1DTX-7 --force-ssid N1LJK N1LJK-5")
+        print("              Resolves tied SSID votes and fixes consensus conflicts.")
+        print("")
         print("       -g, --set-grid CALL GRID")
         print("              Set gridsquare for callsign (e.g., -g NG1P FN43vp).")
         print("")
@@ -4753,6 +4758,7 @@ def main():
     max_hops_explicit = False  # Track if user explicitly set max_hops
     start_node = None
     forced_ssid = None  # User-specified SSID to override discovery
+    forced_ssids = {}  # Multiple forced SSIDs: {base_call: full_ssid}
     username = None
     password = None
     notify_url = None
@@ -4922,6 +4928,25 @@ def main():
             if not max_hops_explicit and not start_node:
                 max_hops = 0
             i += 2
+        elif arg == '--force-ssid':
+            # Parse multiple --force-ssid pairs: --force-ssid BASE FULL
+            if i + 2 < len(sys.argv):
+                base = sys.argv[i + 1].upper()
+                full = sys.argv[i + 2].upper()
+                # Validate base callsign format (without SSID)
+                if not NodeCrawler._is_valid_callsign(base) and '-' not in base:
+                    # Allow base without SSID validation for wildcards
+                    pass
+                # Validate full callsign has SSID
+                if '-' not in full:
+                    colored_print("Error: --force-ssid requires full SSID (e.g., W1DTX-7)", Colors.RED)
+                    sys.exit(1)
+                forced_ssids[base] = full
+                colored_print("Forced SSID: {} -> {}".format(base, full), Colors.CYAN)
+                i += 3
+            else:
+                colored_print("Error: --force-ssid requires BASE and FULL arguments", Colors.RED)
+                sys.exit(1)
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '-H', '--ip', '-I', '--yes', '-y']:
             # Known flags without arguments
             i += 1
@@ -5042,10 +5067,20 @@ def main():
     
     # Crawl network
     try:
-        # If user forced a specific SSID, pre-populate the map
+        # If user forced specific SSIDs, pre-populate the map
         # Save it to restore after resume (which rebuilds map from JSON)
         cli_forced_ssids = {}
         forced_target = None  # Target node to crawl (for --callsign)
+        
+        # Handle --force-ssid arguments (multiple allowed)
+        if forced_ssids:
+            for base_call, full_ssid in forced_ssids.items():
+                crawler.netrom_ssid_map[base_call] = full_ssid
+                crawler.ssid_source[base_call] = ('cli', time.time())
+                cli_forced_ssids[base_call] = full_ssid
+            colored_print("Forcing {} SSID mappings (will update map for future crawls)".format(len(forced_ssids)), Colors.GREEN)
+        
+        # Handle --callsign argument (single, legacy)
         if forced_ssid:
             base_call = forced_ssid.split('-')[0]
             crawler.netrom_ssid_map[base_call] = forced_ssid
