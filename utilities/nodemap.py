@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.83
+Version: 1.7.84
 """
 
-__version__ = '1.7.83'
+__version__ = '1.7.84'
 
 import sys
 import socket
@@ -598,8 +598,10 @@ class NodeCrawler:
                 # CLI-forced SSIDs always take precedence over discovered SSIDs
                 full_callsign = self.cli_forced_ssids.get(lookup_call) or self.netrom_ssid_map.get(lookup_call, callsign)
                 
-                # Direct port connection (C PORT CALL) only for first hop from localhost
-                # Subsequent hops MUST use NetRom routing (already connected via AX.25)
+                # Prefer direct port connection (C PORT CALL-SSID) at every hop when port and SSID
+                # are known. This works at any connected BPQ node, not just from localhost.
+                # Faster than NetRom alias routing and avoids alias table lookup delays.
+                # Fall back to NetRom alias if port or SSID are unknown.
                 
                 # Check for valid alias (not a callsign - that would be a bug)
                 alias = self.call_to_alias.get(lookup_call)
@@ -609,9 +611,9 @@ class NodeCrawler:
                         print("    WARNING: Invalid alias '{}' for {} (callsign stored as alias - bug!)".format(alias, lookup_call))
                     alias = None  # Invalidate and fall through to discovery
                 
-                if i == 0 and port_num and full_callsign:
-                    # Direct neighbor with known port and SSID: C PORT CALLSIGN-SSID
-                    # Fastest method - goes straight to neighbor, no NetRom routing
+                if port_num and full_callsign:
+                    # Direct port connection: C PORT CALLSIGN-SSID
+                    # Works at any hop - bypasses NetRom routing entirely
                     cmd = "C {} {}\r".format(port_num, full_callsign).encode('ascii')
                     connect_target = "{} {} (port {}, direct)".format(port_num, full_callsign, port_num)
                     if self.verbose:
