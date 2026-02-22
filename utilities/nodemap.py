@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.82
+Version: 1.7.83
 """
 
-__version__ = '1.7.82'
+__version__ = '1.7.83'
 
 import sys
 import socket
@@ -154,6 +154,7 @@ class NodeCrawler:
         self.target_only_mode = False  # When True, only crawl target node (no neighbor discovery)
         self.target_callsign = None  # The specific target callsign when using --callsign
         self.silent_mode = False  # When True, skip all interactive prompts (for cron/scripts)
+        self.failed_relays = set()  # Intermediates that failed as relays this session: {base_callsign}
     
     def _write_log_header(self, log_file):
         """Write header with version and metadata to log file on first use."""
@@ -376,6 +377,55 @@ class NodeCrawler:
         """
         return min(45 + (hop_count * 45), 240)
     
+    def _find_alternate_path(self, target_base):
+        """
+        BFS through known node data to find a path to target_base that avoids
+        nodes in self.failed_relays. Used to re-route after an intermediate times out.
+
+        Args:
+            target_base: Base callsign of target node (no SSID)
+
+        Returns:
+            List of intermediate base callsigns (path to pass to crawl_node), or None if not found.
+            Empty list means target is a direct neighbor of local node.
+        """
+        local_base = self.callsign.split('-')[0] if '-' in self.callsign else self.callsign
+
+        # BFS: (current_base, path_to_current)
+        queue = deque()
+        queue.append((local_base, []))
+        visited = {local_base}
+
+        while queue:
+            current, path = queue.popleft()
+
+            # Resolve to full SSID for node lookup
+            current_full = self.netrom_ssid_map.get(current, current)
+            current_info = self.nodes.get(current_full) or self.nodes.get(current, {})
+            neighbors = current_info.get('neighbors', [])
+
+            for neighbor in neighbors:
+                neighbor_base = neighbor.split('-')[0] if '-' in neighbor else neighbor
+                if neighbor_base in visited:
+                    continue
+                # Skip failed relays (but allow them as the FINAL target)
+                if neighbor_base in self.failed_relays and neighbor_base != target_base:
+                    if self.verbose:
+                        print("    Alt-path BFS: skipping failed relay {}".format(neighbor_base))
+                    continue
+                visited.add(neighbor_base)
+
+                new_path = path + [neighbor_base]
+
+                if neighbor_base == target_base:
+                    # Found it - new_path includes target; return only the intermediates
+                    return path  # path = intermediates before target
+
+                # Continue BFS deeper
+                queue.append((neighbor_base, new_path))
+
+        return None  # No alternate path found
+
     def _verify_netrom_route(self, tn, target):
         """
         Verify NetRom route to target using NRR command.
@@ -2112,6 +2162,27 @@ class NodeCrawler:
             else:
                 fail_msg = "{} failed to reach {}".format(path[-1], callsign)
             self._send_notification(fail_msg)
+            
+            # If there were intermediate hops, mark the last one as a failed relay
+            # and try to find an alternative path to the target
+            if path:
+                failed_relay = path[-1].split('-')[0] if '-' in path[-1] else path[-1]
+                if failed_relay not in self.failed_relays:
+                    self.failed_relays.add(failed_relay)
+                    colored_print("  Marking {} as failed relay - searching for alternate path to {}".format(failed_relay, callsign), Colors.YELLOW)
+                    
+                    # BFS through known nodes to find alternate path avoiding failed relays
+                    target_base = callsign.split('-')[0] if '-' in callsign else callsign
+                    alt_path = self._find_alternate_path(target_base)
+                    if alt_path is not None:
+                        queue_key = (callsign, tuple(alt_path))
+                        if queue_key not in self.queued_paths:
+                            self.queue.appendleft((callsign, alt_path, 0))  # High priority
+                            self.queued_paths.add(queue_key)
+                            alt_desc = ' -> '.join(alt_path) if alt_path else '(direct)'
+                            colored_print("  Re-queuing {} via alternate path: {}".format(callsign, alt_desc), Colors.CYAN)
+                    else:
+                        colored_print("  No alternate path found to {} (all routes blocked)".format(callsign), Colors.YELLOW)
             
             # Note: NOT adding to self.failed - node can still be explored from other neighbors
             # This allows mapping intermittent/poor connections while still discovering the node
