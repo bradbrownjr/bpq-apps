@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.84
+Version: 1.7.85
 """
 
-__version__ = '1.7.84'
+__version__ = '1.7.85'
 
 import sys
 import socket
@@ -155,6 +155,7 @@ class NodeCrawler:
         self.target_callsign = None  # The specific target callsign when using --callsign
         self.silent_mode = False  # When True, skip all interactive prompts (for cron/scripts)
         self.failed_relays = set()  # Intermediates that failed as relays this session: {base_callsign}
+        self.loaded_nodes = {}  # Node data loaded from nodemap.json: {callsign: {neighbors, ...}}
     
     def _write_log_header(self, log_file):
         """Write header with version and metadata to log file on first use."""
@@ -401,7 +402,12 @@ class NodeCrawler:
 
             # Resolve to full SSID for node lookup
             current_full = self.netrom_ssid_map.get(current, current)
-            current_info = self.nodes.get(current_full) or self.nodes.get(current, {})
+            # Check both current-session nodes and pre-loaded JSON nodes
+            current_info = (self.nodes.get(current_full)
+                            or self.nodes.get(current)
+                            or self.loaded_nodes.get(current_full)
+                            or self.loaded_nodes.get(current)
+                            or {})
             neighbors = current_info.get('neighbors', [])
 
             for neighbor in neighbors:
@@ -2737,6 +2743,7 @@ class NodeCrawler:
                 
                 if existing and 'nodes' in existing:
                     nodes_data = existing['nodes']
+                    self.loaded_nodes = nodes_data  # Store for use by _find_alternate_path()
                     
                     if self.verbose:
                         print("Loaded existing data with {} nodes: {}".format(

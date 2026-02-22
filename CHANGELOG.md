@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Nodemap Alternate Path Fix] - 2026-02-10
+### Fixed
+- **nodemap.py v1.7.84→1.7.85**: `_find_alternate_path()` BFS now
+  searches pre-loaded JSON node data (`self.loaded_nodes`) in addition
+  to current-session crawled data (`self.nodes`). Previously, the BFS
+  always returned None because `self.nodes` is empty at crawl start
+  (JSON data loaded at startup was not accessible to the method).
+  Alternate path re-routing after relay timeout now works correctly.
+- `self.loaded_nodes` added to `NodeCrawler.__init__` and populated
+  from `nodes_data` when nodemap.json is loaded at startup.
+
 ## [Pagination Prompt Optimization] - 2026-02-09
 ### Changed
 - **Multiple apps**: Removed redundant options from pagination prompts

@@ -314,10 +314,11 @@ Implementation notes:
 
 ## Nodemap Crawler Constraints
 
-**Connection Methods** (priority order):
-1. First hop from localhost: `C PORT CALL-SSID` (using local ROUTES) or `C ALIAS` (NetRom)
-2. Subsequent hops: Direct port, NetRom alias, or FALLBACK to ROUTES query at current node
-3. **Key insight**: Each node's ROUTES table has `PORT CALL-SSID QUALITY` - port numbers work beyond first hop (contrary to BPQ docs)
+**Connection Methods** (priority order — applies at ALL hops, not just first):
+1. **Direct port**: `C PORT CALL-SSID` (when both `port_num` and full SSID are known from ROUTES data)
+2. **NetRom alias**: `C ALIAS` (fallback when no port/SSID data available)
+3. **ROUTES discovery**: Query ROUTES at current node to find port/SSID for next hop (last resort)
+- **Key insight**: Each node's ROUTES table has `PORT CALL-SSID QUALITY` - port numbers work at any connected BPQ node, not just localhost
 
 **SSID Selection** (CRITICAL - do not deviate):
 1. CLI-forced SSIDs (`--force-ssid`) - highest priority
@@ -334,7 +335,7 @@ Implementation notes:
 - Reachable: In ANY node's ROUTES table
 - Unreachable: ONLY in MHEARD (never ROUTES) - likely user station or offline
 
-**Path Building**: Uses `successful_path` from previous crawls; determines SSIDs from ROUTES consensus; NetRom aliases preferred when available (faster)
+**Path Building**: Uses `successful_path` from previous crawls; determines SSIDs from ROUTES consensus; prefers direct port (`C PORT CALL-SSID`) at every hop when port+SSID known; falls back to NetRom alias when no port data
 
 ## Repository Structure
 ```
