@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Nodemap-HTML HF Node Coloring] - 2026-02-23
+### Added
+- **nodemap-html.py v1.4.13→1.4.14**: HF-connected nodes (those with VARA, ARDOP, or
+  PACTOR ports) now render as **gray** circles on both the HTML and SVG maps, making
+  them visually distinct from standard red VHF/UHF nodes. W1DTX-7 and similar nodes
+  that gateway the national network via HF are immediately recognizable.
+  - HTML map: `#9E9E9E` fill / `#616161` stroke when `hf_ports` is non-empty
+  - SVG map: same colors; `stroke_color` variable used in `<circle>` element
+  - Both legends updated: renamed "Band Colors" to "Connection Lines" and added
+    a "Node Markers" section with colored circle indicators
+
 ## [Nodemap Configurable Operation Timeout] - 2026-02-23
 ### Added
 - **nodemap.py v1.7.87→1.7.88**: New `--timeout SECONDS` / `-t SECONDS` CLI arg

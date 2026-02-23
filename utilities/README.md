@@ -142,6 +142,7 @@ Crawls BPQ nodes via RF to discover network topology. Creates comprehensive maps
 **Advanced:**
 - `-H`, `--hf` - Include HF ports (VARA/ARDOP/PACTOR)
 - `-I`, `--ip` - Include IP ports (AXIP/Telnet)
+- `-t`, `--timeout SECONDS` - Override per-node operation timeout (default: 360 + hop_count×240). Increase for nodes with huge ROUTES tables (e.g., `-t 1800` for 30 min)
 - `-g`, `--set-grid CALL GRID` - Set gridsquare for node
 - `-N`, `--note CALL [TEXT]` - Add/update/remove note
 
@@ -285,6 +286,9 @@ Converts nodemap.json to visual maps: interactive HTML with Leaflet.js and stati
   - Yellow (dashed): HF (VARA/ARDOP/PACTOR)
   - Cyan (dotted): IP (AXIP/Telnet)
   - Gray: Unknown
+- Node marker colors:
+  - Red: VHF/UHF node
+  - Gray: HF gateway (has VARA/ARDOP/PACTOR port)
 - Pan/zoom controls, legend
 
 **Static SVG:**

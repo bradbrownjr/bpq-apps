@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.13
+Version: 1.4.14
 """
 
-__version__ = '1.4.13'
+__version__ = '1.4.14'
 
 import sys
 import json
@@ -381,6 +381,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             'applications': applications,
             'frequencies': frequencies,
             'hf_ports': hf_ports,  # HF access methods (VARA, ARDOP, etc.)
+            'has_hf': bool(hf_ports),  # True if node has any HF port (affects marker color)
             'ssids': ssids,
             'rf_neighbors': rf_neighbor_count,
             'ip_neighbors': ip_neighbor_count,
@@ -703,10 +704,12 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         
         // Add node markers
         nodes.forEach(function(node) {
+            // HF-connected nodes shown in gray so they stand out from VHF/UHF nodes
+            var isHf = node.hf_ports && node.hf_ports.length > 0;
             var marker = L.circleMarker([node.lat, node.lon], {
                 radius: 8,
-                fillColor: '#e53935',
-                color: '#b71c1c',
+                fillColor: isHf ? '#9E9E9E' : '#e53935',
+                color: isHf ? '#616161' : '#b71c1c',
                 weight: 2,
                 opacity: 1,
                 fillOpacity: 0.8
@@ -781,12 +784,16 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'legend');
-            div.innerHTML = '<strong>Band Colors</strong><br>' +
+            div.innerHTML = '<strong>Connection Lines</strong><br>' +
                 '<div class="legend-item"><div class="legend-color" style="background:#2196F3"></div>2m (144-148 MHz)</div>' +
                 '<div class="legend-item"><div class="legend-color" style="background:#FF9800"></div>70cm (420-450 MHz)</div>' +
                 '<div class="legend-item"><div class="legend-color" style="background:#9C27B0"></div>1.25m (222-225 MHz)</div>' +
                 '<div class="legend-item"><div class="legend-color" style="background:#4CAF50"></div>6m (50-54 MHz)</div>' +
-                '<div class="legend-item"><div class="legend-color" style="background:#888888"></div>Other/Unknown</div>';
+                '<div class="legend-item"><div class="legend-color" style="background:#888888"></div>Other/Unknown</div>' +
+                '<hr style="margin:6px 0">' +
+                '<strong>Node Markers</strong><br>' +
+                '<div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#e53935;border:2px solid #b71c1c;margin-right:8px;flex-shrink:0"></div>VHF/UHF node</div>' +
+                '<div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#9E9E9E;border:2px solid #616161;margin-right:8px;flex-shrink:0"></div>HF gateway (VARA/ARDOP)</div>';
             return div;
         };
         legend.addTo(map);
@@ -972,6 +979,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             'frequency': primary_freq,
             'frequencies': freq_list,
             'hf_ports': hf_ports,  # HF access methods
+            'has_hf': bool(hf_ports),  # True if node has any HF port (affects marker color)
             'type': node_data.get('type', 'Unknown'),
             'note': node_data.get('note', ''),  # Sysop-added note
             'rf_neighbors': rf_neighbor_count,
@@ -1264,7 +1272,13 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     svg_lines.append('  <g class="nodes">')
     for node in map_nodes:
         x, y = project(node['lat'], node['lon'])
-        color = get_band_color(node['frequency'])
+        # HF-connected nodes shown in gray to distinguish from VHF/UHF nodes
+        if node.get('has_hf'):
+            color = '#9E9E9E'
+            stroke_color = '#616161'
+        else:
+            color = get_band_color(node['frequency'])
+            stroke_color = '#333'
         
         # Build tooltip with same structure as HTML popups
         tooltip_lines = []
@@ -1290,7 +1304,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         # Convert tooltip lines to string for JavaScript
         tooltip_str = "\\n".join(tooltip_lines)
         svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})" onmouseenter="highlightNode(\'{}\');" onmousemove="showTooltip(event, {});" onmouseleave="unhighlightAll(); hideTooltip();">'.format(x, y, node['callsign'], repr(tooltip_str)))
-        svg_lines.append('      <circle r="6" fill="{}" stroke="#333" stroke-width="1.5">'.format(color))
+        svg_lines.append('      <circle r="6" fill="{}" stroke="{}" stroke-width="1.5">'.format(color, stroke_color))
         svg_lines.append('      </circle>')
         svg_lines.append('      <text x="0" y="18" text-anchor="middle">{}</text>'.format(node['display_call']))
         svg_lines.append('    </g>')
@@ -1298,10 +1312,10 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     
     # Legend
     legend_x = width - 150
-    legend_y = height - 140
+    legend_y = height - 155
     svg_lines.append('  <g class="legend" transform="translate({},{})">'.format(legend_x, legend_y))
-    svg_lines.append('    <rect x="-5" y="-15" width="140" height="130" fill="white" stroke="#ccc" rx="5"/>')
-    svg_lines.append('    <text y="0" font-weight="bold">Band Colors</text>')
+    svg_lines.append('    <rect x="-5" y="-15" width="140" height="200" fill="white" stroke="#ccc" rx="5"/>')
+    svg_lines.append('    <text y="0" font-weight="bold">Connection Lines</text>')
     
     bands = [
         ('#2196F3', '2m (144-148 MHz)'),
@@ -1314,6 +1328,13 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         y_offset = 20 + i * 20
         svg_lines.append('    <line x1="0" y1="{}" x2="20" y2="{}" stroke="{}" stroke-width="3"/>'.format(y_offset, y_offset, color))
         svg_lines.append('    <text x="25" y="{}">{}</text>'.format(y_offset + 4, label))
+    # Node markers section
+    svg_lines.append('    <line x1="-5" y1="122" x2="135" y2="122" stroke="#ccc" stroke-width="0.5"/>')
+    svg_lines.append('    <text y="136" font-weight="bold">Node Markers</text>')
+    svg_lines.append('    <circle cx="10" cy="153" r="5" fill="#e53935" stroke="#b71c1c" stroke-width="1.5"/>')
+    svg_lines.append('    <text x="22" y="157">VHF/UHF node</text>')
+    svg_lines.append('    <circle cx="10" cy="173" r="5" fill="#9E9E9E" stroke="#616161" stroke-width="1.5"/>')
+    svg_lines.append('    <text x="22" y="177">HF gateway</text>')
     svg_lines.append('  </g>')
     
     # Stats
