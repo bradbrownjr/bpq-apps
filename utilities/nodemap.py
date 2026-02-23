@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.7.87
 """
 
-__version__ = '1.7.88'
+__version__ = '1.7.89'
 
 import sys
 import socket
@@ -1569,6 +1569,15 @@ class NodeCrawler:
         for base_call, forced_ssid in self.cli_forced_ssids.items():
             self.netrom_ssid_map[base_call] = forced_ssid
             self.ssid_source[base_call] = ('cli', time.time())
+            # Also pull alias from own_aliases if we have it - enables NetRom fallback routing
+            node_data = nodes_data.get(base_call) or nodes_data.get(forced_ssid, {})
+            own_aliases = node_data.get('own_aliases', {})
+            for alias, full_call in own_aliases.items():
+                if full_call == forced_ssid:
+                    self._set_call_to_alias(base_call, alias, 'cli_forced')
+                    if alias not in self.alias_to_call:
+                        self.alias_to_call[alias] = forced_ssid
+                    break
             if self.verbose:
                 print("Restored CLI-forced SSID: {} = {}".format(base_call, forced_ssid))
         
@@ -2957,7 +2966,9 @@ class NodeCrawler:
                             return
                         
                         # Verify node is routable (has NetRom alias or is direct neighbor)
-                        if target_base not in self.call_to_alias and target_base not in self.route_ports:
+                        # Skip this check when SSID was CLI-forced: user asserts the path exists
+                        if target_base not in self.call_to_alias and target_base not in self.route_ports \
+                                and target_base not in self.cli_forced_ssids:
                             colored_print("Error: {} is not routable (no NetRom alias in network data)".format(target_base), Colors.RED)
                             colored_print("NetRom routing requires an alias from the NODES table.", Colors.YELLOW)
                             colored_print("This node may be offline or unreachable from your location.", Colors.YELLOW)

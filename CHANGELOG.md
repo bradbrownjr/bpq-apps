@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Nodemap Force-SSID Routability Bypass] - 2026-02-23
+### Fixed
+- **nodemap.py v1.7.88→1.7.89**: `--force-ssid` now correctly bypasses the
+  NetRom alias routability gate. Previously, targeting a node whose SSID had
+  tied votes (e.g. W1DTX with W1DTX-4/7/15 each getting 1 vote) would fail with
+  "Error: W1DTX is not routable" even when `--force-ssid W1DTX W1DTX-7` was
+  supplied, because the alias check required `call_to_alias` to be populated —
+  which it never was when consensus failed. Fix: add
+  `and target_base not in self.cli_forced_ssids` to the guard condition.
+- When restoring CLI-forced SSIDs after JSON load, also pull the matching
+  NetRom alias from `own_aliases` into `call_to_alias` / `alias_to_call` so
+  that the NetRom fallback path works if the direct port connection fails.
+
 ## [Nodemap-HTML HF Node Coloring] - 2026-02-23
 ### Added
 - **nodemap-html.py v1.4.13→1.4.14**: HF-connected nodes (those with VARA, ARDOP, or
