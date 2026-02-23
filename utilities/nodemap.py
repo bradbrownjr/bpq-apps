@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.86
+Version: 1.7.87
 """
 
-__version__ = '1.7.86'
+__version__ = '1.7.87'
 
 import sys
 import socket
@@ -156,6 +156,7 @@ class NodeCrawler:
         self.target_callsign = None  # The specific target callsign when using --callsign
         self.silent_mode = False  # When True, skip all interactive prompts (for cron/scripts)
         self.failed_relays = set()  # Intermediates that failed as relays this session: {base_callsign}
+        self.last_failed_relay = None  # The specific hop that failed in last _connect_to_node call
         self.loaded_nodes = {}  # Node data loaded from nodemap.json: {callsign: {neighbors, ...}}
     
     def _write_log_header(self, log_file):
@@ -594,6 +595,10 @@ class NodeCrawler:
             
             # Connect through nodes in path (for multi-hop or direct connections from local node)
             for i, callsign in enumerate(path):
+                # Track which hop we are attempting - if this iteration returns None,
+                # last_failed_relay will correctly point to the actual failing hop
+                # (not path[-1] which may be a different node entirely)
+                self.last_failed_relay = callsign.split('-')[0] if '-' in callsign else callsign
                 # Strategy: Prefer direct connection (C PORT CALL-SSID) when we have port info
                 # This bypasses NetRom routing and is faster for direct neighbors
                 # Fallback to NetRom alias (C ALIAS) if no port info available
@@ -2164,6 +2169,7 @@ class NodeCrawler:
         # For multi-hop: callsign=KS1R, path=[KC1JMH] -> C KC1JMH-15, then C KS1R-15
         connect_path = path + [callsign] if path else ([callsign] if callsign != self.callsign else [])
         
+        self.last_failed_relay = None  # Reset before connection attempt
         tn = self._connect_to_node(connect_path)
         
         # Send 'Starting crawl' notification after successful connection to local node
@@ -2195,7 +2201,7 @@ class NodeCrawler:
             # If there were intermediate hops, mark the last one as a failed relay
             # and try to find an alternative path to the target
             if path:
-                failed_relay = path[-1].split('-')[0] if '-' in path[-1] else path[-1]
+                failed_relay = self.last_failed_relay or (path[-1].split('-')[0] if '-' in path[-1] else path[-1])
                 if failed_relay not in self.failed_relays:
                     self.failed_relays.add(failed_relay)
                     colored_print("  Marking {} as failed relay - searching for alternate path to {}".format(failed_relay, callsign), Colors.YELLOW)

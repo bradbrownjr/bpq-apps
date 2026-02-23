@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Nodemap Failed Relay Tracking Fix] - 2026-02-23
+### Fixed
+- **nodemap.py v1.7.86→1.7.87**: `failed_relays` now correctly identifies the
+  hop that actually failed, not always `path[-1]`.
+  Root cause: when a multi-hop connection fails at an early hop
+  (e.g., N1QFY busy at hop 2 of KC1JMH→N1QFY→AB1KI→W1DTX), the failed
+  relay was set to `path[-1]` (AB1KI), not the actual failing hop (N1QFY).
+  This caused AB1KI to be blacklisted as a relay for the rest of the crawl,
+  preventing W1DTX from being re-queued via the correct path (AB1KI→W1DTX-7).
+- Added `self.last_failed_relay = None` to `__init__`.
+- `_connect_to_node` sets `self.last_failed_relay` to the base callsign of
+  the active loop iteration before each hop attempt. Any `return None` inside
+  the loop then correctly reflects which node failed.
+- `crawl_node` uses `self.last_failed_relay or path[-1]` when marking failed relay.
+
 ## [Nodemap Per-Node Port Lookup] - 2026-02-22
 ### Fixed
 - **nodemap.py v1.7.85→1.7.86**: Direct port connections (`C PORT CALL-SSID`)
