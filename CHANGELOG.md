@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Partial Node Connection Fix] - 2026-02-23
+### Fixed
+- **nodemap-html.py v1.4.19**: Allow one-sided connections when the *source*
+  node is partial (incomplete crawl). Previously only relaxed reciprocity check
+  when the neighbor was partial. Fixes W1DTX-7 ↔ AB1KI-15 connection being
+  dropped despite W1DTX having AB1KI in its ROUTES with `>` prefix (direct RF).
+
 ## [Connection Validation] - 2026-02-25
 ### Fixed
 - **nodemap.py v1.7.92**: Store port number in `direct_routes` JSON field.

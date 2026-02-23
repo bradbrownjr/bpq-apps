@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.18
+Version: 1.4.19
 """
 
-__version__ = '1.4.18'
+__version__ = '1.4.19'
 
 import sys
 import json
@@ -477,18 +477,21 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                 continue
             
             # Reciprocity check: require neighbor to acknowledge this node.
-            # For fully-crawled (non-partial) neighbors, the neighbor must have
-            # this node in their routes with quality > 0. This filters one-sided
-            # connections where node A hears B's broadcast but B doesn't route
-            # back (sysop blocked, marginal signal, or frequency mismatch).
-            # For partial/uncrawled neighbors, allow one-sided (incomplete data).
+            # Skip check when either endpoint is partial (incomplete crawl data):
+            #   - Source partial: we trust what little ROUTES data we got
+            #     (e.g. W1DTX-7 claims AB1KI as direct; partial crawl is authoritative)
+            #   - Neighbor partial: can't confirm, give benefit of doubt
+            # When both are fully crawled, require bidirectional routes (quality > 0).
+            # This filters one-sided connections from marginal signals or sysop
+            # blocking (AB1KI's zeroed routes to K1NYY, KS1R, KX1EMA, etc.).
+            source_is_partial = node_data.get('partial', False)
             neighbor_data = nodes.get(neighbor_key, {})
             neighbor_is_partial = neighbor_data.get('partial', False)
-            if not neighbor_is_partial:
+            if not source_is_partial and not neighbor_is_partial:
                 neighbor_routes = neighbor_data.get('routes', {})
                 neighbor_quality = neighbor_routes.get(callsign_base, 0)
                 if neighbor_quality == 0:
-                    continue  # Fully crawled neighbor doesn't acknowledge this node
+                    continue  # Both fully crawled but neighbor doesn't acknowledge
             
             to_lat, to_lon = node_coords[neighbor_key]
             
@@ -1103,15 +1106,16 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
                 continue
             
             # Reciprocity check: require neighbor to acknowledge this node.
-            # For fully-crawled (non-partial) neighbors, the neighbor must have
-            # this node in their routes with quality > 0.
+            # Skip check when either endpoint is partial (incomplete crawl data).
+            # When both are fully crawled, require bidirectional routes.
+            source_is_partial = node_data.get('partial', False)
             neighbor_data = nodes.get(neighbor_key, {})
             neighbor_is_partial = neighbor_data.get('partial', False)
-            if not neighbor_is_partial:
+            if not source_is_partial and not neighbor_is_partial:
                 neighbor_routes = neighbor_data.get('routes', {})
                 neighbor_quality = neighbor_routes.get(callsign_base, 0)
                 if neighbor_quality == 0:
-                    continue  # Fully crawled neighbor doesn't acknowledge this node
+                    continue  # Both fully crawled but neighbor doesn't acknowledge
             
             to_lat, to_lon = node_coords[neighbor_key]
             
