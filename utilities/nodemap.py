@@ -28,7 +28,7 @@ Date: January 2026
 Version: 1.7.87
 """
 
-__version__ = '1.7.87'
+__version__ = '1.7.88'
 
 import sys
 import socket
@@ -93,7 +93,7 @@ class NodeCrawler:
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
     CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None, allow_hf=False, allow_ip=False):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None, allow_hf=False, allow_ip=False, op_timeout=None):
         """
         Initialize crawler.
         
@@ -113,6 +113,7 @@ class NodeCrawler:
             exclude: Set of callsigns to exclude from crawling (default: None)
             allow_hf: Include HF ports (VARA, ARDOP, PACTOR) in crawling (default: False - too slow at 300 baud)
             allow_ip: Include IP ports (AXIP, TCP, Telnet) in crawling (default: False - not RF)
+            op_timeout: Override per-node operation timeout in seconds (default: None = 360 + hop_count*240)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -132,6 +133,7 @@ class NodeCrawler:
         self.exclude = {self._normalize_callsign(c) for c in exclude} if exclude else set()  # Nodes to skip
         self.allow_hf = allow_hf  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
         self.allow_ip = allow_ip  # Include IP ports (AXIP, TCP, Telnet) - not RF
+        self.op_timeout = op_timeout  # Per-node operation timeout override (seconds); None = auto
         self.visited = set()  # Nodes we've already crawled
         self.failed = set()  # Nodes that failed connection
         self.skipped_no_ssid = {}  # Nodes skipped due to tied SSID votes: {callsign: {votes}}
@@ -2227,7 +2229,11 @@ class NodeCrawler:
         # Allow more generous timeout for nodes with many neighbors
         # 6 minutes base + 4 minutes per hop (was 4min + 3min/hop)
         # RF at 1200 baud is slow; need patience for multi-hop responses
-        operation_deadline = time.time() + 360 + (hop_count * 240)
+        # Override with --timeout if the default isn't enough (e.g. nodes with huge ROUTES tables)
+        if self.op_timeout:
+            operation_deadline = time.time() + self.op_timeout
+        else:
+            operation_deadline = time.time() + 360 + (hop_count * 240)
         
         # Track partial crawl data in case of timeout
         partial_data = {
@@ -4398,6 +4404,11 @@ def main():
         print("       -H, --hf")
         print("              Include HF ports (VARA, ARDOP, PACTOR). Default: skip (300 baud).")
         print("")
+        print("       -t, --timeout SECONDS")
+        print("              Override per-node operation timeout. Default: 360 + hop_count*240.")
+        print("              Increase for nodes with huge ROUTES tables or poor RF paths.")
+        print("              Example: --timeout 1800 (30 minutes per node).")
+        print("")
         print("       -I, --ip")
         print("              Include IP ports (AXIP, TCP, Telnet). Default: skip (not RF).")
         print("")
@@ -4902,6 +4913,7 @@ def main():
     resume_file = None  # File to resume from (None = auto-detect)
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
     resume = '--resume' in sys.argv or '-r' in sys.argv
+    op_timeout = None  # Per-node operation timeout override (seconds)
     generate_maps = False  # Will be set by user prompt or silent mode
     silent_mode = '--yes' in sys.argv or '-y' in sys.argv  # Autonomous mode - no prompts
     allow_hf = '--hf' in sys.argv or '-H' in sys.argv  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
@@ -5079,6 +5091,16 @@ def main():
             else:
                 colored_print("Error: --force-ssid requires BASE and FULL arguments", Colors.RED)
                 sys.exit(1)
+        elif (arg == '--timeout' or arg == '-t') and i + 1 < len(sys.argv):
+            try:
+                op_timeout = int(sys.argv[i + 1])
+                if op_timeout < 60:
+                    colored_print("Error: --timeout must be at least 60 seconds", Colors.RED)
+                    sys.exit(1)
+            except ValueError:
+                colored_print("Error: --timeout requires an integer (seconds)", Colors.RED)
+                sys.exit(1)
+            i += 2
         elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '-H', '--ip', '-I', '--yes', '-y']:
             # Known flags without arguments
             i += 1
@@ -5106,7 +5128,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler with specified crawl mode and exclusions
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, allow_hf=allow_hf, allow_ip=allow_ip)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, allow_hf=allow_hf, allow_ip=allow_ip, op_timeout=op_timeout)
     crawler.silent_mode = silent_mode  # Set silent mode for skipping interactive prompts
     
     # Set resume file if specified

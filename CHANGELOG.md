@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Nodemap Configurable Operation Timeout] - 2026-02-23
+### Added
+- **nodemap.py v1.7.87→1.7.88**: New `--timeout SECONDS` / `-t SECONDS` CLI arg
+  to override the per-node operation timeout. Default remains `360 + hop_count*240`
+  seconds (e.g., 840s at 2 hops). Useful for nodes with huge ROUTES tables (such
+  as W1DTX-7, which connects to the nationwide packet network) where data retrieval
+  exceeds the automatic timeout before all MHEARD ports are processed.
+  Example: `./nodemap.py 5 W1DTX-7 --force-ssid W1DTX W1DTX-7 -t 1800 --verbose`
+
 ## [Nodemap Failed Relay Tracking Fix] - 2026-02-23
 ### Fixed
 - **nodemap.py v1.7.86→1.7.87**: `failed_relays` now correctly identifies the
