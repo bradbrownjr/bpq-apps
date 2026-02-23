@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.90
+Version: 1.7.91
 """
 
-__version__ = '1.7.90'
+__version__ = '1.7.91'
 
 import sys
 import socket
@@ -5327,18 +5327,25 @@ def main():
                     else:
                         prompt = "Gridsquare for {}: ".format(callsign)
                     
-                    grid_input = input(prompt).strip()
-                    
-                    # Skip if blank
+                    while True:
+                        grid_input = input(prompt).strip()
+
+                        # Skip if blank
+                        if not grid_input:
+                            break
+
+                        # Validate format (warn but allow or retry)
+                        if not re.match(r'^[A-R]{2}[0-9]{2}[a-x]{2}$', grid_input, re.IGNORECASE):
+                            print("  Warning: '{}' doesn't match standard gridsquare format".format(grid_input))
+                            confirm = input("  Use it anyway? (y/N): ").strip().lower()
+                            if confirm not in ['y', 'yes']:
+                                print("  Try again (or press Enter to skip).")
+                                continue
+
+                        break
+
                     if not grid_input:
                         continue
-                    
-                    # Validate format (warn but allow)
-                    if not re.match(r'^[A-R]{2}[0-9]{2}[a-x]{2}$', grid_input, re.IGNORECASE):
-                        print("  Warning: '{}' doesn't match standard gridsquare format".format(grid_input))
-                        confirm = input("  Use it anyway? (y/N): ").strip().lower()
-                        if confirm not in ['y', 'yes']:
-                            continue
                     
                     # Update the node data
                     if 'location' not in crawler.nodes[callsign]:
