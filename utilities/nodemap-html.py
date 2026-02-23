@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.16
+Version: 1.4.17
 """
 
-__version__ = '1.4.16'
+__version__ = '1.4.17'
 
 import sys
 import json
@@ -439,10 +439,12 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             continue
         
         from_lat, from_lon = node_coords[callsign]
-        routes = node_data.get('routes', {})
+        # Use direct_routes (only > prefix entries) to draw connections.
+        # Fall back to routes for older JSON files that lack direct_routes.
+        routes = node_data.get('direct_routes') or node_data.get('routes', {})
         callsign_base = callsign.split('-')[0] if '-' in callsign else callsign
         
-        # Iterate through routes table (ROUTES-validated neighbors)
+        # Iterate through direct routes (actual RF neighbors)
         for neighbor_base, quality in routes.items():
             if quality == 0:
                 continue  # Skip zeroed routes
@@ -1023,7 +1025,9 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             continue
         
         from_lat, from_lon = node_coords[callsign]
-        routes = node_data.get('routes', {})
+        # Use direct_routes (only > prefix entries) to draw connections.
+        # Fall back to routes for older JSON files that lack direct_routes.
+        routes = node_data.get('direct_routes') or node_data.get('routes', {})
         callsign_base = callsign.split('-')[0] if '-' in callsign else callsign
         
         for neighbor_base, quality in routes.items():

@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Direct-Routes-Only Map Lines] - 2026-02-24
+### Fixed
+- **nodemap.py v1.7.89→1.7.90**: `_parse_routes()` now distinguishes direct RF
+  neighbors (`>` prefix in ROUTES output) from indirect NetRom routes. Returns a
+  `direct_neighbors` set; `crawl_node()` stores a `direct_routes` dict in the JSON
+  containing only entries for directly-connected nodes. Previously all ROUTES entries
+  (including multi-hop NetRom routes like KY2D via AB1KI) were treated equally,
+  causing spurious connection lines between nodes that have no direct RF path.
+- **nodemap-html.py v1.4.16→1.4.17**: Both HTML and SVG generators now use
+  `direct_routes` (falling back to full `routes` for older JSON files) when
+  drawing connection lines between nodes. Eliminates impossible links such as
+  KY2D (144.99 MHz) ↔ W1DTX (145.01 MHz) that were really indirect NetRom
+  routes, not direct RF neighbors.
+
 ## [SVG Legend + W1DTX Link Fix] - 2026-02-23
 ### Fixed
 - **nodemap-html.py v1.4.15→1.4.16**: W1DTX (and any other partial/stub node) lost its

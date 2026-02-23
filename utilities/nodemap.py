@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.87
+Version: 1.7.90
 """
 
-__version__ = '1.7.89'
+__version__ = '1.7.90'
 
 import sys
 import socket
@@ -786,7 +786,7 @@ class NodeCrawler:
                             
                             try:
                                 routes_output = self._send_command(tn, 'ROUTES', timeout=15, expect_content='!')
-                                routes, route_ports, route_ssids = self._parse_routes(routes_output)
+                                routes, route_ports, route_ssids, _ = self._parse_routes(routes_output)
                                 
                                 # Check if target is in ROUTES
                                 if lookup_call in route_ports or lookup_call in routes:
@@ -2043,14 +2043,16 @@ class NodeCrawler:
             > 1 KS1R-15   200 20!   <- KS1R-15 is the NODE (not KS1R-13 CHAT)
         
         Returns:
-            Tuple of (routes dict, ports dict, ssids dict)
+            Tuple of (routes dict, ports dict, ssids dict, direct_neighbors set)
             - routes: {callsign: quality} for all routes
             - ports: {callsign: port_number} for direct neighbors only
             - ssids: {base_callsign: full_callsign-ssid} for direct neighbors (AUTHORITATIVE)
+            - direct_neighbors: set of base callsigns that are direct RF neighbors (> prefix)
         """
         routes = {}
         ports = {}
-        ssids = {}  # NEW: Store authoritative node SSIDs from ROUTES
+        ssids = {}  # Store authoritative node SSIDs from ROUTES
+        direct_neighbors = set()  # Only entries with > prefix (actual RF neighbors)
         lines = output.split('\n')
         
         for line in lines:
@@ -2070,6 +2072,7 @@ class NodeCrawler:
                         routes[base_call] = quality
                         ports[base_call] = port_num  # Store port for direct neighbors
                         ssids[base_call] = full_call  # AUTHORITATIVE node SSID
+                        direct_neighbors.add(base_call)
                         continue
             
             # Look for other route lines (non-direct neighbors)
@@ -2094,7 +2097,7 @@ class NodeCrawler:
                     elif self.verbose:
                         print("    Ignoring {} (quality 0 - sysop blocked route)".format(full_call))
         
-        return routes, ports, ssids
+        return routes, ports, ssids, direct_neighbors
     
     def crawl_node(self, callsign, path=[]):
         """
@@ -2344,8 +2347,9 @@ class NodeCrawler:
             if check_deadline():
                 return
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
-            routes, route_ports, routes_ssids = self._parse_routes(routes_output)
+            routes, route_ports, routes_ssids, direct_neighbors = self._parse_routes(routes_output)
             partial_data['routes'] = routes  # Save partial
+            partial_data['direct_routes'] = {k: v for k, v in routes.items() if k in direct_neighbors}  # Save partial
             # Update global route_ports with direct neighbor port info from this node
             self.route_ports.update(route_ports)
             
@@ -2582,7 +2586,8 @@ class NodeCrawler:
                 'heard_on_ports': [(call, mheard_ports.get(call)) for call in all_neighbors],
                 'type': node_type,  # From INFO or prompt (low/medium confidence)
                 'type_source': 'info' if 'BPQ' in info_output.upper() or 'FBB' in info_output.upper() else 'prompt',
-                'routes': routes,  # From ROUTES (reliable)
+                'routes': routes,  # From ROUTES (reliable) - ALL routes (direct + indirect)
+                'direct_routes': {k: v for k, v in routes.items() if k in direct_neighbors},  # Only > prefix entries
                 'own_aliases': own_aliases,  # This node's aliases (CCEMA:WS1EC-15, etc.)
                 'seen_aliases': other_aliases,  # Other nodes' aliases seen in NODES
                 'netrom_ssids': mheard_ssids,  # From MHEARD (actual RF transmissions)
