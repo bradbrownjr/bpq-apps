@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.91
+Version: 1.7.92
 """
 
-__version__ = '1.7.91'
+__version__ = '1.7.92'
 
 import sys
 import socket
@@ -2349,7 +2349,11 @@ class NodeCrawler:
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
             routes, route_ports, routes_ssids, direct_neighbors = self._parse_routes(routes_output)
             partial_data['routes'] = routes  # Save partial
-            partial_data['direct_routes'] = {k: v for k, v in routes.items() if k in direct_neighbors}  # Save partial
+            partial_data['direct_routes'] = {
+                k: {'quality': v, 'port': route_ports.get(k)}
+                for k, v in routes.items()
+                if k in direct_neighbors and k != base_callsign
+            }  # Save partial (with port info, no self-loops)
             # Update global route_ports with direct neighbor port info from this node
             self.route_ports.update(route_ports)
             
@@ -2587,7 +2591,11 @@ class NodeCrawler:
                 'type': node_type,  # From INFO or prompt (low/medium confidence)
                 'type_source': 'info' if 'BPQ' in info_output.upper() or 'FBB' in info_output.upper() else 'prompt',
                 'routes': routes,  # From ROUTES (reliable) - ALL routes (direct + indirect)
-                'direct_routes': {k: v for k, v in routes.items() if k in direct_neighbors},  # Only > prefix entries
+                'direct_routes': {
+                    k: {'quality': v, 'port': route_ports.get(k)}
+                    for k, v in routes.items()
+                    if k in direct_neighbors and k != base_callsign
+                },  # Only > prefix entries, with port number for frequency lookup
                 'own_aliases': own_aliases,  # This node's aliases (CCEMA:WS1EC-15, etc.)
                 'seen_aliases': other_aliases,  # Other nodes' aliases seen in NODES
                 'netrom_ssids': mheard_ssids,  # From MHEARD (actual RF transmissions)

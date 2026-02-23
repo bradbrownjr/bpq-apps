@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.17
+Version: 1.4.18
 """
 
-__version__ = '1.4.17'
+__version__ = '1.4.18'
 
 import sys
 import json
@@ -445,9 +445,21 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         callsign_base = callsign.split('-')[0] if '-' in callsign else callsign
         
         # Iterate through direct routes (actual RF neighbors)
-        for neighbor_base, quality in routes.items():
+        for neighbor_base, route_info in routes.items():
+            # Support both new format {quality, port} and legacy format (int)
+            if isinstance(route_info, dict):
+                quality = route_info.get('quality', 0)
+                route_port = route_info.get('port')
+            else:
+                quality = route_info
+                route_port = None
+            
             if quality == 0:
                 continue  # Skip zeroed routes
+            
+            # Skip self-loops (node referencing itself in routes)
+            if neighbor_base == callsign_base:
+                continue
             
             # Find neighbor in nodes dict - could be keyed as base or with SSID
             neighbor_key = None
@@ -464,12 +476,19 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             if not neighbor_key or neighbor_key not in node_coords:
                 continue
             
-            # Check reciprocal route - skip ONLY if neighbor has explicitly blocked it (quality=0).
-            # A missing route entry just means incomplete crawl data (e.g. partial node or
-            # stale merge) — still draw the connection so one-sided data isn't silently lost.
-            neighbor_routes = nodes[neighbor_key].get('routes', {})
-            if callsign_base in neighbor_routes and neighbor_routes[callsign_base] == 0:
-                continue  # Skip only if neighbor has explicitly blocked the route
+            # Reciprocity check: require neighbor to acknowledge this node.
+            # For fully-crawled (non-partial) neighbors, the neighbor must have
+            # this node in their routes with quality > 0. This filters one-sided
+            # connections where node A hears B's broadcast but B doesn't route
+            # back (sysop blocked, marginal signal, or frequency mismatch).
+            # For partial/uncrawled neighbors, allow one-sided (incomplete data).
+            neighbor_data = nodes.get(neighbor_key, {})
+            neighbor_is_partial = neighbor_data.get('partial', False)
+            if not neighbor_is_partial:
+                neighbor_routes = neighbor_data.get('routes', {})
+                neighbor_quality = neighbor_routes.get(callsign_base, 0)
+                if neighbor_quality == 0:
+                    continue  # Fully crawled neighbor doesn't acknowledge this node
             
             to_lat, to_lon = node_coords[neighbor_key]
             
@@ -478,39 +497,50 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             if conn_key not in seen_connections:
                 seen_connections[conn_key] = set()
             
-            # Get port info from BOTH directions (A heard B on port X, B heard A on port Y)
-            # This node's view: what port did we hear neighbor on?
-            heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
-            # Neighbor's view: what port did neighbor hear us on?
-            neighbor_base_key = neighbor_key.split('-')[0] if '-' in neighbor_key else neighbor_key
-            heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
-            
-            # Collect (frequency, port_type) tuples from both directions
+            # Determine link frequency/type from multiple sources (priority order):
+            # 1. Port number stored in direct_routes (most accurate - from ROUTES output)
+            # 2. MHEARD heard_on_ports from both directions
+            # 3. Fallback to first RF port (least accurate)
             links_found = set()
-            for port_num in heard_ports_this:
-                port_info = node_port_info.get(callsign, {}).get(port_num, {})
-                freq = port_info.get('frequency')
-                port_type = port_info.get('port_type', 'rf')
-                if freq:
-                    links_found.add((freq, port_type))
-                elif port_type == 'ip':
-                    # IP link without frequency - still record it
-                    links_found.add((None, 'ip'))
-                elif port_type == 'hf':
-                    # HF link without frequency (VARA/ARDOP/PACTOR) - record it
-                    links_found.add((None, 'hf'))
-            for port_num in heard_ports_neighbor:
-                port_info = node_port_info.get(neighbor_key, {}).get(port_num, {})
-                freq = port_info.get('frequency')
-                port_type = port_info.get('port_type', 'rf')
-                if freq:
-                    links_found.add((freq, port_type))
-                elif port_type == 'ip':
-                    links_found.add((None, 'ip'))
-                elif port_type == 'hf':
-                    links_found.add((None, 'hf'))
             
-            # If no MHEARD port info, fall back to first RF port (legacy behavior)
+            # Priority 1: Use port number from direct_routes
+            if route_port is not None:
+                port_info = node_port_info.get(callsign, {}).get(route_port, {})
+                freq = port_info.get('frequency')
+                port_type = port_info.get('port_type', 'rf')
+                if freq:
+                    links_found.add((freq, port_type))
+                elif port_type in ('ip', 'hf'):
+                    links_found.add((None, port_type))
+            
+            # Priority 2: MHEARD port info from both directions
+            if not links_found:
+                heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
+                neighbor_base_key = neighbor_key.split('-')[0] if '-' in neighbor_key else neighbor_key
+                heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
+                
+                for port_num in heard_ports_this:
+                    port_info = node_port_info.get(callsign, {}).get(port_num, {})
+                    freq = port_info.get('frequency')
+                    port_type = port_info.get('port_type', 'rf')
+                    if freq:
+                        links_found.add((freq, port_type))
+                    elif port_type == 'ip':
+                        links_found.add((None, 'ip'))
+                    elif port_type == 'hf':
+                        links_found.add((None, 'hf'))
+                for port_num in heard_ports_neighbor:
+                    port_info = node_port_info.get(neighbor_key, {}).get(port_num, {})
+                    freq = port_info.get('frequency')
+                    port_type = port_info.get('port_type', 'rf')
+                    if freq:
+                        links_found.add((freq, port_type))
+                    elif port_type == 'ip':
+                        links_found.add((None, 'ip'))
+                    elif port_type == 'hf':
+                        links_found.add((None, 'hf'))
+            
+            # Priority 3: Fall back to first RF port (legacy behavior)
             if not links_found:
                 for port in node_data.get('ports', []):
                     if port.get('is_rf') and port.get('frequency'):
@@ -1004,6 +1034,19 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             if port.get('is_rf') and port.get('frequency'):
                 node_port_freqs[callsign][port.get('number')] = port['frequency']
     
+    # Build port->info lookup (frequency + port_type) for each node
+    node_port_info = {}  # {callsign: {port_num: {'frequency': MHz, 'port_type': str}}}
+    for callsign, node_data in nodes.items():
+        node_port_info[callsign] = {}
+        for port in node_data.get('ports', []):
+            port_num = port.get('number')
+            if port_num is not None:
+                node_port_info[callsign][port_num] = {
+                    'frequency': port.get('frequency'),
+                    'port_type': port.get('port_type', 'rf' if port.get('is_rf') else 'ip'),
+                    'is_rf': port.get('is_rf', False)
+                }
+    
     # Build heard_on_ports lookup: {callsign: {neighbor_base: [port_nums]}}
     node_heard_ports = {}
     for callsign, node_data in nodes.items():
@@ -1030,8 +1073,20 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         routes = node_data.get('direct_routes') or node_data.get('routes', {})
         callsign_base = callsign.split('-')[0] if '-' in callsign else callsign
         
-        for neighbor_base, quality in routes.items():
+        for neighbor_base, route_info in routes.items():
+            # Support both new format {quality, port} and legacy format (int)
+            if isinstance(route_info, dict):
+                quality = route_info.get('quality', 0)
+                route_port = route_info.get('port')
+            else:
+                quality = route_info
+                route_port = None
+            
             if quality == 0:
+                continue
+            
+            # Skip self-loops (node referencing itself in routes)
+            if neighbor_base == callsign_base:
                 continue
             
             # Find neighbor in nodes dict - could be keyed as base or with SSID
@@ -1047,11 +1102,16 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             if not neighbor_key or neighbor_key not in node_coords:
                 continue
             
-            # Check reciprocal route - skip ONLY if neighbor has explicitly blocked it (quality=0).
-            # A missing route entry just means incomplete crawl data — still draw the connection.
-            neighbor_routes = nodes[neighbor_key].get('routes', {})
-            if callsign_base in neighbor_routes and neighbor_routes[callsign_base] == 0:
-                continue  # Skip only if neighbor has explicitly blocked the route
+            # Reciprocity check: require neighbor to acknowledge this node.
+            # For fully-crawled (non-partial) neighbors, the neighbor must have
+            # this node in their routes with quality > 0.
+            neighbor_data = nodes.get(neighbor_key, {})
+            neighbor_is_partial = neighbor_data.get('partial', False)
+            if not neighbor_is_partial:
+                neighbor_routes = neighbor_data.get('routes', {})
+                neighbor_quality = neighbor_routes.get(callsign_base, 0)
+                if neighbor_quality == 0:
+                    continue  # Fully crawled neighbor doesn't acknowledge this node
             
             to_lat, to_lon = node_coords[neighbor_key]
             
@@ -1059,22 +1119,34 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             if conn_key not in seen_connections:
                 seen_connections[conn_key] = set()
             
-            # Get frequencies from BOTH directions
-            heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
-            neighbor_base_key = neighbor_key.split('-')[0] if '-' in neighbor_key else neighbor_key
-            heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
-            
+            # Determine link frequency from multiple sources (priority order):
+            # 1. Port number stored in direct_routes (most accurate)
+            # 2. MHEARD heard_on_ports from both directions
+            # 3. Fallback to first RF port
             freqs_found = set()
-            for port_num in heard_ports_this:
-                freq = node_port_freqs.get(callsign, {}).get(port_num)
-                if freq:
-                    freqs_found.add(freq)
-            for port_num in heard_ports_neighbor:
-                freq = node_port_freqs.get(neighbor_key, {}).get(port_num)
+            
+            # Priority 1: Use port number from direct_routes
+            if route_port is not None:
+                port_info = node_port_info.get(callsign, {}).get(route_port, {})
+                freq = port_info.get('frequency')
                 if freq:
                     freqs_found.add(freq)
             
-            # Fallback to first RF port if no MHEARD port info
+            # Priority 2: MHEARD port info from both directions
+            if not freqs_found:
+                heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
+                heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
+                
+                for port_num in heard_ports_this:
+                    freq = node_port_freqs.get(callsign, {}).get(port_num)
+                    if freq:
+                        freqs_found.add(freq)
+                for port_num in heard_ports_neighbor:
+                    freq = node_port_freqs.get(neighbor_key, {}).get(port_num)
+                    if freq:
+                        freqs_found.add(freq)
+            
+            # Priority 3: Fallback to first RF port
             if not freqs_found:
                 for port in node_data.get('ports', []):
                     if port.get('is_rf') and port.get('frequency'):

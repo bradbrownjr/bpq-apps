@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Connection Validation] - 2026-02-25
+### Fixed
+- **nodemap.py v1.7.92**: Store port number in `direct_routes` JSON field.
+  Format changed from `{call: quality}` to `{call: {quality, port}}`.
+  Filter self-loops (node referencing itself in ROUTES).
+- **nodemap-html.py v1.4.18**: Connection validation overhaul for both
+  HTML and SVG map generators:
+  - **Reciprocity check**: For fully-crawled nodes, require the neighbor to
+    acknowledge this node in their ROUTES (quality > 0). Previously drew
+    one-sided connections where node A heard B's NetRom broadcast but B's
+    sysop didn't route back — these were marginal signals, not functional
+    bidirectional links. Partial/uncrawled nodes still allow one-sided.
+  - **Self-loop filter**: Skip connections where a node references itself.
+  - **Port-based frequency**: Use port number from direct_routes (Priority 1)
+    for more accurate band color assignment, falling back to MHEARD ports
+    (Priority 2) then first RF port (Priority 3).
+  - **Backward compatible**: Handles both old `{call: int}` and new
+    `{call: {quality, port}}` direct_routes formats.
+  - Eliminates ~11 bogus connections from the current 13-node network
+    (e.g., K1NYY→AB1KI with no matching frequency, KS1R→N1REX one-sided)
+
 ## [Mail Route Analyzer v1.1] - 2026-02-25
 ### Added
 - **mailroute.py v1.0→1.1**: Bulletin distribution strategy and NTS traffic
