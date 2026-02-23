@@ -5,20 +5,27 @@ BPQ BBS Mail Forwarding Route Analyzer
 Reads network topology from nodemap.json and generates BBS mail
 forwarding configuration recommendations. Helps sysops set up
 inter-BBS message routing with connect scripts, hierarchical
-addresses, and forwarding settings.
+addresses, bulletin distribution, and NTS traffic routing.
 
 For each reachable BBS in the network, outputs:
   - BBS identity (callsign, alias, hierarchical address)
+  - Forwarding role (Bulletin Partner vs Personal-Only)
   - Shortest RF path from home node
   - Connect script (primary via NetRom alias + ELSE fallbacks)
+  - HRoutes / HRoutesP for bulletin and directed mail
   - Recommended forwarding settings for BPQ web UI
+
+Also generates:
+  - Bulletin distribution tree (which BBSes relay to which)
+  - NTS traffic routing guide with FWDAliases
+  - HF gateway identification for wider network access
 
 Author: Brad Brown (KC1JMH)
 Date: February 2026
-Version: 1.0
+Version: 1.1
 """
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 import json
 import sys
@@ -44,7 +51,7 @@ def extract_bbs_nodes(nodes):
     Returns:
         dict: {base_call: {node_call, node_alias, bbs_call,
                bbs_alias, rms_call, rms_alias, ha, location,
-               grid, freqs, sysop}}
+               grid, freqs, sysop, is_hf}}
     """
     bbs_data = {}
 
@@ -83,6 +90,7 @@ def extract_bbs_nodes(nodes):
             'grid': _extract_grid(info),
             'freqs': re.findall(r'(\d{2,3}\.\d{2,3})\s*MHz', info),
             'sysop': _extract_sysop(info),
+            'is_hf': _detect_hf(data, info),
         }
 
     return bbs_data
@@ -140,6 +148,28 @@ def _extract_sysop(info):
     return None
 
 
+def _detect_hf(node_data, info):
+    """Detect HF capability from hf_ports field or info text."""
+    if node_data.get('hf_ports'):
+        return True
+    upper = info.upper()
+    return ('VARA' in upper or 'ARDOP' in upper or 'PACTOR' in upper)
+
+
+def _extract_state(ha):
+    """Extract state code from hierarchical address.
+
+    E.g., 'KS1R.#SAGA.ME.USA.NOAM' -> 'ME'
+    """
+    if not ha:
+        return None
+    parts = ha.split('.')
+    for i, part in enumerate(parts):
+        if part in ('USA', 'CAN') and i > 0:
+            return parts[i - 1].lstrip('#')
+    return None
+
+
 # --- Graph and pathfinding ---
 
 def build_graph(nodes):
@@ -164,6 +194,42 @@ def build_graph(nodes):
             graph[nb].add(base)
 
     return graph
+
+
+def build_bbs_graph(graph, bbs_data):
+    """Build BBS-only adjacency from the full node graph.
+
+    Two BBSes are neighbors if they share an edge in the node graph.
+    """
+    bbs_bases = set(bbs_data.keys())
+    bbs_graph = {}
+    for base in bbs_bases:
+        bbs_graph[base] = {n for n in graph.get(base, set())
+                           if n in bbs_bases}
+    return bbs_graph
+
+
+def build_distribution_tree(bbs_graph, home_base):
+    """Build BFS spanning tree of bulletin forwarding order.
+
+    Returns dict: {parent: [children]} representing the recommended
+    bulletin distribution tree rooted at home_base.
+    """
+    tree = {}
+    visited = {home_base}
+    queue = deque([home_base])
+
+    while queue:
+        node = queue.popleft()
+        for neighbor in sorted(bbs_graph.get(node, [])):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                if node not in tree:
+                    tree[node] = []
+                tree[node].append(neighbor)
+                queue.append(neighbor)
+
+    return tree
 
 
 def find_paths(graph, start, end, max_paths=3):
@@ -302,6 +368,60 @@ def build_full_script(paths, bbs_data, nodes, target_base):
     return lines
 
 
+# --- Bulletin and NTS routing ---
+
+def detect_hf_gateways(bbs_data):
+    """Return set of base callsigns for BBSes with HF capability."""
+    return {base for base, info in bbs_data.items() if info.get('is_hf')}
+
+
+def get_forwarding_role(home_base, target_base, dist_tree):
+    """Determine forwarding role for a target BBS.
+
+    Returns:
+        'bulletin': Direct child in distribution tree
+                    (forward bulletins + personal mail)
+        'personal': Remote BBS (forward personal mail only)
+    """
+    children = dist_tree.get(home_base, [])
+    if target_base in children:
+        return 'bulletin'
+    return 'personal'
+
+
+def get_hroutes(target_base, bbs_info, role, hf_gateways):
+    """Recommend HRoutes value for flood bulletin distribution.
+
+    For bulletin partners: geographic area they serve.
+    For HF gateways: broader coverage (USA/WW).
+    For personal-only: empty.
+    """
+    if role != 'bulletin':
+        return ''
+
+    if target_base in hf_gateways:
+        return 'USA.NOAM'
+
+    ha = bbs_info.get('ha')
+    state = _extract_state(ha)
+    if state:
+        return '{}.USA.NOAM'.format(state)
+
+    return 'ME.USA.NOAM'
+
+
+def get_hroutes_p(target_base, bbs_info):
+    """Recommend HRoutesP value for personal/directed mail.
+
+    Uses the target BBS's hierarchical address for specific
+    matching. BPQ routes to the partner with the best match.
+    """
+    ha = bbs_info.get('ha')
+    if ha:
+        return ha
+    return '{}.#???.ME.USA.NOAM'.format(target_base)
+
+
 # --- Output formatting ---
 
 def format_path(path):
@@ -315,7 +435,7 @@ def print_separator():
 
 
 def print_bbs_entry(index, target_base, bbs_info, home_base, paths,
-                     bbs_data, nodes):
+                     bbs_data, nodes, role, hf_gateways):
     """Print forwarding recommendation for one BBS.
 
     Output maps directly to BPQ32 web UI forwarding fields.
@@ -329,11 +449,22 @@ def print_bbs_entry(index, target_base, bbs_info, home_base, paths,
     sysop = bbs_info.get('sysop', '')
     rms_call = bbs_info.get('rms_call', '')
     freqs = bbs_info.get('freqs', [])
+    is_hf = bbs_info.get('is_hf', False)
 
-    # Header
+    hroutes = get_hroutes(target_base, bbs_info, role, hf_gateways)
+    hroutes_p = get_hroutes_p(target_base, bbs_info)
+    personal_only = (role == 'personal')
+
+    # Header with role indicator
     print()
     alias_str = ' ({})'.format(bbs_alias) if bbs_alias else ''
-    print('[{}] {}{}'.format(index, bbs_call, alias_str))
+    if role == 'bulletin':
+        role_tag = 'BULLETIN + PERSONAL'
+    else:
+        role_tag = 'PERSONAL ONLY'
+    hf_tag = ' [HF GATEWAY]' if is_hf else ''
+    print('[{}] {}{} [{}]{}'.format(
+        index, bbs_call, alias_str, role_tag, hf_tag))
     print_separator()
 
     # Identity
@@ -388,6 +519,18 @@ def print_bbs_entry(index, target_base, bbs_info, home_base, paths,
     else:
         print('  AT:             {}.#???.ME.USA.NOAM'.format(target_base))
 
+    # Hierarchical Routes (Flood Bulls)
+    if hroutes:
+        print('  Hier Routes (Flood Bulls):    {}'.format(hroutes))
+    else:
+        print('  Hier Routes (Flood Bulls):    (leave empty)')
+
+    # HR (Personals and Directed Bulls)
+    if hroutes_p:
+        print('  HR (Personals/Directed):      {}'.format(hroutes_p))
+    else:
+        print('  HR (Personals/Directed):      (leave empty)')
+
     # Connect script
     if paths:
         script = build_full_script(paths, bbs_data, nodes, target_base)
@@ -401,23 +544,37 @@ def print_bbs_entry(index, target_base, bbs_info, home_base, paths,
     print()
     print('  --- Recommended Settings ---')
     print('  Enable Forwarding:    Yes')
-    print('  Interval:             3600 secs (1 hour)')
+    if personal_only:
+        print('  Interval:             14400 secs (4 hours)')
+    else:
+        print('  Interval:             3600 secs (1 hour)')
     print('  Request Reverse:      No')
     print('  FBB Blocked:          Yes')
     print('  Max Block:            10000')
+    print('  Send Personal Only:   {}'.format(
+        'Yes' if personal_only else 'No'))
     print('  Allow Binary:         Yes')
     print('  Use B1 Protocol:      Yes')
     print('  Use B2 Protocol:      Yes')
-    print('  Send Personal Only:   Yes')
     print('  Connect Timeout:      120 secs')
+
+    if role == 'personal':
+        print()
+        print('  NOTE: This BBS receives bulletins via intermediate')
+        print('  forwarding partners. Direct bulletin forwarding is')
+        print('  not needed and would cause duplicate traffic.')
 
     print()
 
 
-def print_config_snippet(target_base, bbs_info, paths, bbs_data, nodes):
+def print_config_snippet(target_base, bbs_info, paths, bbs_data, nodes,
+                          role, hf_gateways):
     """Print linmail.cfg-compatible forwarding record."""
     bbs_call = bbs_info.get('bbs_call', '?')
     ha = bbs_info.get('ha') or '{}.#???.ME.USA.NOAM'.format(target_base)
+    hroutes = get_hroutes(target_base, bbs_info, role, hf_gateways)
+    hroutes_p = get_hroutes_p(target_base, bbs_info)
+    personal_only = (role == 'personal')
 
     script_lines = []
     if paths:
@@ -428,8 +585,8 @@ def print_config_snippet(target_base, bbs_info, paths, bbs_data, nodes):
     print('  {')
     print('    TOCalls = "*";')
     print('    ATCalls = "{}";'.format(ha))
-    print('    HRoutes = "";')
-    print('    HRoutesP = "";')
+    print('    HRoutes = "{}";'.format(hroutes))
+    print('    HRoutesP = "{}";'.format(hroutes_p))
     print('    ConnectScript = "{}";'.format('\\n'.join(script_lines)))
     print('    FWDTimes = "";')
     print('    Enabled = 1;')
@@ -439,9 +596,9 @@ def print_config_snippet(target_base, bbs_info, paths, bbs_data, nodes):
     print('    UseB1Protocol = 1;')
     print('    UseB2Protocol = 1;')
     print('    SendCTRLZ = 0;')
-    print('    FWDPersonalsOnly = 1;')
+    print('    FWDPersonalsOnly = {};'.format(1 if personal_only else 0))
     print('    FWDNewImmediately = 0;')
-    print('    FwdInterval = 3600;')
+    print('    FwdInterval = {};'.format(14400 if personal_only else 3600))
     print('    RevFWDInterval = 0;')
     print('    MaxFBBBlock = 10000;')
     print('    ConTimeout = 120;')
@@ -450,9 +607,199 @@ def print_config_snippet(target_base, bbs_info, paths, bbs_data, nodes):
     print()
 
 
+# --- Bulletin distribution and NTS ---
+
+def render_tree(tree, bbs_data, hf_gateways, node, prefix='',
+                is_last=True):
+    """Recursively render ASCII distribution tree."""
+    info = bbs_data.get(node, {})
+    bbs_call = info.get('bbs_call', node)
+    bbs_alias = info.get('bbs_alias', '')
+    hf_tag = ' (HF)' if node in hf_gateways else ''
+    alias_tag = ' [{}]'.format(bbs_alias) if bbs_alias else ''
+
+    if prefix == '':
+        print('  {}{}{}'.format(bbs_call, alias_tag, hf_tag))
+    else:
+        connector = '+-- '
+        print('  {}{}{}{}{}'.format(
+            prefix, connector, bbs_call, alias_tag, hf_tag))
+
+    children = tree.get(node, [])
+    for i, child in enumerate(children):
+        child_last = (i == len(children) - 1)
+        if prefix == '':
+            child_prefix = '  '
+        else:
+            child_prefix = prefix + ('    ' if is_last else '|   ')
+        render_tree(tree, bbs_data, hf_gateways, child,
+                    child_prefix, child_last)
+
+
+def print_bulletin_strategy(home_base, bbs_data, bbs_graph, dist_tree,
+                             hf_gateways, nodes):
+    """Print bulletin distribution strategy and tree."""
+    print()
+    print('BULLETIN DISTRIBUTION STRATEGY')
+    print('=' * 60)
+    print()
+    print('Bulletins (flood messages) should propagate through the')
+    print('network via direct BBS neighbors, not by connecting to')
+    print('every BBS individually. Each BBS forwards bulletins to')
+    print('its tree children, who forward to theirs. This prevents')
+    print('duplicate traffic over slow 1200 baud links.')
+    print()
+
+    # Distribution tree
+    print('Recommended Bulletin Distribution Tree:')
+    print()
+    render_tree(dist_tree, bbs_data, hf_gateways, home_base)
+    print()
+
+    # Explain the tree
+    children = dist_tree.get(home_base, [])
+    if children:
+        child_str = ', '.join(
+            bbs_data.get(c, {}).get('bbs_call', c) for c in children)
+        print('Your BBS should forward bulletins to: {}'.format(child_str))
+        print('These partners relay to the rest of the network.')
+    else:
+        print('No direct BBS neighbors found in distribution tree.')
+    print()
+
+    # BBS neighbor count
+    neighbors = bbs_graph.get(home_base, set())
+    if len(neighbors) <= 1 and children:
+        print('With only {} BBS neighbor, ALL bulletin and NTS'.format(
+            len(neighbors)))
+        print('traffic routes through {}.'.format(
+            bbs_data.get(children[0], {}).get('bbs_call', children[0])))
+        print()
+
+    # HF gateway note
+    if hf_gateways:
+        gw_list = ', '.join(sorted(hf_gateways))
+        print('HF Gateway: {}'.format(gw_list))
+        print('  Bulletins from the wider packet network (USA/WW)')
+        print('  enter the local network through the HF gateway.')
+        print('  Ensure the HF gateway BBS has forwarding records')
+        print('  to nationwide/worldwide BBSes via HF links.')
+        print()
+
+    # Hierarchical routing explanation
+    print('Hierarchical Routes (HRoutes) Field:')
+    print('  Controls which flood bulletins are sent to each partner.')
+    print('  ME.USA.NOAM  = Maine, US, and worldwide bulletins')
+    print('  USA.NOAM     = US and worldwide (for HF gateways)')
+    print('  WW           = All worldwide bulletins')
+    print()
+    print('  Bulletins are flood-distributed: each BBS that matches')
+    print('  receives a copy, checks for duplicates by message ID,')
+    print('  and forwards to its own partners. Duplicates are')
+    print('  automatically discarded.')
+    print()
+
+
+def print_nts_guide(home_base, home_info, bbs_data, hf_gateways):
+    """Print NTS traffic routing guide."""
+    print()
+    print('NTS TRAFFIC ROUTING')
+    print('=' * 60)
+    print()
+    print('The National Traffic System (NTS) uses packet BBS for')
+    print('store-and-forward delivery of formal radiograms. NTS')
+    print('messages are posted as bulletins addressed to geographic')
+    print('distribution lists.')
+    print()
+
+    # Common NTS addresses
+    print('NTS Addressing Conventions:')
+    print_separator()
+    print('  TO Address      Meaning')
+    print('  -----------     -----------------------------------')
+    print('  NTS1ME          Maine (Region 1) traffic')
+    print('  NTSME           Maine traffic (alternate form)')
+    print('  NTS1            Region 1 - New England')
+    print('  NTS             General NTS traffic')
+    print('  NTSR1           Region 1 Net traffic')
+    print('  NTS1CT          Connecticut section')
+    print('  NTS1RI          Rhode Island section')
+    print('  NTS1VT          Vermont section')
+    print('  NTS1NH          New Hampshire section')
+    print('  NTS1EMA         Eastern Massachusetts section')
+    print('  NTS1WMA         Western Massachusetts section')
+    print()
+
+    # FWDAliases
+    print('Recommended FWDAliases:')
+    print_separator()
+    print('  Add to Mail Management -> Configuration in BPQ web UI.')
+    print('  Maps NTS distribution lists to hierarchical addresses')
+    print('  so bulletin routing works correctly.')
+    print()
+    print('  Alias          Maps To         Description')
+    print('  ----------     -----------     ----------------------')
+    print('  NTS1ME         ME.USA.NOAM     Maine NTS traffic')
+    print('  NTSME          ME.USA.NOAM     Maine (alternate)')
+    print('  NTS1           ME.USA.NOAM     Region 1 (local scope)')
+    print('  NTS            USA.NOAM        General NTS (nationwide)')
+    print('  ALLUS          USA.NOAM        All US traffic')
+    print('  ALLME          ME.USA.NOAM     All Maine traffic')
+    print()
+
+    # NTS traffic flow
+    print('NTS Traffic Flow:')
+    print_separator()
+    print()
+    print('  Outgoing (originate from your BBS):')
+    print('    1. User posts message: TO NTS1ME @ ME.USA.NOAM')
+    print('    2. Bulletin floods to all Maine BBSes via HRoutes')
+    print('    3. NTS liaison operator retrieves from any BBS')
+    print('    4. Liaison relays via voice net or phone')
+    print()
+    print('  Incoming (destined for your area):')
+    print('    1. NTS liaison posts: TO NTS1ME @ ME.USA.NOAM')
+    print('    2. Bulletin floods to all Maine BBSes')
+    print('    3. Local operators check their BBS for traffic')
+    print('    4. Delivering operator contacts recipient')
+    print()
+    print('  Interstate (relay through HF gateway):')
+    if hf_gateways:
+        gw_list = ', '.join(sorted(hf_gateways))
+        print('    NTS traffic for other states routes through')
+        print('    HF gateway ({}) to the nationwide network.'.format(
+            gw_list))
+    else:
+        print('    No HF gateway detected in network.')
+        print('    Interstate NTS requires HF-connected BBS.')
+    print()
+
+    # NTS message format
+    print('NTS Radiogram Format on BBS:')
+    print_separator()
+    print()
+    print('  SP NTS1ME @ ME.USA.NOAM        (post as bulletin)')
+    print('  Subject: QTC 1 PORTLAND ME      (city, state)')
+    print()
+    print('  NR 123 R W1ABC 15 PORTLAND ME 0800Z FEB 23')
+    print('  JOHN DOE')
+    print('  123 MAIN ST')
+    print('  PORTLAND ME 04101')
+    print('  207-555-1234')
+    print('  BT')
+    print('  HAPPY BIRTHDAY STOP LOVE FROM GRANDMA')
+    print('  BT')
+    print('  NO RPT NEEDED')
+    print('  73 DE W1ABC')
+    print()
+    print('  /EX                             (end of message)')
+    print()
+
+
 # --- Network summary ---
 
-def print_topology_summary(home_base, home_info, bbs_data, graph, nodes):
+def print_topology_summary(home_base, home_info, bbs_data, graph, nodes,
+                            bbs_graph, hf_gateways):
     """Print network topology summary."""
     print()
     print('MAIL ROUTE ANALYSIS')
@@ -478,6 +825,7 @@ def print_topology_summary(home_base, home_info, bbs_data, graph, nodes):
     # Network stats
     total_nodes = len(nodes)
     total_bbs = len(bbs_data)
+    bbs_neighbors = bbs_graph.get(home_base, set())
     reachable = 0
     unreachable = 0
     for base in bbs_data:
@@ -490,9 +838,15 @@ def print_topology_summary(home_base, home_info, bbs_data, graph, nodes):
             unreachable += 1
 
     print()
-    print('Network:     {} nodes crawled'.format(total_nodes))
-    print('BBSes:       {} detected ({} reachable, {} unreachable)'.format(
-        total_bbs, reachable, unreachable))
+    print('Network:     {} nodes, {} BBSes detected'.format(
+        total_nodes, total_bbs))
+    print('Reachable:   {} BBSes ({} unreachable)'.format(
+        reachable, unreachable))
+    print('BBS Neighbors: {} direct'.format(len(bbs_neighbors)))
+    if bbs_neighbors:
+        print('             {}'.format(', '.join(sorted(bbs_neighbors))))
+    if hf_gateways:
+        print('HF Gateways: {}'.format(', '.join(sorted(hf_gateways))))
     print()
 
 
@@ -526,13 +880,19 @@ def show_help():
     print()
     print("DESCRIPTION")
     print("       Reads network topology from nodemap.json and generates")
-    print("       BBS-to-BBS mail forwarding recommendations. For each")
-    print("       reachable BBS, outputs connect scripts, hierarchical")
-    print("       addresses, and settings for the BPQ32 web UI.")
+    print("       BBS-to-BBS mail forwarding recommendations including")
+    print("       bulletin distribution strategy, NTS traffic routing,")
+    print("       and connect scripts for the BPQ32 web UI.")
     print()
-    print("       Primary connect scripts use BBS NetRom aliases which let")
-    print("       BPQ route transparently. ELSE fallbacks provide explicit")
-    print("       hop-by-hop paths through intermediate nodes.")
+    print("       For bulletins, recommends a distribution tree where")
+    print("       each BBS forwards only to its direct BBS neighbors,")
+    print("       avoiding redundant traffic over slow RF links.")
+    print()
+    print("       For personal mail, provides direct connect scripts")
+    print("       to each reachable BBS via shortest RF path.")
+    print()
+    print("       For NTS traffic, provides radiogram routing guidance")
+    print("       and FWDAliases configuration.")
     print()
     print("OPTIONS")
     print("   Input:")
@@ -555,18 +915,24 @@ def show_help():
     print("       -s, --summary")
     print("              Show network summary only (no per-BBS detail).")
     print()
+    print("       -b, --bulletin")
+    print("              Show bulletin strategy and NTS guide only.")
+    print()
     print("       -h, --help, /?")
     print("              Show this help message.")
     print()
     print("EXAMPLES")
     print("       mailroute.py")
-    print("              Analyze from auto-detected home node.")
+    print("              Full analysis with bulletin and NTS routing.")
     print()
     print("       mailroute.py -n WS1EC")
     print("              Analyze forwarding from WS1EC.")
     print()
     print("       mailroute.py -t KC1JMH")
     print("              Show routing to KC1JMH's BBS only.")
+    print()
+    print("       mailroute.py -b")
+    print("              Show bulletin tree and NTS guide only.")
     print()
     print("       mailroute.py -c > forwarding.cfg")
     print("              Generate linmail.cfg snippets to file.")
@@ -576,7 +942,7 @@ def show_help():
     print()
     print("FILES")
     print("       nodemap.json    Network topology (from nodemap.py)")
-    print("       linmail.cfg     BPQ mail forwarding config (auto-generated)")
+    print("       linmail.cfg     BPQ mail forwarding config")
     print()
     print("SEE ALSO")
     print("       nodemap.py      - Network topology crawler")
@@ -587,14 +953,17 @@ def show_help():
     print("         CALL.#COUNTY.STATE.COUNTRY.CONTINENT")
     print("         Example: WS1EC.#CUMB.ME.USA.NOAM")
     print()
-    print("       BBSes that don't advertise their HA in node info text")
-    print("       are marked with ??? placeholders. Configure these")
-    print("       manually in the BPQ web UI.")
+    print("       Forwarding Roles:")
+    print("         BULLETIN + PERSONAL = direct BBS neighbor,")
+    print("           forwards flood bulletins and personal mail")
+    print("         PERSONAL ONLY = remote BBS, bulletins arrive")
+    print("           via intermediate BBSes in the distribution tree")
     print()
-    print("       Connect scripts use the BBS NetRom alias as the primary")
-    print("       path (e.g., C BBSWDB). NetRom routes transparently")
-    print("       through intermediate nodes. ELSE blocks provide explicit")
-    print("       hop-by-hop fallbacks if the alias is unreachable.")
+    print("       NTS Traffic:")
+    print("         National Traffic System radiograms use bulletin-")
+    print("         style addressing (TO NTS1ME @ ME.USA.NOAM).")
+    print("         Configure FWDAliases so BPQ routes NTS bulletins")
+    print("         through the hierarchical system.")
 
 
 def main():
@@ -604,6 +973,7 @@ def main():
     target_call = None
     config_mode = False
     summary_only = False
+    bulletin_only = False
 
     # Parse arguments
     args = sys.argv[1:]
@@ -626,6 +996,8 @@ def main():
             config_mode = True
         elif arg in ('-s', '--summary'):
             summary_only = True
+        elif arg in ('-b', '--bulletin'):
+            bulletin_only = True
         else:
             print("Unknown option: {}".format(arg))
             print("Use -h for help.")
@@ -652,17 +1024,30 @@ def main():
         print("Error: cannot determine home node. Use -n CALL.")
         sys.exit(1)
 
-    # Extract BBS data and build graph
+    # Extract BBS data and build graphs
     bbs_data = extract_bbs_nodes(nodes)
     graph = build_graph(nodes)
+    bbs_graph = build_bbs_graph(graph, bbs_data)
+    dist_tree = build_distribution_tree(bbs_graph, home_call)
+    hf_gateways = detect_hf_gateways(bbs_data)
     home_info = bbs_data.get(home_call)
 
     # Summary
     if not config_mode:
-        print_topology_summary(home_call, home_info, bbs_data, graph, nodes)
+        print_topology_summary(home_call, home_info, bbs_data, graph,
+                                nodes, bbs_graph, hf_gateways)
 
     if summary_only:
         return
+
+    # Bulletin strategy and NTS guide
+    if not config_mode:
+        print_bulletin_strategy(home_call, bbs_data, bbs_graph,
+                                 dist_tree, hf_gateways, nodes)
+        print_nts_guide(home_call, home_info, bbs_data, hf_gateways)
+
+        if bulletin_only:
+            return
 
     # Config mode header
     if config_mode:
@@ -672,7 +1057,16 @@ def main():
         print('#')
         print('# Paste into BBSForwarding section of linmail.cfg')
         print('# or configure via BPQ32 web UI -> Forwarding tab')
+        print('#')
+        print('# Roles: bulletin partners get flood bulletins + personal')
+        print('#        personal-only partners get direct personal mail')
         print()
+
+    # Section header for per-BBS entries
+    if not config_mode:
+        print()
+        print('PER-BBS FORWARDING CONFIGURATION')
+        print('=' * 60)
 
     # Generate recommendations for each BBS
     targets = sorted(bbs_data.keys())
@@ -688,13 +1082,14 @@ def main():
         index += 1
         bbs_info = bbs_data[target_base]
         paths = find_paths(graph, home_call, target_base, max_paths=3)
+        role = get_forwarding_role(home_call, target_base, dist_tree)
 
         if config_mode:
             print_config_snippet(target_base, bbs_info, paths,
-                                 bbs_data, nodes)
+                                 bbs_data, nodes, role, hf_gateways)
         else:
             print_bbs_entry(index, target_base, bbs_info, home_call,
-                            paths, bbs_data, nodes)
+                            paths, bbs_data, nodes, role, hf_gateways)
 
     if target_call and index == 0:
         print("BBS '{}' not found in network data.".format(target_call))
@@ -706,15 +1101,25 @@ def main():
         print_separator()
         print()
         print('NOTES')
-        print('  - BBSes with ??? in HA need manual hierarchical address')
-        print('    configuration. Ask the remote sysop or check their')
-        print('    BBS HA field in the forwarding web UI.')
-        print('  - Primary connect scripts use BBS NetRom aliases.')
-        print('    ELSE paths route explicitly through intermediate nodes.')
+        print('  - BULLETIN + PERSONAL partners are your direct BBS')
+        print('    neighbors in the distribution tree. They receive')
+        print('    flood bulletins AND personal/directed mail.')
+        print()
+        print('  - PERSONAL ONLY partners receive direct personal')
+        print('    mail via multi-hop connect scripts. Bulletins')
+        print('    reach them through intermediate BBS partners.')
+        print()
+        print('  - BBSes with ??? in HA need manual hierarchical')
+        print('    address configuration. Ask the remote sysop or')
+        print('    check their BBS HA in the forwarding web UI.')
+        print()
+        print('  - Configure FWDAliases for NTS traffic routing')
+        print('    (see NTS TRAFFIC ROUTING section above).')
+        print()
         print('  - B1 protocol recommended for all BPQ-to-BPQ links.')
-        print('  - Increase interval for unreliable RF paths.')
-        print('  - Set FWDPersonalsOnly=Yes to avoid flooding bulletins')
-        print('    until hierarchical routing is fully configured.')
+        print('  - Increase Interval for unreliable RF paths.')
+        print('  - HF gateways need broader HRoutes (USA.NOAM)')
+        print('    to receive nationwide/worldwide bulletins.')
         print()
 
 

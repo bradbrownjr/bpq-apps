@@ -314,15 +314,20 @@ FILE=/HTML/nodemap.html,nodemap.html
 
 ## mailroute.py - Mail Forwarding Route Analyzer
 
-Reads network topology from `nodemap.json` and generates BBS mail forwarding configuration recommendations. Helps sysops set up inter-BBS message routing with connect scripts, hierarchical addresses, and forwarding settings.
+Reads network topology from `nodemap.json` and generates BBS mail forwarding configuration recommendations. Helps sysops set up inter-BBS message routing with connect scripts, hierarchical addresses, bulletin distribution, and NTS traffic routing.
 
 ### Features
 
 - Auto-detects all BBS nodes from crawled NetRom alias data
 - Extracts hierarchical addresses from node info text
 - Computes shortest RF paths via BFS on the topology graph
+- **Bulletin distribution tree**: BFS spanning tree showing which BBSes forward bulletins to which neighbors, preventing duplicate flood traffic over 1200 baud
+- **Forwarding roles**: Classifies each BBS as BULLETIN + PERSONAL (direct neighbor, full forwarding) or PERSONAL ONLY (remote, personal mail via multi-hop scripts)
+- **HRoutes/HRoutesP recommendations**: Hierarchical routes for flood bulletins and personal/directed mail per partner
+- **HF gateway detection**: Identifies BBSes with VARA/ARDOP/PACTOR ports for wider network access
+- **NTS traffic routing guide**: Addressing conventions, FWDAliases, traffic flow, and radiogram format
 - Generates connect scripts with BBS NetRom alias (primary) and explicit hop-by-hop ELSE fallbacks
-- Outputs BPQ32 web UI field values (TO, AT, Connect Script, BBS HA, settings)
+- Outputs BPQ32 web UI field values (TO, AT, HRoutes, HRoutesP, Connect Script, BBS HA, settings)
 - Optional linmail.cfg-compatible snippets (`-c` flag)
 
 ### Usage
@@ -336,6 +341,9 @@ Reads network topology from `nodemap.json` and generates BBS mail forwarding con
 
 # Show routing for one BBS only
 ./mailroute.py -t KC1JMH
+
+# Bulletin strategy and NTS guide only
+./mailroute.py -b
 
 # Generate linmail.cfg snippets
 ./mailroute.py -c > forwarding.cfg
@@ -356,15 +364,23 @@ Reads network topology from `nodemap.json` and generates BBS mail forwarding con
 | `-t, --target CALL` | Show routing for specific BBS only |
 | `-c, --config` | Output linmail.cfg format snippets |
 | `-s, --summary` | Show network summary only |
+| `-b, --bulletin` | Show bulletin strategy and NTS guide only |
 | `-h, --help, /?` | Show help |
 
 ### Output
 
 For each reachable BBS in the network:
 - BBS identity (callsign, alias, hierarchical address, location)
+- Forwarding role: BULLETIN + PERSONAL or PERSONAL ONLY
 - Shortest RF path from home node with alternate routes
+- HRoutes (flood bulletins) and HRoutesP (personal/directed) recommendations
 - Connect script: primary via BBS NetRom alias + ELSE explicit hops
 - Recommended forwarding settings (B1 protocol, intervals, etc.)
+
+Network-wide sections:
+- Bulletin distribution tree showing relay topology
+- NTS addressing conventions and FWDAliases
+- HF gateway identification for interstate traffic
 
 ### Prerequisites
 

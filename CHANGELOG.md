@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Mail Route Analyzer v1.1] - 2026-02-25
+### Added
+- **mailroute.py v1.0→1.1**: Bulletin distribution strategy and NTS traffic
+  routing guidance. New features:
+  - **Bulletin distribution tree**: BFS spanning tree shows which BBSes should
+    forward bulletins to which neighbors, preventing duplicate flood traffic
+  - **Forwarding roles**: Each BBS classified as BULLETIN + PERSONAL (direct
+    BBS neighbor, full forwarding) or PERSONAL ONLY (remote, personal mail
+    only via multi-hop connect scripts)
+  - **HRoutes/HRoutesP**: Recommends hierarchical routes for flood bulletins
+    and personal/directed mail per forwarding partner
+  - **HF gateway detection**: Identifies BBSes with VARA/ARDOP/PACTOR ports
+    (currently WD1O) for wider network access
+  - **NTS traffic guide**: Addressing conventions (NTS1ME, NTSME, etc.),
+    recommended FWDAliases mappings, traffic flow diagrams, and sample
+    radiogram format for BBS posting
+  - **-b/--bulletin flag**: Show bulletin strategy and NTS guide only
+  - Differentiated settings: bulletin partners get 1-hour intervals and
+    Send Personal Only = No; remote BBSes get 4-hour intervals and
+    Send Personal Only = Yes
+
 ## [Mail Route Analyzer] - 2026-02-23
 ### Added
 - **mailroute.py v1.0**: New utility that reads `nodemap.json` network topology
