@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [SVG Legend + W1DTX Link Fix] - 2026-02-23
+### Fixed
+- **nodemap-html.py v1.4.15→1.4.16**: W1DTX (and any other partial/stub node) lost its
+  connection lines after an update-only crawl overwrote AB1KI-15's routes table with
+  stale/partial data. Root cause: the reciprocal-route check required BOTH sides to have
+  a quality > 0 entry — W1DTX still listed AB1KI in its routes, but AB1KI's stored routes
+  no longer included W1DTX. Fix: skip the connection only when the neighbor has an
+  **explicit quality-0 entry** (sysop-blocked route); a missing entry just means incomplete
+  crawl data and the connection should still be drawn. Applies to both HTML and SVG
+  map generators.
+
 ## [SVG Legend Clipping Fix] - 2026-02-23
 ### Fixed
 - **nodemap-html.py v1.4.14→1.4.15**: SVG legend box was clipped at the bottom of

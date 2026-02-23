@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.15
+Version: 1.4.16
 """
 
-__version__ = '1.4.15'
+__version__ = '1.4.16'
 
 import sys
 import json
@@ -462,11 +462,12 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             if not neighbor_key or neighbor_key not in node_coords:
                 continue
             
-            # Check reciprocal route - neighbor must also have quality > 0 route back
-            # This prevents drawing connections where one sysop has blocked the route
+            # Check reciprocal route - skip ONLY if neighbor has explicitly blocked it (quality=0).
+            # A missing route entry just means incomplete crawl data (e.g. partial node or
+            # stale merge) — still draw the connection so one-sided data isn't silently lost.
             neighbor_routes = nodes[neighbor_key].get('routes', {})
-            if callsign_base not in neighbor_routes or neighbor_routes[callsign_base] == 0:
-                continue  # Skip if neighbor has no route back or has blocked it
+            if callsign_base in neighbor_routes and neighbor_routes[callsign_base] == 0:
+                continue  # Skip only if neighbor has explicitly blocked the route
             
             to_lat, to_lon = node_coords[neighbor_key]
             
@@ -1042,11 +1043,11 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             if not neighbor_key or neighbor_key not in node_coords:
                 continue
             
-            # Check reciprocal route - neighbor must also have quality > 0 route back
-            # This prevents drawing connections where one sysop has blocked the route
+            # Check reciprocal route - skip ONLY if neighbor has explicitly blocked it (quality=0).
+            # A missing route entry just means incomplete crawl data — still draw the connection.
             neighbor_routes = nodes[neighbor_key].get('routes', {})
-            if callsign_base not in neighbor_routes or neighbor_routes[callsign_base] == 0:
-                continue  # Skip if neighbor has no route back or has blocked it
+            if callsign_base in neighbor_routes and neighbor_routes[callsign_base] == 0:
+                continue  # Skip only if neighbor has explicitly blocked the route
             
             to_lat, to_lon = node_coords[neighbor_key]
             
