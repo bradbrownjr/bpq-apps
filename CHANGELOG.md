@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [SVG Legend Clipping Fix] - 2026-02-23
+### Fixed
+- **nodemap-html.py v1.4.14→1.4.15**: SVG legend box was clipped at the bottom of
+  the viewport. The legend origin (`legend_y`) was set to `height - 155 = 445`, but
+  the box extends 185px below that, overflowing the 600px SVG height (630 > 600).
+  Changed to `height - 195 = 405` so the bottom of the legend sits at y=590, fully
+  within the viewport.
+
 ## [Nodemap Force-SSID Routability Bypass] - 2026-02-23
 ### Fixed
 - **nodemap.py v1.7.88→1.7.89**: `--force-ssid` now correctly bypasses the
