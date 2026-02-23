@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Mail Route Analyzer] - 2026-02-23
+### Added
+- **mailroute.py v1.0**: New utility that reads `nodemap.json` network topology
+  and generates BBS mail forwarding configuration recommendations. For each BBS
+  in the network, outputs connect scripts (primary via BBS NetRom alias + ELSE
+  fallbacks through intermediate nodes), hierarchical addresses extracted from
+  node info text, and recommended forwarding settings. Supports linmail.cfg
+  snippet generation (`-c` flag) and per-target filtering (`-t CALL`).
+
 ## [Direct-Routes-Only Map Lines] - 2026-02-24
 ### Fixed
 - **nodemap.py v1.7.89→1.7.90**: `_parse_routes()` now distinguishes direct RF
