@@ -114,7 +114,13 @@ su - sysop -c '/spider/perl/console.pl'  # Spider console
 
 ## nodemap.py - Network Topology Mapper
 
-Crawls BPQ nodes via RF to discover network topology. Creates comprehensive maps by analyzing routing tables, MHEARD lists, and node information.
+Crawls packet radio nodes via RF to discover network topology. Creates comprehensive maps by analyzing routing tables, MHEARD lists, and node information.
+
+Supported node firmware:
+- **BPQ32/LinBPQ** (G8BPQ) - Full support
+- **Kantronics KPC-3 Plus** (X1J4 firmware) - MHEARD columnar format, ALIAS:CALL routes
+- **FBB** (F6FBB) - Basic support
+- **JNOS** - Basic support
 
 ### Usage
 

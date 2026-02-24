@@ -25,10 +25,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.92
+Version: 1.7.93
 """
 
-__version__ = '1.7.92'
+__version__ = '1.7.93'
 
 import sys
 import socket
@@ -1201,9 +1201,16 @@ class NodeCrawler:
         """
         Parse MHEARD output to extract callsigns, timestamps, and port numbers.
         
-        MHEARD output format:
+        Supports two MHEARD formats:
+        
+        BPQ32 format:
             Heard List for Port N
             CALLSIGN-SSID  DD:HH:MM:SS (days:hours:mins:secs since last heard)
+        
+        Kantronics X1J4 format (columnar with signal data):
+            Callsign    Pkts   Port  Time      Dev.   dBm   Type
+            AB1KI-15    4553   0     0:5:3     2.9    -40   Node
+            VE9SIX      27     0     3:40:45   2.9    -40   Node
         
         Args:
             output: MHEARD command output
@@ -1216,6 +1223,13 @@ class NodeCrawler:
         """
         heard = []
         lines = output.split('\n')
+        
+        # Detect Kantronics X1J4 columnar format
+        # Header line: "Callsign    Pkts   Port  Time      Dev.   dBm   Type"
+        is_kantronics = any('Pkts' in line and 'dBm' in line for line in lines)
+        
+        if is_kantronics:
+            return self._parse_mheard_kantronics(lines, port_num)
         
         # Try to extract port from header if not provided
         detected_port = port_num
@@ -1267,6 +1281,84 @@ class NodeCrawler:
                     # No port info, just return callsigns
                     if callsign not in heard:
                         heard.append(callsign)
+        
+        return heard
+    
+    def _parse_mheard_kantronics(self, lines, port_num=None):
+        """
+        Parse Kantronics X1J4 MHEARD columnar output.
+        
+        Format:
+            Callsign    Pkts   Port  Time      Dev.   dBm   Type
+            AB1KI-15    4553   0     0:5:3     2.9    -40   Node
+            VE9SIX      27     0     3:40:45   2.9    -40   Node
+        
+        Key differences from BPQ32:
+        - Column header line present
+        - Packet count column between callsign and port
+        - Port is per-row (not in header), always 0 on single-port Kantronics
+        - Time format H:M:S (3 fields, not 4 like BPQ's DD:HH:MM:SS)
+        - Signal quality: deviation (kHz) and dBm columns
+        - Type column: 'Node' tag for known NET/ROM nodes
+        
+        Args:
+            lines: Pre-split output lines
+            port_num: Port number override (from command context)
+        
+        Returns:
+            List of (callsign, port) tuples or list of callsigns
+        """
+        heard = []
+        
+        for line in lines:
+            # Skip header, empty lines, and prompt lines
+            if not line.strip() or 'Callsign' in line or 'Pkts' in line:
+                continue
+            if '}' in line and ':' in line.split('}')[0]:
+                continue  # Prompt line like "CAL:W1LH-6}"
+            
+            # Kantronics MHEARD format:
+            # CALLSIGN    PKTS   PORT  H:M:S     DEV    DBM   [TYPE]
+            # Match: callsign, then digits (pkts), then digit (port), then H:M:S timestamp
+            match = re.match(
+                r'^(\w+(?:-\d+)?)\s+(\d+)\s+(\d+)\s+(\d+):(\d+):(\d+)',
+                line
+            )
+            if not match:
+                continue
+            
+            full_callsign = self._normalize_callsign(match.group(1))
+            callsign = full_callsign.split('-')[0]  # Strip SSID for base call
+            
+            # Validate callsign format
+            if not self._is_valid_callsign(callsign):
+                continue
+            
+            # Extract fields
+            # pkts = int(match.group(2))  # Packet count (not used for routing)
+            kantronics_port = int(match.group(3))  # Port from column
+            hours = int(match.group(4))
+            minutes = int(match.group(5))
+            seconds = int(match.group(6))
+            total_seconds = hours * 3600 + minutes * 60 + seconds
+            
+            # Use port_num override if provided, otherwise use per-row port
+            detected_port = port_num if port_num is not None else kantronics_port
+            
+            # Update last_heard with most recent time for this callsign
+            if callsign not in self.last_heard or total_seconds < self.last_heard[callsign]:
+                self.last_heard[callsign] = total_seconds
+            
+            # Add to heard list (avoid duplicates)
+            if detected_port is not None:
+                if callsign not in [h[0] if isinstance(h, tuple) else h for h in heard]:
+                    if port_num is not None:
+                        heard.append(callsign)
+                    else:
+                        heard.append((callsign, detected_port))
+            else:
+                if callsign not in heard:
+                    heard.append(callsign)
         
         return heard
     
@@ -1328,21 +1420,35 @@ class NodeCrawler:
         
         return location
     
-    def _detect_node_type(self, info_output, prompt_chars):
+    def _detect_node_type(self, info_output, prompt_chars, commands=None):
         """
-        Detect node software type (BPQ, FBB, JNOS).
+        Detect node software type (BPQ, Kantronics, FBB, JNOS).
         
         Note: Detection from INFO text is unreliable (sysop-entered freeform).
         Prompt character detection (> or :) is more reliable fallback.
+        Command list from ? output provides additional hints.
         
         Args:
             info_output: Output from INFO command
             prompt_chars: Last characters received (prompt indicators)
+            commands: List of available commands from ? output (optional)
             
         Returns:
-            String: 'BPQ', 'FBB', 'JNOS', or 'Unknown'
+            String: 'BPQ', 'Kantronics', 'FBB', 'JNOS', or 'Unknown'
         """
         info_upper = info_output.upper()
+        
+        # Kantronics KPC-3 Plus / X1J4 firmware detection
+        # X1J4 firmware identifier, or Kantronics/KPC in INFO text
+        if 'X1J4' in info_upper or 'KANTRONICS' in info_upper or 'KPC' in info_upper:
+            return 'Kantronics'
+        
+        # Check command list for Kantronics-specific commands
+        # 'Adc' command is unique to Kantronics hardware (ADC voltage readout)
+        if commands:
+            cmd_set = {c.upper() for c in commands if isinstance(c, str)}
+            if 'ADC' in cmd_set:
+                return 'Kantronics'
         
         if 'BPQ' in info_upper or 'G8BPQ' in info_upper:
             return 'BPQ'
@@ -2007,7 +2113,9 @@ class NodeCrawler:
             'STOP', 'TCP', 'TRACE', 'UDP', 'UPLOAD',
             # FBB Commands
             'ABORT', 'CHECK', 'DIR', 'EXPERT', 'HELP', 'KILL', 'LIST',
-            'READ', 'REPLY', 'SEND', 'STATS', 'TALK', 'VERBOSE', 'WHO'
+            'READ', 'REPLY', 'SEND', 'STATS', 'TALK', 'VERBOSE', 'WHO',
+            # Kantronics X1J4 Commands (KPC-3 Plus TNC firmware)
+            'ADC', 'HOST', 'IPROUTE', 'QUIT'
         }
         
         # Built-in BPQ applications that should ALWAYS be counted as apps
@@ -2059,12 +2167,18 @@ class NodeCrawler:
             # Look for direct neighbor routes (start with >)
             # Format: "> PORT CALLSIGN-SSID QUALITY METRIC"
             # Example: "> 1 WS1EC-15  200 4!"
+            # Kantronics X1J4 format: "> PORT ALIAS:CALLSIGN-SSID QUALITY METRIC"
+            # Example: "> 0 KNXABN:AB1KI-15 10 4"
             if line.strip().startswith('>'):
-                match = re.search(r'>\s+(\d+)\s+(\w+(?:-\d+)?)\s+(\d+)', line)
+                match = re.search(r'>\s+(\d+)\s+(\S+)\s+(\d+)', line)
                 if match:
                     port_num = int(match.group(1))
-                    full_call = self._normalize_callsign(match.group(2))
+                    call_field = match.group(2)
                     quality = int(match.group(3))
+                    # Strip ALIAS: prefix if present (Kantronics X1J4 format)
+                    if ':' in call_field:
+                        call_field = call_field.split(':')[-1]
+                    full_call = self._normalize_callsign(call_field)
                     base_call = full_call.split('-')[0]
                     
                     # Validate callsign format
@@ -2078,13 +2192,18 @@ class NodeCrawler:
             # Look for other route lines (non-direct neighbors)
             # Format: "  PORT CALLSIGN-SSID QUALITY METRIC"
             # Example: "  1 K1NYY-15  200 0!" (reachable via intermediate hop)
+            # Kantronics X1J4: "  PORT ALIAS:CALLSIGN-SSID QUALITY METRIC"
             # The port number indicates which port the node was last heard on
             # Skip routes with quality 0 (blocked/poor paths that sysop disabled)
-            match = re.search(r'^\s+(\d+)\s+(\w+(?:-\d+)?)\s+(\d+)', line)
+            match = re.search(r'^\s+(\d+)\s+(\S+)\s+(\d+)', line)
             if match:
                 port_num = int(match.group(1))
-                full_call = self._normalize_callsign(match.group(2))
+                call_field = match.group(2)
                 quality = int(match.group(3))
+                # Strip ALIAS: prefix if present (Kantronics X1J4 format)
+                if ':' in call_field:
+                    call_field = call_field.split(':')[-1]
+                full_call = self._normalize_callsign(call_field)
                 base_call = full_call.split('-')[0]
                 
                 # Validate callsign format and skip quality 0 (blocked routes)
@@ -2379,6 +2498,100 @@ class NodeCrawler:
             mheard_neighbors = []
             mheard_ports = {}  # {callsign: port_num}
             mheard_ssids = {}  # {base_callsign: 'CALLSIGN-SSID'} - from actual RF
+            
+            # Kantronics / X1J4 fallback: single-port devices don't have PORTS command
+            # Send plain MHEARD (no port argument) and parse columnar output
+            if not ports_list:
+                if check_deadline():
+                    return
+                if self.verbose:
+                    print("  No ports detected (possibly Kantronics/X1J4) - sending plain MHEARD")
+                mheard_output = self._send_command(tn, 'MHEARD', timeout=cmd_timeout, expect_content='Callsign')
+                time.sleep(inter_cmd_delay)
+                
+                # Detect Kantronics columnar format (has "Pkts" and "dBm" in header)
+                is_kantronics_mheard = ('Pkts' in mheard_output and 'dBm' in mheard_output)
+                
+                mh_lines = mheard_output.split('\n')
+                for line in mh_lines:
+                    if not line.strip():
+                        continue
+                    
+                    if is_kantronics_mheard:
+                        # Kantronics X1J4 columnar format:
+                        # Callsign    Pkts   Port  Time      Dev.   dBm   Type
+                        # AB1KI-15    4553   0     0:5:3     2.9    -40   Node
+                        if 'Callsign' in line or 'Pkts' in line:
+                            continue  # Skip header
+                        if '}' in line and ':' in line.split('}')[0]:
+                            continue  # Skip prompt line
+                        match = re.match(
+                            r'^(\w+(?:-\d+)?)\s+(\d+)\s+(\d+)\s+(\d+):(\d+):(\d+)',
+                            line
+                        )
+                        if not match:
+                            continue
+                        full_callsign = match.group(1)
+                        # pkts = int(match.group(2))
+                        kantronics_port = int(match.group(3))
+                        hours = int(match.group(4))
+                        minutes = int(match.group(5))
+                        seconds = int(match.group(6))
+                        total_seconds = hours * 3600 + minutes * 60 + seconds
+                        
+                        # Check for "Node" type tag (Kantronics marks known nodes)
+                        is_tagged_node = bool(re.search(r'\bNode\b', line))
+                        port_num = kantronics_port
+                    else:
+                        # Standard BPQ format without port header
+                        # CALLSIGN-SSID  DD:HH:MM:SS
+                        match = re.match(r'^(\w+(?:-\d+)?)\s+(\d+):(\d+):(\d+):(\d+)', line)
+                        if not match:
+                            continue
+                        full_callsign = match.group(1)
+                        days = int(match.group(2))
+                        hours = int(match.group(3))
+                        minutes = int(match.group(4))
+                        seconds = int(match.group(5))
+                        total_seconds = days * 86400 + hours * 3600 + minutes * 60 + seconds
+                        is_tagged_node = False
+                        port_num = 0  # Unknown port
+                    
+                    base_call = full_callsign.split('-')[0]
+                    if not self._is_valid_callsign(base_call):
+                        continue
+                    
+                    has_ssid = '-' in full_callsign
+                    
+                    # Update last_heard
+                    if base_call not in self.last_heard or total_seconds < self.last_heard[base_call]:
+                        self.last_heard[base_call] = total_seconds
+                    
+                    # SSID selection (same logic as per-port loop below)
+                    if base_call in routes_ssids:
+                        if base_call not in mheard_ssids:
+                            mheard_ssids[base_call] = routes_ssids[base_call]
+                    elif base_call in routes and routes[base_call] == 0:
+                        continue
+                    elif base_call not in mheard_ssids:
+                        if has_ssid:
+                            mheard_ssids[base_call] = full_callsign
+                        elif is_tagged_node:
+                            # Kantronics "Node" tag - station is a node even without SSID
+                            # Store base callsign as placeholder; ROUTES consensus may resolve later
+                            mheard_ssids[base_call] = full_callsign
+                            if self.verbose:
+                                print("    {} tagged as Node by Kantronics (no SSID)".format(full_callsign))
+                        else:
+                            if self.verbose:
+                                print("    MHEARD {} (no SSID - not a node, skipping)".format(full_callsign))
+                            continue
+                    
+                    # Add to neighbors if it has SSID or is tagged as Node
+                    if has_ssid or is_tagged_node:
+                        mheard_neighbors.append(base_call)
+                        if base_call not in mheard_ports:
+                            mheard_ports[base_call] = port_num
             for port_info in ports_list:
                 port_type = port_info.get('port_type', 'rf')
                 # Filter ports based on type and allow_hf/allow_ip flags
@@ -2526,8 +2739,8 @@ class NodeCrawler:
             commands_output = self._send_command(tn, '?', timeout=cmd_timeout)
             commands, applications = self._parse_commands(commands_output)
             
-            # Detect node type
-            node_type = self._detect_node_type(info_output, '>:')
+            # Detect node type (pass commands list for Kantronics detection via 'Adc')
+            node_type = self._detect_node_type(info_output, '>:', commands)
             
             # Store node data
             # Note: INFO-derived data (location, applications, type from keywords) is marked

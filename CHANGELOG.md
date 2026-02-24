@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Kantronics X1J4 Support] - 2026-02-24
+### Added
+- **nodemap.py v1.7.93**: Kantronics KPC-3 Plus / X1J4 firmware support:
+  - Node type detection: Identifies Kantronics nodes via X1J4/KPC/Kantronics
+    keywords in INFO text, or `Adc` command in `?` output
+  - MHEARD parsing: Handles Kantronics columnar format with columns
+    `Callsign Pkts Port Time Dev. dBm Type` (3-field H:M:S timestamps
+    vs BPQ's 4-field DD:HH:MM:SS)
+  - Kantronics "Node" type tag: Stations tagged as "Node" in MHEARD are
+    treated as crawlable even without SSID
+  - ROUTES parsing: Strips `ALIAS:CALLSIGN-SSID` notation (Kantronics
+    includes NetRom alias prefix in ROUTES output)
+  - Portless MHEARD fallback: When PORTS command returns nothing (single-port
+    Kantronics hardware), sends plain `MHEARD` without port argument
+  - Standard commands filter: Added Kantronics-specific commands
+    (ADC, HOST, IPROUTE, QUIT) to prevent false application classification
+  - New `_parse_mheard_kantronics()` method for the columnar format
+- **nodemap.json**: Added W1LH-6 (Kantronics X1J4 node on Cooper Mountain,
+  ME) with full MHEARD detail including signal quality data (dBm, deviation).
+  Gateway to Canadian maritime nodes VE9SIX, VE1BO, VE9SJW.
+
+### Changed
+- **nodemap.json**: Updated AB1KI-15 with fresh routes (KX1EMA q240,
+  N1REX q240, W1EMA q240), updated successful path via N1REX, moved
+  W1LH-6 from unexplored to explored neighbors.
+
 ## [Partial Node Connection Fix] - 2026-02-23
 ### Fixed
 - **nodemap-html.py v1.4.19**: Allow one-sided connections when the *source*
