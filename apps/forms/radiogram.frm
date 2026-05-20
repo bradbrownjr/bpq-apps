@@ -1,8 +1,9 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "1.0",
-  "description": "Standard ARRL radiogram format for formal message traffic. Used for passing messages through the National Traffic System (NTS).",
+  "version": "2.0",
+  "format": "nts_radiogram",
+  "description": "Standard ARRL radiogram for the National Traffic System (NTS). For PKTNET: send SP to KY2D@ARRL.NET. Message: May PKTNET checkin. I am using the [BBS] BBS System. 73.",
   "fields": [
     {
       "name": "number",
@@ -103,6 +104,39 @@
       "required": true,
       "max_length": 100,
       "description": "Sender's name or signature"
+    },
+    {
+      "name": "to_zip",
+      "label": "To (ZIP Code)",
+      "type": "text",
+      "required": true,
+      "max_length": 10,
+      "description": "Destination ZIP code — used for NTS routing (e.g. 04543)"
+    },
+    {
+      "name": "to_state",
+      "label": "To (2-letter state abbr)",
+      "type": "text",
+      "required": true,
+      "max_length": 2,
+      "description": "Destination state abbreviation — used for NTS routing (e.g. ME, MA, NH)"
+    },
+    {
+      "name": "to_email",
+      "label": "To (Email, for address block)",
+      "type": "text",
+      "required": false,
+      "max_length": 100,
+      "description": "Recipient email address to include in the radiogram address block (e.g. KY2D@ARRL.NET)"
+    },
+    {
+      "name": "filed_time",
+      "label": "Time Filed (UTC, HHMM)",
+      "type": "text",
+      "required": false,
+      "max_length": 6,
+      "default_now": "%H%M",
+      "description": "UTC time message is filed (auto-filled with current time)"
     }
   ]
 }

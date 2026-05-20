@@ -360,19 +360,23 @@ wget -O forms.py https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/app
 - **Auto-downloads form templates from GitHub** - no manual wget needed for forms!
 - Auto-discovery of form templates from `forms/` subdirectory
 - Captures user callsign automatically from BPQ32 (or prompts if not available)
-- User always specifies recipient for each form submission
+- **Interactive routing menu** after every form: choose Personal (SP), NTS Traffic (ST), or Bulletin (SB)
+  - *Personal*: enter any callsign or BBS address
+  - *NTS Traffic*: guided state (name or abbreviation accepted) + ZIP prompts; builds `ST [ZIP] @ NTS[STATE]` automatically
+  - *Bulletin*: enter topic and distribution (e.g. `PKTNET@USA`, `ARRL@WW`)
 - Optional form review before submission (saves bandwidth)
 - **Strip Mode**: Parse and respond to slash-separated information request strips (MARS/SHARES format)
 - Multiple field types: text (single-line), textarea (/EX terminated), yes/no/na, multiple choice
 - Required and optional field validation
+- Default values, auto-filled fields (callsign, timestamp), and form-level body format control
 - Press Q to quit at any time during form filling
 - Exports to BPQ message format for automatic import
 
 **Included Forms**:
 - ICS-213 General Message
-- Net Check-in
+- TPRFN / PKTNET Net Check-in (matches vden.org PACKET CHECK-IN format exactly)
 - Equipment Status Report
-- ARRL Radiogram
+- ARRL NTS Radiogram (with auto-built `ST [ZIP] @ NTS[STATE]` routing)
 - Field Situation Report (FSR)
 - Severe Weather Report (SKYWARN compatible)
 - Bulletin Message
@@ -404,6 +408,7 @@ Form templates use JSON format with the following structure:
   "title": "Form Title",
   "version": "1.0",
   "description": "Form description",
+  "format": "standard",
   "fields": [
     {
       "name": "field_name",
@@ -413,12 +418,26 @@ Form templates use JSON format with the following structure:
       "description": "Field description",
       "max_length": 100,
       "allow_na": true|false,
-      "choices": ["Option 1", "Option 2"]
+      "choices": ["Option 1", "Option 2"],
+      "default": "pre-filled value",
+      "auto_fill": "callsign",
+      "default_now": "%H%M"
     }
   ]
 }
 ```
-Note: Recipient is always prompted from user after form completion.
+
+**Top-level `format` values**:
+- `standard` (default) — generic field-by-field output
+- `pktnet_checkin` — PACKET CHECK-IN body matching vden.org format
+- `nts_radiogram` — ARRL NTS preamble + address block
+
+**Special field keys**:
+- `default` — pre-fills the field; user presses Enter to accept
+- `auto_fill: "callsign"` — silently fills with the connecting station's callsign
+- `default_now: "<strftime>"` — silently fills with the current UTC time/date using the given format string
+
+After form completion, the routing menu (Personal / NTS / Bulletin) always runs interactively.
 
 **Field Types**:
 - `text` - Single-line text input (press Enter to finish, can be left blank if not required)

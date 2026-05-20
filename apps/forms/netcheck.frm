@@ -1,77 +1,135 @@
 {
   "id": "NETCHECK",
   "title": "Net Check-in Form",
-  "version": "1.0",
-  "description": "Standard form for checking into an amateur radio net. Collects station information and operational status.",
+  "version": "2.0",
+  "format": "pktnet_checkin",
+  "description": "Packet Radio Net Check-in Form. Output matches vden.org PACKET CHECK-IN format. Send as bulletin SB PKTNET@USA with subject: Name, Call, Town, State.",
   "fields": [
     {
-      "name": "net_name",
-      "label": "Net Name",
+      "name": "agency",
+      "label": "Agency/Group Name",
       "type": "text",
-      "required": true,
+      "required": false,
       "max_length": 100,
-      "description": "Name of the net you are checking into"
+      "description": "Optional: agency or group affiliation (leave blank if none)"
     },
     {
-      "name": "operator_name",
-      "label": "Operator Name",
+      "name": "datetime",
+      "label": "Date/Time",
+      "type": "text",
+      "required": true,
+      "max_length": 20,
+      "default_now": "%Y-%m-%d %H:%M",
+      "description": "Check-in date and time UTC (YYYY-MM-DD HH:MM)"
+    },
+    {
+      "name": "to",
+      "label": "To (destination address)",
+      "type": "text",
+      "required": true,
+      "max_length": 50,
+      "default": "PKTNET@USA",
+      "description": "Bulletin address (e.g. PKTNET@USA)"
+    },
+    {
+      "name": "from_call",
+      "label": "From (your callsign)",
+      "type": "text",
+      "required": true,
+      "max_length": 20,
+      "auto_fill": "callsign",
+      "description": "Your callsign"
+    },
+    {
+      "name": "contact",
+      "label": "Station Contact Name",
       "type": "text",
       "required": true,
       "max_length": 100,
       "description": "Your name"
     },
     {
-      "name": "location",
-      "label": "Location (City/County)",
+      "name": "operator",
+      "label": "Initial Operator(s)",
       "type": "text",
-      "required": true,
+      "required": false,
       "max_length": 100,
-      "description": "Your current location"
+      "description": "Callsign(s) of operator(s) at this station (leave blank if same as From)"
     },
     {
-      "name": "grid_square",
+      "name": "session_type",
+      "label": "Session Type",
+      "type": "choice",
+      "required": true,
+      "choices": [
+        "EXERCISE",
+        "REAL EVENT"
+      ],
+      "description": "Type of session"
+    },
+    {
+      "name": "service_type",
+      "label": "Service",
+      "type": "text",
+      "required": false,
+      "max_length": 50,
+      "default": "AMATEUR",
+      "description": "Service type (default: AMATEUR)"
+    },
+    {
+      "name": "band",
+      "label": "Band",
+      "type": "choice",
+      "required": true,
+      "choices": [
+        "AXIP",
+        "HF",
+        "VHF",
+        "UHF",
+        "SHF"
+      ],
+      "description": "Frequency band or link type used"
+    },
+    {
+      "name": "mode",
+      "label": "Session/Mode",
+      "type": "choice",
+      "required": true,
+      "choices": [
+        "AXIP",
+        "AX25 Packet",
+        "Pactor",
+        "Robust Packet",
+        "Ardop",
+        "VARA HF",
+        "VARA FM",
+        "Mesh"
+      ],
+      "description": "Digital mode used for this session"
+    },
+    {
+      "name": "location",
+      "label": "Location",
+      "type": "text",
+      "required": true,
+      "max_length": 200,
+      "description": "Your location - city, state (or specific site/address)"
+    },
+    {
+      "name": "gridsquare",
       "label": "Grid Square",
       "type": "text",
       "required": false,
       "max_length": 10,
-      "description": "Maidenhead grid square (e.g., FN43sr)"
-    },
-    {
-      "name": "status",
-      "label": "Station Status",
-      "type": "choice",
-      "required": true,
-      "choices": [
-        "Active - Available for traffic",
-        "Active - Monitoring only",
-        "Mobile",
-        "Portable",
-        "Emergency Power"
-      ],
-      "description": "Your current operating status"
-    },
-    {
-      "name": "traffic",
-      "label": "Traffic to Pass",
-      "type": "yesno",
-      "required": true,
-      "allow_na": false,
-      "description": "Do you have traffic (messages) to pass?"
-    },
-    {
-      "name": "emergency",
-      "label": "Emergency or Priority Traffic",
-      "type": "yesno",
-      "required": true,
-      "allow_na": false,
-      "description": "Do you have emergency or priority traffic?"
+      "description": "Maidenhead grid square (e.g., FN42sr)"
     },
     {
       "name": "comments",
       "label": "Comments",
       "type": "textarea",
       "required": false,
-      "description": "Additional comments or information (optional)"
+      "max_length": 500,
+      "description": "Hub station and band used, BBS used, notes (max 500 chars)"
     }
   ]
 }

@@ -22,8 +22,8 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.14
-Date: January 2026
+Version: 1.15
+Date: May 2026
 """
 
 import sys
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.14"
+VERSION = "1.15"
 APP_NAME = "forms.py"
 
 import os
@@ -75,6 +75,27 @@ def get_line_width():
     return 80  # Default width for packet radio terminals
 
 LINE_WIDTH = get_line_width()  # Dynamic terminal width
+
+# US state name/shorthand -> 2-letter USPS abbreviation
+_STATE_ABBR = {
+    'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR',
+    'california': 'CA', 'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE',
+    'florida': 'FL', 'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID',
+    'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA', 'kansas': 'KS',
+    'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
+    'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS',
+    'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV',
+    'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY',
+    'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH', 'oklahoma': 'OK',
+    'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+    'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT',
+    'vermont': 'VT', 'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV',
+    'wisconsin': 'WI', 'wyoming': 'WY', 'district of columbia': 'DC',
+    # common shorthands
+    'mass': 'MA', 'conn': 'CT', 'penn': 'PA', 'penna': 'PA',
+    'wash': 'WA', 'tenn': 'TN', 'mich': 'MI', 'minn': 'MN',
+}
+_VALID_STATE_ABBRS = set(_STATE_ABBR.values())
 
 class FormsApp:
     """Main forms application class"""
@@ -415,6 +436,7 @@ class FormsApp:
             'form_title': form.get('title', 'Untitled'),
             'form_id': form.get('id', 'UNKNOWN'),
             'form_version': form.get('version', '1.0'),
+            'output_format': form.get('format', 'standard'),
             'submitted_by': self.user_call,
             'submitted_date': datetime.now().strftime('%Y-%m-%d %H:%M UTC'),
             'fields': []
@@ -427,6 +449,14 @@ class FormsApp:
             field_label = field.get('label', field_name)
             required = field.get('required', False)
             description = field.get('description', '')
+
+            # Pre-compute default values for special auto-fill fields
+            if field.get('default_now'):
+                field = dict(field)
+                field['default'] = datetime.now().strftime(field['default_now'])
+            elif field.get('auto_fill') == 'callsign' and self.user_call:
+                field = dict(field)
+                field['default'] = self.user_call
             
             print("\n{}{}".format(field_label, ' (REQUIRED)' if required else ''))
             if description:
@@ -611,12 +641,18 @@ class FormsApp:
     def fill_text_field(self, field, required):
         """Fill a single-line text field (press Enter to finish, B to back)"""
         max_length = field.get('max_length', 255)
-        
+        default = field.get('default', '')
+
+        if default:
+            print("(Press Enter to accept: {})".format(default))
+
         while True:
             value = self.get_input("> ")
-            
+
             if value == '__BACK__':
                 return None
+            elif not value and default:
+                return default
             elif not value and not required:
                 return ""
             elif not value and required:
@@ -774,17 +810,263 @@ class FormsApp:
         print()
         self.print_separator()
     
-    def format_as_bpq_message(self, form_data, recipient):
-        """Format the filled form as a BPQ-importable message"""
+    # ------------------------------------------------------------------
+    # Routing helpers
+    # ------------------------------------------------------------------
+
+    def _resolve_state_abbr(self, user_input):
+        """Return 2-letter state abbreviation from a name or abbreviation."""
+        s = user_input.strip()
+        # Try exact 2-letter abbreviation
+        if s.upper() in _VALID_STATE_ABBRS:
+            return s.upper()
+        # Try full name or shorthand (case-insensitive)
+        lower = s.lower()
+        if lower in _STATE_ABBR:
+            return _STATE_ABBR[lower]
+        # Try prefix match (e.g. "new h" -> NH)
+        matches = [abbr for name, abbr in _STATE_ABBR.items() if name.startswith(lower)]
+        if len(matches) == 1:
+            return matches[0]
+        return None
+
+    def _prompt_nts_routing(self, fv):
+        """Ask for destination state and ZIP, return ST [ZIP] @ NTS[STATE] string."""
+        suggested_state = fv.get('to_state', '').strip().upper()
+        suggested_zip   = fv.get('to_zip',   '').strip()
+
+        # State
+        state_abbr = None
+        while state_abbr is None:
+            hint = ' [{}]'.format(suggested_state) if suggested_state else ''
+            raw = self.get_input('Destination state (name or abbr){}: '.format(hint)).strip()
+            if not raw and suggested_state:
+                raw = suggested_state
+            state_abbr = self._resolve_state_abbr(raw)
+            if state_abbr:
+                print('  -> {}'.format(state_abbr))
+            else:
+                print('  Unrecognized: "{}". Try the full name or 2-letter abbreviation.'.format(raw))
+
+        # ZIP
+        zip_code = None
+        while zip_code is None:
+            hint = ' [{}]'.format(suggested_zip) if suggested_zip else ''
+            raw = self.get_input('Destination ZIP code{}: '.format(hint)).strip()
+            if not raw and suggested_zip:
+                raw = suggested_zip
+            if raw.isdigit() and len(raw) == 5:
+                zip_code = raw
+            else:
+                print('  ZIP code must be 5 digits.')
+
+        routing = 'ST {} @ NTS{}'.format(zip_code, state_abbr)
+        print('  Routing: {}'.format(routing))
+        return routing
+
+    def _prompt_bulletin_routing(self, fv):
+        """Ask for bulletin topic and distribution, return SB TOPIC@DIST string."""
+        COMMON_DISTS = ['USA', 'WW', 'NA', 'SA', 'EU', 'AF', 'AS', 'OC', 'PAC', 'CAR', 'CAN', 'ALLUS']
+
+        # Pre-suggest from the form's To field (e.g. "PKTNET@USA" -> topic=PKTNET, dist=USA)
+        form_to = fv.get('to', '').strip().upper()
+        if '@' in form_to:
+            suggested_topic = form_to.split('@')[0]
+            suggested_dist  = form_to.split('@')[1]
+        else:
+            suggested_topic = form_to
+            suggested_dist  = 'USA'
+
+        hint = ' [{}]'.format(suggested_topic) if suggested_topic else ''
+        topic = self.get_input('Bulletin topic (e.g. PKTNET, ARRL, WX){}: '.format(hint)).strip().upper()
+        if not topic and suggested_topic:
+            topic = suggested_topic
+
+        print('Common distributions: {}'.format(', '.join(COMMON_DISTS)))
+        hint = ' [{}]'.format(suggested_dist) if suggested_dist else ''
+        dist = self.get_input('Distribution{}: '.format(hint)).strip().upper()
+        if not dist and suggested_dist:
+            dist = suggested_dist
+
+        routing = 'SB {}@{}'.format(topic, dist)
+        print('  Address: {}'.format(routing))
+        return routing
+
+    def prompt_routing(self, form_data):
+        """Interactively build the BPQ routing line (SP/ST/SB + address)."""
+        fv = {f['name']: f['value'] for f in form_data['fields']}
+
+        print('Message type:')
+        print('  1. Personal    (SP - to a callsign or BBS address)')
+        print('  2. NTS Traffic (ST - enters NTS routing system)')
+        print('  3. Bulletin    (SB - broadcast to a distribution)')
+        print()
+
+        while True:
+            choice = self.get_input('Select type [1/2/3]: ').strip()
+
+            if choice == '1':
+                suggested = fv.get('to', '').strip().upper()
+                # Only use form's To as a hint if it looks like a callsign/personal address
+                if '@' in suggested and suggested.split('@')[-1] in _VALID_STATE_ABBRS:
+                    suggested = ''  # Looks like NTS, don't suggest for personal
+                hint = ' [{}]'.format(suggested) if suggested else ''
+                addr = self.get_input('Callsign or BBS address{}: '.format(hint)).strip().upper()
+                if not addr and suggested:
+                    addr = suggested
+                if addr:
+                    return 'SP {}'.format(addr)
+                print('Address is required.')
+
+            elif choice == '2':
+                return self._prompt_nts_routing(fv)
+
+            elif choice == '3':
+                return self._prompt_bulletin_routing(fv)
+
+            else:
+                print('Please enter 1, 2, or 3.')
+
+    # ------------------------------------------------------------------
+    # Body formatters
+    # ------------------------------------------------------------------
+
+    def format_pktnet_checkin(self, form_data):
+        """Format body as PACKET CHECK-IN matching vden.org check_in.html output exactly"""
+        fv = {f['name']: f['value'] for f in form_data['fields']}
+
         lines = []
-        
-        # BPQ message header
-        # SP for Private (default for callsigns), SB for Bulletin (ALL, WW, etc.)
-        # Use SB only if recipient is a bulletin address
-        bulletin_addresses = ['ALL', 'WW', 'ALLUS', 'INFO', 'SALE', 'WANTED', 'TECH', 'TEST']
-        msg_type = "SB" if recipient.upper() in bulletin_addresses or '@WW' in recipient.upper() else "SP"
-        lines.append("{} {} < {}".format(msg_type, recipient, self.user_call))
-        
+        lines.append("PACKET CHECK-IN")
+        lines.append("")
+
+        agency = fv.get('agency', '').strip()
+        if agency:
+            lines.append(agency)
+            lines.append("")
+
+        lines.append("1. STATION")
+        lines.append("")
+        lines.append("a. Date/Time: {}".format(fv.get('datetime', '')))
+        lines.append("")
+        lines.append("b. To: {}".format(fv.get('to', '')))
+        lines.append("")
+        lines.append("c. From: {}    d. Station Contact Name: {}    e. Initial Operator(s): {}".format(
+            fv.get('from_call', form_data.get('submitted_by', '')),
+            fv.get('contact', ''),
+            fv.get('operator', '')
+        ))
+        lines.append("")
+        lines.append("")
+        lines.append("2. SESSION")
+        lines.append("")
+        lines.append("a. Type: {}    b. Service: {}    c. Band: {}".format(
+            fv.get('session_type', ''),
+            fv.get('service_type', 'AMATEUR'),
+            fv.get('band', '')
+        ))
+        lines.append("")
+        lines.append("d. Session: {}".format(fv.get('mode', '')))
+        lines.append("")
+        lines.append("")
+        lines.append("3. LOCATION")
+        lines.append("")
+        lines.append("a. Location: {}".format(fv.get('location', '')))
+        lines.append("")
+        lines.append("b. GRID SQUARE: {}".format(fv.get('gridsquare', '')))
+        lines.append("")
+        lines.append("")
+        lines.append("4. COMMENTS: {}".format(fv.get('comments', '')))
+
+        return '\n'.join(lines)
+
+    def format_nts_radiogram(self, form_data):
+        """Format body as standard ARRL NTS radiogram preamble"""
+        fv = {f['name']: f['value'] for f in form_data['fields']}
+
+        # Precedence: extract just the letter from e.g. "R - Routine"
+        prec = fv.get('precedence', 'R - Routine').split(' ')[0].upper()
+        handling = fv.get('handling', '').strip().upper()
+        origin = fv.get('station_of_origin', form_data.get('submitted_by', '')).upper()
+        check = fv.get('check', '')
+        place = fv.get('place_of_origin', '').upper()
+
+        filed_time = fv.get('filed_time', '').strip()
+        if not filed_time:
+            filed_time = datetime.now().strftime('%H%M')
+        filed_date = datetime.now().strftime('%b %d').upper()  # e.g. MAY 20
+
+        preamble_parts = ['NR', fv.get('number', ''), prec]
+        if handling:
+            preamble_parts.append(handling)
+        preamble_parts.extend([origin, check, place, filed_time, filed_date])
+        preamble = ' '.join(p for p in preamble_parts if p)
+
+        lines = []
+        lines.append(preamble)
+        lines.append("")
+
+        lines.append("TO: {}".format(fv.get('to_name', '').upper()))
+        to_address = fv.get('to_address', '').upper()
+        if to_address:
+            lines.append(to_address)
+        to_cs = fv.get('to_city_state', '').upper()
+        to_zip = fv.get('to_zip', '').strip()
+        lines.append("{} {}".format(to_cs, to_zip).strip())
+        to_phone = fv.get('to_phone', '').strip()
+        if to_phone:
+            lines.append(to_phone)
+        to_email = fv.get('to_email', '').strip()
+        if to_email:
+            lines.append(to_email)
+        lines.append("")
+
+        for line in fv.get('text', '').split('\n'):
+            lines.append(line)
+        lines.append("")
+
+        lines.append(fv.get('signature', ''))
+
+        return '\n'.join(lines)
+
+    def format_as_bpq_message(self, form_data, routing):
+        """Format the filled form as a BPQ-importable message.
+
+        routing -- the full BPQ command string from prompt_routing(), e.g.
+                   'SP KC1JMH', 'ST 04543 @ NTSME', 'SB PKTNET@USA'
+        """
+        lines = []
+        lines.append("{} < {}".format(routing, self.user_call))
+
+        output_format = form_data.get('output_format', 'standard')
+
+        if output_format == 'pktnet_checkin':
+            fv = {f['name']: f['value'] for f in form_data['fields']}
+            subject = "{}, {}, {}".format(
+                fv.get('contact', form_data.get('submitted_by', '')),
+                fv.get('from_call', form_data.get('submitted_by', '')),
+                fv.get('location', '')
+            )
+            lines.append(subject)
+            lines.append("")
+            lines.append(self.format_pktnet_checkin(form_data))
+            lines.append("")
+            lines.append("/EX")
+            return '\n'.join(lines)
+
+        if output_format == 'nts_radiogram':
+            fv = {f['name']: f['value'] for f in form_data['fields']}
+            # Subject: destination city/state ZIP (what NTS operators see in LT listing)
+            subject = "{} {}".format(
+                fv.get('to_city_state', '').upper(),
+                fv.get('to_zip', '').strip()
+            ).strip()
+            lines.append(subject)
+            lines.append("")
+            lines.append(self.format_nts_radiogram(form_data))
+            lines.append("")
+            lines.append("/EX")
+            return '\n'.join(lines)
+
         # Check if this is a strip form
         if 'strip_response' in form_data:
             # Subject line for strip forms
@@ -827,19 +1109,11 @@ class FormsApp:
             form_data['form_title']
         )
         lines.append(subject)
-        
+
         # Message body
         lines.append("")
-        lines.append("=" * 70)
-        lines.append(form_data['form_title'])
-        lines.append("Form ID: {}".format(form_data['form_id']))
-        lines.append("Version: {}".format(form_data['form_version']))
-        lines.append("=" * 70)
-        lines.append("")
         lines.append("Submitted by: {}".format(form_data['submitted_by']))
-        lines.append("Submitted on: {}".format(form_data['submitted_date']))
-        lines.append("")
-        lines.append("-" * 70)
+        lines.append("Date: {}".format(form_data['submitted_date']))
         lines.append("")
         
         # Form fields
@@ -857,11 +1131,6 @@ class FormsApp:
                 lines.append("{}: {}".format(label, value))
         
         lines.append("")
-        lines.append("-" * 70)
-        lines.append("End of form")
-        lines.append("")
-        
-        # BPQ message terminator
         lines.append("/EX")
         
         return '\n'.join(lines)
@@ -971,28 +1240,21 @@ class FormsApp:
                         self._continue_prompt()
                         continue
                     
-                    # Get recipient - always prompt user
+                    # Routing
                     print("\n")
                     self.print_separator()
                     print("\nPreparing to submit form...")
                     print()
-                    print("Who should receive this form?")
-                    print("(Enter a callsign or address)")
-                    print()
-                    
-                    recipient = ""
-                    while not recipient:
-                        recipient = self.get_input("Send to: ").strip()
-                        if not recipient:
-                            print("Recipient is required.")
-                    
+
+                    routing = self.prompt_routing(form_data)
+
                     # Format as BPQ message
-                    message = self.format_as_bpq_message(form_data, recipient.upper())
-                    
+                    message = self.format_as_bpq_message(form_data, routing)
+
                     # Save to file
                     if self.save_message(message):
                         print("\nThe form has been submitted and will be imported")
-                        print("into the BBS for delivery to {}.".format(recipient.upper()))
+                        print("into the BBS for delivery via: {}".format(routing))
                     
                     # Ask if they want to fill another form
                     print()

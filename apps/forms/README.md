@@ -8,13 +8,13 @@ This directory contains form templates (`.frm` files) for the fillable forms sys
 Standard Incident Command System form for general messages in emergency and non-emergency communications. Includes fields for incident name, sender/recipient information, message content, priority level, and reply request.
 
 ### Net Check-in Form (`netcheck.frm`)
-Standard form for checking into amateur radio nets. Collects station information including operator name, location, grid square, operational status, and whether the station has traffic to pass.
+PKTNET / TPRFN check-in form. Output matches the **vden.org PACKET CHECK-IN** format exactly — four labeled sections covering station identity, session type, communications capability, and comments. Auto-fills the sender's callsign and the current UTC timestamp. Designed for bulletin submission to `PKTNET@USA`.
 
 ### Equipment Status Report (`eqstat.frm`)
 Report operational status of radio equipment and infrastructure. Useful for nets and emergency preparedness assessments. Covers power source, radio equipment status (HF/VHF/UHF), digital modes, antennas, and overall capability.
 
 ### ARRL Radiogram (`radiogram.frm`)
-Standard ARRL radiogram format for formal message traffic used in the National Traffic System (NTS). Includes all standard radiogram fields: number, precedence, handling instructions, check, address information, and message text.
+Standard ARRL radiogram format for formal message traffic in the National Traffic System (NTS). Includes all standard fields: number, precedence, handling instructions, origin station, check (word count), place of origin, addressee name/address/city-state/phone, and message text. Also collects the destination ZIP code and state for automatic NTS packet routing — forms.py builds the BPQ command `ST [ZIP] @ NTS[STATE]` without any extra user input. The `filed_time` field auto-fills with the current UTC time in HHMM format.
 
 ### Field Situation Report (`fsr.frm`)
 Report field conditions, resource status, and operational situation during incidents or exercises. Used for tactical field updates. Includes situation summary, personnel status, resources needed, safety concerns, and communications status.
@@ -102,6 +102,7 @@ Form templates use JSON format. Here's the structure:
   "title": "Form Title",
   "version": "1.0",
   "description": "Brief description of the form's purpose",
+  "format": "standard",
   "fields": [
     {
       "name": "field_identifier",
@@ -111,13 +112,26 @@ Form templates use JSON format. Here's the structure:
       "description": "Help text for the user",
       "max_length": 100,
       "allow_na": true,
-      "choices": ["Option 1", "Option 2", "Option 3"]
+      "choices": ["Option 1", "Option 2", "Option 3"],
+      "default": "pre-filled value (user presses Enter to accept)",
+      "auto_fill": "callsign",
+      "default_now": "%H%M"
     }
   ]
 }
 ```
 
-**Note**: The recipient is always prompted from the user after form completion, allowing flexibility for different scenarios and incidents.
+**Top-level `format` values**:
+- `standard` (default) — generic field-by-field body output
+- `pktnet_checkin` — PACKET CHECK-IN body matching vden.org format exactly
+- `nts_radiogram` — ARRL NTS preamble + address block body
+
+**Special field keys**:
+- `default` — pre-fills the field; user presses Enter to accept or types to override
+- `auto_fill: "callsign"` — silently fills with the connecting station's callsign
+- `default_now: "<strftime>"` — silently fills with current UTC time/date using the given format string (e.g. `"%H%M"` for HHMM, `"%Y-%m-%d %H:%M"` for full datetime)
+
+After form completion, forms.py presents an interactive routing menu — the user chooses Personal, NTS Traffic, or Bulletin and is guided through building the correct BPQ address.
 
 ## Field Types
 
