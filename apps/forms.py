@@ -429,6 +429,7 @@ class FormsApp:
             print(self.wrap_text(desc))
             print()
         self.print_separator()
+        print("(Press Q at any field to quit, except message text fields)")
         print()
         
         # Collect form data
