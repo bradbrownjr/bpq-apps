@@ -420,7 +420,7 @@ class FormsApp:
         if form.get('strip_mode', False):
             return self.fill_strip_form(form)
         
-        self.print_separator()
+        self.clear_screen()
         print("Form: {}".format(form.get('title', 'Untitled')))
         print()
         desc = form.get('description', '')
@@ -528,7 +528,6 @@ class FormsApp:
     def fill_strip_form(self, form):
         """Handle strip-mode forms (slash-separated request/response)"""
         self.clear_screen()
-        self.print_header()
         print("Form: {}".format(form.get('title', 'Untitled')))
         print()
         print(self.wrap_text(form.get('description', '')))
