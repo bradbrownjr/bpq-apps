@@ -32,7 +32,16 @@
       "type": "text",
       "required": false,
       "max_length": 50,
-      "description": "Optional handling instructions (HXA, HXB, etc.)"
+      "description": "Optional handling instructions (HXA, HXB, etc.) or ? for list",
+      "help": [
+        "HXA(n) Collect delivery authorized within n miles",
+        "HXB(n) Cancel if not delivered within n hours; notify origin",
+        "HXC    Report delivery date/time to originating station",
+        "HXD    Report relay and delivery chain to originating station",
+        "HXE    Get reply from addressee; originate reply message back",
+        "HXF(n) Hold delivery until date n",
+        "HXG    No toll delivery; cancel and notify origin if cost required"
+      ]
     },
     {
       "name": "station_of_origin",

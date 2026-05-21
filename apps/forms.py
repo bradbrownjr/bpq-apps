@@ -670,12 +670,24 @@ class FormsApp:
 
         if default:
             print("(Press Enter to accept: {})".format(default))
+        if field.get('help'):
+            print("(Type ? for help)")
 
         while True:
             value = self.get_input("> ")
 
             if value == '__BACK__':
                 return None
+            elif value == '?':
+                help_lines = field.get('help', [])
+                if help_lines:
+                    print()
+                    for line in help_lines:
+                        print(line)
+                    print()
+                else:
+                    print("No help available for this field.")
+                continue
             elif not value and default:
                 return default
             elif not value and not required:
