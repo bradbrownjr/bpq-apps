@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "2.5",
+  "version": "2.6",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -89,7 +89,7 @@
       "type": "text",
       "required": true,
       "max_length": 10,
-      "description": "Destination ZIP code — used for NTS routing (e.g. 04543)"
+      "description": "Destination ZIP code — used for NTS routing"
     },
     {
       "name": "to_phone",
@@ -105,7 +105,7 @@
       "type": "text",
       "required": false,
       "max_length": 100,
-      "description": "Recipient email address (optional, e.g. KY2D@ARRL.NET)"
+      "description": "Recipient email address (optional)"
     },
     {
       "name": "text",
