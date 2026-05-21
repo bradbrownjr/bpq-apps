@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.24"
+VERSION = "1.25"
 APP_NAME = "forms.py"
 
 import os
@@ -480,7 +480,7 @@ class FormsApp:
             'form_version': form.get('version', '1.0'),
             'output_format': form.get('format', 'standard'),
             'submitted_by': self.user_call,
-            'submitted_date': datetime.now().strftime('%Y-%m-%d %H:%M UTC'),
+            'submitted_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC'),
             'fields': []
         }
         
@@ -495,7 +495,7 @@ class FormsApp:
             # Pre-compute default values for special auto-fill fields
             if field.get('default_now'):
                 field = dict(field)
-                field['default'] = datetime.now().strftime(field['default_now'])
+                field['default'] = datetime.utcnow().strftime(field['default_now'])
             elif field.get('auto_fill') == 'callsign' and self.user_call:
                 field = dict(field)
                 field['default'] = self.user_call
@@ -675,7 +675,7 @@ class FormsApp:
             'form_id': form.get('id', 'UNKNOWN'),
             'form_version': form.get('version', '1.0'),
             'submitted_by': self.user_call,
-            'submitted_date': datetime.now().strftime('%Y-%m-%d %H:%M UTC'),
+            'submitted_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC'),
             'strip_title': strip_title,
             'strip_request': strip_input + '//',
             'strip_response': response_strip,
@@ -1356,8 +1356,8 @@ class FormsApp:
 
         filed_time = fv.get('filed_time', '').strip()
         if not filed_time:
-            filed_time = datetime.now().strftime('%H%M')
-        filed_date = datetime.now().strftime('%b %d').upper()  # e.g. MAY 20
+            filed_time = datetime.utcnow().strftime('%H%M')
+        filed_date = datetime.utcnow().strftime('%b %d').upper()  # e.g. MAY 20
 
         preamble_parts = ['NR', fv.get('number', ''), prec]
         if handling:
