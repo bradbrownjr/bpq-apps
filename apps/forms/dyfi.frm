@@ -1,7 +1,7 @@
 {
   "id": "DYFI",
   "title": "USGS Did You Feel It? (DYFI) Earthquake Report",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Report earthquake experiences to the USGS Did You Feel It system. Helps create maps showing what people experienced and extent of damage. Data sent to USGS for earthquake intensity analysis.",
   "fields": [
     {
@@ -21,7 +21,7 @@
       "type": "text",
       "required": false,
       "max_length": 50,
-      "description": "USGS Event ID from earthquake.usgs.gov (e.g., ci40063464)"
+      "description": "USGS Event ID from earthquake.usgs.gov"
     },
     {
       "name": "exercise_id",
@@ -29,7 +29,7 @@
       "type": "text",
       "required": false,
       "max_length": 50,
-      "description": "Exercise identifier if applicable (e.g., ShakeOut2025)"
+      "description": "Exercise identifier if applicable"
     },
     {
       "name": "report_location",
@@ -53,7 +53,7 @@
       "type": "text",
       "required": false,
       "max_length": 20,
-      "description": "e.g., 34.1341 (North is positive)"
+      "description": "Decimal latitude \u2014 North is positive, South is negative"
     },
     {
       "name": "longitude",
@@ -61,7 +61,7 @@
       "type": "text",
       "required": false,
       "max_length": 20,
-      "description": "e.g., -118.3215 (West is negative)"
+      "description": "Decimal longitude \u2014 East is positive, West is negative"
     },
     {
       "name": "situation",
