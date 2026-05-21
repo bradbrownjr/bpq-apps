@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.23"
+VERSION = "1.24"
 APP_NAME = "forms.py"
 
 import os
@@ -527,15 +527,16 @@ class FormsApp:
                     value = self.fill_textarea_field(field, required)
                 if value is None:
                     return None  # User pressed B to back
-                # NTS normalization: convert periods/decimals before word count
+                # NTS normalization: encode for transmission; count original words
                 if value and field.get('nts_normalize'):
+                    check = self.count_nts_check(value)
                     normalized = self.normalize_nts_text(value)
                     if normalized != value.upper().strip():
                         print("NTS text (normalized):")
                         print(normalized)
-                    wc = len(normalized.split())
-                    print("Check (word count): {}".format(wc))
+                    print("Check (word count): {}".format(check))
                     value = normalized
+                    form_data['nts_check'] = check
             else:
                 print("Unknown field type: {}".format(field_type))
                 value = ""
@@ -1251,39 +1252,106 @@ class FormsApp:
         return '\n'.join(lines)
 
     def normalize_nts_text(self, text):
-        """Apply NTS radiogram encoding rules to message text.
-        - Trailing periods are dropped (NTS: never end message with X)
-        - Decimal point between digits: 146.52 -> 146R52
-        - All other periods: . -> X (word group separator)
-        - Uppercase, collapsed whitespace
+        """Apply ARRL NTS prosign encoding to message text.
+        Matches Winlink fixpunct() behavior:
+          , ! ;     -> X    |  ? -> INT  |  & -> AND  |  ' -> dropped
+          d.d d/d d:d -> R  |  hyphen between words -> X
+        Trailing punctuation and prosigns are stripped.
         """
         t = text.upper().strip()
-        # Drop trailing periods before any conversion
-        t = t.rstrip('. ')
-        # Decimal point between digits -> R (e.g. 146.52 -> 146R52)
-        t = re.sub(r'(\d)\.(\d)', r'\1R\2', t)
-        # Remaining periods -> X word group
-        t = re.sub(r'\s*\.\s*', ' X ', t)
+        # Strip trailing punctuation before any conversion
+        t = re.sub(r'[.,!?;:\s]+$', '', t).strip()
+        # Decimal, fraction slash, time-colon between digits -> R
+        t = re.sub(r'(\d)[.:/](\d)', r'\1R\2', t)
+        # Apostrophe -> dropped
+        t = t.replace("'", '')
+        # Ampersand -> AND
+        t = re.sub(r'&', ' AND ', t)
+        # At-sign in text -> AT
+        t = re.sub(r'@', ' AT ', t)
+        # Question mark -> INT (NTS prosign)
+        t = re.sub(r'\?', ' INT ', t)
+        # Parentheses -> dropped
+        t = re.sub(r'[()]', ' ', t)
+        # Hyphen between word characters -> X
+        t = re.sub(r'(\w)\s*-\s*(\w)', r'\1 X \2', t)
+        # Remaining hyphens -> space
+        t = re.sub(r'-', ' ', t)
+        # Period, comma, exclamation, semicolon, colon -> X word group
+        t = re.sub(r'[.,!;:]', ' X ', t)
         # Collapse multiple spaces
         t = re.sub(r' {2,}', ' ', t).strip()
-        # Safety: strip trailing standalone X word (never end on X)
+        # Strip trailing prosign words (no standalone meaning at end)
         words = t.split()
-        while words and words[-1] == 'X':
+        while words and words[-1] in ('X', 'INT'):
             words.pop()
         return ' '.join(words)
 
+    def count_nts_check(self, text):
+        """Compute NTS check (word count) per ARRL/Winlink rules.
+        Strips punctuation without prosign substitution — matches Winlink
+        Strippunct+wordcount behavior. Pure-digit strings >5 chars count
+        as ceil(len/5) words each per ARRL NTS standard.
+        """
+        t = text.upper().strip()
+        # Treat decimal between digits as one number token (146.52 -> 1 word)
+        t = re.sub(r'(\d)\.(\d)', r'\1\2', t)
+        # Strip all remaining punctuation
+        t = re.sub(r'[^\w\s]', ' ', t)
+        t = re.sub(r' {2,}', ' ', t).strip()
+        count = 0
+        for w in t.split():
+            if re.match(r'^\d+$', w):
+                count += (len(w) + 4) // 5
+            else:
+                count += 1
+        return count
+
+    def encode_nts_email(self, addr):
+        """Encode email address for NTS radiogram output.
+        user@example.com -> USER AT EXAMPLE DOT COM
+        """
+        if not addr:
+            return ''
+        addr = addr.strip().upper()
+        addr = addr.replace('@', ' AT ')
+        addr = addr.replace('.', ' DOT ')
+        return re.sub(r' {2,}', ' ', addr).strip()
+
+    def format_nts_phone(self, ph):
+        """Normalize phone to XXX-XXX-XXXX for radiogram output."""
+        if not ph:
+            return ph
+        digits = re.sub(r'[^\d]', '', ph)
+        if len(digits) == 11 and digits[0] == '1':
+            digits = digits[1:]
+        if len(digits) == 10:
+            return '{}-{}-{}'.format(digits[:3], digits[3:6], digits[6:])
+        if len(digits) == 7:
+            return '{}-{}'.format(digits[:3], digits[3:])
+        return ph
+
     def format_nts_radiogram(self, form_data):
-        """Format body as standard ARRL NTS radiogram preamble"""
+        """Format body as standard ARRL NTS radiogram.
+        Uses BT section separators and AR close per ARRL/NTS standard.
+        Phone and email are normalized for verbal relay.
+        """
         fv = {f['name']: f['value'] for f in form_data['fields']}
 
         # Precedence: extract just the letter from e.g. "R - Routine"
         prec = fv.get('precedence', 'R - Routine').split(' ')[0].upper()
         handling = fv.get('handling', '').strip().upper()
         origin = fv.get('station_of_origin', form_data.get('submitted_by', '')).upper()
-        # Auto-compute check (word count of normalized message text)
+
+        # Check: use pre-computed value from fill_form (counts original words,
+        # not prosign substitutions). Fall back to count_nts_check if not set.
         raw_text = fv.get('text', '')
         text = self.normalize_nts_text(raw_text)
-        check = str(len(text.split()))
+        if 'nts_check' in form_data:
+            check = str(form_data['nts_check'])
+        else:
+            check = str(self.count_nts_check(raw_text))
+
         place = fv.get('place_of_origin', '').upper()
 
         filed_time = fv.get('filed_time', '').strip()
@@ -1299,7 +1367,7 @@ class FormsApp:
 
         lines = []
         lines.append(preamble)
-        lines.append("")
+        lines.append('BT')
 
         lines.append("TO: {}".format(fv.get('to_name', '').upper()))
         to_address = fv.get('to_address', '').upper()
@@ -1310,17 +1378,18 @@ class FormsApp:
         lines.append("{} {}".format(to_cs, to_zip).strip())
         to_phone = fv.get('to_phone', '').strip()
         if to_phone:
-            lines.append(to_phone)
+            lines.append("TEL {}".format(self.format_nts_phone(to_phone)))
         to_email = fv.get('to_email', '').strip()
         if to_email:
-            lines.append(to_email)
-        lines.append("")
+            lines.append("EMAIL {}".format(self.encode_nts_email(to_email)))
+        lines.append('BT')
 
         for line in text.split('\n'):
             lines.append(line)
-        lines.append("")
+        lines.append('BT')
 
         lines.append(fv.get('signature', ''))
+        lines.append('AR')
 
         return '\n'.join(lines)
 
