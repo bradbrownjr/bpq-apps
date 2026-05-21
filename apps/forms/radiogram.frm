@@ -3,7 +3,7 @@
   "title": "ARRL Radiogram",
   "version": "2.0",
   "format": "nts_radiogram",
-  "description": "Standard ARRL radiogram for the National Traffic System (NTS). For PKTNET: send SP to KY2D@ARRL.NET. Message: May PKTNET checkin. I am using the [BBS] BBS System. 73.",
+  "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
     {
       "name": "number",

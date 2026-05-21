@@ -420,8 +420,7 @@ class FormsApp:
         if form.get('strip_mode', False):
             return self.fill_strip_form(form)
         
-        self.clear_screen()
-        self.print_header()
+        self.print_separator()
         print("Form: {}".format(form.get('title', 'Untitled')))
         print()
         desc = form.get('description', '')
