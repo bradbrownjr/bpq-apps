@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.20
+Version: 1.21
 Date: May 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.20"
+VERSION = "1.21"
 APP_NAME = "forms.py"
 
 import os
@@ -1034,6 +1034,12 @@ class FormsApp:
     def _prompt_nts_routing(self, fv):
         """Ask for destination state and ZIP, return ST [ZIP] @ NTS[STATE] string."""
         suggested_state = fv.get('to_state', '').strip().upper()
+        if not suggested_state:
+            # Extract trailing state abbreviation from "City, State" field (e.g. "DAMARISCOTTA ME" -> "ME")
+            city_state = fv.get('to_city_state', '').strip()
+            parts = city_state.replace(',', ' ').split()
+            if parts:
+                suggested_state = parts[-1].upper()
         suggested_zip   = fv.get('to_zip',   '').strip()
 
         # State

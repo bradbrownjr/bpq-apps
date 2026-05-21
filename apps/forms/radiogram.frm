@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "2.4",
+  "version": "2.5",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -90,14 +90,6 @@
       "required": true,
       "max_length": 10,
       "description": "Destination ZIP code — used for NTS routing (e.g. 04543)"
-    },
-    {
-      "name": "to_state",
-      "label": "To (2-letter state abbr)",
-      "type": "text",
-      "required": true,
-      "max_length": 2,
-      "description": "Destination state abbreviation — used for NTS routing (e.g. ME, MA, NH)"
     },
     {
       "name": "to_phone",
