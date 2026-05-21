@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.25"
+VERSION = "1.26"
 APP_NAME = "forms.py"
 
 import os
@@ -1044,30 +1044,37 @@ class FormsApp:
                     value = '(empty)'
                 print("  {}: {}".format(label, value))
         else:
-            # Standard form review
             print("Form: {}".format(form_data['form_title']))
             print("Form ID: {}".format(form_data['form_id']))
             print()
             self.print_separator()
             print()
-            
-            for field in form_data['fields']:
-                label = field['label']
-                value = field['value']
-                field_type = field['type']
-                
-                if field_type == 'textarea':
-                    print("{}:".format(label))
-                    if value.strip():
-                        for line in value.split('\n'):
-                            print("  {}".format(line))
+
+            if form_data.get('output_format') == 'nts_radiogram':
+                # Show the actual formatted output — exactly what will be sent
+                print("MESSAGE OUTPUT:")
+                print()
+                for line in self.format_nts_radiogram(form_data).split('\n'):
+                    print(line)
+            else:
+                # Standard form review: field-by-field
+                for field in form_data['fields']:
+                    label = field['label']
+                    value = field['value']
+                    field_type = field['type']
+
+                    if field_type == 'textarea':
+                        print("{}:".format(label))
+                        if value.strip():
+                            for line in value.split('\n'):
+                                print("  {}".format(line))
+                        else:
+                            print("  (empty)")
+                        print()
                     else:
-                        print("  (empty)")
-                    print()
-                else:
-                    if not value or value.strip() == '':
-                        value = '(empty)'
-                    print("{}: {}".format(label, value))
+                        if not value or value.strip() == '':
+                            value = '(empty)'
+                        print("{}: {}".format(label, value))
         
         print()
         self.print_separator()
