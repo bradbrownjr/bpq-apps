@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.15
+Version: 1.16
 Date: May 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.15"
+VERSION = "1.16"
 APP_NAME = "forms.py"
 
 import os
@@ -480,7 +480,10 @@ class FormsApp:
                 if value is None:
                     return None  # User pressed B to back
             elif field_type == 'textarea':
-                value = self.fill_textarea_field(field, required)
+                if field.get('arl_enabled'):
+                    value = self.fill_arl_or_textarea_field(field, required)
+                else:
+                    value = self.fill_textarea_field(field, required)
                 if value is None:
                     return None  # User pressed B to back
             else:
@@ -666,6 +669,151 @@ class FormsApp:
             else:
                 return value
     
+    # ------------------------------------------------------------------
+    # ARL Numbered Message helpers
+    # ------------------------------------------------------------------
+
+    def _load_arl_messages(self):
+        """Load ARL numbered messages from arl_messages.json (cached after first load)"""
+        if not hasattr(self, '_arl_messages_cache'):
+            forms_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'forms')
+            arl_path = os.path.join(forms_dir, 'arl_messages.json')
+            try:
+                with open(arl_path, 'r') as f:
+                    self._arl_messages_cache = json.load(f)
+            except (IOError, ValueError) as e:
+                print("Warning: Could not load ARL messages: {}".format(e))
+                self._arl_messages_cache = []
+        return self._arl_messages_cache
+
+    def _print_arl_group(self, messages, group):
+        """Print all ARL messages for a group as a numbered list"""
+        label = "Emergency/Welfare" if group == "emergency" else "Routine"
+        print("")
+        print("--- ARL {} Messages ---".format(label))
+        print("")
+        for msg in messages:
+            if msg['group'] != group:
+                continue
+            snippet = msg['text']
+            if len(snippet) > 52:
+                snippet = snippet[:49] + "..."
+            print("  {:2d}. {:13s} - {}".format(msg['num'], msg['word'], snippet))
+        print("")
+
+    def _fill_arl_blanks(self, msg):
+        """Show selected ARL message, prompt for each blank, return assembled ARL text."""
+        print("")
+        print("Selected: ARL {} (#{}):".format(msg['word'], msg['num']))
+        print(self.wrap_text(msg['text'], width=72))
+        print("")
+        filled = []
+        for prompt_label in msg.get('blanks', []):
+            val = self.get_input("  {}: ".format(prompt_label))
+            if val == '__BACK__':
+                return None
+            filled.append(val.strip())
+        parts = ["ARL", msg['word']] + [v for v in filled if v]
+        result = " ".join(parts)
+        print("")
+        print("Message text: {}".format(result))
+        return result
+
+    def fill_arl_or_textarea_field(self, field, required):
+        """Textarea field with optional ARL canned message picker."""
+        print("Press A to browse ARL templates, enter ARL number if known,")
+        print("or press Enter to type your own message:")
+
+        while True:
+            choice = self.get_input("> ")
+            if choice == '__BACK__':
+                return None
+
+            choice_stripped = choice.strip()
+
+            # Empty Enter -> normal textarea
+            if choice_stripped == '':
+                return self.fill_textarea_field(field, required)
+
+            # 'A' -> show group menu, then group list
+            if choice_stripped.upper() == 'A':
+                arl_msgs = self._load_arl_messages()
+                if not arl_msgs:
+                    print("ARL messages unavailable. Please type your message.")
+                    return self.fill_textarea_field(field, required)
+
+                print("")
+                print("Select message group:")
+                print("  1. Emergency/Welfare  (ARL 1-40)")
+                print("  2. Routine            (ARL 46-94)")
+                print("")
+
+                group = None
+                while group is None:
+                    grp = self.get_input("Enter 1 or 2 (B=back): ")
+                    if grp == '__BACK__':
+                        break
+                    if grp.strip() == '1':
+                        group = 'emergency'
+                    elif grp.strip() == '2':
+                        group = 'routine'
+                    else:
+                        print("Please enter 1 or 2.")
+
+                if group is None:
+                    # User pressed B at group menu; re-show top prompt
+                    print("")
+                    print("Press A to browse ARL templates, enter ARL number if known,")
+                    print("or press Enter to type your own message:")
+                    continue
+
+                self._print_arl_group(arl_msgs, group)
+
+                while True:
+                    num_input = self.get_input("Enter ARL number (B=back to groups): ")
+                    if num_input == '__BACK__':
+                        break  # back to group menu
+                    try:
+                        num = int(num_input.strip())
+                        msg = next((m for m in arl_msgs if m['num'] == num and m['group'] == group), None)
+                        if msg:
+                            result = self._fill_arl_blanks(msg)
+                            if result is None:
+                                # Backed out during blank-filling; re-show group list
+                                self._print_arl_group(arl_msgs, group)
+                                continue
+                            return result
+                        else:
+                            print("ARL {} not found in this group. Try again.".format(num))
+                    except ValueError:
+                        print("Please enter a valid number.")
+
+                # Fell through back to group menu; loop back to top
+                print("")
+                print("Press A to browse ARL templates, enter ARL number if known,")
+                print("or press Enter to type your own message:")
+                continue
+
+            # Direct number entry
+            try:
+                num = int(choice_stripped)
+                arl_msgs = self._load_arl_messages()
+                msg = next((m for m in arl_msgs if m['num'] == num), None)
+                if msg:
+                    result = self._fill_arl_blanks(msg)
+                    if result is None:
+                        print("")
+                        print("Press A to browse ARL templates, enter ARL number if known,")
+                        print("or press Enter to type your own message:")
+                        continue
+                    return result
+                else:
+                    print("ARL {} not found. Press A to browse, a number to select, or Enter for custom.".format(num))
+            except ValueError:
+                print("Enter A, a number (1-94), or press Enter for custom message.")
+
+    # ------------------------------------------------------------------
+
     def fill_textarea_field(self, field, required):
         """Fill a multi-line text field (terminated with /EX, B to back)"""
         print("(Enter text. Type /EX on a new line when finished, B on empty line to go back)")

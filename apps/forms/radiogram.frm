@@ -87,6 +87,7 @@
       "label": "Message Text",
       "type": "textarea",
       "required": true,
+      "arl_enabled": true,
       "description": "The message text (word count is computed automatically for the check)"
     },
     {
