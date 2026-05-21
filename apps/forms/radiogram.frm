@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "2.1",
+  "version": "2.2",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [

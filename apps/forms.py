@@ -217,8 +217,9 @@ class FormsApp:
                 return False
         
         # Check GitHub for available forms
-        github_forms = self.get_github_forms()
-        
+        # Fetch the manifest once — one small request covers all version checks
+        github_versions = self.get_github_manifest()
+
         # Load existing forms and check for updates
         self.forms = []
         local_form_versions = {}  # Track local versions for update checking
@@ -235,9 +236,9 @@ class FormsApp:
                 except Exception as e:
                     print("Warning: Could not load {}: {}".format(filename, str(e)))
         
-        # Update existing local forms if GitHub has a newer version (no API needed)
+        # Update existing local forms where the manifest shows a newer version
         for filename, local_version in list(local_form_versions.items()):
-            github_version = self.get_github_form_version(filename)
+            github_version = github_versions.get(filename)
             if github_version and self.compare_versions(github_version, local_version) > 0:
                 if self.download_form(filename):
                     filepath = os.path.join(FORMS_DIR, filename)
@@ -271,31 +272,42 @@ class FormsApp:
                 pass
 
         # Use GitHub listing API to discover and download brand-new forms/data files
-        github_forms = self.get_github_forms()
-        if github_forms:
-            existing_files = set(f['filename'] for f in self.forms)
-            local_data_files = set(os.listdir(FORMS_DIR))
-            for github_form in github_forms:
+        # Use manifest to discover brand-new forms not yet installed
+        existing_files = set(f['filename'] for f in self.forms)
+        local_data_files = set(os.listdir(FORMS_DIR))
+        for github_form in github_versions.keys():
+            if github_form not in existing_files:
+                if self.download_form(github_form):
+                    filepath = os.path.join(FORMS_DIR, github_form)
+                    try:
+                        with open(filepath, 'r') as f:
+                            form_data = json.load(f)
+                            form_data['filename'] = github_form
+                            form_data['_status'] = 'NEW'
+                            self.forms.append(form_data)
+                    except Exception as e:
+                        print("Warning: Could not load downloaded {}: {}".format(github_form, str(e)))
 
-                if github_form.endswith('.json'):
-                    # New data file not yet on disk
-                    if github_form not in local_data_files:
-                        self.download_form(github_form)
-                    continue
+        # Sync .json data files listed in the manifest (download if missing or changed)
+        for fname in github_versions.keys():
+            if not fname.endswith('.json'):
+                continue
+            local_path = os.path.join(FORMS_DIR, fname)
+            if fname not in local_data_files:
+                self.download_form(fname)
+            else:
+                try:
+                    url = "{}/{}".format(GITHUB_RAW_URL, fname)
+                    with urllib.request.urlopen(url, timeout=10) as resp:
+                        remote = resp.read()
+                    with open(local_path, 'rb') as f:
+                        local = f.read()
+                    if remote.strip() != local.strip():
+                        with open(local_path, 'wb') as f:
+                            f.write(remote)
+                except Exception:
+                    pass
 
-                if github_form not in existing_files:
-                    # Brand-new form not yet installed — download it
-                    if self.download_form(github_form):
-                        filepath = os.path.join(FORMS_DIR, github_form)
-                        try:
-                            with open(filepath, 'r') as f:
-                                form_data = json.load(f)
-                                form_data['filename'] = github_form
-                                form_data['_status'] = 'NEW'
-                                self.forms.append(form_data)
-                        except Exception as e:
-                            print("Warning: Could not load downloaded {}: {}".format(github_form, str(e)))
-        
         if not self.forms:
             print("Error: No form templates found.")
             print("Please check your internet connection or manually download forms from:")
@@ -304,6 +316,15 @@ class FormsApp:
         
         return True
     
+    def get_github_manifest(self):
+        """Fetch manifest.json — one request returns all form versions (and data file names)"""
+        url = "{}/manifest.json".format(GITHUB_RAW_URL)
+        try:
+            with urllib.request.urlopen(url, timeout=10) as response:
+                return json.loads(response.read().decode('utf-8'))
+        except Exception:
+            return {}
+
     def get_github_forms(self):
         """Get list of available form templates from GitHub repository (silent operation)"""
         try:
