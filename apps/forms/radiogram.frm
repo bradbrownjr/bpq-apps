@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "2.2",
+  "version": "2.3",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -92,6 +92,14 @@
       "description": "Phone number (optional)"
     },
     {
+      "name": "to_email",
+      "label": "To (Email)",
+      "type": "text",
+      "required": false,
+      "max_length": 100,
+      "description": "Recipient email address (optional, e.g. KY2D@ARRL.NET)"
+    },
+    {
       "name": "text",
       "label": "Message Text",
       "type": "textarea",
@@ -122,14 +130,6 @@
       "required": true,
       "max_length": 2,
       "description": "Destination state abbreviation — used for NTS routing (e.g. ME, MA, NH)"
-    },
-    {
-      "name": "to_email",
-      "label": "To (Email, for address block)",
-      "type": "text",
-      "required": false,
-      "max_length": 100,
-      "description": "Recipient email address to include in the radiogram address block (e.g. KY2D@ARRL.NET)"
     },
     {
       "name": "filed_time",

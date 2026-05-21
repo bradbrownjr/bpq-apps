@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.19
+Version: 1.20
 Date: May 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.19"
+VERSION = "1.20"
 APP_NAME = "forms.py"
 
 import os
@@ -460,13 +460,15 @@ class FormsApp:
             return self.fill_strip_form(form)
         
         self.clear_screen()
+        print()
+        self.print_separator()
         print("Form: {}".format(form.get('title', 'Untitled')))
+        self.print_separator()
         print()
         desc = form.get('description', '')
         if desc:
             print(self.wrap_text(desc))
             print()
-        self.print_separator()
         print("(Press Q at any field to quit, except message text fields)")
         print()
         
@@ -567,11 +569,12 @@ class FormsApp:
     def fill_strip_form(self, form):
         """Handle strip-mode forms (slash-separated request/response)"""
         self.clear_screen()
-        print("Form: {}".format(form.get('title', 'Untitled')))
-        print()
-        print(self.wrap_text(form.get('description', '')))
         print()
         self.print_separator()
+        print("Form: {}".format(form.get('title', 'Untitled')))
+        self.print_separator()
+        print()
+        print(self.wrap_text(form.get('description', '')))
         print()
         
         # Check if form has a built-in template
