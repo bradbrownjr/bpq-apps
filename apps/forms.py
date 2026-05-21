@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.16"
+VERSION = "1.17"
 APP_NAME = "forms.py"
 
 import os
@@ -235,71 +235,64 @@ class FormsApp:
                 except Exception as e:
                     print("Warning: Could not load {}: {}".format(filename, str(e)))
         
-        # Download any missing forms from GitHub, or update existing ones if version is newer
+        # Update existing local forms if GitHub has a newer version (no API needed)
+        for filename, local_version in list(local_form_versions.items()):
+            github_version = self.get_github_form_version(filename)
+            if github_version and self.compare_versions(github_version, local_version) > 0:
+                if self.download_form(filename):
+                    filepath = os.path.join(FORMS_DIR, filename)
+                    try:
+                        with open(filepath, 'r') as f:
+                            form_data = json.load(f)
+                            form_data['filename'] = filename
+                            form_data['_status'] = 'UPDATED'
+                            for i, form in enumerate(self.forms):
+                                if form['filename'] == filename:
+                                    self.forms[i] = form_data
+                                    break
+                    except Exception:
+                        pass
+
+        # Sync .json data files already present locally
+        for fname in os.listdir(FORMS_DIR):
+            if not fname.endswith('.json'):
+                continue
+            local_path = os.path.join(FORMS_DIR, fname)
+            try:
+                url = "{}/{}".format(GITHUB_RAW_URL, fname)
+                with urllib.request.urlopen(url, timeout=10) as resp:
+                    remote = resp.read()
+                with open(local_path, 'rb') as f:
+                    local = f.read()
+                if remote.strip() != local.strip():
+                    with open(local_path, 'wb') as f:
+                        f.write(remote)
+            except Exception:
+                pass
+
+        # Use GitHub listing API to discover and download brand-new forms/data files
+        github_forms = self.get_github_forms()
         if github_forms:
             existing_files = set(f['filename'] for f in self.forms)
             local_data_files = set(os.listdir(FORMS_DIR))
             for github_form in github_forms:
-                should_download = False
-                is_new_form = False
 
                 if github_form.endswith('.json'):
-                    # Data files: sync if missing or content differs
-                    local_path = os.path.join(FORMS_DIR, github_form)
+                    # New data file not yet on disk
                     if github_form not in local_data_files:
-                        should_download = True
-                        is_new_form = True
-                    else:
-                        # Check content against GitHub
-                        try:
-                            url = "{}/{}".format(GITHUB_RAW_URL, github_form)
-                            with urllib.request.urlopen(url, timeout=10) as resp:
-                                remote = resp.read()
-                            with open(local_path, 'rb') as f:
-                                local = f.read()
-                            if remote.strip() != local.strip():
-                                should_download = True
-                        except Exception:
-                            pass
-                    if should_download:
                         self.download_form(github_form)
                     continue
 
                 if github_form not in existing_files:
-                    # New form - download it silently
-                    should_download = True
-                    is_new_form = True
-                else:
-                    # Existing form - check if GitHub version is newer
-                    github_version = self.get_github_form_version(github_form)
-                    if github_version:
-                        local_version = local_form_versions.get(github_form, '0.0')
-                        if self.compare_versions(github_version, local_version) > 0:
-                            should_download = True
-                
-                if should_download:
+                    # Brand-new form not yet installed — download it
                     if self.download_form(github_form):
-                        # Load the newly downloaded form
                         filepath = os.path.join(FORMS_DIR, github_form)
                         try:
                             with open(filepath, 'r') as f:
                                 form_data = json.load(f)
                                 form_data['filename'] = github_form
-                                # Mark as new or updated (in-memory only, not persisted)
-                                if is_new_form:
-                                    form_data['_status'] = 'NEW'
-                                else:
-                                    form_data['_status'] = 'UPDATED'
-                                # Update or add to forms list
-                                if github_form in existing_files:
-                                    # Replace existing form in list
-                                    for i, form in enumerate(self.forms):
-                                        if form['filename'] == github_form:
-                                            self.forms[i] = form_data
-                                            break
-                                else:
-                                    # Add new form to list
-                                    self.forms.append(form_data)
+                                form_data['_status'] = 'NEW'
+                                self.forms.append(form_data)
                         except Exception as e:
                             print("Warning: Could not load downloaded {}: {}".format(github_form, str(e)))
         
