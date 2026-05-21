@@ -988,7 +988,8 @@ class FormsApp:
         prec = fv.get('precedence', 'R - Routine').split(' ')[0].upper()
         handling = fv.get('handling', '').strip().upper()
         origin = fv.get('station_of_origin', form_data.get('submitted_by', '')).upper()
-        check = fv.get('check', '')
+        # Auto-compute check (word count of message text)
+        check = str(len(fv.get('text', '').split()))
         place = fv.get('place_of_origin', '').upper()
 
         filed_time = fv.get('filed_time', '').strip()

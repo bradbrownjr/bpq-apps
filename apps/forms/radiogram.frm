@@ -43,14 +43,6 @@
       "description": "Callsign of originating station"
     },
     {
-      "name": "check",
-      "label": "Check (Word Count)",
-      "type": "text",
-      "required": true,
-      "max_length": 5,
-      "description": "Number of words in message text"
-    },
-    {
       "name": "place_of_origin",
       "label": "Place of Origin",
       "type": "text",
@@ -95,7 +87,7 @@
       "label": "Message Text",
       "type": "textarea",
       "required": true,
-      "description": "The message text (count words for check)"
+      "description": "The message text (word count is computed automatically for the check)"
     },
     {
       "name": "signature",
