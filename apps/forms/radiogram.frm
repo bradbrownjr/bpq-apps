@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "2.7",
+  "version": "2.8",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -11,6 +11,7 @@
       "type": "text",
       "required": true,
       "max_length": 10,
+      "validate": "nts_number",
       "description": "Sequential message number from your station"
     },
     {
@@ -32,6 +33,7 @@
       "type": "text",
       "required": false,
       "max_length": 50,
+      "validate": "hx_code",
       "description": "Optional handling instructions (HXA, HXB, etc.) or ? for list",
       "help": [
         "HXA(n) Collect delivery authorized within n miles",
@@ -49,6 +51,7 @@
       "type": "text",
       "required": true,
       "max_length": 20,
+      "validate": "callsign",
       "description": "Callsign of originating station"
     },
     {
@@ -57,6 +60,7 @@
       "type": "text",
       "required": true,
       "max_length": 50,
+      "validate": "city_state",
       "description": "City and state of origin"
     },
     {
@@ -81,6 +85,7 @@
       "type": "text",
       "required": true,
       "max_length": 100,
+      "validate": "city_state",
       "description": "City and state"
     },
     {
@@ -89,6 +94,7 @@
       "type": "text",
       "required": true,
       "max_length": 10,
+      "validate": "us_zip",
       "description": "Destination ZIP code — used for NTS routing"
     },
     {
@@ -97,6 +103,7 @@
       "type": "text",
       "required": false,
       "max_length": 20,
+      "validate": "phone",
       "description": "Phone number (optional)"
     },
     {
@@ -105,6 +112,7 @@
       "type": "text",
       "required": false,
       "max_length": 100,
+      "validate": "email",
       "description": "Recipient email address (optional)"
     },
     {
@@ -130,6 +138,7 @@
       "type": "text",
       "required": false,
       "max_length": 6,
+      "validate": "hhmm",
       "default_now": "%H%M",
       "description": "UTC time message is filed (auto-filled with current time)"
     }

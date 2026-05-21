@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.22
+Version: 1.23
 Date: May 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.22"
+VERSION = "1.23"
 APP_NAME = "forms.py"
 
 import os
@@ -691,7 +691,57 @@ class FormsApp:
             })
         
         return form_data
-    
+
+    def validate_field_value(self, field, value):
+        """Validate a non-empty field value against the field's 'validate' rule.
+        Returns None if valid, or an error string to display.
+        """
+        rule = field.get('validate')
+        if not rule:
+            return None
+
+        if rule == 'nts_number':
+            if not re.match(r'^\d{1,4}$', value):
+                return "Message number must be 1-4 digits (e.g. 42)"
+
+        elif rule == 'callsign':
+            if not re.match(r'^[A-Z]{1,2}[0-9][A-Z]{1,3}(/[A-Z0-9]+)?$', value.upper()):
+                return "Must be a valid callsign (e.g. KC1JMH, W1AW, VK3XYZ)"
+
+        elif rule == 'city_state':
+            parts = value.strip().replace(',', ' ').split()
+            if len(parts) < 2:
+                return "Enter city and state (e.g. PORTLAND ME)"
+            if parts[-1].upper() not in _VALID_STATE_ABBRS:
+                return "Last word must be a 2-letter state abbreviation (e.g. ME, NH, TX)"
+
+        elif rule == 'us_zip':
+            if not re.match(r'^\d{5}(-\d{4})?$', value):
+                return "ZIP code must be 5 digits (e.g. 04543)"
+
+        elif rule == 'phone':
+            digits = re.sub(r'[^\d]', '', value)
+            if len(digits) not in (7, 10, 11):
+                return "Enter a valid phone number (e.g. 207-555-0100)"
+
+        elif rule == 'email':
+            if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', value):
+                return "Enter a valid email address (e.g. name@example.com)"
+
+        elif rule == 'hhmm':
+            if not re.match(r'^\d{4}$', value):
+                return "Time must be 4 digits HHMM (e.g. 1430)"
+            h, m = int(value[:2]), int(value[2:])
+            if h > 23 or m > 59:
+                return "Invalid time. Hours 00-23, minutes 00-59."
+
+        elif rule == 'hx_code':
+            for code in value.upper().split():
+                if not re.match(r'^HX[A-G]\d*$', code):
+                    return "HX code must be HXA-HXG with optional number (e.g. HXA100, HXB24)"
+
+        return None
+
     def fill_text_field(self, field, required):
         """Fill a single-line text field (press Enter to finish, B to back)"""
         max_length = field.get('max_length', 255)
@@ -729,6 +779,10 @@ class FormsApp:
                 print("Input too long. Maximum {} characters.".format(max_length))
                 continue
             else:
+                err = self.validate_field_value(field, value)
+                if err:
+                    print("Invalid: {}".format(err))
+                    continue
                 return value
     
     # ------------------------------------------------------------------
