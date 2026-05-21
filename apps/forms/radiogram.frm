@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "2.8",
+  "version": "2.9",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -117,12 +117,11 @@
     },
     {
       "name": "text",
-      "label": "Message Text",
+      "label": "Message Type",
       "type": "textarea",
       "required": true,
       "arl_enabled": true,
-      "nts_normalize": true,
-      "description": "The message text. Periods become X, decimals become R (e.g. 146.52 becomes 146R52). Word count is computed after normalization."
+      "nts_normalize": true
     },
     {
       "name": "signature",
