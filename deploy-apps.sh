@@ -9,14 +9,13 @@ PORT=4722
 echo "Deploying apps to WS1EC node..."
 
 # Copy main app launchers
-scp -P $PORT apps/apps.py $NODE:/home/ect/apps/
+scp -P $PORT apps/apps.py apps/forms.py apps/update.sh $NODE:/home/ect/apps/
 
-# Copy forms app and data files
-scp -P $PORT apps/forms.py $NODE:/home/ect/apps/
+# Copy forms templates and data files
 scp -P $PORT apps/forms/*.frm apps/forms/arl_messages.json $NODE:/home/ect/apps/forms/
 
 # Make executables
-ssh -p $PORT $NODE "chmod +x /home/ect/apps/apps.py /home/ect/apps/forms.py"
+ssh -p $PORT $NODE "chmod +x /home/ect/apps/apps.py /home/ect/apps/forms.py /home/ect/apps/update.sh"
 
 echo ""
 echo "Deployed successfully!"
