@@ -158,9 +158,9 @@ class FormsApp:
             with urllib.request.urlopen(github_url, timeout=10) as response:
                 content = response.read().decode('utf-8')
             
-            # Extract version from docstring
+            # Extract version from VERSION = "x.y" assignment
             import re
-            version_match = re.search(r'Version:\s*([0-9.]+)', content)
+            version_match = re.search(r'^\s*VERSION\s*=\s*[\'"](\S+)[\'"]', content, re.MULTILINE)
             if version_match:
                 github_version = version_match.group(1)
                 local_version = self.version
@@ -238,10 +238,33 @@ class FormsApp:
         # Download any missing forms from GitHub, or update existing ones if version is newer
         if github_forms:
             existing_files = set(f['filename'] for f in self.forms)
+            local_data_files = set(os.listdir(FORMS_DIR))
             for github_form in github_forms:
                 should_download = False
                 is_new_form = False
-                
+
+                if github_form.endswith('.json'):
+                    # Data files: sync if missing or content differs
+                    local_path = os.path.join(FORMS_DIR, github_form)
+                    if github_form not in local_data_files:
+                        should_download = True
+                        is_new_form = True
+                    else:
+                        # Check content against GitHub
+                        try:
+                            url = "{}/{}".format(GITHUB_RAW_URL, github_form)
+                            with urllib.request.urlopen(url, timeout=10) as resp:
+                                remote = resp.read()
+                            with open(local_path, 'rb') as f:
+                                local = f.read()
+                            if remote.strip() != local.strip():
+                                should_download = True
+                        except Exception:
+                            pass
+                    if should_download:
+                        self.download_form(github_form)
+                    continue
+
                 if github_form not in existing_files:
                     # New form - download it silently
                     should_download = True
@@ -294,10 +317,10 @@ class FormsApp:
             with urllib.request.urlopen(GITHUB_FORMS_URL, timeout=10) as response:
                 data = json.loads(response.read().decode('utf-8'))
             
-            # Extract .frm files
+            # Extract .frm and .json data files
             forms = []
             for item in data:
-                if item['type'] == 'file' and item['name'].endswith('.frm'):
+                if item['type'] == 'file' and (item['name'].endswith('.frm') or item['name'].endswith('.json')):
                     forms.append(item['name'])
             
             return forms
