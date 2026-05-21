@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.21
+Version: 1.22
 Date: May 2026
 """
 
@@ -39,10 +39,11 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.21"
+VERSION = "1.22"
 APP_NAME = "forms.py"
 
 import os
+import re
 import json
 from datetime import datetime
 import textwrap
@@ -526,6 +527,15 @@ class FormsApp:
                     value = self.fill_textarea_field(field, required)
                 if value is None:
                     return None  # User pressed B to back
+                # NTS normalization: convert periods/decimals before word count
+                if value and field.get('nts_normalize'):
+                    normalized = self.normalize_nts_text(value)
+                    if normalized != value.upper().strip():
+                        print("NTS text (normalized):")
+                        print(normalized)
+                    wc = len(normalized.split())
+                    print("Check (word count): {}".format(wc))
+                    value = normalized
             else:
                 print("Unknown field type: {}".format(field_type))
                 value = ""
@@ -1186,6 +1196,28 @@ class FormsApp:
 
         return '\n'.join(lines)
 
+    def normalize_nts_text(self, text):
+        """Apply NTS radiogram encoding rules to message text.
+        - Trailing periods are dropped (NTS: never end message with X)
+        - Decimal point between digits: 146.52 -> 146R52
+        - All other periods: . -> X (word group separator)
+        - Uppercase, collapsed whitespace
+        """
+        t = text.upper().strip()
+        # Drop trailing periods before any conversion
+        t = t.rstrip('. ')
+        # Decimal point between digits -> R (e.g. 146.52 -> 146R52)
+        t = re.sub(r'(\d)\.(\d)', r'\1R\2', t)
+        # Remaining periods -> X word group
+        t = re.sub(r'\s*\.\s*', ' X ', t)
+        # Collapse multiple spaces
+        t = re.sub(r' {2,}', ' ', t).strip()
+        # Safety: strip trailing standalone X word (never end on X)
+        words = t.split()
+        while words and words[-1] == 'X':
+            words.pop()
+        return ' '.join(words)
+
     def format_nts_radiogram(self, form_data):
         """Format body as standard ARRL NTS radiogram preamble"""
         fv = {f['name']: f['value'] for f in form_data['fields']}
@@ -1194,8 +1226,10 @@ class FormsApp:
         prec = fv.get('precedence', 'R - Routine').split(' ')[0].upper()
         handling = fv.get('handling', '').strip().upper()
         origin = fv.get('station_of_origin', form_data.get('submitted_by', '')).upper()
-        # Auto-compute check (word count of message text)
-        check = str(len(fv.get('text', '').split()))
+        # Auto-compute check (word count of normalized message text)
+        raw_text = fv.get('text', '')
+        text = self.normalize_nts_text(raw_text)
+        check = str(len(text.split()))
         place = fv.get('place_of_origin', '').upper()
 
         filed_time = fv.get('filed_time', '').strip()
@@ -1228,7 +1262,7 @@ class FormsApp:
             lines.append(to_email)
         lines.append("")
 
-        for line in fv.get('text', '').split('\n'):
+        for line in text.split('\n'):
             lines.append(line)
         lines.append("")
 
