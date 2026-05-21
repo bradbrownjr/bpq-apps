@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.17"
+VERSION = "1.18"
 APP_NAME = "forms.py"
 
 import os
