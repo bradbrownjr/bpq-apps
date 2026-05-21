@@ -20,8 +20,9 @@ and ALWAYS/NEVER directives so that context-window compaction never loses them.
 Python applications for BPQ32/LinBPQ amateur radio packet nodes. Users connect
 at **1200 baud over RF** using plain serial terminals. Output rules are strict:
 
-- **ALWAYS** plaintext only — no ANSI color codes, no Unicode, no box-drawing
-  characters, no emoji.
+- **ALWAYS** ASCII-only output — strict 7-bit ASCII. No Unicode, no UTF-8
+  characters above 0x7F, no ANSI color/escape codes, no box-drawing characters,
+  no emoji, no smart quotes, no em-dashes. Serial terminals cannot render them.
 - **ALWAYS** assume a terminal width of 80 columns maximum.
 - **ALWAYS** minimize output at startup — every printed line costs air time at
   1200 baud. Silence is golden.
