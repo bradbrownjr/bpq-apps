@@ -1,15 +1,22 @@
 #!/bin/bash
-# Deploy apps.py to WS1EC node
+# Deploy apps to WS1EC node
 
 set -e
 
-echo "Deploying apps.py to WS1EC node..."
+NODE="ect@ws1ec.mainepacketradio.org"
+PORT=4722
 
-# Copy app to node
-scp -i ~/.ssh/id_rsa -P 4722 apps/apps.py ect@ws1ec.mainepacketradio.org:/home/ect/apps/
+echo "Deploying apps to WS1EC node..."
 
-# Make executable and copy apps.json if needed
-ssh -i ~/.ssh/id_rsa -p 4722 ect@ws1ec.mainepacketradio.org "chmod +x /home/ect/apps/apps.py"
+# Copy main app launchers
+scp -P $PORT apps/apps.py $NODE:/home/ect/apps/
+
+# Copy forms app and data files
+scp -P $PORT apps/forms.py $NODE:/home/ect/apps/
+scp -P $PORT apps/forms/*.frm apps/forms/arl_messages.json $NODE:/home/ect/apps/forms/
+
+# Make executables
+ssh -p $PORT $NODE "chmod +x /home/ect/apps/apps.py /home/ect/apps/forms.py"
 
 echo ""
 echo "Deployed successfully!"
