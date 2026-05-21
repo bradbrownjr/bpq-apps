@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.18"
+VERSION = "1.19"
 APP_NAME = "forms.py"
 
 import os
@@ -276,6 +276,8 @@ class FormsApp:
         existing_files = set(f['filename'] for f in self.forms)
         local_data_files = set(os.listdir(FORMS_DIR))
         for github_form in github_versions.keys():
+            if github_form.endswith('.json'):
+                continue  # data files handled below
             if github_form not in existing_files:
                 if self.download_form(github_form):
                     filepath = os.path.join(FORMS_DIR, github_form)
