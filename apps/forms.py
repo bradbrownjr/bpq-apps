@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.26"
+VERSION = "1.27"
 APP_NAME = "forms.py"
 
 import os
@@ -527,10 +527,10 @@ class FormsApp:
                     value = self.fill_textarea_field(field, required)
                 if value is None:
                     return None  # User pressed B to back
-                # NTS normalization: encode for transmission; count original words
+                # NTS normalization: normalize first, then count (so X prowords are included)
                 if value and field.get('nts_normalize'):
-                    check = self.count_nts_check(value)
                     normalized = self.normalize_nts_text(value)
+                    check = self.count_nts_check(normalized)
                     if normalized != value.upper().strip():
                         print("NTS text (normalized):")
                         print(normalized)
