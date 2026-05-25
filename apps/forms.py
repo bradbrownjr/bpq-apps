@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.30"
+VERSION = "1.31"
 APP_NAME = "forms.py"
 
 import os
@@ -1052,6 +1052,8 @@ class FormsApp:
 
             if form_data.get('output_format') == 'nts_radiogram':
                 # Show the actual formatted output — exactly what will be sent
+                print("SUBJECT: {}".format(self._compute_nts_subject(form_data)))
+                print()
                 print("MESSAGE OUTPUT:")
                 print()
                 for line in self.format_nts_radiogram(form_data).split('\n'):
@@ -1365,6 +1367,25 @@ class FormsApp:
             chunks.append(' '.join(words[i:i+5]))
         return '\n'.join(chunks)
 
+    def _compute_nts_subject(self, form_data):
+        """Compute the BPQ message subject for an NTS radiogram.
+        Returns: CITY CALLSIGN | CITY NXX NXX | CITY - -
+        """
+        fv = {f['name']: f['value'] for f in form_data['fields']}
+        _cs_parts = fv.get('to_city_state', '').upper().split()
+        city = ' '.join(_cs_parts[:-1]) if len(_cs_parts) > 1 else fv.get('to_city_state', '').upper()
+        to_callsign_s = fv.get('to_callsign', '').upper().strip()
+        to_phone_s = fv.get('to_phone', '').strip()
+        if to_callsign_s:
+            return '{} {}'.format(city, to_callsign_s)
+        elif to_phone_s:
+            _ph = re.sub(r'[^\d]', '', to_phone_s)
+            if len(_ph) == 11 and _ph[0] == '1':
+                _ph = _ph[1:]
+            return '{} {} {}'.format(city, _ph[:3], _ph[3:6]) if len(_ph) == 10 else '{} - -'.format(city)
+        else:
+            return '{} - -'.format(city)
+
     def format_nts_radiogram(self, form_data):
         """Format body as standard ARRL NTS radiogram.
         Two BT breaks only: after address block, after text.
@@ -1386,7 +1407,7 @@ class FormsApp:
         else:
             check = str(self.count_nts_check(raw_text))
 
-        place = re.sub(r',', ' ', fv.get('place_of_origin', '').upper()).strip()
+        place = re.sub(r' {2,}', ' ', re.sub(r',', ' ', fv.get('place_of_origin', '').upper())).strip()
 
         filed_time = fv.get('filed_time', '').strip()
         if not filed_time:
@@ -1415,7 +1436,7 @@ class FormsApp:
         to_address = self._sanitize_nts_address(fv.get('to_address', ''))
         if to_address:
             lines.append(to_address)
-        to_cs = re.sub(r',', ' ', fv.get('to_city_state', '').upper()).strip()
+        to_cs = re.sub(r' {2,}', ' ', re.sub(r',', ' ', fv.get('to_city_state', '').upper())).strip()
         to_zip = fv.get('to_zip', '').strip()
         lines.append("{} {}".format(to_cs, to_zip).strip())
         to_phone = fv.get('to_phone', '').strip()
@@ -1461,21 +1482,7 @@ class FormsApp:
 
         if output_format == 'nts_radiogram':
             fv = {f['name']: f['value'] for f in form_data['fields']}
-            # Subject: NTS title convention per ARRL
-            # ham addressee: CITY CALLSIGN  |  non-ham with phone: CITY NXX NXX  |  else: CITY - -
-            _cs_parts = fv.get('to_city_state', '').upper().split()
-            city = ' '.join(_cs_parts[:-1]) if len(_cs_parts) > 1 else fv.get('to_city_state', '').upper()
-            to_callsign_s = fv.get('to_callsign', '').upper().strip()
-            to_phone_s = fv.get('to_phone', '').strip()
-            if to_callsign_s:
-                subject = '{} {}'.format(city, to_callsign_s)
-            elif to_phone_s:
-                _ph = re.sub(r'[^\d]', '', to_phone_s)
-                if len(_ph) == 11 and _ph[0] == '1':
-                    _ph = _ph[1:]
-                subject = '{} {} {}'.format(city, _ph[:3], _ph[3:6]) if len(_ph) == 10 else '{} - -'.format(city)
-            else:
-                subject = '{} - -'.format(city)
+            subject = self._compute_nts_subject(form_data)
             lines.append(subject)
             lines.append("")
             lines.append(self.format_nts_radiogram(form_data))
