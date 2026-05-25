@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "3.0",
+  "version": "3.1",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -69,7 +69,7 @@
       "type": "text",
       "required": true,
       "max_length": 100,
-      "description": "Recipient's name"
+      "description": "Recipient's name only — callsign goes in the next field"
     },
     {
       "name": "to_callsign",

@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.28
+Version: 1.30
 Date: May 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.29"
+VERSION = "1.30"
 APP_NAME = "forms.py"
 
 import os
@@ -1405,7 +1405,12 @@ class FormsApp:
         # Address block — no BT before address (only 2 BTs total in a radiogram)
         to_name = self._sanitize_nts_address(fv.get('to_name', ''))
         to_callsign = fv.get('to_callsign', '').upper().strip()
-        name_line = '{} {}'.format(to_name, to_callsign).strip() if to_callsign else to_name
+        # Deduplicate: user may have typed "JIM KUTSCH KY2D" in the name field
+        # and also entered KY2D in the callsign field — don't append it twice
+        if to_callsign and to_name.upper().endswith(to_callsign):
+            name_line = to_name
+        else:
+            name_line = '{} {}'.format(to_name, to_callsign).strip() if to_callsign else to_name
         lines.append(name_line)
         to_address = self._sanitize_nts_address(fv.get('to_address', ''))
         if to_address:
