@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "2.9",
+  "version": "3.0",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -70,6 +70,15 @@
       "required": true,
       "max_length": 100,
       "description": "Recipient's name"
+    },
+    {
+      "name": "to_callsign",
+      "label": "To (Callsign, if ham)",
+      "type": "text",
+      "required": false,
+      "max_length": 20,
+      "validate": "callsign",
+      "description": "Recipient's callsign if addressee is a ham (leave blank if not a ham)"
     },
     {
       "name": "to_address",

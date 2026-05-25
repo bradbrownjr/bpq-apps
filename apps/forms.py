@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.23
+Version: 1.28
 Date: May 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.27"
+VERSION = "1.28"
 APP_NAME = "forms.py"
 
 import os
@@ -1326,22 +1326,49 @@ class FormsApp:
         return re.sub(r' {2,}', ' ', addr).strip()
 
     def format_nts_phone(self, ph):
-        """Normalize phone to XXX-XXX-XXXX for radiogram output."""
+        """Normalize phone to NXX NXX XXXX for radiogram output (no dashes per NTS rules)."""
         if not ph:
             return ph
         digits = re.sub(r'[^\d]', '', ph)
         if len(digits) == 11 and digits[0] == '1':
             digits = digits[1:]
         if len(digits) == 10:
-            return '{}-{}-{}'.format(digits[:3], digits[3:6], digits[6:])
+            return '{} {} {}'.format(digits[:3], digits[3:6], digits[6:])
         if len(digits) == 7:
-            return '{}-{}'.format(digits[:3], digits[3:])
+            return '{} {}'.format(digits[:3], digits[3:])
         return ph
+
+    def _sanitize_nts_address(self, text):
+        """Spell out punctuation in address fields per NTS rules.
+        # -> NR, hyphen -> DASH, colons/commas -> space.
+        """
+        t = text.upper().strip()
+        # Number sign -> NR
+        t = re.sub(r'#\s*', 'NR ', t)
+        # Hyphen between word characters -> DASH
+        t = re.sub(r'(\w)\s*-\s*(\w)', r'\1 DASH \2', t)
+        # Remaining hyphens -> space
+        t = re.sub(r'-', ' ', t)
+        # Colons -> space
+        t = re.sub(r':', ' ', t)
+        # Commas -> space
+        t = re.sub(r',', ' ', t)
+        # Collapse spaces
+        t = re.sub(r' {2,}', ' ', t).strip()
+        return t
+
+    def _format_text_5words(self, text):
+        """Format normalized NTS text in groups of 5 words per line."""
+        words = text.split()
+        chunks = []
+        for i in range(0, len(words), 5):
+            chunks.append(' '.join(words[i:i+5]))
+        return '\n'.join(chunks)
 
     def format_nts_radiogram(self, form_data):
         """Format body as standard ARRL NTS radiogram.
-        Uses BT section separators and AR close per ARRL/NTS standard.
-        Phone and email are normalized for verbal relay.
+        Two BT breaks only: after address block, after text.
+        Phone and email are normalized per NTS punctuation rules.
         """
         fv = {f['name']: f['value'] for f in form_data['fields']}
 
@@ -1374,10 +1401,13 @@ class FormsApp:
 
         lines = []
         lines.append(preamble)
-        lines.append('BT')
 
-        lines.append("TO: {}".format(fv.get('to_name', '').upper()))
-        to_address = fv.get('to_address', '').upper()
+        # Address block — no BT before address (only 2 BTs total in a radiogram)
+        to_name = self._sanitize_nts_address(fv.get('to_name', ''))
+        to_callsign = fv.get('to_callsign', '').upper().strip()
+        name_line = '{} {}'.format(to_name, to_callsign).strip() if to_callsign else to_name
+        lines.append(name_line)
+        to_address = self._sanitize_nts_address(fv.get('to_address', ''))
         if to_address:
             lines.append(to_address)
         to_cs = fv.get('to_city_state', '').upper()
@@ -1391,12 +1421,11 @@ class FormsApp:
             lines.append("EMAIL {}".format(self.encode_nts_email(to_email)))
         lines.append('BT')
 
-        for line in text.split('\n'):
-            lines.append(line)
+        # Text in groups of 5 words per line for easy check verification
+        lines.append(self._format_text_5words(text))
         lines.append('BT')
 
-        lines.append(fv.get('signature', ''))
-        lines.append('AR')
+        lines.append(fv.get('signature', '').upper().strip())
 
         return '\n'.join(lines)
 
@@ -1427,11 +1456,21 @@ class FormsApp:
 
         if output_format == 'nts_radiogram':
             fv = {f['name']: f['value'] for f in form_data['fields']}
-            # Subject: destination city/state ZIP (what NTS operators see in LT listing)
-            subject = "{} {}".format(
-                fv.get('to_city_state', '').upper(),
-                fv.get('to_zip', '').strip()
-            ).strip()
+            # Subject: NTS title convention per ARRL
+            # ham addressee: CITY CALLSIGN  |  non-ham with phone: CITY NXX NXX  |  else: CITY - -
+            _cs_parts = fv.get('to_city_state', '').upper().split()
+            city = ' '.join(_cs_parts[:-1]) if len(_cs_parts) > 1 else fv.get('to_city_state', '').upper()
+            to_callsign_s = fv.get('to_callsign', '').upper().strip()
+            to_phone_s = fv.get('to_phone', '').strip()
+            if to_callsign_s:
+                subject = '{} {}'.format(city, to_callsign_s)
+            elif to_phone_s:
+                _ph = re.sub(r'[^\d]', '', to_phone_s)
+                if len(_ph) == 11 and _ph[0] == '1':
+                    _ph = _ph[1:]
+                subject = '{} {} {}'.format(city, _ph[:3], _ph[3:6]) if len(_ph) == 10 else '{} - -'.format(city)
+            else:
+                subject = '{} - -'.format(city)
             lines.append(subject)
             lines.append("")
             lines.append(self.format_nts_radiogram(form_data))
