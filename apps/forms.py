@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.31"
+VERSION = "1.32"
 APP_NAME = "forms.py"
 
 import os
@@ -1013,6 +1013,82 @@ class FormsApp:
             except ValueError:
                 print("Please enter a valid number.")
     
+    def edit_form_fields(self, form_data, form_template):
+        """Let the user re-enter individual fields after reviewing the preview."""
+        fields = form_data['fields']
+        # Build a lookup from field name -> original field definition
+        template_fields = {f['name']: f for f in form_template.get('fields', [])}
+
+        while True:
+            self.clear_screen()
+            self.print_header()
+            print("EDIT FIELDS")
+            print()
+            self.print_separator()
+            print()
+            for i, field in enumerate(fields, 1):
+                val = field['value'] if field['value'] else '(empty)'
+                print("  {}. {}: {}".format(i, field['label'], val))
+            print()
+            choice = self.get_input("Field number to edit (or 0 to finish): ").strip()
+            if choice == '0' or choice.upper() == 'Q':
+                break
+            try:
+                idx = int(choice)
+            except ValueError:
+                print("Please enter a valid number.")
+                continue
+            if not (1 <= idx <= len(fields)):
+                print("Invalid selection.")
+                continue
+
+            target = fields[idx - 1]
+            field_def = dict(template_fields.get(target['name'], {}))
+            if not field_def:
+                print("Cannot find field definition.")
+                continue
+
+            # Pre-fill default with current value so user sees it and can keep it
+            field_def['default'] = target['value']
+            # Remove auto-fill flags so they don't override the explicit default
+            field_def.pop('default_now', None)
+            field_def.pop('auto_fill', None)
+            required = field_def.get('required', False)
+
+            print()
+            print("{} (current: {})".format(target['label'], target['value'] or '(empty)'))
+            desc = field_def.get('description', '')
+            if desc:
+                print(self.wrap_text(desc, width=LINE_WIDTH - 2))
+
+            field_type = field_def.get('type', 'text')
+            new_val = None
+            if field_type == 'text':
+                new_val = self.fill_text_field(field_def, required)
+            elif field_type == 'yesno':
+                new_val = self.fill_yesno_field(field_def, required)
+            elif field_type == 'choice':
+                new_val = self.fill_choice_field(field_def, required)
+            elif field_type == 'textarea':
+                if field_def.get('arl_enabled'):
+                    new_val = self.fill_arl_or_textarea_field(field_def, required)
+                else:
+                    new_val = self.fill_textarea_field(field_def, required)
+                if new_val and field_def.get('nts_normalize'):
+                    normalized = self.normalize_nts_text(new_val)
+                    check = self.count_nts_check(normalized)
+                    if normalized != new_val.upper().strip():
+                        print("NTS text (normalized):")
+                        print(normalized)
+                    print("Check (word count): {}".format(check))
+                    new_val = normalized
+                    form_data['nts_check'] = check
+
+            # None means user pressed B/back — keep old value
+            if new_val is not None:
+                target['value'] = new_val
+            break  # Return to preview after one field edit
+
     def display_form_review(self, form_data):
         """Display a review/preview of the filled form"""
         self.clear_screen()
@@ -1643,24 +1719,29 @@ class FormsApp:
                         # Error during form fill, return to menu
                         continue
                     
-                    # Ask if they want to review before submitting
+                    # Show preview — user can edit fields or submit from here
                     print("\n")
                     self.print_separator()
                     print("\nForm completed!")
                     print()
-                    review_choice = self.get_input("Review form before submitting? (Y/N): ")
-                    
-                    if review_choice.upper() in ['Y', 'YES']:
-                        # Display form review/preview
-                        self.display_form_review(form_data)
-                    
-                    # Ask if they want to submit or cancel
-                    print()
-                    submit_choice = self.get_input("Submit this form? (Y/N): ")
-                    
-                    if submit_choice.upper() not in ['Y', 'YES']:
-                        print("\nForm cancelled. Returning to menu.")
-                        self._continue_prompt()
+                    self.display_form_review(form_data)
+
+                    submit_ok = False
+                    while True:
+                        print()
+                        action = self.get_input("(S)ubmit  (E)dit a field  (N) Cancel: ").strip().upper()
+                        if action in ['S', 'Y', 'YES']:
+                            submit_ok = True
+                            break
+                        elif action.startswith('E'):
+                            self.edit_form_fields(form_data, selected_form)
+                            self.display_form_review(form_data)
+                        else:
+                            print("\nForm cancelled. Returning to menu.")
+                            self._continue_prompt()
+                            break
+
+                    if not submit_ok:
                         continue
                     
                     # Routing
