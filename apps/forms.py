@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.32"
+VERSION = "1.33"
 APP_NAME = "forms.py"
 
 import os
@@ -1448,8 +1448,10 @@ class FormsApp:
         Returns: CITY CALLSIGN | CITY NXX NXX | CITY - -
         """
         fv = {f['name']: f['value'] for f in form_data['fields']}
-        _cs_parts = fv.get('to_city_state', '').upper().split()
-        city = ' '.join(_cs_parts[:-1]) if len(_cs_parts) > 1 else fv.get('to_city_state', '').upper()
+        # Strip commas and collapse spaces (same as format_nts_radiogram)
+        _cs_clean = re.sub(r' {2,}', ' ', re.sub(r',', ' ', fv.get('to_city_state', '').upper())).strip()
+        _cs_parts = _cs_clean.split()
+        city = ' '.join(_cs_parts[:-1]) if len(_cs_parts) > 1 else _cs_clean
         to_callsign_s = fv.get('to_callsign', '').upper().strip()
         to_phone_s = fv.get('to_phone', '').strip()
         if to_callsign_s:
@@ -1719,12 +1721,14 @@ class FormsApp:
                         # Error during form fill, return to menu
                         continue
                     
-                    # Show preview — user can edit fields or submit from here
+                    # Ask if they want to review before submitting
                     print("\n")
                     self.print_separator()
                     print("\nForm completed!")
                     print()
-                    self.display_form_review(form_data)
+                    review_choice = self.get_input("Review form before submitting? (Y/N): ").strip().upper()
+                    if review_choice in ['Y', 'YES']:
+                        self.display_form_review(form_data)
 
                     submit_ok = False
                     while True:
