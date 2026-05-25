@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.28"
+VERSION = "1.29"
 APP_NAME = "forms.py"
 
 import os
@@ -1386,7 +1386,7 @@ class FormsApp:
         else:
             check = str(self.count_nts_check(raw_text))
 
-        place = fv.get('place_of_origin', '').upper()
+        place = re.sub(r',', ' ', fv.get('place_of_origin', '').upper()).strip()
 
         filed_time = fv.get('filed_time', '').strip()
         if not filed_time:
@@ -1410,7 +1410,7 @@ class FormsApp:
         to_address = self._sanitize_nts_address(fv.get('to_address', ''))
         if to_address:
             lines.append(to_address)
-        to_cs = fv.get('to_city_state', '').upper()
+        to_cs = re.sub(r',', ' ', fv.get('to_city_state', '').upper()).strip()
         to_zip = fv.get('to_zip', '').strip()
         lines.append("{} {}".format(to_cs, to_zip).strip())
         to_phone = fv.get('to_phone', '').strip()
