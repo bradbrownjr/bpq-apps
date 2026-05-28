@@ -744,3 +744,82 @@ git push origin main
 
 # Version bump triggers auto-download on user systems within 24-48 hours
 ```
+
+---
+
+## Baseline additions (from agents-baseline)
+
+The following sections were appended from the cross-project
+`agents-baseline` standard. Some may duplicate rules already present
+above — prune or merge as you review.
+
+### Phase / Milestone Completion Guardrail
+
+Never mark a phase, milestone, or roadmap item "complete" without:
+
+1. Reading the full requirement section top-to-bottom.
+2. Checking for "pending", "planned", or "deferred" — if any remain,
+   the phase is **not** complete.
+3. Verifying each requirement: code exists, tests pass, docs match.
+4. Asking the user "Ready to mark X complete?" before flipping the flag.
+5. If in doubt, leave it "in progress" and summarize done vs pending.
+
+This is a learned rule — phases tend to get auto-completed prematurely
+on multi-part work. The guardrail is a deliberate checkpoint.
+
+### Regression Check Policy
+
+- **Before every commit**, mentally run `git diff --stat`. If deletions
+  outnumber additions, or any single file is shrinking by more than ~50
+  lines, **explicitly audit** that no shipped behavior is being removed.
+- A single commit removing **200+ lines** from one file requires a
+  written justification in the commit body.
+- Before any large file rewrite, list the named features / API routes /
+  exported functions present in that file, then confirm each one
+  survives. Cross-reference against the Feature Registry.
+- Run the full local test/lint suite after any multi-file change.
+- After pushing, watch CI. A regression that goes green locally but red
+  in CI is still a regression — fix forward, don't disable the check.
+
+### Implementation Discipline
+
+- Only make changes that are directly requested or clearly necessary.
+- Don't add features, refactor code, or make "improvements" beyond scope.
+- Don't add docstrings, comments, or type annotations to code you
+  didn't change.
+- Don't add error handling for scenarios that can't happen. Validate at
+  system boundaries only.
+- Don't create helpers or abstractions for one-time operations.
+
+### Subagent Usage
+
+- Prefer subagents (e.g., `Explore`) for read-only multi-step research
+  to avoid cluttering the main conversation. Safe to call in parallel.
+- Specify thoroughness explicitly (quick / medium / thorough).
+- Subagents are stateless — give them complete context in the prompt
+  and tell them exactly what to return.
+
+### Validate Locally Before Pushing
+
+- CI ping-pong (push → wait → fix → push) is the slowest feedback loop.
+- If a toolchain is missing locally, install it once rather than
+  firefighting per CI run.
+- Symptom of falling into the trap: "fix one error, push, new error,
+  fix, push" cycle. Stop and audit holistically.
+
+### Output style defaults
+
+- No emoji in code, comments, commit messages, or generated docs unless
+  explicitly requested.
+- No em-dashes in source code or generated text — use commas, periods,
+  or parentheses.
+
+### Feature Registry (template)
+
+Maintain a compact checklist of shipped user-facing features keyed to
+their primary implementation files. Before any large refactor, verify
+every row touching the affected file column is preserved.
+
+| Feature | Key file(s) | Key identifiers |
+|---|---|---|
+| _(populate as features ship)_ | | |
