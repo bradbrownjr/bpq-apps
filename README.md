@@ -6,8 +6,11 @@ Custom applications for a BPQ32 packet radio node, your console, or a terminal. 
 - [Applications](#applications)
 - [Games](#games)
 - [Utilities](#utilities)
-- [Installation](#installation)
+- [Web Theme for LinBPQ Management Interface](#web-theme-for-linbpq-management-interface)
+- [Quick Installation](#quick-installation)
 - [Development](#development)
+- [Directory Structure](#directory-structure)
+- [Target Environment](#target-environment)
 
 ## Features
 
@@ -40,6 +43,27 @@ These applications are custom-built for low bandwidth terminal access over packe
 
 For detailed documentation, see [apps/README.md](apps/README.md).
 
+### Offline Caching
+
+**Cached Data Applications** (with `--update-cache` cron support):
+- **wx.py**: Local weather observations, alerts, and SKYWARN activation status (2-hour cache)
+- **rss-news.py**: Emergency bulletins, weather warnings, ham radio news (2-hour cache)
+- **hamqsl.py**: HF propagation data for band planning (4-hour cache)
+- **space.py**: NOAA space weather reports for HF comms (4-hour cache)
+- **eventcal.py**: Club calendar and net schedules (6-hour cache)
+- **predict.py**: Callsign lookups with 30-day local cache
+
+**Always-Offline Applications** (no internet required):
+- **hamtest.py**: License exam practice with local question pools
+- **wall.py**: Community bulletin board (local JSON storage)
+- **forms.py**: ICS-213, radiograms, weather reports (local templates)
+- **callout.py**: Station information lookup (local data)
+
+**Graceful Degradation** (offline-aware):
+- **gopher.py**, **qrz3.py**, **wxnws-ftp.py**: Show "Internet unavailable" messages, continue operating
+
+All apps continue running even if GitHub is unreachable (auto-update fails silently), external APIs are down (uses cached data), or network connectivity is intermittent. See [docs/INSTALLATION.md](docs/INSTALLATION.md) for cron job configuration to keep cached data fresh.
+
 ## Games
 
 Interactive games that run as standalone TCP servers:
@@ -59,33 +83,6 @@ Sysop tools for network mapping, mail routing, and service installation:
 * **download_boundaries.py** / **map_boundaries.py** - Support files for `nodemap-html.py`'s offline SVG rendering. `download_boundaries.py` fetches Natural Earth 1:10m boundary data and regenerates `map_boundaries.py` if you need updated geographic data.
 
 See [utilities/README.md](utilities/README.md) for detailed documentation and usage examples.
-
-## Offline Caching
-
-**Cached Data Applications** (with `--update-cache` cron support):
-- **wx.py**: Local weather observations, alerts, and SKYWARN activation status (2-hour cache)
-- **rss-news.py**: Emergency bulletins, weather warnings, ham radio news (2-hour cache)
-- **hamqsl.py**: HF propagation data for band planning (4-hour cache)
-- **space.py**: NOAA space weather reports for HF comms (4-hour cache)
-- **eventcal.py**: Club calendar and net schedules (6-hour cache)
-- **predict.py**: Callsign lookups with 30-day local cache
-
-**Always-Offline Applications** (no internet required):
-- **hamtest.py**: License exam practice with local question pools
-- **wall.py**: Community bulletin board (local JSON storage)
-- **forms.py**: ICS-213, radiograms, weather reports (local templates)
-- **callout.py**: Station information lookup (local data)
-
-**Graceful Degradation** (offline-aware):
-- **gopher.py**, **qrz3.py**, **wxnws-ftp.py**: Show "Internet unavailable" messages, continue operating
-
-All apps continue running even if:
-- GitHub is unreachable (auto-update fails silently)
-- External APIs are down (uses cached data or shows offline message)
-- Network connectivity is intermittent (retries without crashing)
-- Config files are missing (uses sensible defaults)
-
-**Setting Up Offline Caching**: See [docs/INSTALLATION.md](docs/INSTALLATION.md) for cron job configuration to keep cached data fresh (typically every 2-6 hours).
 
 ## Web Theme for LinBPQ Management Interface
 
