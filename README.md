@@ -110,9 +110,16 @@ bpq-apps/
 ├── apps/              # User-facing BPQ applications
 ├── games/             # Interactive game servers
 ├── utilities/         # Sysop tools for BBS management
+├── html-theme/        # Modern web theme for the LinBPQ management interface
+│   ├── bpq-proxy.conf     nginx reverse proxy config template
+│   ├── bpq-modern.css     Stylesheet (CSS custom properties for easy retheming)
+│   ├── bpq-terminal.js    Nav grouping, terminal history, theme toggle
+│   ├── files-browser.html BBS Files single-page browser
+│   └── README.md          Setup and customisation guide
 ├── docs/              # Documentation and setup guides
 │   ├── examples/      # Configuration file examples (inetd, bpq32.cfg)
 │   └── images/        # Screenshots and example outputs
+├── deploy-theme.sh    # Deploy the web theme to the LinBPQ host
 └── .github/           # GitHub Copilot instructions for AI development
 ```
 

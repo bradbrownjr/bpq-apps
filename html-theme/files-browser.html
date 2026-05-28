@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBS Files</title>
+    <link rel="stylesheet" href="/bpq-theme/bpq-modern.css">
+    <style>
+        /* Files-browser-specific styles */
+        .fb-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem;
+        }
+
+        .fb-breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            font-size: 0.88rem;
+            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .fb-breadcrumb a {
+            color: var(--color-primary);
+        }
+
+        .fb-breadcrumb .fb-sep {
+            color: var(--color-text-muted);
+            padding: 0 0.1rem;
+        }
+
+        .fb-breadcrumb .fb-current {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        .fb-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .fb-count {
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+        }
+
+        .fb-search {
+            padding: 0.35rem 0.6rem;
+            border: 1px solid var(--color-border);
+            border-radius: 5px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-size: 0.88rem;
+            width: 220px;
+        }
+
+        .fb-search:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        /* File table */
+        .fb-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-surface);
+            border: 1px solid var(--color-table-border);
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 0.88rem;
+        }
+
+        .fb-table th {
+            background: var(--color-table-head);
+            color: var(--color-table-headtext);
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .fb-table th:hover {
+            background: color-mix(in srgb, var(--color-primary) 80%, black);
+        }
+
+        .fb-table th .sort-icon {
+            margin-left: 0.3rem;
+            opacity: 0.5;
+        }
+
+        .fb-table th.sorted .sort-icon {
+            opacity: 1;
+        }
+
+        .fb-table td {
+            padding: 0.45rem 0.75rem;
+            border-bottom: 1px solid var(--color-table-border);
+            vertical-align: middle;
+        }
+
+        .fb-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .fb-table tr:nth-child(even) td {
+            background: var(--color-table-row-alt);
+        }
+
+        .fb-table tr:hover td {
+            background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+        }
+
+        /* File/folder icons and names */
+        .fb-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .fb-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            width: 1.2rem;
+            text-align: center;
+        }
+
+        .fb-name a {
+            color: var(--color-primary);
+            word-break: break-all;
+        }
+
+        .fb-name a.fb-dir {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .fb-name a.fb-dir:hover {
+            color: var(--color-accent);
+        }
+
+        .fb-size {
+            text-align: right;
+            white-space: nowrap;
+            color: var(--color-text-muted);
+            font-variant-numeric: tabular-nums;
+            min-width: 80px;
+        }
+
+        .fb-mtime {
+            white-space: nowrap;
+            color: var(--color-text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* States */
+        .fb-loading,
+        .fb-empty,
+        .fb-error {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .fb-error {
+            color: var(--color-accent);
+        }
+
+        .fb-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .fb-mtime { display: none; }
+            .fb-search { width: 140px; }
+        }
+    </style>
+</head>
+<body>
+
+<script src="/bpq-theme/bpq-terminal.js"></script>
+
+<div class="fb-container">
+    <div id="fb-breadcrumb" class="fb-breadcrumb"></div>
+
+    <div class="fb-toolbar">
+        <span id="fb-count" class="fb-count"></span>
+        <input type="text" id="fb-search" class="fb-search"
+               placeholder="Filter files…" autocomplete="off">
+    </div>
+
+    <div class="bpq-table-wrap">
+        <table class="fb-table" id="fb-table">
+            <thead>
+                <tr>
+                    <th data-col="name" class="sorted">
+                        Name <span class="sort-icon">▲</span>
+                    </th>
+                    <th data-col="size" style="text-align:right">
+                        Size <span class="sort-icon">⇅</span>
+                    </th>
+                    <th data-col="mtime">
+                        Modified <span class="sort-icon">⇅</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="fb-tbody">
+                <tr>
+                    <td colspan="3">
+                        <div class="fb-loading">
+                            <div class="fb-spinner"></div>
+                            <div>Loading…</div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // Current directory path relative to /files-data/ (always starts with /)
+    var currentPath = '/';
+    var allEntries = [];
+    var sortCol = 'name';
+    var sortAsc = true;
+
+    var tbody   = document.getElementById('fb-tbody');
+    var countEl = document.getElementById('fb-count');
+    var crumbEl = document.getElementById('fb-breadcrumb');
+    var search  = document.getElementById('fb-search');
+
+    // -----------------------------------------------------------------------
+    // Fetch directory listing from nginx JSON autoindex
+    // -----------------------------------------------------------------------
+    function loadDir(path) {
+        currentPath = path;
+        renderBreadcrumb();
+        tbody.innerHTML = '<tr><td colspan="3"><div class="fb-loading"><div class="fb-spinner"></div><div>Loading…</div></div></td></tr>';
+        countEl.textContent = '';
+
+        var url = '/files-data' + path;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                var data;
+                try { data = JSON.parse(xhr.responseText); } catch (e) {
+                    showError('Invalid response from server.');
+                    return;
+                }
+                allEntries = data || [];
+                renderTable();
+            } else if (xhr.status === 403) {
+                showError('Access denied.');
+            } else if (xhr.status === 404) {
+                showError('Directory not found.');
+            } else {
+                showError('Server error (' + xhr.status + ').');
+            }
+        };
+        xhr.onerror = function () {
+            showError('Could not reach the server. Check your connection.');
+        };
+        xhr.send();
+    }
+
+    // -----------------------------------------------------------------------
+    // Render breadcrumb
+    // -----------------------------------------------------------------------
+    function renderBreadcrumb() {
+        var parts = currentPath.split('/').filter(Boolean);
+        var html = '<a href="#" data-path="/">Files</a>';
+        var built = '/';
+        parts.forEach(function (part, i) {
+            built += part + '/';
+            var path = built;
+            html += '<span class="fb-sep">/</span>';
+            if (i === parts.length - 1) {
+                html += '<span class="fb-current">' + esc(part) + '</span>';
+            } else {
+                html += '<a href="#" data-path="' + esc(path) + '">' + esc(part) + '</a>';
+            }
+        });
+        crumbEl.innerHTML = html;
+
+        // Attach click handlers
+        crumbEl.querySelectorAll('a[data-path]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                loadDir(a.getAttribute('data-path'));
+            });
+        });
+    }
+
+    // -----------------------------------------------------------------------
+    // Render table rows
+    // -----------------------------------------------------------------------
+    function renderTable() {
+        var filter = search.value.toLowerCase().trim();
+        var entries = allEntries.filter(function (e) {
+            return !filter || e.name.toLowerCase().indexOf(filter) !== -1;
+        });
+
+        // Sort
+        entries.sort(function (a, b) {
+            // Directories always first
+            var aDir = a.type === 'directory';
+            var bDir = b.type === 'directory';
+            if (aDir !== bDir) return aDir ? -1 : 1;
+
+            var av, bv;
+            if (sortCol === 'name') {
+                av = a.name.toLowerCase();
+                bv = b.name.toLowerCase();
+            } else if (sortCol === 'size') {
+                av = a.size || 0;
+                bv = b.size || 0;
+            } else {
+                av = a.mtime || '';
+                bv = b.mtime || '';
+            }
+            if (av < bv) return sortAsc ? -1 : 1;
+            if (av > bv) return sortAsc ? 1 : -1;
+            return 0;
+        });
+
+        if (entries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3"><div class="fb-empty">No files found.</div></td></tr>';
+            countEl.textContent = '';
+            return;
+        }
+
+        var rows = '';
+
+        // "Up" row when not at root
+        if (currentPath !== '/') {
+            var parent = currentPath.replace(/[^/]+\/$/, '') || '/';
+            rows += '<tr>'
+                + '<td><div class="fb-name"><span class="fb-icon">↩</span>'
+                + '<a href="#" class="fb-dir" data-path="' + esc(parent) + '">..</a></div></td>'
+                + '<td class="fb-size">—</td>'
+                + '<td class="fb-mtime">—</td>'
+                + '</tr>';
+        }
+
+        entries.forEach(function (entry) {
+            var isDir = entry.type === 'directory';
+            var icon  = isDir ? '📁' : fileIcon(entry.name);
+            var name  = entry.name;
+            var size  = isDir ? '—' : formatSize(entry.size || 0);
+            var mtime = entry.mtime ? formatDate(entry.mtime) : '—';
+
+            var nameCell;
+            if (isDir) {
+                var subPath = currentPath + name + '/';
+                nameCell = '<div class="fb-name"><span class="fb-icon">' + icon + '</span>'
+                    + '<a href="#" class="fb-dir" data-path="' + esc(subPath) + '">' + esc(name) + '</a></div>';
+            } else {
+                var fileUrl = '/files-data' + currentPath + encodeURIComponent(name);
+                nameCell = '<div class="fb-name"><span class="fb-icon">' + icon + '</span>'
+                    + '<a href="' + fileUrl + '" download="' + esc(name) + '">' + esc(name) + '</a></div>';
+            }
+
+            rows += '<tr>'
+                + '<td>' + nameCell + '</td>'
+                + '<td class="fb-size">' + size + '</td>'
+                + '<td class="fb-mtime">' + mtime + '</td>'
+                + '</tr>';
+        });
+
+        tbody.innerHTML = rows;
+
+        // Attach directory click handlers
+        tbody.querySelectorAll('a[data-path]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                loadDir(a.getAttribute('data-path'));
+            });
+        });
+
+        var total = entries.length;
+        var dirs  = entries.filter(function (e) { return e.type === 'directory'; }).length;
+        var files = total - dirs;
+        countEl.textContent = files + ' file' + (files !== 1 ? 's' : '')
+            + (dirs ? ', ' + dirs + ' folder' + (dirs !== 1 ? 's' : '') : '');
+    }
+
+    // -----------------------------------------------------------------------
+    // Sort column headers
+    // -----------------------------------------------------------------------
+    document.getElementById('fb-table').querySelectorAll('th[data-col]').forEach(function (th) {
+        th.addEventListener('click', function () {
+            var col = th.getAttribute('data-col');
+            if (sortCol === col) {
+                sortAsc = !sortAsc;
+            } else {
+                sortCol = col;
+                sortAsc = true;
+            }
+            // Update header icons
+            document.getElementById('fb-table').querySelectorAll('th[data-col]').forEach(function (h) {
+                var icon = h.querySelector('.sort-icon');
+                h.classList.remove('sorted');
+                icon.textContent = '⇅';
+            });
+            th.classList.add('sorted');
+            th.querySelector('.sort-icon').textContent = sortAsc ? '▲' : '▼';
+            renderTable();
+        });
+    });
+
+    // Search filter
+    search.addEventListener('input', function () { renderTable(); });
+
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+    function showError(msg) {
+        tbody.innerHTML = '<tr><td colspan="3"><div class="fb-error">' + esc(msg) + '</div></td></tr>';
+    }
+
+    function esc(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function formatSize(bytes) {
+        if (bytes === 0) return '0 B';
+        var units = ['B', 'KB', 'MB', 'GB'];
+        var i = Math.floor(Math.log(bytes) / Math.log(1024));
+        i = Math.min(i, units.length - 1);
+        return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+
+    function formatDate(mtime) {
+        // nginx JSON autoindex returns mtime as a string like "Wed, 28 May 2026 12:34:56 GMT"
+        var d = new Date(mtime);
+        if (isNaN(d.getTime())) return mtime;
+        return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+            + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function fileIcon(name) {
+        var ext = name.split('.').pop().toLowerCase();
+        var icons = {
+            'zip': '🗜', 'gz': '🗜', 'tar': '🗜', 'bz2': '🗜',
+            'txt': '📄', 'log': '📄', 'cfg': '📄', 'conf': '📄', 'ini': '📄',
+            'pdf': '📋',
+            'jpg': '🖼', 'jpeg': '🖼', 'png': '🖼', 'gif': '🖼',
+            'mp3': '🎵', 'wav': '🎵',
+            'py': '🐍',
+            'sh': '⚙',
+            'exe': '⚙', 'bin': '⚙'
+        };
+        return icons[ext] || '📄';
+    }
+
+    // -----------------------------------------------------------------------
+    // Init
+    // -----------------------------------------------------------------------
+    loadDir('/');
+
+})();
+</script>
+
+</body>
+</html>

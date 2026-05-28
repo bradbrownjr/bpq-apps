@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [LinBPQ Modern Web Theme] - 2026-05-28
+### Added
+- **html-theme/**: nginx reverse proxy theme for the LinBPQ web management interface.
+  LinBPQ's pages are baked into the binary; an nginx `sub_filter` injects CSS and JS
+  into every response without modifying LinBPQ's configuration.
+  - `bpq-proxy.conf`: nginx config template — `:80` redirect to HTTPS, `:443` proxy
+    to LinBPQ with `sub_filter` injection, `/files-data/` JSON autoindex, `/files/`
+    redirect to the files browser. Variables (`%%HOSTNAME%%`, `%%LINBPQ_PORT%%`,
+    `%%BBS_FILES_PATH%%`) substituted by deploy script.
+  - `bpq-modern.css`: Full stylesheet. ARES navy/red default palette. All colours
+    are CSS custom properties — reskin by editing `:root` only. Automatic dark mode
+    via `prefers-color-scheme` plus `[data-theme]` attribute for manual override.
+    Responsive nav, striped tables, styled forms, always-dark terminal area.
+  - `bpq-terminal.js`: Injected JS. Adds branded header with logo slot, callsign
+    from page title, and light/dark/system theme toggle (persisted in `localStorage`).
+    Restructures LinBPQ's flat nav into three labelled groups — Node, BBS, Sysop.
+    Injects a Files link into the BBS group. Wraps wide tables for horizontal scroll
+    on mobile. On terminal pages: up/down arrow command history (50-entry ring),
+    `MutationObserver` auto-scroll.
+  - `files-browser.html`: Single-page BBS Files browser. Fetches nginx JSON autoindex
+    at `/files-data/`. Sortable columns (name, size, modified), live search filter,
+    subdirectory navigation with breadcrumb, download links, file type icons.
+  - `README.md`: Full setup and customisation guide including architecture diagram,
+    certbot instructions, colour customisation, logo slot, and selector debugging.
+- **deploy-theme.sh**: Idempotent deploy script. Checks for nginx and installs if
+  missing; substitutes config variables; uploads theme assets via SCP; sets BBS
+  directory read permissions for `www-data`; reloads nginx. Prints port-forward and
+  certbot instructions. `--assets-only` flag for subsequent theme-only updates.
+  Configurable via `-h`, `-u`, `-p`, `-l`, `-f` flags for non-default nodes.
+
 ## [Kantronics X1J4 Support] - 2026-02-24
 ### Added
 - **nodemap.py v1.7.93**: Kantronics KPC-3 Plus / X1J4 firmware support:

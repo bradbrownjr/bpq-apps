@@ -1,0 +1,545 @@
+/*
+ * bpq-modern.css — LinBPQ Web Interface Theme
+ *
+ * Injected into every LinBPQ page by the nginx reverse proxy (sub_filter).
+ * LinBPQ's own markup is untouched; this stylesheet resets and overrides it.
+ *
+ * COLOR CUSTOMIZATION:
+ * All colors are CSS custom properties in :root below. To reskin for a
+ * different club or node, only edit the :root block — nothing else.
+ *
+ * Default palette: Maine ARES — navy blue, bright red, white.
+ */
+
+/* =========================================================================
+   1. THEME TOKENS (edit these to reskin)
+   ========================================================================= */
+
+:root {
+    /* Brand */
+    --color-primary:      #002868;   /* Navy — nav background, headings */
+    --color-accent:       #bf0000;   /* Red  — group labels, active links, borders */
+
+    /* Page */
+    --color-bg:           #f5f7fa;
+    --color-surface:      #ffffff;
+    --color-border:       #d0d8e4;
+    --color-text:         #1a1a1a;
+    --color-text-muted:   #555e6d;
+
+    /* Nav */
+    --color-navbg:        #002868;
+    --color-navtext:      #ffffff;
+    --color-navtext-hover:#ffd700;   /* Gold on hover — visible on navy */
+    --color-navlabel:     #ff9999;   /* Muted red — group label on dark nav */
+    --color-navborder:    rgba(255,255,255,0.15);
+
+    /* Tables */
+    --color-table-head:   #002868;
+    --color-table-headtext: #ffffff;
+    --color-table-row-alt:#edf1f7;
+    --color-table-border: #c5cdd8;
+
+    /* Terminal (always dark regardless of theme) */
+    --color-term-bg:      #0d1117;
+    --color-term-text:    #d4d4d4;
+    --color-term-border:  #30363d;
+
+    /* Header */
+    --header-height:      64px;
+
+    /* Typography */
+    --font-ui:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono:  'Courier New', Courier, monospace;
+    --font-size:  15px;
+}
+
+/* Dark mode — activated by system preference OR manual toggle via
+   data-theme="dark" on <body> (set by bpq-terminal.js) */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --color-primary:      #1a3a6b;
+        --color-accent:       #ff5555;
+        --color-bg:           #0d1117;
+        --color-surface:      #161b22;
+        --color-border:       #30363d;
+        --color-text:         #e6edf3;
+        --color-text-muted:   #8b949e;
+        --color-navbg:        #0d1117;
+        --color-navtext:      #e6edf3;
+        --color-navtext-hover:#ffd700;
+        --color-navlabel:     #ff7070;
+        --color-navborder:    rgba(255,255,255,0.1);
+        --color-table-head:   #1c2128;
+        --color-table-headtext: #e6edf3;
+        --color-table-row-alt:#1c2128;
+        --color-table-border: #30363d;
+    }
+}
+
+[data-theme="dark"] {
+    --color-primary:      #1a3a6b;
+    --color-accent:       #ff5555;
+    --color-bg:           #0d1117;
+    --color-surface:      #161b22;
+    --color-border:       #30363d;
+    --color-text:         #e6edf3;
+    --color-text-muted:   #8b949e;
+    --color-navbg:        #0d1117;
+    --color-navtext:      #e6edf3;
+    --color-navtext-hover:#ffd700;
+    --color-navlabel:     #ff7070;
+    --color-navborder:    rgba(255,255,255,0.1);
+    --color-table-head:   #1c2128;
+    --color-table-headtext: #e6edf3;
+    --color-table-row-alt:#1c2128;
+    --color-table-border: #30363d;
+}
+
+[data-theme="light"] {
+    /* Force light even when OS is in dark mode */
+    --color-primary:      #002868;
+    --color-accent:       #bf0000;
+    --color-bg:           #f5f7fa;
+    --color-surface:      #ffffff;
+    --color-border:       #d0d8e4;
+    --color-text:         #1a1a1a;
+    --color-text-muted:   #555e6d;
+    --color-navbg:        #002868;
+    --color-navtext:      #ffffff;
+    --color-navtext-hover:#ffd700;
+    --color-navlabel:     #ff9999;
+    --color-navborder:    rgba(255,255,255,0.15);
+    --color-table-head:   #002868;
+    --color-table-headtext: #ffffff;
+    --color-table-row-alt:#edf1f7;
+    --color-table-border: #c5cdd8;
+}
+
+/* =========================================================================
+   2. RESET & BASE
+   ========================================================================= */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: var(--font-size);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-ui);
+    line-height: 1.5;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-ui);
+    padding-bottom: 2rem;
+}
+
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: var(--color-accent);
+}
+
+/* =========================================================================
+   3. INJECTED HEADER (logo + callsign + theme toggle)
+   ========================================================================= */
+
+.bpq-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--color-primary);
+    color: var(--color-navtext);
+    padding: 0 1.25rem;
+    height: var(--header-height);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.bpq-header-logo {
+    height: 44px;
+    width: auto;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.bpq-header-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--color-navtext);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bpq-header-title span.bpq-subtitle {
+    font-size: 0.78rem;
+    font-weight: 400;
+    opacity: 0.75;
+    margin-left: 0.5rem;
+}
+
+.bpq-theme-toggle {
+    background: transparent;
+    border: 1px solid var(--color-navborder);
+    color: var(--color-navtext);
+    border-radius: 6px;
+    padding: 0.3rem 0.65rem;
+    cursor: pointer;
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.bpq-theme-toggle:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* =========================================================================
+   4. NAV BAR (injected groups replacing LinBPQ's table of buttons)
+   ========================================================================= */
+
+/* Hide LinBPQ's original nav table — bpq-terminal.js rebuilds it */
+.bpq-nav-original {
+    display: none !important;
+}
+
+.bpq-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    background: var(--color-navbg);
+    border-bottom: 2px solid var(--color-accent);
+    padding: 0 0.5rem;
+}
+
+.bpq-navgroup {
+    display: flex;
+    flex-direction: column;
+    padding: 0.35rem 0.5rem 0.4rem;
+    border-right: 1px solid var(--color-navborder);
+    min-width: 0;
+}
+
+.bpq-navgroup:last-child {
+    border-right: none;
+}
+
+.bpq-navlabel {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-navlabel);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+}
+
+.bpq-navlinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.5rem;
+    align-items: center;
+}
+
+.bpq-navlinks a {
+    color: var(--color-navtext);
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 0.1rem 0.2rem;
+    border-radius: 3px;
+    transition: color 0.1s, background 0.1s;
+}
+
+.bpq-navlinks a:hover {
+    color: var(--color-navtext-hover);
+    background: rgba(255,255,255,0.08);
+    text-decoration: none;
+}
+
+.bpq-navlinks a.bpq-nav-active {
+    color: var(--color-navtext-hover);
+    border-bottom: 2px solid var(--color-accent);
+}
+
+/* Files link badge */
+.bpq-navlinks a.bpq-nav-files::after {
+    content: ' ↗';
+    font-size: 0.65rem;
+    opacity: 0.6;
+}
+
+/* Responsive: stack nav groups vertically on narrow screens */
+@media (max-width: 600px) {
+    .bpq-nav {
+        flex-direction: column;
+        padding: 0;
+    }
+
+    .bpq-navgroup {
+        border-right: none;
+        border-bottom: 1px solid var(--color-navborder);
+        padding: 0.4rem 0.75rem;
+    }
+
+    .bpq-navlinks {
+        gap: 0.25rem 0.75rem;
+    }
+
+    .bpq-header-title span.bpq-subtitle {
+        display: none;
+    }
+}
+
+/* =========================================================================
+   5. PAGE CONTENT WRAPPER
+   ========================================================================= */
+
+/* LinBPQ wraps content in <body> directly — add a content container */
+body > *:not(.bpq-header):not(.bpq-nav) {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 0;
+}
+
+/* Page headings LinBPQ emits */
+h1, h2, h3 {
+    color: var(--color-primary);
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-ui);
+}
+
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: 1rem; }
+
+/* =========================================================================
+   6. TABLES (Routes, Nodes, Ports, Users, Stats, etc.)
+   ========================================================================= */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-table-border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+/* Overflow wrapper injected for horizontal scroll on mobile */
+.bpq-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+}
+
+table th {
+    background: var(--color-table-head);
+    color: var(--color-table-headtext);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+table td {
+    padding: 0.45rem 0.65rem;
+    border-bottom: 1px solid var(--color-table-border);
+    vertical-align: top;
+    word-break: break-word;
+}
+
+table tr:last-child td {
+    border-bottom: none;
+}
+
+table tr:nth-child(even) td {
+    background: var(--color-table-row-alt);
+}
+
+table tr:hover td {
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+/* =========================================================================
+   7. FORMS (SYSOP login, config edit, etc.)
+   ========================================================================= */
+
+form {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    max-width: 520px;
+    margin-bottom: 1rem;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
+    margin-bottom: 0.5rem;
+    transition: border-color 0.15s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+input[type="submit"],
+button[type="submit"],
+input[type="button"],
+button {
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.9rem;
+    font-family: var(--font-ui);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+input[type="submit"]:hover,
+button[type="submit"]:hover,
+input[type="button"]:hover,
+button:hover {
+    background: color-mix(in srgb, var(--color-primary) 80%, black);
+}
+
+label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    display: block;
+}
+
+/* =========================================================================
+   8. TERMINAL AREA (always dark — overrides theme)
+   ========================================================================= */
+
+/* LinBPQ terminal uses <textarea> or <div> with id "term" or class "term" */
+#term,
+.term,
+textarea[name="term"],
+textarea[id*="term" i],
+.bpq-terminal-output {
+    background: var(--color-term-bg) !important;
+    color: var(--color-term-text) !important;
+    font-family: var(--font-mono) !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    border: 1px solid var(--color-term-border) !important;
+    border-radius: 6px !important;
+    padding: 0.75rem !important;
+    width: 100% !important;
+    min-height: 420px !important;
+    resize: vertical !important;
+    white-space: pre !important;
+    overflow-y: auto !important;
+}
+
+/* Terminal input line */
+.bpq-terminal-input-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.bpq-terminal-input-row input[type="text"] {
+    flex: 1;
+    background: var(--color-term-bg) !important;
+    color: var(--color-term-text) !important;
+    border-color: var(--color-term-border) !important;
+    font-family: var(--font-mono) !important;
+    margin: 0 !important;
+}
+
+.bpq-terminal-input-row button {
+    background: var(--color-accent) !important;
+    flex-shrink: 0;
+}
+
+/* =========================================================================
+   9. PRE / CODE BLOCKS (config editor, log viewer)
+   ========================================================================= */
+
+pre, code {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    background: var(--color-term-bg);
+    color: var(--color-term-text);
+    border: 1px solid var(--color-term-border);
+    border-radius: 5px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.45;
+}
+
+/* =========================================================================
+   10. MISCELLANEOUS
+   ========================================================================= */
+
+hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 1rem 0;
+}
+
+/* LinBPQ uses <center> tags liberally — override */
+center {
+    text-align: left;
+}
+
+/* LinBPQ status/info paragraphs */
+p {
+    margin: 0.4rem 0 0.75rem;
+    color: var(--color-text);
+}
+
+/* Scrollable wrapper for wide tables on mobile (applied by bpq-terminal.js) */
+.bpq-table-wrap {
+    overflow-x: auto;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}

@@ -106,6 +106,31 @@ does an atomic replace + `os.execv` restart. Form templates use `manifest.json`
 
 ---
 
+## html-theme/ (nginx proxy theme)
+
+Files in `html-theme/` are served to web browsers via the nginx reverse proxy.
+Different rules from the Python apps — these target modern browsers, not serial terminals.
+
+- **ALWAYS** use vanilla JS and CSS — no frameworks, no bundler, no `npm`. The
+  deploy script does a plain `scp`; there is no build step.
+- **NEVER** add external CDN dependencies. Everything must work from `/bpq-theme/`
+  on the local host.
+- **ALWAYS** keep all colours as CSS custom properties in the `:root { }` block
+  at the top of `bpq-modern.css`. Never hardcode colours anywhere else in the file.
+- **ALWAYS** add `[data-theme="dark"]` overrides alongside any new `@media
+  (prefers-color-scheme: dark)` block so the manual toggle works too.
+- **ALWAYS** update `NAV_GROUPS` in `bpq-terminal.js` if LinBPQ adds or renames
+  nav links (match by `textContent`, case-insensitive).
+- **NEVER** use `innerHTML` with unsanitised user data in `files-browser.html`.
+  All filename/path values must pass through the `esc()` helper.
+- **ALWAYS** test `sub_filter` injection by verifying the deployed page source
+  contains `bpq-modern.css` after running `deploy-theme.sh`.
+- When LinBPQ terminal selectors change, update `TERM_OUTPUT_SELECTORS` and
+  `TERM_INPUT_SELECTORS` at the top of `bpq-terminal.js` — never bury selectors
+  inside functions.
+
+---
+
 ## Release Checklist
 
 Every change to `forms.py` or any `.frm` file must follow this sequence:
