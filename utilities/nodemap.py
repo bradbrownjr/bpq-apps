@@ -135,6 +135,17 @@ class NodeCrawler:
         self.allow_ip = allow_ip  # Include IP ports (AXIP, TCP, Telnet) - not RF
         self.op_timeout = op_timeout  # Per-node operation timeout override (seconds); None = auto
         self.visited = set()  # Nodes we've already crawled
+        # Subset of self.visited actually (re)crawled *this run* - distinct from
+        # self.visited itself, which _load_unexplored_nodes() pre-seeds with
+        # every node already in nodemap.json before a single connection is made
+        # this run (so an 'update'-mode run that never re-visits a known node,
+        # e.g. the local/start node, still shows it as visited). export_json()'s
+        # merge step needs the narrower set: it decides which *old* connections
+        # to keep by checking whether either endpoint was re-crawled, and using
+        # self.nodes.keys() (which also includes every preloaded node) there
+        # silently drops a still-true connection for any node this run didn't
+        # actually touch, with nothing appended to replace it.
+        self.freshly_crawled = set()
         self.failed = set()  # Nodes that failed connection
         self.skipped_no_ssid = {}  # Nodes skipped due to tied SSID votes: {callsign: {votes}}
         self.skipped_no_route = set()  # Nodes skipped: not in any ROUTES table (unreachable)
@@ -2955,7 +2966,12 @@ class NodeCrawler:
             
             # Mark as successfully visited after crawl completes
             self.visited.add(callsign)
-            
+            # This callsign's own ROUTES table was just read and its connections
+            # (if any) already appended above - see self.freshly_crawled's own
+            # comment in __init__ for why this has to be tracked separately
+            # from self.visited.
+            self.freshly_crawled.add(callsign)
+
         finally:
             # Disconnect
             try:
@@ -3913,9 +3929,18 @@ class NodeCrawler:
                 nodes_data = existing['nodes']
                 print("Merging with {} existing nodes...".format(len(nodes_data)))
             
-            # Load existing connections and filter out connections from re-crawled nodes
+            # Load existing connections and filter out connections from re-crawled nodes.
+            # Deliberately self.freshly_crawled, not self.nodes.keys() - the latter also
+            # contains every node _load_unexplored_nodes() preloaded from nodemap.json
+            # before this run touched a single connection (in particular the local/start
+            # node itself, on any 'update'-mode run after the first: it's already in
+            # nodemap.json, so it's "known" without being re-crawled). Filtering on that
+            # wider set drops a still-true old connection for a node this run never
+            # actually re-crawled, with no fresh entry appended to replace it - the old
+            # connection just vanishes, silently, and stays gone on every later merge too
+            # since there's now nothing left in nodemap.json to carry forward.
             if 'connections' in existing:
-                crawled_nodes = set(self.nodes.keys())
+                crawled_nodes = self.freshly_crawled
                 for conn in existing.get('connections', []):
                     # Keep connection if neither endpoint was re-crawled
                     if conn['from'] not in crawled_nodes and conn['to'] not in crawled_nodes:
