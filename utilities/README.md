@@ -337,9 +337,16 @@ SSIDs like `-2` (BBS), `-10` (RMS), `-4` (CHAT) vary by sysop. When crawl encoun
 - Use `--ip` for AXIP/Telnet connectivity
 
 **Crawl Modes:**
-- `update` (default) - Skip visited nodes this session
-- `reaudit` - Re-crawl all nodes to refresh data
-- `new-only` - Only discover unexplored neighbors (minimal bandwidth)
+- `update` (default) - Skip nodes nodemap.json already has good data for,
+  but still grow the map using their previously recorded unexplored neighbours
+  (so it works even if the local node can't currently reach them live). The
+  node you crawl from is always re-crawled fresh, regardless of mode.
+- `reaudit` - Re-crawl every reachable node from scratch, verifying it is
+  actually still there. Slower; needs a live connection to discover anything,
+  since it does not use recorded stubs.
+- `new-only` - Load nodemap.json and queue only its unexplored neighbours,
+  with no live walk from the start node at all. The fastest option when you
+  just want to fill in gaps.
 
 ### Requirements
 

@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.0
+Version: 1.8.1
 """
 
-__version__ = '1.8.0'
+__version__ = '1.8.1'
 
 import sys
 import socket
@@ -4473,7 +4473,39 @@ class NodeCrawler:
         # Every mode benefits from the previous export's context, even the
         # ones that do not resume from it: known-good callsigns to judge
         # corruption against, the temporal record, and the ignore list.
-        if not (self.resume or self.crawl_mode == 'new-only'):
+        #
+        # 'update' mode additionally pre-seeds self.visited and the crawl
+        # queue from what nodemap.json already has. Without this, self.visited
+        # only ever tracked nodes touched during the CURRENT run - it started
+        # empty on every invocation that did not also pass --resume - so
+        # "skip already-visited nodes" had nothing pre-existing to skip, and a
+        # plain `update` run re-crawled the entire reachable network exactly
+        # like `reaudit`. _load_unexplored_nodes() both primes (it calls
+        # _prime_from_existing internally) and returns each known node's
+        # previously recorded unexplored neighbours, which is what lets update
+        # mode still grow into new territory while skipping nodes it has
+        # already fully mapped. Skipped for a single forced target
+        # (--callsign): that is a narrow, deliberate one-node operation, not a
+        # general sweep, and does not want a flood of unrelated queued nodes.
+        preseeded_unexplored = []
+        if self.resume or self.crawl_mode == 'new-only':
+            pass  # primed and seeded below, in the resume/new-only branch
+        elif self.crawl_mode == 'update' and not forced_target:
+            preseeded_unexplored = self._load_unexplored_nodes('nodemap.json')
+            # The node being crawled FROM must always be crawled fresh, not
+            # skipped as "already known". Its live MHEARD/ROUTES output is
+            # what update mode uses to discover anything new at hop 1; on
+            # every run after the first, it is also the one node guaranteed
+            # to already be in nodemap.json, so without this a plain update
+            # run would silently stop refreshing local RF data at all and
+            # rely entirely on stale stubs recorded on a previous crawl.
+            effective_start = (start_node or self.callsign or '').upper()
+            if effective_start:
+                effective_base = effective_start.split('-')[0]
+                for known in list(self.visited):
+                    if known.split('-')[0] == effective_base:
+                        self.visited.discard(known)
+        else:
             self._prime_from_existing(self._load_existing_data('nodemap.json'))
 
         # Resume mode OR new-only mode: load unexplored nodes from existing data
@@ -5265,6 +5297,27 @@ class NodeCrawler:
             if self.verbose and (start_node or forced_target):
                 print("Queuing {} with path: {}".format(starting_callsign, starting_path if starting_path else "(direct)"))
             self.queue.append(queue_entry)
+
+            # Fold in update mode's pre-seeded stubs: nodes already fully
+            # known are in self.visited and will be skipped on contact, but
+            # their previously recorded unexplored neighbours still need a
+            # path to reach them, since crawl_node() never runs for the
+            # known node that would otherwise have discovered them fresh.
+            preseeded_count = 0
+            for stub_callsign, stub_path in preseeded_unexplored:
+                if len(stub_path) >= self.max_hops:
+                    continue          # would exceed the requested depth
+                stub_key = (stub_callsign, tuple(stub_path))
+                if stub_key in self.queued_paths:
+                    continue
+                self.queue.append((stub_callsign, stub_path, 200))
+                self.queued_paths.add(stub_key)
+                preseeded_count += 1
+            if preseeded_count:
+                colored_print(
+                    "Update mode: {} known node(s) will be skipped; queued {} "
+                    "previously unexplored neighbor(s)".format(
+                        len(self.visited), preseeded_count), Colors.CYAN)
         
         # BFS traversal with priority sorting:
         # 1. Route quality (higher = better, 0 = blocked)
@@ -6573,9 +6626,12 @@ def main():
         print("")
         print("       -M, --mode MODE")
         print("              Crawl mode: update (default), reaudit, new-only.")
-        print("                update   - Skip already-visited nodes (fastest)")
-        print("                reaudit  - Re-crawl all nodes to verify/update data")
+        print("                update   - Skip nodes already fully known, but still")
+        print("                           grow the map from their recorded stubs (fastest")
+        print("                           useful default; start node always re-crawled)")
+        print("                reaudit  - Re-crawl every reachable node from scratch")
         print("                new-only - Auto-load nodemap.json, queue unexplored neighbors")
+        print("                           only - no live walk from the start node")
         print("")
         print("       -x, --exclude [CALLS|FILE]")
         print("              Exclude callsigns from crawling. CALLS: comma-separated list or")
