@@ -19,6 +19,8 @@ utilities/nodemap.json
 utilities/nodemap.csv
 utilities/nodemap_partial*.json
 utilities/nodemap_partial*.csv
+utilities/nodemap-overrides.json
+utilities/nodemap-geocache.json
 utilities/test_nodemap.json
 .github/nodemap.json
 .github/ws1ec-bpq32.cfg

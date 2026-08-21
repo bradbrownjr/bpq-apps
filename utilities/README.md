@@ -152,8 +152,8 @@ Supported node firmware:
 - `-C`, `--cleanup [TARGET]` - Clean nodemap.json: `nodes`, `connections`, `all`
 
 **Advanced:**
-- `-H`, `--hf` - Include HF ports (VARA/ARDOP/PACTOR)
-- `-I`, `--ip` - Include IP ports (AXIP/Telnet)
+- `-H`, `--hf[:audit|:crawl]` - HF ports (VARA/ARDOP/PACTOR); bare form audits
+- `-I`, `--ip[:audit|:crawl]` - IP ports (AXIP/Telnet); bare form audits
 - `-t`, `--timeout SECONDS` - Override per-node operation timeout (default: 360 + hop_count×240). Increase for nodes with huge ROUTES tables (e.g., `-t 1800` for 30 min)
 - `-g`, `--set-grid CALL GRID` - Set gridsquare for node
 - `-N`, `--note CALL [TEXT]` - Add/update/remove note
@@ -332,9 +332,26 @@ then to take the rest by hand.
 SSIDs like `-2` (BBS), `-10` (RMS), `-4` (CHAT) vary by sysop. When crawl encounters tied votes (e.g., W1DTX-4, W1DTX-7, W1DTX-15), use `--force-ssid W1DTX W1DTX-7` to break the tie and complete the crawl. The script uses ROUTES tables from neighboring nodes to find the actual node SSID.
 
 **Port Filtering:**
-- Default: VHF/UHF packet only (skips HF and IP)
-- Use `--hf` for VARA/ARDOP/PACTOR networks
-- Use `--ip` for AXIP/Telnet connectivity
+
+VHF/UHF (RF) ports are always fully crawled. HF and IP ports are each a
+tri-state, off by default:
+
+- `--hf` or `--hf:audit` (and `-H`) - list what MHEARD reports on VARA/ARDOP/
+  PACTOR ports without ever connecting to it. Good for awareness and mapping
+  ("what's reachable over HF from here") at no air-time cost beyond one MHEARD
+  query per port.
+- `--hf:crawl` - also connect and fully crawl over HF. Slow at 300 baud; only
+  worth it if you actually want HF nodes' own INFO/ROUTES/neighbours.
+- `--ip` / `--ip:audit` / `--ip:crawl` (and `-I`) - the same three states for
+  AXIP/Telnet ports.
+- Omit the flag entirely to skip that port type completely, as before.
+
+Audited stations are recorded under each node's `port_audit` field - the port,
+its description, and who was heard there - kept separate from `neighbors` and
+`connections` since we never actually spoke to them: no INFO, no ROUTES, no
+confirmation the callsign is even a node rather than a user station. A station
+only becomes part of the mapped topology once something actually connects to
+it, either over RF or via `:crawl`.
 
 **Crawl Modes:**
 - `update` (default) - Skip nodes nodemap.json already has good data for,

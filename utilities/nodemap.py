@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.1
+Version: 1.8.2
 """
 
-__version__ = '1.8.1'
+__version__ = '1.8.2'
 
 import sys
 import socket
@@ -994,7 +994,7 @@ class NodeCrawler:
     # Retained for compatibility; CallsignValidator is now authoritative.
     CALLSIGN_PATTERN = CallsignValidator.PATTERN
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None, allow_hf=False, allow_ip=False, op_timeout=None,
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None, hf_mode='off', ip_mode='off', op_timeout=None,
                  resolve_locations=True, auto_ignore=True):
         """
         Initialize crawler.
@@ -1013,8 +1013,10 @@ class NodeCrawler:
             resume: Resume from unexplored nodes in existing nodemap.json (default: False)
             crawl_mode: How to handle existing nodes: 'update' (skip known), 'reaudit' (re-crawl all), 'new-only' (only new nodes)
             exclude: Set of callsigns to exclude from crawling (default: None)
-            allow_hf: Include HF ports (VARA, ARDOP, PACTOR) in crawling (default: False - too slow at 300 baud)
-            allow_ip: Include IP ports (AXIP, TCP, Telnet) in crawling (default: False - not RF)
+            hf_mode: 'off' (default), 'audit' (list what's heard, never connect),
+                     or 'crawl' (connect and fully crawl - slow at 300 baud)
+            ip_mode: 'off' (default), 'audit', or 'crawl' - same tri-state as hf_mode,
+                     for AXIP/Telnet ports
             op_timeout: Override per-node operation timeout in seconds (default: None = 360 + hop_count*240)
             resolve_locations: Allow network lookups (geocoding, QRZ) to fill missing grids (default: True)
             auto_ignore: Add quarantined ghost callsigns to the persistent ignore list (default: True)
@@ -1035,8 +1037,8 @@ class NodeCrawler:
         self.resume_file = None  # Set externally if specific file needed
         self.crawl_mode = crawl_mode  # 'update', 'reaudit', or 'new-only'
         self.exclude = {self._normalize_callsign(c) for c in exclude} if exclude else set()  # Nodes to skip
-        self.allow_hf = allow_hf  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
-        self.allow_ip = allow_ip  # Include IP ports (AXIP, TCP, Telnet) - not RF
+        self.hf_mode = hf_mode  # 'off', 'audit', or 'crawl' - HF ports (VARA/ARDOP/PACTOR)
+        self.ip_mode = ip_mode  # 'off', 'audit', or 'crawl' - IP ports (AXIP/Telnet)
         self.op_timeout = op_timeout  # Per-node operation timeout override (seconds); None = auto
         self.visited = set()  # Nodes we've already crawled
         # Subset of self.visited actually (re)crawled *this run* - distinct from
@@ -3948,6 +3950,7 @@ class NodeCrawler:
             mheard_neighbors = []
             mheard_ports = {}  # {callsign: port_num}
             mheard_ssids = {}  # {base_callsign: 'CALLSIGN-SSID'} - from actual RF
+            port_audit = []  # HF/IP ports in 'audit' mode: [{port, port_type, description, heard}]
             
             # Kantronics / X1J4 fallback: single-port devices don't have PORTS command
             # Send plain MHEARD (no port argument) and parse columnar output
@@ -4044,25 +4047,67 @@ class NodeCrawler:
                             mheard_ports[base_call] = port_num
             for port_info in ports_list:
                 port_type = port_info.get('port_type', 'rf')
-                # Filter ports based on type and allow_hf/allow_ip flags
-                # RF (VHF/UHF) always included; HF only if --hf; IP only if --ip
-                if port_type == 'ip' and not self.allow_ip:
+                # RF (VHF/UHF) is always fully processed. HF and IP each have
+                # their own tri-state: 'off' skips the port entirely, 'audit'
+                # lists what MHEARD reports without ever connecting to it,
+                # 'crawl' behaves like RF - full discovery and a place in the
+                # queue. Set via --hf[:audit|:crawl] / --ip[:audit|:crawl].
+                if port_type == 'hf':
+                    port_mode = self.hf_mode
+                elif port_type == 'ip':
+                    port_mode = self.ip_mode
+                else:
+                    port_mode = 'crawl'
+
+                if port_mode == 'off':
                     if self.verbose:
-                        print("    Skipping IP port {} ({})".format(port_info['number'], port_info['description']))
+                        print("    Skipping {} port {} ({})".format(
+                            port_type.upper(), port_info['number'], port_info['description']))
                     continue
-                if port_type == 'hf' and not self.allow_hf:
-                    if self.verbose:
-                        print("    Skipping HF port {} ({})".format(port_info['number'], port_info['description']))
-                    continue
-                    
+
                 if check_deadline():
                     return
                 port_num = port_info['number']
                 mheard_output = self._send_command(tn, 'MHEARD {}'.format(port_num), timeout=cmd_timeout, expect_content='Heard')
                 time.sleep(inter_cmd_delay)
-                
-                # Parse MHEARD with full callsign-SSID info
                 lines = mheard_output.split('\n')
+
+                if port_mode == 'audit':
+                    # List what is out there without ever dialing it: nothing
+                    # parsed here reaches mheard_neighbors, so nothing on this
+                    # port enters the crawl queue. Recorded separately on the
+                    # node for awareness/mapping rather than as a first-class
+                    # mapped node - we have no INFO or ROUTES for a station we
+                    # never connected to, only "heard here, this recently".
+                    heard_here = []
+                    for line in lines:
+                        if 'Heard List' in line or not line.strip():
+                            continue
+                        match = re.match(r'^(\w+(?:-\d+)?)\s+(\d+):(\d+):(\d+):(\d+)', line)
+                        if not match:
+                            continue
+                        full_callsign = match.group(1)
+                        base_call = full_callsign.split('-')[0]
+                        if not self._is_valid_callsign(base_call):
+                            continue
+                        days, hours, minutes, seconds = (int(match.group(i)) for i in (2, 3, 4, 5))
+                        heard_here.append({
+                            'callsign': full_callsign,
+                            'last_heard_seconds': days * 86400 + hours * 3600 + minutes * 60 + seconds,
+                        })
+                    if heard_here:
+                        port_audit.append({
+                            'port': port_num,
+                            'port_type': port_type,
+                            'description': port_info.get('description', ''),
+                            'heard': heard_here,
+                        })
+                        if self.verbose:
+                            print("    Audited {} port {}: {} station(s) heard, not crawled".format(
+                                port_type.upper(), port_num, len(heard_here)))
+                    continue  # never falls through to neighbor/queue logic below
+
+                # port_mode == 'crawl' from here (RF ports, or HF/IP opted all the way in).
                 for line in lines:
                     # Skip header lines
                     if 'Heard List' in line or not line.strip():
@@ -4304,7 +4349,8 @@ class NodeCrawler:
                 'seen_aliases': other_aliases,  # Other nodes' aliases seen in NODES
                 'netrom_ssids': mheard_ssids,  # From MHEARD (actual RF transmissions)
                 'applications': applications,  # From ? command (BBS, CHAT, RMS, etc.)
-                'commands': commands  # From ? command (all available commands)
+                'commands': commands,  # From ? command (all available commands)
+                'port_audit': port_audit  # HF/IP stations heard but not crawled (awareness only)
             }
             
             # Update node_route_ports with freshly crawled port data
@@ -5461,6 +5507,15 @@ class NodeCrawler:
         'crawl_successes', 'consecutive_failures', 'notes',
     )
 
+    # Fields that are a point-in-time observation, not a durable fact: an
+    # empty result here means "we checked and there is currently nothing",
+    # not "we didn't check" - unlike a gridsquare, which stays true forever
+    # once known, so a crawl finding nothing new for it must not blank it.
+    # port_audit specifically is HF/IP awareness data (see --hf:audit /
+    # --ip:audit): keeping a stale sighting around after the station has
+    # gone quiet would defeat the point of auditing current conditions.
+    _ALWAYS_FRESH_FIELDS = ('port_audit',)
+
     def _merge_node_record(self, callsign, fresh, existing):
         """Combine a freshly crawled node record with what we already had.
 
@@ -5469,7 +5524,9 @@ class NodeCrawler:
         gridsquare=None, so the next write silently erased the value a sysop
         had typed in. Fresh observations win for anything the network reports,
         history fields are carried forward, and a field the crawl came back
-        empty-handed on keeps its previous value rather than nulling it.
+        empty-handed on keeps its previous value rather than nulling it -
+        except _ALWAYS_FRESH_FIELDS, which describe the present moment rather
+        than an accumulated fact and so must be allowed to go back to empty.
         """
         if not existing:
             merged = dict(fresh)
@@ -5477,6 +5534,9 @@ class NodeCrawler:
             merged = dict(existing)
             for key, value in fresh.items():
                 if key in self._HISTORY_FIELDS:
+                    continue
+                if key in self._ALWAYS_FRESH_FIELDS:
+                    merged[key] = value
                     continue
                 # An empty result means "this crawl learned nothing", not
                 # "the previous value is now known to be wrong".
@@ -6052,6 +6112,30 @@ def review_quarantined_callsigns(crawler):
         print("")
         print("Whitelisted {} callsign(s).".format(restored))
     return restored
+
+
+def _parse_port_mode(argv, long_flag, short_flag):
+    """Tri-state parse for --hf[:audit|:crawl] / --ip[:audit|:crawl].
+
+    Bare --hf or -H means 'audit': list what is heard on that port type
+    without ever connecting to it. --hf:crawl opts into the old, slower
+    behaviour of actually dialing out and fully crawling through it. Absent
+    entirely, the port type is skipped altogether ('off').
+    """
+    mode = 'off'
+    prefix = long_flag + ':'
+    for arg in argv:
+        if arg == long_flag or arg == short_flag:
+            mode = 'audit'
+        elif arg.startswith(prefix):
+            suffix = arg[len(prefix):].strip().lower()
+            if suffix in ('audit', 'crawl'):
+                mode = suffix
+            else:
+                colored_print("Warning: unknown mode '{}' for {} - use {}:audit or {}:crawl".format(
+                    suffix, long_flag, long_flag, long_flag), Colors.YELLOW)
+                mode = 'audit'
+    return mode
 
 
 def main():
@@ -6637,16 +6721,20 @@ def main():
         print("              Exclude callsigns from crawling. CALLS: comma-separated list or")
         print("              filename. Default: exclusions.txt if no argument given.")
         print("")
-        print("       -H, --hf")
-        print("              Include HF ports (VARA, ARDOP, PACTOR). Default: skip (300 baud).")
+        print("       -H, --hf[:audit|:crawl]")
+        print("              HF ports (VARA, ARDOP, PACTOR). Default: skip entirely.")
+        print("              --hf or --hf:audit lists what MHEARD reports, never connects.")
+        print("              --hf:crawl also connects and fully crawls - slow at 300 baud.")
         print("")
         print("       -t, --timeout SECONDS")
         print("              Override per-node operation timeout. Default: 360 + hop_count*240.")
         print("              Increase for nodes with huge ROUTES tables or poor RF paths.")
         print("              Example: --timeout 1800 (30 minutes per node).")
         print("")
-        print("       -I, --ip")
-        print("              Include IP ports (AXIP, TCP, Telnet). Default: skip (not RF).")
+        print("       -I, --ip[:audit|:crawl]")
+        print("              IP ports (AXIP, TCP, Telnet). Default: skip entirely.")
+        print("              --ip or --ip:audit lists what MHEARD reports, never connects.")
+        print("              --ip:crawl also connects and fully crawls over IP.")
         print("")
         print("   Node Operations:")
         print("       -c, --callsign CALL")
@@ -7163,8 +7251,8 @@ def main():
     op_timeout = None  # Per-node operation timeout override (seconds)
     generate_maps = False  # Will be set by user prompt or silent mode
     silent_mode = '--yes' in sys.argv or '-y' in sys.argv  # Autonomous mode - no prompts
-    allow_hf = '--hf' in sys.argv or '-H' in sys.argv  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
-    allow_ip = '--ip' in sys.argv or '-I' in sys.argv  # Include IP ports (AXIP, TCP, Telnet) - not RF
+    hf_mode = _parse_port_mode(sys.argv, '--hf', '-H')  # 'off', 'audit', or 'crawl'
+    ip_mode = _parse_port_mode(sys.argv, '--ip', '-I')   # 'off', 'audit', or 'crawl'
     # Location lookups reach the internet; --no-lookup keeps a crawl entirely
     # on-net, which matters when the uplink is the thing that just failed.
     resolve_locations = '--no-lookup' not in sys.argv
@@ -7352,7 +7440,7 @@ def main():
                 colored_print("Error: --timeout requires an integer (seconds)", Colors.RED)
                 sys.exit(1)
             i += 2
-        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '-H', '--ip', '-I', '--yes', '-y']:
+        elif arg in ['--verbose', '-v', '--overwrite', '-o', '--display-nodes', '-d', '--hf', '-H', '--ip', '-I', '--yes', '-y'] or arg.startswith('--hf:') or arg.startswith('--ip:'):
             # Known flags without arguments
             i += 1
         elif arg.startswith('-') and not arg.isdigit():
@@ -7379,7 +7467,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler with specified crawl mode and exclusions
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, allow_hf=allow_hf, allow_ip=allow_ip, op_timeout=op_timeout, resolve_locations=resolve_locations, auto_ignore=auto_ignore)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, hf_mode=hf_mode, ip_mode=ip_mode, op_timeout=op_timeout, resolve_locations=resolve_locations, auto_ignore=auto_ignore)
     crawler.silent_mode = silent_mode  # Set silent mode for skipping interactive prompts
     
     # Set resume file if specified

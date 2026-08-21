@@ -275,7 +275,7 @@ class Option(object):
     """
 
     def __init__(self, key, label, kind, value=None, choices=None,
-                 flag=None, help_text='', positional=False):
+                 flag=None, help_text='', positional=False, colon_choice=False):
         self.key = key
         self.label = label
         self.kind = kind
@@ -284,6 +284,11 @@ class Option(object):
         self.flag = flag
         self.help_text = help_text
         self.positional = positional
+        # A 'choice' option normally renders as two argv tokens ("--mode
+        # reaudit"). Some flags - --hf and --ip - take their mode as a colon
+        # suffix on one token ("--hf:crawl") instead, so the choice needs to
+        # know which shape to emit.
+        self.colon_choice = colon_choice
 
     def display(self):
         if self.kind == 'toggle':
@@ -301,6 +306,8 @@ class Option(object):
             return []
         if self.kind == 'choice' and self.value == self.choices[0]:
             return []                      # first choice is the default
+        if self.kind == 'choice' and self.colon_choice:
+            return ['{}:{}'.format(self.flag, self.value)]
         return [self.flag, str(self.value)]
 
     def cycle(self, step=1):
@@ -349,10 +356,14 @@ def build_options():
                help_text='Callsigns or a filename. Blank uses exclusions.txt if present.'),
         Option('timeout', 'Per-node timeout', 'number', None, flag='--timeout',
                help_text='Seconds. Blank = 360 + 240 per hop. Raise for slow paths.'),
-        Option('hf', 'Include HF ports', 'toggle', False, flag='--hf',
-               help_text='VARA/ARDOP/PACTOR. Slow at 300 baud.'),
-        Option('ip', 'Include IP ports', 'toggle', False, flag='--ip',
-               help_text='AXIP/Telnet. Not RF, so off by default.'),
+        Option('hf', 'HF ports', 'choice', 'off', choices=['off', 'audit', 'crawl'],
+               flag='--hf', colon_choice=True,
+               help_text='off=skip; audit=list VARA/ARDOP/PACTOR contacts without '
+                         'connecting; crawl=connect and fully crawl (slow, 300 baud)'),
+        Option('ip', 'IP ports', 'choice', 'off', choices=['off', 'audit', 'crawl'],
+               flag='--ip', colon_choice=True,
+               help_text='off=skip; audit=list AXIP/Telnet contacts without connecting; '
+                         'crawl=connect and fully crawl over IP'),
         Option('nolookup', 'Skip internet lookups', 'toggle', False, flag='--no-lookup',
                help_text='Do not geocode or look up callsigns to fill in locations'),
         Option('noignore', 'Keep retrying bad calls', 'toggle', False,
