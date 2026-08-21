@@ -154,7 +154,7 @@ Supported node firmware:
 **Advanced:**
 - `-H`, `--hf[:audit|:crawl]` - HF ports (VARA/ARDOP/PACTOR); bare form audits
 - `-I`, `--ip[:audit|:crawl]` - IP ports (AXIP/Telnet); bare form audits
-- `-t`, `--timeout SECONDS` - Override per-node operation timeout (default: 360 + hop_count×240). Increase for nodes with huge ROUTES tables (e.g., `-t 1800` for 30 min)
+- `-t`, `--timeout SECONDS` - Override per-node operation timeout (default: 420 + hop_count×300). Increase for nodes with huge ROUTES tables (e.g., `-t 1800` for 30 min)
 - `-g`, `--set-grid CALL GRID` - Set gridsquare for node
 - `-N`, `--note CALL [TEXT]` - Add/update/remove note
 

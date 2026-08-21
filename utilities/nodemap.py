@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.2
+Version: 1.8.3
 """
 
-__version__ = '1.8.2'
+__version__ = '1.8.3'
 
 import sys
 import socket
@@ -1666,14 +1666,16 @@ class NodeCrawler:
                                         # Connect to neighbor
                                         neighbor_cmd = "C {}\r".format(alias).encode('ascii')
                                         tn.write(neighbor_cmd)
+                                        self._log('SEND', neighbor_cmd)
                                         time.sleep(1)
-                                        
+
                                         # Look for CONNECTED response
                                         response = ""
                                         start_time = time.time()
                                         while time.time() - start_time < 10:  # Short timeout
                                             try:
                                                 chunk = tn.read_some()
+                                                self._log('RECV', chunk)
                                                 response += chunk.decode('ascii', errors='ignore')
                                                 if 'CONNECTED' in response.upper():
                                                     if self.verbose:
@@ -1808,6 +1810,12 @@ class NodeCrawler:
                 
                 try:
                     tn.write(cmd)
+                    # Connect attempts previously went out unlogged, so a
+                    # failed or timed-out connect (e.g. the N1QFY and K1NYY
+                    # timeouts on the 2026-08-21 crawl) left no trace at all
+                    # in telnet.log - only the next login attempt would show
+                    # up, minutes later, with nothing to explain the gap.
+                    self._log('SEND', cmd)
                 except socket.timeout:
                     print("  Connection to {} timed out (write blocked)".format(callsign))
                     tn.close()
@@ -1844,8 +1852,9 @@ class NodeCrawler:
                         # Use read_very_eager() instead of read_some() - it's non-blocking
                         chunk = tn.read_very_eager()
                         if chunk:
+                            self._log('RECV', chunk)
                             response += chunk.decode('ascii', errors='ignore')
-                        
+
                         # Check for connection success
                         if 'CONNECTED' in response.upper():
                             connected = True
@@ -1915,6 +1924,7 @@ class NodeCrawler:
                         cmd = "C {}\r".format(fallback_alias).encode('ascii')
                         try:
                             tn.write(cmd)
+                            self._log('SEND', cmd)
                         except:
                             tn.close()
                             return None
@@ -1936,8 +1946,9 @@ class NodeCrawler:
                             
                             try:
                                 chunk = tn.read_some()
+                                self._log('RECV', chunk)
                                 response += chunk.decode('ascii', errors='ignore')
-                                
+
                                 if 'CONNECTED' in response.upper():
                                     connected = True
                                     print("  Connected to {} via NetRom alias {}".format(callsign, alias))
@@ -2068,69 +2079,62 @@ class NodeCrawler:
             # Wait for command echo before reading response
             # This helps synchronize on slow multi-hop RF links
             time.sleep(0.3)
-            
-            # Read all available data with retries
-            # Over RF, responses arrive in chunks with gaps
-            # For large responses (NODES, ROUTES), use short per-read timeout to avoid blocking
-            # and calculate attempts based on overall timeout
+
+            # Poll non-blockingly (read_very_eager) instead of parking in
+            # read_until() for a fixed per-read timeout every iteration - that
+            # blocked the FULL timeout even when the response had already
+            # finished arriving, costing ~35-45s of pure dead air after every
+            # command on a multi-hop node (measured against a real crawl's
+            # telnet.log) and consuming most of the per-node operation budget
+            # on silence rather than actual RF latency. Same read_very_eager
+            # + wall-clock-deadline pattern already used in _connect_to_node.
+            #
+            # quiet_window scales with the caller's timeout (itself scaled by
+            # hop count via cmd_timeout in crawl_node), so a distant,
+            # genuinely slow multi-hop response still gets patience - it just
+            # stops paying for silence the moment the response goes quiet.
+            #
+            # The floor here is deliberately generous: a real 2-hop MHEARD
+            # response (telnet.log, 2026-08-21 15:24:28) went 16s between two
+            # data-bearing chunks while still mid-response. A short
+            # quiet_window would read that as "done" and truncate the
+            # NODES/ROUTES/MHEARD table it was in the middle of - silent data
+            # loss, which is worse than the wasted time this loop exists to
+            # cut. 25s gives that observed worst case comfortable margin.
+            quiet_window = min(4.0 + (timeout * 0.35), 25.0)
+            poll_interval = 0.4
+
             response = b''
-            read_attempts = 0
-            # Per-read timeout: scale with overall timeout for long commands (MHEARD, INFO)
-            # Use 5s for short commands, up to 8s for long commands over multi-hop RF
-            per_read_timeout = min(8, max(3, timeout / 2))
-            max_attempts = max(8, int(timeout / 2))  # More attempts for reliability
-            last_response_len = 0
-            stable_count = 0  # Count consecutive attempts with no growth
-            
-            while read_attempts < max_attempts:
-                read_attempts += 1
-                
-                try:
-                    # Try to read until prompt (use short timeout to avoid blocking on large output)
-                    chunk = tn.read_until(b'} ', timeout=per_read_timeout)
+            start_time = time.time()
+            last_growth = start_time
+
+            while True:
+                elapsed = time.time() - start_time
+                if elapsed >= timeout:
+                    break
+
+                chunk = tn.read_very_eager()
+                if chunk:
                     self._log('RECV', chunk)
                     response += chunk
-                    
-                    # Try to get second prompt (actual response follows first prompt)
-                    chunk2 = tn.read_until(b'} ', timeout=per_read_timeout)
-                    self._log('RECV', chunk2)
-                    response += chunk2
-                except:
-                    pass
-                
-                # Consume any extra buffered data
-                time.sleep(1.0)  # Give more time for trailing data to arrive over RF
-                try:
-                    extra = tn.read_very_eager()
-                    if extra:
-                        self._log('RECV', extra)
-                        response += extra
-                except:
-                    pass
-                
-                # Check if response stopped growing
-                if len(response) > 0 and len(response) == last_response_len:
-                    stable_count += 1
-                    # Need 3 consecutive stable readings for multi-hop RF (3-4 seconds with no data)
-                    # This prevents premature termination of long MHEARD/INFO outputs
-                    if stable_count >= 3:
+                    last_growth = time.time()
+                    continue
+
+                quiet_for = time.time() - last_growth
+                if response and quiet_for >= quiet_window:
+                    break
+
+                # Exit early once expected content has shown up and things
+                # have gone quiet for a short tail-wait, rather than always
+                # burning the full quiet_window.
+                if expect_content and response:
+                    decoded_check = response.decode('ascii', errors='ignore')
+                    if (expect_content.lower() in decoded_check.lower()
+                            and quiet_for >= max(1.0, quiet_window / 2)):
                         break
-                else:
-                    stable_count = 0  # Reset if we got more data
-                last_response_len = len(response)
-                
-                # If we have expected content, check for it
-                decoded_check = response.decode('ascii', errors='ignore')
-                if expect_content and expect_content.lower() in decoded_check.lower():
-                    # Still wait for stable response even if we found expected content
-                    # (there might be more data after it)
-                    if stable_count >= 2:  # Can exit with 2 stable if we found expected content
-                        break
-                
-                # Delay before retry (already did 1.0s above)
-                if read_attempts < max_attempts and stable_count == 0:
-                    time.sleep(0.5)
-            
+
+                time.sleep(poll_interval)
+
             decoded = response.decode('ascii', errors='ignore')
             
             # Validate response content if expected
@@ -3539,7 +3543,14 @@ class NodeCrawler:
         node, which is the normal case in update mode.
         """
         for callsign, node in nodes_data.items():
-            self.node_history[callsign] = {
+            # Keyed by base callsign: nodemap.json stores remote nodes with
+            # their SSID (e.g. 'KS1R-15'), but crawl_node() and every other
+            # writer of node_history only ever sees the base call ('KS1R') -
+            # loading under the SSID key meant a re-crawled node's history
+            # was written to a different dict entry than the one export read
+            # back, so status/last_crawled silently reverted to whatever was
+            # loaded here on every single run.
+            self.node_history[_base_call(callsign)] = {
                 'first_seen': node.get('first_seen') or node.get('timestamp'),
                 'last_seen': node.get('last_seen'),
                 'last_crawled': node.get('last_crawled'),
@@ -3574,11 +3585,10 @@ class NodeCrawler:
         differently from one that has genuinely gone quiet.
         """
         base = _base_call(callsign)
-        history = self.node_history.get(callsign, {})
+        history = self.node_history.get(base, {})
         failures = history.get('consecutive_failures', 0)
 
-        if callsign in self.freshly_crawled or base in {
-                _base_call(c) for c in self.freshly_crawled}:
+        if base in self.freshly_crawled:
             return 'online'
 
         heard = self.last_heard.get(base)
@@ -3601,8 +3611,8 @@ class NodeCrawler:
 
     def _apply_temporal_fields(self, callsign, node):
         """Stamp first/last seen and status onto one exported node record."""
-        history = self.node_history.get(callsign, {})
         base = _base_call(callsign)
+        history = self.node_history.get(base, {})
 
         # Fall back to the previous export's timestamp rather than to now:
         # claiming a node was seen this instant because we happened to load a
@@ -3615,7 +3625,7 @@ class NodeCrawler:
         # includes being heard by somebody else even when we never reached it.
         last_seen = history.get('last_seen') or node.get('last_seen')
         heard = self.last_heard.get(base)
-        if callsign in self.freshly_crawled:
+        if base in self.freshly_crawled:
             last_seen = self.crawl_started
         elif heard is not None:
             heard_at = time.time() - heard
@@ -3723,13 +3733,22 @@ class NodeCrawler:
         # Don't add to visited yet - only after successful connection
         # This allows retrying via alternate paths if this path fails
         
-        # Calculate command timeout based on path length
-        # At 1200 baud simplex: ~10s per hop for command/response cycle
-        # Base timeout 5s + 10s per hop, max 60s
-        # hop_count = number of RF jumps from start node
-        # path=[] means 0 hops (local node), path=[KC1JMH] means 1 hop, etc.
-        hop_count = len(path) if path else (0 if callsign == self.callsign else 1)
-        cmd_timeout = min(5 + (hop_count * 10), 60)
+        # Calculate command timeout based on path length.
+        # hop_count = number of RF jumps from start node to THIS node.
+        # path holds intermediate hops only, not the target itself, so a
+        # node reached via one relay (path=['KC1JMH'], target=KS1R) is 2
+        # hops away, not 1 - this used to under-count every multi-hop node
+        # by exactly one, handing it a timeout and operation deadline sized
+        # for the wrong distance and killing the crawl mid-node.
+        hop_count = (len(path) + 1) if path else (0 if callsign == self.callsign else 1)
+        # A real 2-hop MHEARD response measured on WS1EC took 43s to finish
+        # arriving (telnet.log, 2026-08-21 15:24:28) - the old 5+10/hop
+        # formula gave that command only 15s, and _send_command's previous
+        # implementation got away with it only because its retry loop wasn't
+        # actually bounded by this value. Now that _send_command polls to a
+        # hard deadline of `timeout`, the formula has to reflect real 1200
+        # baud multi-hop relay latency, with margin for network contention.
+        cmd_timeout = min(10 + (hop_count * 25), 120)
         
         # Notify about connection attempt before connecting
         if not path:
@@ -3810,13 +3829,17 @@ class NodeCrawler:
         
         # Set overall operation timeout (commands + processing)
         # Allow more generous timeout for nodes with many neighbors
-        # 6 minutes base + 4 minutes per hop (was 4min + 3min/hop)
-        # RF at 1200 baud is slow; need patience for multi-hop responses
+        # 7 minutes base + 5 minutes per hop (was 6min + 4min/hop)
+        # RF at 1200 baud is slow; need patience for multi-hop responses,
+        # plus margin for other traffic contending on the same channel.
+        # A node can issue a dozen commands in one crawl (?, PORTS, NODES,
+        # ROUTES, one MHEARD per port, INFO, ?) each now budgeted up to
+        # cmd_timeout (see above) - this has to cover all of them.
         # Override with --timeout if the default isn't enough (e.g. nodes with huge ROUTES tables)
         if self.op_timeout:
             operation_deadline = time.time() + self.op_timeout
         else:
-            operation_deadline = time.time() + 360 + (hop_count * 240)
+            operation_deadline = time.time() + 420 + (hop_count * 300)
         
         # Track partial crawl data in case of timeout
         partial_data = {
@@ -5695,11 +5718,17 @@ class NodeCrawler:
             # Add or update node. Field-level merge, not replacement: a
             # crawl that comes back without a gridsquare must not erase one
             # that is already recorded.
-            if existing_key and existing_key != callsign:
-                # Merge into existing SSID variant
-                continue
-            nodes_data[callsign] = self._merge_node_record(
-                callsign, node_data, nodes_data.get(callsign))
+            #
+            # target_key is deliberately existing_key (the SSID-bearing key,
+            # e.g. 'KS1R-15') rather than callsign (the base call this run
+            # crawled under, e.g. 'KS1R') whenever the two differ. Writing
+            # under callsign here used to silently create a second, wrong
+            # entry - or with the old bare `continue`, drop this run's fresh
+            # data on the floor entirely, since self.nodes is keyed by base
+            # call but nodemap.json keys remote nodes with their SSID.
+            target_key = existing_key or callsign
+            nodes_data[target_key] = self._merge_node_record(
+                target_key, node_data, nodes_data.get(target_key))
         
         # Convert intermittent_links keys to strings for JSON serialization
         intermittent_serialized = {}
