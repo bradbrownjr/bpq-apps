@@ -15,6 +15,15 @@ Features:
 - Exports to JSON and CSV formats
 - Reads BPQ telnet port from bpq32.cfg automatically
 - Skips IP-based ports (focuses on RF connectivity)
+- Detects and quarantines corrupt callsigns from un-FEC'd MHEARD packets
+- Tracks first/last seen per node and link, and marks nodes offline or stale
+- Remembers sysop-entered gridsquares in nodemap-overrides.json
+- Fills missing locations from INFO text, geocoding, Callook/HamDB/QRZ
+- Routes by NET/ROM link quality rather than raw hop count
+
+Sidecar files (all safe to edit or delete):
+  nodemap-overrides.json  sysop-entered grids, ignore list, whitelist
+  nodemap-geocache.json   cached location lookups, so repeat crawls are free
 
 Network Resources:
 - Maine Packet Network: https://www.mainepacketradio.org/
@@ -25,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.7.93
+Version: 1.8.0
 """
 
-__version__ = '1.7.93'
+__version__ = '1.8.0'
 
 import sys
 import socket
@@ -44,15 +53,28 @@ from collections import deque
 # Note: telnetlib was deprecated in Python 3.11 and removed in 3.13
 # For Python 3.13+, install telnetlib3: pip install telnetlib3
 # Then use: from telnetlib3.telnetlib import Telnet (drop-in replacement)
+telnetlib = None
+_TELNET_IMPORT_ERROR = (
+    "telnetlib is not available. Python 3.13 removed it from the standard\n"
+    "library; install the drop-in replacement with: pip install telnetlib3")
 try:
     import telnetlib
 except ImportError:
     # Python 3.13+ - telnetlib removed from stdlib
     try:
-        from telnetlib3.telnetlib import Telnet as telnetlib
-        print("Note: Using telnetlib3 (telnetlib not available in Python 3.13+)")
+        from telnetlib3 import telnetlib
     except ImportError:
-        print("Error: telnetlib not available. For Python 3.13+, install: pip install telnetlib3")
+        # Deliberately not fatal at import time. Plenty of what this script
+        # does never opens a socket - reading the map, setting a gridsquare,
+        # managing the ignore list - and refusing to start at all would make
+        # those unusable on a current Python for no reason.
+        telnetlib = None
+
+
+def _require_telnet():
+    """Fail loudly, but only once something actually needs to connect."""
+    if telnetlib is None:
+        colored_print("Error: " + _TELNET_IMPORT_ERROR, Colors.RED)
         sys.exit(1)
 
 
@@ -87,13 +109,893 @@ if sys.version_info < (3, 5):
     sys.exit(1)
 
 
+# ---------------------------------------------------------------------------
+# Callsign quality control
+# ---------------------------------------------------------------------------
+#
+# MHEARD output is the only discovery source that arrives as bare AX.25 UI
+# frames: no FEC, no ARQ, nothing that would catch a flipped bit before the
+# TNC prints the address. ROUTES and the NODES table, by contrast, arrive
+# inside an L2-acked NET/ROM session, so a callsign that shows up there has
+# already survived a CRC. That asymmetry is the whole basis of the scoring
+# below - MHEARD is a lead, structured output is evidence.
+#
+# Note that a node's `netrom_ssids` field is NOT structured evidence despite
+# the name: crawl_node() populates it from the MHEARD SSIDs, not from ROUTES,
+# so every ghost callsign carries one. Only `routes` and `own_aliases` count.
+
+
+class CallsignValidator:
+    """Structural validation and bit-error detection for observed callsigns."""
+
+    # 1-2 character prefix (letter-letter, letter-digit, or digit-letter),
+    # one digit, 1-4 letter suffix, optional AX.25 SSID.
+    PATTERN = re.compile(r'^([A-Z0-9]{1,2}\d[A-Z]{1,4})(?:-(\d{1,2}))?$')
+
+    # ITU prefix blocks allocated to the amateur service, keyed by first
+    # character. Q is deliberately absent - it is reserved for Q signals and is
+    # never issued to a station, which makes it a free catch for corruption
+    # (a flipped bit in "N1QFY" lands on "Q1QFY" surprisingly often).
+    ALLOCATED_PREFIXES = {
+        'A': 'ABCDEFGHIJKLMNOPRSTUVWXYZ23456789',
+        'B': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'C': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789',
+        'D': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ2345679',
+        'E': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
+        'F': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'G': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'H': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ2345678',
+        'I': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'J': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ2345678',
+        'K': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        'L': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789',
+        'M': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'N': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        'O': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'P': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
+        'R': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        'S': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789',
+        'T': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ2345678',
+        'U': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'V': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234568',
+        'W': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        'X': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'Y': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'Z': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ2345678',
+        '2': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '3': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        '4': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '5': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        '6': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '7': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        '8': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '9': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    }
+
+    # AX.25 destination fields that name a protocol or a broadcast, not a
+    # station. BPQ will happily list these in MHEARD.
+    RESERVED_WORDS = frozenset([
+        'MAIL', 'NODES', 'NODE', 'ID', 'BEACON', 'QST', 'CQ', 'APRS', 'RELAY',
+        'WIDE', 'TRACE', 'TCPIP', 'NETROM', 'BBS', 'CHAT', 'RMS', 'SYNC',
+        'TEST', 'ALL', 'TIME', 'OPENBCM', 'FBB',
+    ])
+
+    @staticmethod
+    def is_structurally_valid(callsign):
+        """True if the string could be a real callsign at all."""
+        if not callsign:
+            return False
+        up = callsign.upper()
+        if up.split('-')[0] in CallsignValidator.RESERVED_WORDS:
+            return False
+        m = CallsignValidator.PATTERN.match(up)
+        if not m:
+            return False
+        # AX.25 carries the SSID in 4 bits, so 0-15 and nothing else.
+        if m.group(2) is not None and int(m.group(2)) > 15:
+            return False
+        prefix = m.group(1)
+        allowed = CallsignValidator.ALLOCATED_PREFIXES.get(prefix[0])
+        if allowed is None:
+            return False
+        if len(prefix) > 1 and prefix[1] not in allowed:
+            return False
+        return True
+
+    @staticmethod
+    def _substitution_distance(a, b):
+        """Count differing positions, or None when the lengths differ.
+
+        Deliberately not a full edit distance. A corrupted AX.25 address keeps
+        its length - the field is a fixed 7 bytes - so real corruption shows up
+        as substitution, never as an insertion or deletion. Using Levenshtein
+        here would pull in genuine callsigns that merely happen to be short
+        (W1ZE is edit-distance 2 from W1EMA, and both are real stations).
+        """
+        if len(a) != len(b):
+            return None
+        return sum(1 for x, y in zip(a, b) if x != y)
+
+    @staticmethod
+    def classify(raw_callsign, confirmed, structured=None, heard_by=1):
+        """Judge one observed callsign.
+
+        Args:
+            raw_callsign: the callsign as it came off the wire, case preserved
+            confirmed: set of base callsigns we connected to or read from
+                       an own_aliases map - these are known-good anchors
+            structured: set of base callsigns seen in some node's ROUTES table
+            heard_by: how many distinct nodes reported hearing it
+
+        Returns:
+            (verdict, reason) where verdict is 'confirmed', 'unverified'
+            or 'suspect'. Callers quarantine 'suspect' and keep the rest.
+        """
+        structured = structured or set()
+        base = raw_callsign.split('-')[0]
+        up = base.upper()
+
+        # Structured NET/ROM corroboration outranks every heuristic below it.
+        # This is the escape hatch that keeps a genuinely new station from
+        # being quarantined just for resembling an established one.
+        trusted = up in confirmed or up in structured
+
+        if up in CallsignValidator.RESERVED_WORDS:
+            return 'suspect', 'reserved_word'
+
+        # AX.25 shifts uppercase ASCII into the address field; there is no way
+        # to transmit a lowercase callsign. Lowercase means a flipped bit.
+        if base != base.upper() and not trusted:
+            return 'suspect', 'case_anomaly'
+
+        if not CallsignValidator.is_structurally_valid(base):
+            m = CallsignValidator.PATTERN.match(up)
+            if m and m.group(2) is not None and int(m.group(2)) > 15:
+                return 'suspect', 'bad_ssid'
+            if m:
+                return 'suspect', 'unallocated_prefix'
+            return 'suspect', 'malformed'
+
+        if trusted:
+            return 'confirmed', 'structured'
+
+        # Bit-error signature: same length as a known-good call, differing in
+        # only a position or two. The threshold tightens for short callsigns -
+        # at four characters, two substitutions is half the string, and real
+        # pairs collide there (N1EP vs NG1P differ in 2 of 4 positions).
+        limit = 1 if len(up) <= 4 else 2
+        # Report the closest anchor, not merely the first one that matched:
+        # this string is what a sysop reads when deciding whether the
+        # quarantine was right, so it needs to name the likeliest original.
+        best_match, best_distance = None, None
+        for good in confirmed:
+            d = CallsignValidator._substitution_distance(up, good)
+            if d is not None and 0 < d <= limit:
+                if best_distance is None or d < best_distance or (
+                        d == best_distance and good < best_match):
+                    best_match, best_distance = good, d
+        if best_match:
+            return 'suspect', 'bit_error:{}'.format(best_match)
+
+        # Truncation signature: the frame was cut short mid-address, leaving a
+        # strict prefix of a real call.
+        candidates = sorted(good for good in confirmed
+                            if 3 <= len(up) < len(good) and good.startswith(up))
+        if candidates:
+            return 'suspect', 'truncated:{}'.format(candidates[0])
+
+        # Heard independently by two different nodes: two receivers are
+        # unlikely to invent the same corruption, so treat that as real.
+        if heard_by >= 2:
+            return 'confirmed', 'multi_source_mheard'
+        return 'unverified', 'single_source_mheard'
+
+def _now():
+    """Timestamp in the fixed-width format the rest of the export already uses."""
+    return time.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _base_call(callsign):
+    """Strip an AX.25 SSID, returning the bare callsign in uppercase."""
+    if not callsign:
+        return callsign
+    return callsign.split('-')[0].upper()
+
+
+class OverrideStore:
+    """Sysop-entered facts that a crawl must never overwrite.
+
+    nodemap.json is regenerated from what the network says on each run, so
+    anything a human typed in has to live somewhere the crawl only reads.
+    Before this existed, a hand-entered gridsquare survived exactly until the
+    next crawl of that node: export_json() replaced the whole node dict, and a
+    node whose INFO text has no grid in it re-exported as gridsquare=None.
+
+    Holds four maps:
+      grids      callsign -> gridsquare, authoritative over anything parsed
+      locations  callsign -> city/state, same precedence
+      ignore     callsign -> never crawl, never map (quarantined ghosts and
+                 anything the sysop rejected by hand)
+      confirm    callsign -> force 'confirmed', overriding the bit-error
+                 heuristics for a real station that resembles another one
+    """
+
+    FILENAME = 'nodemap-overrides.json'
+    VERSION = 1
+
+    def __init__(self, filename=None, verbose=False):
+        self.filename = filename or self.FILENAME
+        self.verbose = verbose
+        self.grids = {}
+        self.locations = {}
+        self.ignore = {}
+        self.confirm = {}
+        self.load()
+
+    def load(self):
+        if not os.path.exists(self.filename):
+            return
+        try:
+            with open(self.filename, 'r') as f:
+                data = json.load(f)
+        except (ValueError, IOError) as e:
+            # A damaged overrides file must not take the crawl down with it.
+            colored_print("Warning: could not read {}: {}".format(
+                self.filename, e), Colors.YELLOW)
+            return
+        self.grids = data.get('grids', {}) or {}
+        self.locations = data.get('locations', {}) or {}
+        self.ignore = data.get('ignore', {}) or {}
+        self.confirm = data.get('confirm', {}) or {}
+        if self.verbose:
+            print("Loaded overrides: {} grids, {} ignored, {} confirmed".format(
+                len(self.grids), len(self.ignore), len(self.confirm)))
+
+    def save(self):
+        data = {
+            'version': self.VERSION,
+            'updated': _now(),
+            'comment': 'Sysop-entered data. nodemap.py reads this and never '
+                       'overwrites it from a crawl. Safe to edit by hand.',
+            'grids': self.grids,
+            'locations': self.locations,
+            'ignore': self.ignore,
+            'confirm': self.confirm,
+        }
+        tmp = self.filename + '.tmp'
+        try:
+            with open(tmp, 'w') as f:
+                json.dump(data, f, indent=2, sort_keys=True)
+                f.write('\n')
+            os.rename(tmp, self.filename)      # atomic, survives a crash mid-write
+        except IOError as e:
+            colored_print("Warning: could not save {}: {}".format(
+                self.filename, e), Colors.YELLOW)
+
+    # -- lookups ----------------------------------------------------------
+    # Every lookup tries the exact key first, then the bare callsign, so an
+    # override entered against "NG1P" still applies once the crawl learns the
+    # node is really "NG1P-4".
+
+    def _lookup(self, table, callsign):
+        if not callsign:
+            return None
+        if callsign in table:
+            return table[callsign]
+        base = _base_call(callsign)
+        if base in table:
+            return table[base]
+        for key, value in table.items():
+            if _base_call(key) == base:
+                return value
+        return None
+
+    def grid_for(self, callsign):
+        entry = self._lookup(self.grids, callsign)
+        return entry.get('grid') if entry else None
+
+    def location_for(self, callsign):
+        entry = self._lookup(self.locations, callsign)
+        return dict(entry) if entry else None
+
+    def is_ignored(self, callsign):
+        return self._lookup(self.ignore, callsign) is not None
+
+    def is_confirmed(self, callsign):
+        return self._lookup(self.confirm, callsign) is not None
+
+    # -- mutations --------------------------------------------------------
+
+    def set_grid(self, callsign, grid, source='manual'):
+        self.grids[callsign] = {
+            'grid': grid, 'source': source, 'updated': _now()}
+
+    def set_location(self, callsign, city=None, state=None, source='manual'):
+        entry = {'source': source, 'updated': _now()}
+        if city:
+            entry['city'] = city
+        if state:
+            entry['state'] = state
+        self.locations[callsign] = entry
+
+    def add_ignore(self, callsign, reason, source='quarantine'):
+        """Record a callsign the crawler should stop spending air time on.
+
+        Re-quarantining an already-ignored call bumps its hit count rather
+        than resetting it, so a persistently-reappearing ghost is visible as
+        such in the file.
+        """
+        key = _base_call(callsign)
+        existing = self.ignore.get(key)
+        if existing:
+            existing['hits'] = existing.get('hits', 1) + 1
+            existing['last_seen'] = _now()
+            existing['reason'] = reason
+            return False
+        self.ignore[key] = {
+            'reason': reason,
+            'source': source,
+            'added': _now(),
+            'last_seen': _now(),
+            'hits': 1,
+        }
+        return True
+
+    def remove_ignore(self, callsign):
+        key = _base_call(callsign)
+        for candidate in [key] + [k for k in self.ignore if _base_call(k) == key]:
+            if candidate in self.ignore:
+                del self.ignore[candidate]
+                return True
+        return False
+
+    def add_confirm(self, callsign, reason='sysop confirmed'):
+        """Whitelist a real station that the corruption heuristics flag.
+
+        Also lifts any existing ignore entry - keeping both would leave the
+        call whitelisted and still un-crawlable.
+        """
+        key = _base_call(callsign)
+        self.confirm[key] = {'reason': reason, 'added': _now()}
+        self.remove_ignore(key)
+
+# ---------------------------------------------------------------------------
+# Location resolution
+# ---------------------------------------------------------------------------
+#
+# A node's own INFO text is the only location source a crawl gets for free,
+# and it is freeform sysop prose - some nodes state a gridsquare, most name a
+# mountain or a town, and a few say nothing at all. Everything below is a
+# ladder of decreasing confidence, tried in order and stopped at the first
+# hit, with every network answer cached to disk so a repeat crawl costs
+# nothing and an offline node degrades to "whatever we already knew".
+
+US_STATES = frozenset([
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID',
+    'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS',
+    'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK',
+    'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
+    'WI', 'WY', 'DC', 'PR', 'VI', 'GU', 'AS', 'MP',
+    # Canadian provinces and territories - the Maritimes are RF neighbours.
+    'AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT',
+])
+
+# Words that the old City/State regex happily accepted as a city name. The
+# pattern "([A-Z][a-z]+),?\s+([A-Z]{2})" matches "Packet BBS" and "Node EM"
+# just as readily as "Portland ME", which is how nodes ended up on the map at
+# a city of literally "Node".
+PLACE_NOISE_WORDS = frozenset([
+    'node', 'packet', 'bbs', 'net', 'winlink', 'rms', 'chat', 'mail', 'gateway',
+    'digipeater', 'digi', 'repeater', 'system', 'server', 'station', 'sysop',
+    'welcome', 'info', 'baud', 'port', 'ports', 'mhz', 'khz', 'user', 'users',
+    'connect', 'telnet', 'radio', 'amateur', 'club', 'group', 'county',
+    'emergency', 'ares', 'races', 'skywarn', 'the', 'and', 'this', 'is',
+])
+
+# Landmarks worth geocoding on their own. Packet nodes live on hilltops and
+# the sysop almost always says so ("on Streaked Mtn", "Mt Washington site").
+LANDMARK_RE = re.compile(
+    r'\b((?:Mt\.?|Mount|Mtn\.?)\s+[A-Z][A-Za-z]+'
+    r'|[A-Z][A-Za-z]+\s+(?:Mountain|Mtn\.?|Hill|Ridge|Peak|Summit|Island|Butte|Knob))\b')
+
+# "QTH is Foo", "located in Foo", "Foo, ME" - the keyword forms are much more
+# reliable than a bare capitalised word and are tried first.
+QTH_RE = re.compile(
+    r'(?:QTH|Location|Located|Site|Based)\s*(?:is|in|at|near|:)?\s*'
+    r'([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})', re.IGNORECASE)
+CITY_STATE_RE = re.compile(
+    r'\b((?:St\.?|Mt\.?|Ft\.?|Pt\.?)\s+)?'
+    r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}),?\s+([A-Z]{2})\b')
+CITY_STATE_CAPS_RE = re.compile(
+    r'\b([A-Z][A-Z.\']{1,}(?:\s+[A-Z][A-Z.\']{1,}){0,2}),\s*([A-Z]{2})\b')
+# Words that lead into a place name without being part of it.
+PLACE_LEAD_WORDS = frozenset(['at', 'in', 'on', 'near', 'from', 'the', 'is', 'of'])
+
+# Degrees-and-minutes as well as decimal: "43 39.5 N 070 15.2 W" and "43.66N".
+LATLON_RE = re.compile(
+    r'(\d{1,3})(?:\s*[.:]\s*|\s+)?(\d{0,2}(?:\.\d+)?)\s*([NS])'
+    r'[\s,/]+(\d{1,3})(?:\s*[.:]\s*|\s+)?(\d{0,2}(?:\.\d+)?)\s*([EW])',
+    re.IGNORECASE)
+
+
+def latlon_to_grid(lat, lon, precision=6):
+    """Convert decimal degrees to a Maidenhead locator.
+
+    Returns None rather than raising on out-of-range input - callers feed this
+    straight from scraped INFO text, where a "latitude" of 4366 is normal.
+    """
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except (TypeError, ValueError):
+        return None
+    if not (-90.0 <= lat <= 90.0) or not (-180.0 <= lon <= 180.0):
+        return None
+
+    lat += 90.0
+    lon += 180.0
+    grid = chr(int(lon / 20) + ord('A')) + chr(int(lat / 10) + ord('A'))
+    grid += str(int((lon % 20) / 2)) + str(int(lat % 10))
+    if precision >= 6:
+        grid += chr(int((lon % 2) * 12) + ord('a'))
+        grid += chr(int((lat % 1) * 24) + ord('a'))
+    return grid
+
+
+def _dm_to_decimal(degrees, minutes, hemisphere):
+    """Combine a degrees/minutes/hemisphere triple into decimal degrees."""
+    try:
+        value = float(degrees) + (float(minutes) / 60.0 if minutes else 0.0)
+    except ValueError:
+        return None
+    if hemisphere.upper() in ('S', 'W'):
+        value = -value
+    return value
+
+
+class LocationResolver:
+    """Resolves a node's position, cheapest and most trustworthy source first.
+
+    Order of preference:
+      1. sysop override           (OverrideStore - always wins)
+      2. gridsquare in INFO text  (the sysop stated it outright)
+      3. lat/lon in INFO text     (converted to a grid)
+      4. place name in INFO text  (landmark or town, geocoded)
+      5. callsign lookup          (Callook, then HamDB, then QRZ)
+
+    Every network result is cached in nodemap-geocache.json keyed by query, so
+    the second crawl of a network costs no HTTP at all, and a node with no
+    internet simply falls through to whatever the cache already holds. No
+    lookup is ever allowed to raise: an emergency-time crawl on a dead uplink
+    has to keep going.
+    """
+
+    CACHE_FILE = 'nodemap-geocache.json'
+    USER_AGENT = 'bpq-apps-nodemap/{} (+https://github.com/bradbrownjr/bpq-apps)'
+    TIMEOUT = 8
+
+    def __init__(self, enabled=True, verbose=False, cache_file=None,
+                 qrz_user=None, qrz_pass=None):
+        self.enabled = enabled          # False disables all network lookups
+        self.verbose = verbose
+        self.cache_file = cache_file or self.CACHE_FILE
+        self.cache = {}
+        self.dirty = False
+        self.qrz_user = qrz_user
+        self.qrz_pass = qrz_pass
+        self.qrz_session = None
+        self.qrz_failed = False         # stop retrying a bad login every node
+        self.offline = False            # set after the first connection failure
+        self._last_nominatim = 0.0      # Nominatim asks for <=1 request/second
+        self.stats = {'cache_hit': 0, 'lookup': 0, 'fail': 0}
+        self._load_cache()
+
+    # -- cache ------------------------------------------------------------
+
+    def _load_cache(self):
+        if not os.path.exists(self.cache_file):
+            return
+        try:
+            with open(self.cache_file, 'r') as f:
+                self.cache = json.load(f)
+        except (ValueError, IOError):
+            self.cache = {}
+
+    def save_cache(self):
+        if not self.dirty:
+            return
+        try:
+            tmp = self.cache_file + '.tmp'
+            with open(tmp, 'w') as f:
+                json.dump(self.cache, f, indent=2, sort_keys=True)
+                f.write('\n')
+            os.rename(tmp, self.cache_file)
+        except IOError:
+            pass
+
+    def _cached(self, key):
+        entry = self.cache.get(key)
+        if entry is not None:
+            self.stats['cache_hit'] += 1
+        return entry
+
+    def _store(self, key, value):
+        self.cache[key] = value
+        self.dirty = True
+        return value
+
+    # -- HTTP -------------------------------------------------------------
+
+    def _fetch(self, url):
+        """GET a URL, returning the body as text or None. Never raises."""
+        if not self.enabled or self.offline:
+            return None
+        try:
+            import urllib.request
+            request = urllib.request.Request(url, headers={
+                'User-Agent': self.USER_AGENT.format(__version__)})
+            response = urllib.request.urlopen(request, timeout=self.TIMEOUT)
+            try:
+                return response.read().decode('utf-8', 'replace')
+            finally:
+                response.close()
+        except Exception as e:
+            # Anything at all - DNS failure, TLS error, timeout, 404, a proxy
+            # returning HTML. The crawl is the point; location is a bonus.
+            if self.verbose:
+                print("    lookup failed ({}): {}".format(url.split('?')[0], e))
+            self.stats['fail'] += 1
+            # One connection-level failure means the uplink is down; stop
+            # burning eight seconds per node discovering that repeatedly.
+            if isinstance(e, (IOError, OSError)) and not hasattr(e, 'code'):
+                self.offline = True
+                if self.verbose:
+                    print("    no internet - disabling further lookups")
+            return None
+
+    # -- INFO text --------------------------------------------------------
+
+    @staticmethod
+    def parse_info_text(text):
+        """Pull whatever location signal exists out of freeform INFO output.
+
+        Returns a dict that may contain grid, lat, lon, city, state, place.
+        Nothing here contacts the network.
+        """
+        location = {}
+        if not text:
+            return location
+
+        # A stated gridsquare is the strongest thing INFO can give us. Accept
+        # 4-character grids too - plenty of sysops only publish FN43.
+        grid_match = re.search(r'\b([A-R]{2}\d{2}(?:[a-x]{2})?)\b', text, re.IGNORECASE)
+        if grid_match:
+            grid = grid_match.group(1)
+            location['grid'] = grid[:4].upper() + grid[4:].lower()
+
+        latlon = LATLON_RE.search(text)
+        if latlon:
+            lat = _dm_to_decimal(latlon.group(1), latlon.group(2), latlon.group(3))
+            lon = _dm_to_decimal(latlon.group(4), latlon.group(5), latlon.group(6))
+            if lat is not None and lon is not None and abs(lat) <= 90 and abs(lon) <= 180:
+                location['lat'] = lat
+                location['lon'] = lon
+
+        landmark = LANDMARK_RE.search(text)
+        if landmark:
+            location['place'] = landmark.group(1).strip()
+
+        # Only accept City, ST when ST is a real state or province and the
+        # city word is not obvious node boilerplate.
+        for match in CITY_STATE_RE.finditer(text):
+            prefix = (match.group(1) or '').strip()
+            city = ('{} {}'.format(prefix, match.group(2)) if prefix
+                    else match.group(2)).strip()
+            state = match.group(3).upper()
+            if state not in US_STATES:
+                continue
+            words = [w.lower() for w in city.split()]
+            if any(w in PLACE_NOISE_WORDS for w in words):
+                continue
+            location['city'] = city
+            location['state'] = state
+            break
+
+        if 'city' not in location:
+            for match in CITY_STATE_CAPS_RE.finditer(text):
+                state = match.group(2).upper()
+                if state not in US_STATES:
+                    continue
+                words = match.group(1).split()
+                # Drop a leading preposition the greedy match swept up, e.g.
+                # "AT WINDHAM" -> "WINDHAM".
+                while words and words[0].lower() in PLACE_LEAD_WORDS:
+                    words.pop(0)
+                if not words:
+                    continue
+                if any(w.lower() in PLACE_NOISE_WORDS for w in words):
+                    continue
+                location['city'] = ' '.join(w.title() for w in words)
+                location['state'] = state
+                break
+
+        if 'city' not in location:
+            qth = QTH_RE.search(text)
+            if qth:
+                candidate = qth.group(1).strip()
+                words = [w.lower() for w in candidate.split()]
+                if not any(w in PLACE_NOISE_WORDS for w in words):
+                    location.setdefault('place', candidate)
+
+        return location
+
+    # -- network sources --------------------------------------------------
+
+    def geocode_place(self, place, state=None):
+        """Geocode a free-text place name via OpenStreetMap Nominatim."""
+        query = place if not state else '{}, {}'.format(place, state)
+        key = 'geocode:' + query.lower()
+        cached = self._cached(key)
+        if cached is not None:
+            return cached or None
+
+        import urllib.parse
+        # Nominatim's usage policy caps this at one request per second.
+        elapsed = time.time() - self._last_nominatim
+        if elapsed < 1.1:
+            time.sleep(1.1 - elapsed)
+        self._last_nominatim = time.time()
+
+        url = ('https://nominatim.openstreetmap.org/search?q={}&format=json'
+               '&limit=1&countrycodes=us,ca'.format(urllib.parse.quote(query)))
+        self.stats['lookup'] += 1
+        body = self._fetch(url)
+        if not body:
+            return None
+        try:
+            results = json.loads(body)
+        except ValueError:
+            return None
+        if not results:
+            self._store(key, {})       # cache the miss, do not re-ask
+            return None
+        top = results[0]
+        grid = latlon_to_grid(top.get('lat'), top.get('lon'))
+        if not grid:
+            self._store(key, {})
+            return None
+        return self._store(key, {
+            'grid': grid,
+            'lat': float(top['lat']),
+            'lon': float(top['lon']),
+            'source': 'nominatim:' + query,
+        })
+
+    def lookup_callsign(self, callsign):
+        """Look up a callsign's location, trying the free services first."""
+        base = _base_call(callsign)
+        key = 'call:' + base
+        cached = self._cached(key)
+        if cached is not None:
+            return cached or None
+
+        for method in (self._callook, self._hamdb, self._qrz):
+            result = method(base)
+            if result:
+                return self._store(key, result)
+        # Cache the miss too - re-asking three services per crawl for a
+        # Canadian or club call that none of them carry is pure air time.
+        self._store(key, {})
+        return None
+
+    def _callook(self, callsign):
+        """callook.info - free, no key, FCC data, US callsigns only."""
+        self.stats['lookup'] += 1
+        body = self._fetch('https://callook.info/{}/json'.format(callsign))
+        if not body:
+            return None
+        try:
+            data = json.loads(body)
+        except ValueError:
+            return None
+        if data.get('status') != 'VALID':
+            return None
+        loc = data.get('location', {}) or {}
+        addr = data.get('address', {}) or {}
+        grid = (loc.get('gridsquare') or '').strip()
+        if not grid and loc.get('latitude') and loc.get('longitude'):
+            grid = latlon_to_grid(loc['latitude'], loc['longitude'])
+        if not grid:
+            return None
+        result = {'grid': grid, 'source': 'callook'}
+        # "PORTLAND, ME" in a single line field.
+        line2 = (addr.get('line2') or '').strip()
+        if ',' in line2:
+            city, _, tail = line2.rpartition(',')
+            # tail looks like "ME 04640"; keep the state, drop the ZIP.
+            state = tail.strip().split()[0].upper() if tail.strip() else ''
+            if state in US_STATES:
+                result['city'] = city.strip().title()
+                result['state'] = state
+        return result
+
+    def _hamdb(self, callsign):
+        """hamdb.org - free, no key, wider coverage than callook."""
+        self.stats['lookup'] += 1
+        body = self._fetch(
+            'https://api.hamdb.org/v1/{}/json/bpq-nodemap'.format(callsign))
+        if not body:
+            return None
+        try:
+            data = json.loads(body).get('hamdb', {}).get('callsign', {})
+        except (ValueError, AttributeError):
+            return None
+        grid = (data.get('grid') or '').strip()
+        if grid.upper() in ('', 'NOT_FOUND'):
+            return None
+        result = {'grid': grid, 'source': 'hamdb'}
+        state = (data.get('state') or '').strip().upper()
+        if data.get('addr2') and state in US_STATES:
+            result['city'] = data['addr2'].title()
+            result['state'] = state
+        return result
+
+    def _qrz(self, callsign):
+        """QRZ XML API - needs the credentials from the qrz3.py config."""
+        if not self.qrz_user or not self.qrz_pass or self.qrz_failed:
+            return None
+        if not self.qrz_session and not self._qrz_login():
+            return None
+
+        import xml.etree.ElementTree as ET
+        self.stats['lookup'] += 1
+        body = self._fetch('https://xmldata.qrz.com/xml/current/?s={};callsign={}'
+                           .format(self.qrz_session, callsign))
+        if not body:
+            return None
+        try:
+            root = ET.fromstring(body)
+        except ET.ParseError:
+            return None
+        ns = {'q': 'http://xmldata.qrz.com'}
+
+        def field(name):
+            node = root.find('.//q:{}'.format(name), ns)
+            return node.text.strip() if node is not None and node.text else None
+
+        # A session can expire between crawls; drop it and let the next node
+        # re-login rather than failing every remaining lookup.
+        if field('Error') and 'session' in field('Error').lower():
+            self.qrz_session = None
+            return None
+
+        grid = field('grid')
+        if not grid:
+            lat, lon = field('lat'), field('lon')
+            grid = latlon_to_grid(lat, lon) if lat and lon else None
+        if not grid:
+            return None
+        result = {'grid': grid, 'source': 'qrz'}
+        if field('addr2'):
+            result['city'] = field('addr2')
+        state = (field('state') or '').strip().upper()
+        if state in US_STATES:
+            result['state'] = state
+        return result
+
+    def _qrz_login(self):
+        import urllib.parse
+        import xml.etree.ElementTree as ET
+        body = self._fetch(
+            'https://xmldata.qrz.com/xml/current/?username={};password={};agent=bpq-nodemap'
+            .format(urllib.parse.quote_plus(self.qrz_user),
+                    urllib.parse.quote_plus(self.qrz_pass)))
+        if not body:
+            return False
+        try:
+            root = ET.fromstring(body)
+        except ET.ParseError:
+            self.qrz_failed = True
+            return False
+        ns = {'q': 'http://xmldata.qrz.com'}
+        key = root.find('.//q:Key', ns)
+        if key is not None and key.text:
+            self.qrz_session = key.text.strip()
+            return True
+        error = root.find('.//q:Error', ns)
+        if error is not None and error.text:
+            colored_print("QRZ login failed: {}".format(error.text.strip()),
+                          Colors.YELLOW)
+        # Bad credentials will not fix themselves mid-crawl.
+        self.qrz_failed = True
+        return False
+
+    # -- the ladder -------------------------------------------------------
+
+    def resolve(self, callsign, info_text=None, existing=None):
+        """Best-effort location for one node.
+
+        Returns a dict with at least 'grid' and 'location_source', or None.
+        'location_source' records which rung of the ladder answered, so the
+        map and the mepn import can weight a scraped guess differently from a
+        gridsquare the sysop published.
+        """
+        parsed = self.parse_info_text(info_text) if info_text else {}
+
+        if parsed.get('grid'):
+            return {'grid': parsed['grid'], 'location_source': 'info_grid',
+                    'city': parsed.get('city'), 'state': parsed.get('state')}
+
+        if parsed.get('lat') is not None and parsed.get('lon') is not None:
+            grid = latlon_to_grid(parsed['lat'], parsed['lon'])
+            if grid:
+                return {'grid': grid, 'lat': parsed['lat'], 'lon': parsed['lon'],
+                        'location_source': 'info_latlon',
+                        'city': parsed.get('city'), 'state': parsed.get('state')}
+
+        # An existing grid from a previous crawl beats a fresh network guess.
+        if existing and existing.get('grid'):
+            return None
+
+        if parsed.get('place'):
+            hit = self.geocode_place(parsed['place'], parsed.get('state'))
+            if hit:
+                return {'grid': hit['grid'], 'lat': hit.get('lat'),
+                        'lon': hit.get('lon'), 'location_source': 'info_place',
+                        'place': parsed['place'],
+                        'city': parsed.get('city'), 'state': parsed.get('state')}
+
+        if parsed.get('city') and parsed.get('state'):
+            hit = self.geocode_place(parsed['city'], parsed['state'])
+            if hit:
+                return {'grid': hit['grid'], 'lat': hit.get('lat'),
+                        'lon': hit.get('lon'), 'location_source': 'info_city',
+                        'city': parsed['city'], 'state': parsed['state']}
+
+        hit = self.lookup_callsign(callsign)
+        if hit:
+            return {'grid': hit['grid'],
+                    'location_source': 'lookup_' + hit.get('source', 'unknown'),
+                    'city': hit.get('city') or parsed.get('city'),
+                    'state': hit.get('state') or parsed.get('state')}
+        return None
+
+
+def load_qrz_credentials(verbose=False):
+    """Read qrz_user/qrz_pass out of the qrz3.py config, if it is installed.
+
+    Parsed with a regex rather than imported: config.py sits in the apps
+    directory next to modules that do real work at import time, and a network
+    crawler has no business executing them.
+    """
+    candidates = [
+        os.path.expanduser('~/apps/config.py'),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'config.py'),
+        os.path.expanduser('~/bpq-apps/apps/config.py'),
+        'config.py',
+    ]
+    for path in candidates:
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, 'r') as f:
+                text = f.read()
+        except IOError:
+            continue
+        user = re.search(r'^\s*qrz_user\s*=\s*[\'"]([^\'"]*)[\'"]', text, re.M)
+        password = re.search(r'^\s*qrz_pass\s*=\s*[\'"]([^\'"]*)[\'"]', text, re.M)
+        if user and password and user.group(1) and password.group(1):
+            if verbose:
+                print("Using QRZ credentials from {}".format(path))
+            return user.group(1), password.group(1)
+    return None, None
+
+
 class NodeCrawler:
     """Crawls BPQ packet radio network to discover topology."""
     
     # Valid amateur radio callsign pattern: 1-2 prefix chars, digit, 1-3 suffix chars, optional -SSID
-    CALLSIGN_PATTERN = re.compile(r'^[A-Z]{1,2}\d[A-Z]{1,3}(?:-\d{1,2})?$', re.IGNORECASE)
+    # Retained for compatibility; CallsignValidator is now authoritative.
+    CALLSIGN_PATTERN = CallsignValidator.PATTERN
     
-    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None, allow_hf=False, allow_ip=False, op_timeout=None):
+    def __init__(self, host='localhost', port=None, callsign=None, max_hops=10, username=None, password=None, verbose=False, notify_url=None, log_file=None, debug_log=None, resume=False, crawl_mode='update', exclude=None, allow_hf=False, allow_ip=False, op_timeout=None,
+                 resolve_locations=True, auto_ignore=True):
         """
         Initialize crawler.
         
@@ -114,6 +1016,8 @@ class NodeCrawler:
             allow_hf: Include HF ports (VARA, ARDOP, PACTOR) in crawling (default: False - too slow at 300 baud)
             allow_ip: Include IP ports (AXIP, TCP, Telnet) in crawling (default: False - not RF)
             op_timeout: Override per-node operation timeout in seconds (default: None = 360 + hop_count*240)
+            resolve_locations: Allow network lookups (geocoding, QRZ) to fill missing grids (default: True)
+            auto_ignore: Add quarantined ghost callsigns to the persistent ignore list (default: True)
         """
         self.host = host
         self.port = port if port else self._find_bpq_port()
@@ -171,6 +1075,46 @@ class NodeCrawler:
         self.failed_relays = set()  # Intermediates that failed as relays this session: {base_callsign}
         self.last_failed_relay = None  # The specific hop that failed in last _connect_to_node call
         self.loaded_nodes = {}  # Node data loaded from nodemap.json: {callsign: {neighbors, ...}}
+
+        # -- Callsign quality control ------------------------------------
+        # Anchors for the bit-error heuristics. confirmed_calls holds base
+        # callsigns we actually connected to or read out of an own_aliases
+        # map; structured_calls holds anything seen in a ROUTES table. Both
+        # are rebuilt from nodemap.json at load time so a first-hop crawl
+        # still has anchors to compare against.
+        self.confirmed_calls = set()
+        self.structured_calls = set()
+        self.mheard_counts = {}      # base call -> how many nodes heard it
+        self.suspect_calls = {}      # base call -> {reason, verdict, heard_by}
+        self.auto_ignore = auto_ignore
+
+        # -- Temporal tracking -------------------------------------------
+        # Carried across crawls so a node that stops answering can be aged
+        # out instead of sitting in the map forever looking healthy.
+        self.crawl_started = _now()
+        self.previous_crawl_time = None  # timestamp of the export we loaded
+        self.node_history = {}       # callsign -> preserved temporal fields
+        self.connection_history = {} # "FROM>TO" -> {first_seen, last_seen, count}
+        self.crawl_failures = {}     # base call -> reason this run
+        self.location_fixes = {}     # callsign -> corrected city/state
+                                     # (export_json re-reads the file, so a
+                                     #  scrub has to be replayed there)
+
+        # -- Sysop overrides and location lookup -------------------------
+        self.overrides = OverrideStore(verbose=verbose)
+        qrz_user, qrz_pass = (None, None)
+        if resolve_locations:
+            qrz_user, qrz_pass = load_qrz_credentials(verbose=verbose)
+        self.resolver = LocationResolver(
+            enabled=resolve_locations, verbose=verbose,
+            qrz_user=qrz_user, qrz_pass=qrz_pass)
+
+        # -- Path quality -------------------------------------------------
+        # Remembering which paths worked (and which did not) lets the next
+        # crawl try the good one first instead of rediscovering it over RF.
+        self.loaded_connection_history = {}  # from a previous export's connections
+        self.path_history = {}       # target base -> [{path, ok, at}]
+        self.link_quality = {}       # "FROM>TO" -> best observed NET/ROM quality
     
     def _write_log_header(self, log_file):
         """Write header with version and metadata to log file on first use."""
@@ -257,10 +1201,12 @@ class NodeCrawler:
     
     @staticmethod
     def _is_valid_callsign(callsign):
-        """Validate callsign format: 1-2 prefix, digit, 1-3 suffix, optional -SSID."""
+        """Validate callsign structure: real prefix, valid AX.25 SSID, not a
+        reserved protocol word. Delegates to CallsignValidator so the crawler
+        and the quarantine logic can never disagree about what is a callsign."""
         if not callsign:
             return False
-        return NodeCrawler.CALLSIGN_PATTERN.match(callsign.upper()) is not None
+        return CallsignValidator.is_structurally_valid(callsign)
     
     @staticmethod
     def _normalize_callsign(callsign):
@@ -497,6 +1443,7 @@ class NodeCrawler:
         Returns:
             telnetlib.Telnet object or None
         """
+        _require_telnet()
         try:
             # Show progress for local connections
             if not path:
@@ -1408,28 +2355,11 @@ class NodeCrawler:
         Returns:
             Dictionary with location data (lat, lon, grid, city, state)
         """
-        location = {}
-        
-        # Look for common location patterns
-        # Grid square: FN43xx
-        grid_match = re.search(r'\b([A-R]{2}\d{2}[a-x]{2})\b', output, re.IGNORECASE)
-        if grid_match:
-            location['grid'] = grid_match.group(1).upper()
-        
-        # Lat/Lon patterns
-        lat_match = re.search(r'(\d{2}[.\d]*)\s*[NnSs]', output)
-        lon_match = re.search(r'(\d{2,3}[.\d]*)\s*[WwEe]', output)
-        if lat_match and lon_match:
-            location['lat'] = lat_match.group(0)
-            location['lon'] = lon_match.group(0)
-        
-        # City, State pattern
-        city_state = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s+([A-Z]{2})', output)
-        if city_state:
-            location['city'] = city_state.group(1)
-            location['state'] = city_state.group(2)
-        
-        return location
+        # Delegates to LocationResolver.parse_info_text, which validates the
+        # state against a real list and rejects node boilerplate. The old
+        # inline regex accepted "Node EM" and "Packet BBS" as a City/State
+        # pair, which is how stations ended up mapped to a city of "Node".
+        return LocationResolver.parse_info_text(output)
     
     def _detect_node_type(self, info_output, prompt_chars, commands=None):
         """
@@ -1486,43 +2416,173 @@ class NodeCrawler:
             colored_print("Warning: Could not load {}: {}".format(filename, e), Colors.YELLOW)
             return None
     
+    def _build_link_graph(self, nodes_data):
+        """Build a weighted adjacency map of the network, keyed by base call.
+
+        Edges come from each node's own ROUTES output where available, since
+        that carries a real NET/ROM quality figure, and fall back to bare
+        MHEARD adjacency where it does not. Everything is normalised to base
+        callsigns: the node records are keyed by SSID ("KX1EMA-15") while the
+        neighbour lists hold bare calls ("KX1EMA"), and mixing the two is what
+        made the old path search unable to see past the first hop.
+        """
+        graph = {}
+        for callsign, node in nodes_data.items():
+            source = _base_call(callsign)
+            edges = graph.setdefault(source, {})
+
+            # ROUTES: an explicit, node-reported quality per neighbour.
+            for neighbor, detail in (node.get('direct_routes') or {}).items():
+                quality = detail.get('quality') if isinstance(detail, dict) else detail
+                try:
+                    quality = int(quality)
+                except (TypeError, ValueError):
+                    continue
+                # BPQ uses quality 0 to mean "do not route through this";
+                # treat the link as absent rather than as merely poor.
+                if quality <= 0:
+                    continue
+                target = _base_call(neighbor)
+                if target and target != source:
+                    edges[target] = max(edges.get(target, 0), quality)
+
+            # MHEARD: heard on RF but with no quality figure. Score it below
+            # any real ROUTES entry so a measured path always wins.
+            for neighbor in (node.get('neighbors') or []):
+                target = _base_call(neighbor)
+                if not target or target == source:
+                    continue
+                if target in self.suspect_calls or self.overrides.is_ignored(target):
+                    continue
+                edges.setdefault(target, 60)
+        return graph
+
     def _find_path_to_node(self, target_callsign, nodes_data):
-        """Find shortest path from local node to target node using BFS.
-        
-        Args:
-            target_callsign: Target node to reach
-            nodes_data: Dictionary of node data from nodemap.json
-            
-        Returns:
-            List of intermediate callsigns (not including local or target), or None if not found
+        """Find the best path from the local node to a target.
+
+        Dijkstra over NET/ROM link quality rather than a plain hop count: a
+        two-hop path over two solid links routes far better than a single
+        marginal one, and BPQ already tells us which is which. A fixed cost
+        is added per hop so that, all else equal, shorter still wins.
+
+        Returns a list of intermediate base callsigns (excluding both the
+        local node and the target), or None when no path is known.
         """
         if not self.callsign:
             return None
-        
-        if target_callsign == self.callsign:
+        source = _base_call(self.callsign)
+        target = _base_call(target_callsign)
+        if target == source:
             return []
-        
-        # BFS to find shortest path
-        queue = [(self.callsign, [])]  # (current_node, path_to_current)
-        visited = {self.callsign}
-        
-        while queue:
-            current, path = queue.pop(0)
-            current_info = nodes_data.get(current, {})
-            neighbors = current_info.get('neighbors', [])
-            
-            for neighbor in neighbors:
-                if neighbor == target_callsign:
-                    # Found target - path doesn't include local or target
+
+        graph = self._build_link_graph(nodes_data)
+        if source not in graph:
+            return None
+
+        # A path that has actually worked before beats anything computed.
+        for attempt in reversed(self.path_history.get(target, [])):
+            if attempt.get('ok') and attempt.get('path') is not None:
+                path = [_base_call(p) for p in attempt['path']]
+                if all(hop in graph for hop in path):
+                    if self.verbose:
+                        print("  Reusing known-good path to {}: {}".format(
+                            target, ' > '.join(path) or 'direct'))
                     return path
-                
-                if neighbor not in visited and neighbor in nodes_data:
-                    visited.add(neighbor)
-                    queue.append((neighbor, path + [neighbor]))
-        
-        # Target not reachable through known neighbors
-        return None
-    
+
+        import heapq
+        HOP_COST = 40          # discourage long paths without forbidding them
+        best = {source: 0}
+        previous = {}
+        heap = [(0, source)]
+        seen = set()
+
+        while heap:
+            cost, current = heapq.heappop(heap)
+            if current in seen:
+                continue
+            seen.add(current)
+            if current == target:
+                break
+            for neighbor, quality in graph.get(current, {}).items():
+                if neighbor in seen:
+                    continue
+                if neighbor in self.suspect_calls or self.overrides.is_ignored(neighbor):
+                    continue
+                # Higher NET/ROM quality means a cheaper edge.
+                edge_cost = max(1, 256 - int(quality)) + HOP_COST
+                # An intermediate that already failed as a relay this session
+                # is not forbidden, just made expensive.
+                if neighbor in self.failed_relays:
+                    edge_cost += 500
+                candidate = cost + edge_cost
+                if candidate < best.get(neighbor, float('inf')):
+                    best[neighbor] = candidate
+                    previous[neighbor] = current
+                    heapq.heappush(heap, (candidate, neighbor))
+
+        if target not in best:
+            return None
+
+        path = []
+        node = target
+        while node != source:
+            path.append(node)
+            node = previous.get(node)
+            if node is None:
+                return None          # disconnected; should not happen
+        path.reverse()
+        return path[:-1]             # drop the target itself
+
+    def _record_path_result(self, target_callsign, path, ok):
+        """Remember whether a path worked, for this crawl and the next one."""
+        target = _base_call(target_callsign)
+        attempts = self.path_history.setdefault(target, [])
+        normalised = [_base_call(p) for p in (path or [])]
+        for attempt in attempts:
+            if attempt.get('path') == normalised:
+                attempt['ok'] = ok
+                attempt['at'] = _now()
+                attempt['tries'] = attempt.get('tries', 1) + 1
+                break
+        else:
+            attempts.append({'path': normalised, 'ok': ok,
+                             'at': _now(), 'tries': 1})
+        # Keep the record bounded; only the recent past is informative.
+        if len(attempts) > 8:
+            del attempts[:-8]
+
+    def _prime_from_existing(self, existing):
+        """Seed anchors, history and the ignore list from a previous export.
+
+        Has to run on every crawl mode, not just resume. The default update
+        mode never called _load_unexplored_nodes at all, which left the
+        corruption heuristics with no known-good callsigns to compare against
+        and skipped the cleanup of ghosts already recorded in the map.
+        """
+        if not existing or 'nodes' not in existing:
+            return
+        nodes_data = existing['nodes']
+        self._rebuild_anchors(nodes_data)
+        self._count_mheard(nodes_data)
+        for key, record in (existing.get('connection_history') or {}).items():
+            self.loaded_connection_history[key] = record
+        self._load_history(nodes_data)
+        # Bootstrap value for nodes that predate temporal tracking: the run
+        # that produced this file is the last time we can honestly claim to
+        # have seen them, which is not the same as "now".
+        self.previous_crawl_time = (
+            (existing.get('crawl_info') or {}).get('timestamp')
+            or (existing.get('metadata') or {}).get('generated'))
+        self._scrub_loaded_data(nodes_data)
+        self._scrub_locations(nodes_data)
+        # Carry forward per-target path outcomes so _connect_to_node can try
+        # the path that worked last time before rediscovering it over RF.
+        for target, attempts in (existing.get('path_history') or {}).items():
+            self.path_history[target] = attempts
+        if self.verbose:
+            print("Anchors: {} confirmed, {} corroborated by ROUTES".format(
+                len(self.confirmed_calls), len(self.structured_calls)))
+
     def _load_unexplored_nodes(self, filename='nodemap.json'):
         """Load unexplored nodes from existing nodemap data.
         
@@ -1567,6 +2627,13 @@ class NodeCrawler:
             self.visited.add(callsign)
         
         print("Loaded {} previously visited nodes".format(len(self.visited)))
+
+        # Seed the callsign quality-control anchors and the temporal record
+        # from what we already know. This has to happen before any crawling:
+        # the bit-error heuristics compare observed calls against known-good
+        # ones, and on an update-mode run most known-good calls come from the
+        # previous export rather than from this run's connections.
+        self._prime_from_existing(existing)
         
         # Restore SSID mappings from previous crawl data
         # SSID Selection Standard:
@@ -2229,6 +3296,370 @@ class NodeCrawler:
         
         return routes, ports, ssids, direct_neighbors
     
+    # ------------------------------------------------------------------
+    # Callsign quality control
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _has_crawl_evidence(node):
+        """True if this record came from an actual conversation with a station.
+
+        A node we have connected to and read commands from is real, whatever
+        its callsign looks like. WD1F is a genuine Maine BBS whose callsign
+        happens to sit one character from WD1O, a genuine node; without this
+        check a single early quarantine would delete it from the map on every
+        subsequent crawl and block it from ever being retried.
+        """
+        if not isinstance(node, dict):
+            return False
+        if node.get('own_aliases') or node.get('ports') or node.get('commands'):
+            return True
+        info = (node.get('info') or '').strip()
+        return len(info) > 20
+
+    def _clear_ignore(self, callsign, why):
+        """Un-quarantine a callsign that has proved itself real."""
+        base = _base_call(callsign)
+        removed = self.suspect_calls.pop(base, None)
+        if self.overrides.is_ignored(base):
+            self.overrides.remove_ignore(base)
+            removed = True
+        if removed:
+            colored_print("  {} is real ({}) - removed from the ignore list".format(
+                base, why), Colors.GREEN)
+        return bool(removed)
+
+    def _rebuild_anchors(self, nodes_data):
+        """Rebuild the known-good callsign sets from existing nodemap data.
+
+        Called before the first connection so the bit-error heuristics have
+        something to compare against even on a resumed or update-mode crawl
+        that never re-visits a node.
+        """
+        for callsign, node in nodes_data.items():
+            self.confirmed_calls.add(_base_call(callsign))
+            # own_aliases is this node describing its own services - as
+            # authoritative as it gets.
+            for full in (node.get('own_aliases') or {}).values():
+                self.confirmed_calls.add(_base_call(str(full)))
+            # ROUTES arrives inside an acked NET/ROM session, so it is
+            # corroboration, though not proof of a station we have met.
+            for neighbor in (node.get('routes') or {}):
+                self.structured_calls.add(_base_call(neighbor))
+            for neighbor in (node.get('direct_routes') or {}):
+                self.structured_calls.add(_base_call(neighbor))
+
+    def _count_mheard(self, nodes_data):
+        """Tally how many distinct nodes reported hearing each callsign."""
+        for node in nodes_data.values():
+            for neighbor in set(node.get('neighbors') or []):
+                key = _base_call(neighbor)
+                self.mheard_counts[key] = self.mheard_counts.get(key, 0) + 1
+
+    def _scrub_loaded_data(self, nodes_data):
+        """Re-judge callsigns already sitting in nodemap.json.
+
+        Filtering only at crawl time would leave every ghost that earlier
+        versions recorded permanently baked into the map, since update-mode
+        runs never re-visit most nodes. Running the same heuristics over the
+        loaded data lets one crawl clean up the whole history.
+        """
+        observed = set()
+        for node in nodes_data.values():
+            for field in ('neighbors', 'unexplored_neighbors',
+                          'explored_neighbors', 'intermittent_neighbors'):
+                for neighbor in (node.get(field) or []):
+                    observed.add(neighbor)
+
+        known = {_base_call(c) for c in nodes_data}
+        rejected = []
+        judged = set()
+        for neighbor in sorted(observed):
+            base = _base_call(neighbor)
+            # Never quarantine a node we have actually crawled and stored.
+            if base in known:
+                continue
+            # Judge each station once. Without this the SSID variants get
+            # judged after the bare call has already been added to the ignore
+            # list, and every one of them reports back as 'sysop_ignored'.
+            if base in judged:
+                if base in self.suspect_calls:
+                    self._quarantine(neighbor, self.suspect_calls[base]['reason'])
+                continue
+            judged.add(base)
+            verdict, reason = self._judge_callsign(neighbor)
+            if verdict == 'suspect':
+                self._quarantine(neighbor, reason)
+                rejected.append((neighbor, reason))
+        if rejected:
+            colored_print("Quarantined {} suspect callsign(s) from existing data".format(
+                len(rejected)), Colors.YELLOW)
+            for neighbor, reason in sorted(rejected):
+                print("    {:<12} {}".format(neighbor, reason))
+        return rejected
+
+    def _scrub_locations(self, nodes_data):
+        """Re-parse stored location text with the current rules.
+
+        Earlier versions accepted any capitalised word before a two-letter
+        token as a City/State pair, so "BPQ32 Node KNXSTG - St. George, ME"
+        stored a city of "Node". Those values sit in nodemap.json until the
+        node happens to be re-crawled, and they are what the web map and the
+        mepn import read. Re-deriving them from each node's own stored INFO
+        text fixes the whole history in one pass.
+
+        Only city and state are touched. A gridsquare is never rewritten
+        here - it may have come from a sysop override or a lookup, neither of
+        which is reconstructible from INFO text.
+        """
+        cleaned = 0
+        for callsign, node in nodes_data.items():
+            location = node.get('location')
+            if not isinstance(location, dict):
+                continue
+            city = (location.get('city') or '').strip()
+            state = (location.get('state') or '').strip().upper()
+            if not city and not state:
+                continue
+
+            suspect_city = any(word.lower() in PLACE_NOISE_WORDS
+                               for word in city.split())
+            suspect_state = bool(state) and state not in US_STATES
+            if not (suspect_city or suspect_state):
+                continue
+
+            parsed = LocationResolver.parse_info_text(node.get('info') or '')
+            if parsed.get('city') and parsed.get('state'):
+                location['city'] = parsed['city']
+                location['state'] = parsed['state']
+                self.location_fixes[callsign] = {
+                    'city': parsed['city'], 'state': parsed['state']}
+            else:
+                # Nothing trustworthy to replace it with; better absent than wrong.
+                location.pop('city', None)
+                location.pop('state', None)
+                self.location_fixes[callsign] = {'city': None, 'state': None}
+            cleaned += 1
+            if self.verbose:
+                print("    Re-parsed location for {}: {!r} -> {!r}".format(
+                    callsign, city, location.get('city', '')))
+        if cleaned:
+            colored_print("Re-parsed {} bad city/state value(s) from stored INFO text".format(
+                cleaned), Colors.YELLOW)
+        return cleaned
+
+    def _judge_callsign(self, callsign):
+        """Classify one observed callsign, honouring sysop overrides.
+
+        Returns (verdict, reason). A sysop decision short-circuits both ways:
+        an explicit confirm beats the heuristics, an explicit ignore beats
+        everything.
+        """
+        base = _base_call(callsign)
+        if self.overrides.is_confirmed(base):
+            return 'confirmed', 'sysop_confirmed'
+        if self.overrides.is_ignored(base):
+            return 'suspect', 'sysop_ignored'
+        return CallsignValidator.classify(
+            callsign, self.confirmed_calls, self.structured_calls,
+            self.mheard_counts.get(base, 1))
+
+    def _quarantine(self, callsign, reason):
+        """Record a ghost callsign and keep it out of the crawl queue."""
+        base = _base_call(callsign)
+        if base not in self.suspect_calls:
+            self.suspect_calls[base] = {
+                'reason': reason,
+                'observed_as': [callsign],
+                'heard_by': self.mheard_counts.get(base, 1),
+                'flagged': _now(),
+            }
+        elif callsign not in self.suspect_calls[base]['observed_as']:
+            self.suspect_calls[base]['observed_as'].append(callsign)
+        # Feeding the persistent ignore list is what stops the next crawl
+        # spending RF time trying to connect to a call that never existed.
+        if self.auto_ignore and reason != 'sysop_ignored':
+            self.overrides.add_ignore(base, reason, source='quarantine')
+
+    def _filter_callsigns(self, callsigns):
+        """Split observed callsigns into (keep, quarantined).
+
+        'unverified' calls are kept - they are single-source MHEARD hits that
+        do not resemble anything known, which is exactly what a genuinely new
+        station looks like on its first beacon.
+        """
+        keep, dropped = [], []
+        for callsign in callsigns:
+            verdict, reason = self._judge_callsign(callsign)
+            if verdict == 'suspect':
+                self._quarantine(callsign, reason)
+                dropped.append((callsign, reason))
+            else:
+                keep.append(callsign)
+        if dropped and self.verbose:
+            for callsign, reason in dropped:
+                print("    Quarantined {} ({})".format(callsign, reason))
+        return keep, dropped
+
+    # ------------------------------------------------------------------
+    # Temporal tracking
+    # ------------------------------------------------------------------
+
+    # A node is 'online' if we reached it or heard it recently; 'stale' once
+    # nothing has confirmed it for a week; 'offline' once we have tried and
+    # failed repeatedly. These thresholds are deliberately generous - a
+    # packet node can be off the air for days of bad weather and still be a
+    # real, wanted part of the map.
+    STALE_AFTER_DAYS = 7
+    OFFLINE_AFTER_FAILURES = 3
+    RECENT_HEARD_SECONDS = 86400
+
+    @staticmethod
+    def _parse_stamp(value):
+        """Parse an export timestamp, returning epoch seconds or None."""
+        if not value:
+            return None
+        try:
+            return time.mktime(time.strptime(value, '%Y-%m-%d %H:%M:%S'))
+        except (ValueError, TypeError):
+            return None
+
+    def _days_since(self, value):
+        stamp = self._parse_stamp(value)
+        if stamp is None:
+            return None
+        return (time.time() - stamp) / 86400.0
+
+    def _load_history(self, nodes_data):
+        """Preserve temporal fields from a previous export.
+
+        Everything here has to survive a crawl that does not re-visit the
+        node, which is the normal case in update mode.
+        """
+        for callsign, node in nodes_data.items():
+            self.node_history[callsign] = {
+                'first_seen': node.get('first_seen') or node.get('timestamp'),
+                'last_seen': node.get('last_seen'),
+                'last_crawled': node.get('last_crawled'),
+                'crawl_successes': node.get('crawl_successes', 0),
+                'crawl_attempts': node.get('crawl_attempts', 0),
+                'consecutive_failures': node.get('consecutive_failures', 0),
+            }
+        for key, record in (self.loaded_connection_history or {}).items():
+            self.connection_history[key] = record
+
+    def _record_crawl_result(self, callsign, success, reason=None):
+        """Update attempt/success counters for one node."""
+        history = self.node_history.setdefault(callsign, {})
+        history['crawl_attempts'] = history.get('crawl_attempts', 0) + 1
+        if success:
+            history['crawl_successes'] = history.get('crawl_successes', 0) + 1
+            history['consecutive_failures'] = 0
+            history['last_crawled'] = _now()
+            history['last_seen'] = _now()
+            history.setdefault('first_seen', _now())
+        else:
+            history['consecutive_failures'] = history.get('consecutive_failures', 0) + 1
+            if reason:
+                self.crawl_failures[_base_call(callsign)] = reason
+
+    def _node_status(self, callsign, node):
+        """Derive online/stale/offline for one node.
+
+        Two independent signals feed this: whether we could connect, and how
+        recently anybody heard the node on RF. A node we cannot route to may
+        still be plainly alive and beaconing, and that is worth showing
+        differently from one that has genuinely gone quiet.
+        """
+        base = _base_call(callsign)
+        history = self.node_history.get(callsign, {})
+        failures = history.get('consecutive_failures', 0)
+
+        if callsign in self.freshly_crawled or base in {
+                _base_call(c) for c in self.freshly_crawled}:
+            return 'online'
+
+        heard = self.last_heard.get(base)
+        if heard is not None and heard <= self.RECENT_HEARD_SECONDS:
+            return 'online'
+
+        if failures >= self.OFFLINE_AFTER_FAILURES:
+            return 'offline'
+        if base in self.crawl_failures:
+            return 'unreachable'
+
+        # Nothing below this point is positive evidence of the node being up
+        # this run - it is all inference from how long ago we last had any.
+        age = self._days_since(history.get('last_seen') or node.get('last_seen'))
+        if age is None:
+            return 'unreachable' if failures else 'unknown'
+        if age > self.STALE_AFTER_DAYS:
+            return 'stale'
+        return 'recent'
+
+    def _apply_temporal_fields(self, callsign, node):
+        """Stamp first/last seen and status onto one exported node record."""
+        history = self.node_history.get(callsign, {})
+        base = _base_call(callsign)
+
+        # Fall back to the previous export's timestamp rather than to now:
+        # claiming a node was seen this instant because we happened to load a
+        # file that mentions it would make every stale node look healthy.
+        bootstrap = self.previous_crawl_time or self.crawl_started
+        first_seen = history.get('first_seen') or node.get('first_seen') or bootstrap
+        last_crawled = history.get('last_crawled') or node.get('last_crawled')
+
+        # last_seen means "most recent evidence this station exists", which
+        # includes being heard by somebody else even when we never reached it.
+        last_seen = history.get('last_seen') or node.get('last_seen')
+        heard = self.last_heard.get(base)
+        if callsign in self.freshly_crawled:
+            last_seen = self.crawl_started
+        elif heard is not None:
+            heard_at = time.time() - heard
+            candidate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(heard_at))
+            if not last_seen or candidate > last_seen:
+                last_seen = candidate
+
+        node['first_seen'] = first_seen
+        node['last_seen'] = last_seen or bootstrap
+        if last_crawled:
+            node['last_crawled'] = last_crawled
+        node['crawl_attempts'] = history.get('crawl_attempts', node.get('crawl_attempts', 0))
+        node['crawl_successes'] = history.get('crawl_successes', node.get('crawl_successes', 0))
+        node['consecutive_failures'] = history.get(
+            'consecutive_failures', node.get('consecutive_failures', 0))
+        if heard is not None:
+            node['last_heard_seconds'] = heard
+        node['status'] = self._node_status(callsign, node)
+        age = self._days_since(node['last_seen'])
+        if age is not None:
+            node['days_since_seen'] = round(age, 2)
+        return node
+
+    def _should_crawl(self, callsign):
+        """Gate on the ignore list before any RF time is spent.
+
+        Quarantined ghosts and sysop-rejected callsigns are dropped here
+        rather than at export, so a corrupt call discovered on one crawl
+        costs nothing on every crawl after it - each avoided connection
+        attempt is minutes of 1200-baud air time.
+        """
+        base = _base_call(callsign)
+        # Anything we have successfully crawled outranks the ignore list. A
+        # stale quarantine must not be able to make a real station
+        # permanently unreachable.
+        for known, node in self.nodes.items():
+            if _base_call(known) == base and self._has_crawl_evidence(node):
+                return True
+        if base in self.suspect_calls:
+            return False
+        if self.overrides.is_ignored(base):
+            if self.verbose:
+                print("  Skipping {} (on ignore list)".format(callsign))
+            return False
+        return True
+
     def crawl_node(self, callsign, path=[]):
         """
         Crawl a single node to discover neighbors.
@@ -2240,6 +3671,8 @@ class NodeCrawler:
         # Check if node is excluded (match both full callsign and base callsign)
         callsign = self._normalize_callsign(callsign)
         base_call = callsign.split('-')[0] if '-' in callsign else callsign
+        if not self._should_crawl(callsign):
+            return
         if callsign in self.exclude or base_call in self.exclude:
             if self.verbose:
                 print("  Skipping {} (excluded via --exclude)".format(callsign))
@@ -2315,7 +3748,13 @@ class NodeCrawler:
         
         self.last_failed_relay = None  # Reset before connection attempt
         tn = self._connect_to_node(connect_path)
-        
+
+        # Record how this path fared so the next crawl can start with the one
+        # that worked instead of rediscovering it hop by hop over RF.
+        self._record_path_result(callsign, connect_path, bool(tn))
+        self._record_crawl_result(callsign, bool(tn),
+                                  reason=None if tn else 'connection failed')
+
         # Send 'Starting crawl' notification after successful connection to local node
         if tn and not path and callsign == self.callsign:
             self._send_notification("Starting crawl from {}".format(callsign))
@@ -2704,6 +4143,26 @@ class NodeCrawler:
             # Use MHEARD exclusively for neighbors (stations actually heard on RF with SSIDs)
             # Remove duplicates and exclude self (all SSIDs)
             all_neighbors = list(set([n for n in mheard_neighbors if n != base_callsign]))
+
+            # MHEARD is bare AX.25 with no error correction, so a share of
+            # these "stations" are corrupted copies of real ones. Quarantine
+            # them here, before they reach the neighbour lists, the crawl
+            # queue, or the map. This node's own successful connection makes
+            # it an anchor for judging everything it heard.
+            self.confirmed_calls.add(base_callsign)
+            for _alias, _full in (own_aliases or {}).items():
+                self.confirmed_calls.add(_base_call(str(_full)))
+            for _neighbor in (routes or {}):
+                self.structured_calls.add(_base_call(_neighbor))
+            for _neighbor in set(all_neighbors):
+                _key = _base_call(_neighbor)
+                self.mheard_counts[_key] = self.mheard_counts.get(_key, 0) + 1
+
+            all_neighbors, _rejected = self._filter_callsigns(all_neighbors)
+            if _rejected:
+                colored_print("  Quarantined {} corrupt callsign(s) heard by {}: {}".format(
+                    len(_rejected), callsign,
+                    ', '.join(c for c, _r in _rejected[:6])), Colors.YELLOW)
             
             # Update global route_ports with MHEARD port info
             # Combine with ROUTES data (ROUTES takes precedence if both exist)
@@ -2742,6 +4201,27 @@ class NodeCrawler:
                 return
             info_output = self._send_command(tn, 'INFO', timeout=cmd_timeout)
             location = self._parse_info(info_output)
+
+            # Climb the resolution ladder for anything INFO did not state
+            # outright: a named mountain or town gets geocoded, and failing
+            # that the callsign gets looked up. All of it is cached and all of
+            # it is optional - an offline node just keeps what it parsed.
+            resolved = None
+            try:
+                resolved = self.resolver.resolve(
+                    callsign, info_text=info_output, existing=location)
+            except Exception as e:
+                # Location is a nicety; never let it interrupt a crawl.
+                self._debug_log("location resolve failed for {}: {}".format(callsign, e))
+            if resolved and resolved.get('grid') and not location.get('grid'):
+                location['grid'] = resolved['grid']
+                for key in ('city', 'state', 'lat', 'lon', 'place'):
+                    if resolved.get(key) and not location.get(key):
+                        location[key] = resolved[key]
+                location['source'] = resolved.get('location_source')
+                if self.verbose:
+                    print("    Location: {} via {}".format(
+                        resolved['grid'], resolved.get('location_source')))
             time.sleep(inter_cmd_delay)
             
             # Get available commands (? command)
@@ -2809,7 +4289,7 @@ class NodeCrawler:
                 'hop_distance': hop_count,  # RF hops from start node
                 'successful_path': successful_path,  # Intermediate nodes used to reach this node
                 'location': location,  # From INFO (unreliable, sysop-entered)
-                'location_source': 'info',  # Mark as low-confidence
+                'location_source': location.get('source', 'info'),  # how the grid was determined
                 'ports': ports_list,  # From PORTS (reliable)
                 'heard_on_ports': [(call, mheard_ports.get(call)) for call in all_neighbors],
                 'type': node_type,  # From INFO or prompt (low/medium confidence)
@@ -2940,6 +4420,8 @@ class NodeCrawler:
                         continue
                     
                     # Queue this path with quality (for prioritization)
+                    if not self._should_crawl(neighbor):
+                        continue
                     self.queue.append((neighbor, new_path, route_quality))
                     self.queued_paths.add(path_key)
             
@@ -2988,6 +4470,12 @@ class NodeCrawler:
         Args:
             start_node: Callsign to start crawl from (default: local node)
         """
+        # Every mode benefits from the previous export's context, even the
+        # ones that do not resume from it: known-good callsigns to judge
+        # corruption against, the temporal record, and the ignore list.
+        if not (self.resume or self.crawl_mode == 'new-only'):
+            self._prime_from_existing(self._load_existing_data('nodemap.json'))
+
         # Resume mode OR new-only mode: load unexplored nodes from existing data
         if self.resume or self.crawl_mode == 'new-only':
             resume_filename = self.resume_file if self.resume_file else 'nodemap.json'
@@ -3912,6 +5400,116 @@ class NodeCrawler:
             ))
             print("=" * 96)
     
+    # Fields that describe the node's history rather than its current state.
+    # A crawl that does not re-visit a node must not blank these, and a crawl
+    # that does re-visit it must not reset them to this run's values.
+    _HISTORY_FIELDS = (
+        'first_seen', 'last_seen', 'last_crawled', 'crawl_attempts',
+        'crawl_successes', 'consecutive_failures', 'notes',
+    )
+
+    def _merge_node_record(self, callsign, fresh, existing):
+        """Combine a freshly crawled node record with what we already had.
+
+        Replacing the record wholesale is what used to lose hand-entered
+        gridsquares: a node whose INFO text carries no locator re-exports with
+        gridsquare=None, so the next write silently erased the value a sysop
+        had typed in. Fresh observations win for anything the network reports,
+        history fields are carried forward, and a field the crawl came back
+        empty-handed on keeps its previous value rather than nulling it.
+        """
+        if not existing:
+            merged = dict(fresh)
+        else:
+            merged = dict(existing)
+            for key, value in fresh.items():
+                if key in self._HISTORY_FIELDS:
+                    continue
+                # An empty result means "this crawl learned nothing", not
+                # "the previous value is now known to be wrong".
+                if value in (None, '', [], {}) and existing.get(key) not in (None, '', [], {}):
+                    continue
+                merged[key] = value
+            for key in self._HISTORY_FIELDS:
+                if key in existing and key not in fresh:
+                    merged[key] = existing[key]
+        return merged
+
+    def _apply_overrides(self, callsign, node):
+        """Overlay sysop-entered facts. These outrank anything crawled."""
+        grid = self.overrides.grid_for(callsign)
+        if grid:
+            node.setdefault('location', {})
+            node['location']['grid'] = grid
+            node['gridsquare'] = grid
+            node['location_source'] = 'manual'
+        location = self.overrides.location_for(callsign)
+        if location:
+            node.setdefault('location', {})
+            for key in ('city', 'state'):
+                if location.get(key):
+                    node['location'][key] = location[key]
+        return node
+
+    def _connection_key(self, conn):
+        return '{}>{}'.format(_base_call(conn.get('from')), _base_call(conn.get('to')))
+
+    def _annotate_connections(self, connections):
+        """Stamp first/last seen on links and drop the ones built from ghosts.
+
+        Also flags asymmetry: A hearing B while B never hears A is a real and
+        useful property of an RF path, not a defect in the data, and the map
+        should be able to draw it differently.
+        """
+        seen_pairs = set()
+        result = []
+        fresh_keys = {self._connection_key(c) for c in self.connections}
+
+        for conn in connections:
+            from_call, to_call = _base_call(conn.get('from')), _base_call(conn.get('to'))
+            if not from_call or not to_call:
+                continue
+            # A link to a callsign that never existed is not a link.
+            if self.overrides.is_ignored(from_call) or self.overrides.is_ignored(to_call):
+                continue
+            if from_call in self.suspect_calls or to_call in self.suspect_calls:
+                continue
+
+            key = '{}>{}'.format(from_call, to_call)
+            if key in seen_pairs:
+                continue
+            seen_pairs.add(key)
+
+            history = self.connection_history.get(key, {})
+            record = dict(conn)
+            record['first_seen'] = history.get('first_seen') or self.crawl_started
+            if key in fresh_keys:
+                record['last_seen'] = self.crawl_started
+                record['observed_count'] = history.get('observed_count', 0) + 1
+            else:
+                record['last_seen'] = history.get('last_seen') or record['first_seen']
+                record['observed_count'] = history.get('observed_count', 1)
+            age = self._days_since(record['last_seen'])
+            if age is not None:
+                record['days_since_seen'] = round(age, 2)
+                record['stale'] = age > self.STALE_AFTER_DAYS
+            result.append(record)
+
+        # Second pass for symmetry, once every link is in hand.
+        present = {'{}>{}'.format(_base_call(r['from']), _base_call(r['to'])) for r in result}
+        for record in result:
+            reverse = '{}>{}'.format(_base_call(record['to']), _base_call(record['from']))
+            record['asymmetric'] = reverse not in present
+
+        self.connection_history = {
+            '{}>{}'.format(_base_call(r['from']), _base_call(r['to'])): {
+                'first_seen': r['first_seen'],
+                'last_seen': r['last_seen'],
+                'observed_count': r['observed_count'],
+            } for r in result
+        }
+        return result
+
     def export_json(self, filename='nodemap.json', merge=False):
         """Export network map to JSON.
         
@@ -3981,18 +5579,68 @@ class NodeCrawler:
                             existing_key = existing_call
                         break
             
-            # Add or update node
+            # Add or update node. Field-level merge, not replacement: a
+            # crawl that comes back without a gridsquare must not erase one
+            # that is already recorded.
             if existing_key and existing_key != callsign:
                 # Merge into existing SSID variant
                 continue
-            nodes_data[callsign] = node_data
+            nodes_data[callsign] = self._merge_node_record(
+                callsign, node_data, nodes_data.get(callsign))
         
         # Convert intermittent_links keys to strings for JSON serialization
         intermittent_serialized = {}
         for (from_call, to_call), attempts in self.intermittent_links.items():
             key = "{}>{}".format(from_call, to_call)
             intermittent_serialized[key] = attempts
-        
+
+        # Drop quarantined ghosts from the map entirely, but keep the record
+        # of them in a separate block so a false positive stays auditable and
+        # can be lifted with --confirm-call.
+        for callsign in list(nodes_data.keys()):
+            base = _base_call(callsign)
+            if not (base in self.suspect_calls or self.overrides.is_ignored(base)):
+                continue
+            # Proof of contact beats the heuristic that flagged it, and the
+            # stale ignore entry is cleared so later crawls stop skipping it.
+            if self._has_crawl_evidence(nodes_data[callsign]):
+                self._clear_ignore(base, 'we have connected to it')
+                continue
+            del nodes_data[callsign]
+
+        # Strip ghosts out of every neighbour list too, otherwise they survive
+        # as phantom edges even after the node records are gone.
+        for callsign, node in nodes_data.items():
+            for field in ('neighbors', 'explored_neighbors',
+                          'unexplored_neighbors', 'intermittent_neighbors'):
+                values = node.get(field)
+                if isinstance(values, list):
+                    node[field] = [n for n in values
+                                   if _base_call(n) not in self.suspect_calls
+                                   and not self.overrides.is_ignored(n)]
+
+        # Overlay sysop data and stamp the temporal fields across every node,
+        # including ones this run never touched - otherwise a node goes
+        # permanently statusless the moment it stops being re-crawled.
+        for callsign, node in nodes_data.items():
+            fix = self.location_fixes.get(callsign)
+            if fix is not None:
+                location = node.setdefault('location', {})
+                for field in ('city', 'state'):
+                    if fix[field]:
+                        location[field] = fix[field]
+                    else:
+                        location.pop(field, None)
+            self._apply_overrides(callsign, node)
+            self._apply_temporal_fields(callsign, node)
+
+        connections_data = self._annotate_connections(connections_data)
+
+        status_counts = {}
+        for node in nodes_data.values():
+            status = node.get('status', 'unknown')
+            status_counts[status] = status_counts.get(status, 0) + 1
+
         data = {
             'metadata': {
                 'nodemap_version': __version__,
@@ -4002,20 +5650,37 @@ class NodeCrawler:
             'nodes': nodes_data,
             'connections': connections_data,
             'intermittent_links': intermittent_serialized,  # Failed/unreliable connections
+            'suspect_callsigns': self.suspect_calls,  # Quarantined: corrupt/ghost calls
+            'connection_history': self.connection_history,
+            'path_history': self.path_history,
             'crawl_info': {
                 'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'start_node': self.callsign,
                 'total_nodes': len(nodes_data),
                 'total_connections': len(connections_data),
-                'mode': 'merge' if merge else 'overwrite'
+                'mode': 'merge' if merge else 'overwrite',
+                'nodes_crawled_this_run': sorted(self.freshly_crawled),
+                'status_counts': status_counts,
+                'suspect_count': len(self.suspect_calls),
             }
         }
-        
+
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
-        
+
+        # Persist the sidecars alongside the map.
+        self.overrides.save()
+        self.resolver.save_cache()
+
         mode_str = "Merged into" if merge else "Exported to"
         print("{} {} ({} nodes)".format(mode_str, filename, len(nodes_data)))
+        if status_counts:
+            print("  Status: {}".format(', '.join(
+                '{} {}'.format(count, status)
+                for status, count in sorted(status_counts.items()))))
+        if self.suspect_calls:
+            colored_print("  Quarantined {} suspect callsign(s)".format(
+                len(self.suspect_calls)), Colors.YELLOW)
     
     def export_csv(self, filename='nodemap.csv'):
         """Export connections to CSV with frequency information for network mapping."""
@@ -4161,8 +5826,233 @@ class NodeCrawler:
             return -1
 
 
+def prompt_for_missing_grids(crawler, filename='nodemap.json'):
+    """Walk the sysop through every node still missing a gridsquare.
+
+    Reads the exported map rather than crawler.nodes. In update mode a known
+    node is skipped and so never lands in crawler.nodes, which meant the old
+    prompt could not see the nodes most likely to be missing a grid - the ones
+    that have been in the map for months without one. The prompt was also
+    suppressed entirely on resumed crawls.
+
+    Answers go into nodemap-overrides.json, not just into the exported map, so
+    the next crawl of that node cannot overwrite them.
+    """
+    try:
+        with open(filename, 'r') as f:
+            data = json.load(f)
+    except (IOError, ValueError):
+        return 0
+    nodes = data.get('nodes', {})
+
+    missing = []
+    for callsign, node in sorted(nodes.items()):
+        grid = node.get('gridsquare') or (node.get('location') or {}).get('grid')
+        if not grid:
+            missing.append(callsign)
+    if not missing:
+        return 0
+
+    print("")
+    print("{} node(s) still missing a gridsquare:".format(len(missing)))
+    print("  {}".format(', '.join(missing)))
+
+    # Offer to look up whatever we can before asking a human to type it in.
+    if crawler.resolver.enabled and not crawler.resolver.offline:
+        try:
+            answer = input("Try looking these up online first? (Y/n): ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print("")
+            return 0
+        if answer in ('', 'y', 'yes'):
+            found = 0
+            for callsign in list(missing):
+                node = nodes[callsign]
+                hit = None
+                try:
+                    hit = crawler.resolver.resolve(
+                        callsign, info_text=node.get('info'),
+                        existing=node.get('location'))
+                except Exception:
+                    hit = None
+                if hit and hit.get('grid'):
+                    crawler.overrides.set_grid(
+                        callsign, hit['grid'],
+                        source=hit.get('location_source', 'lookup'))
+                    if hit.get('city') or hit.get('state'):
+                        crawler.overrides.set_location(
+                            callsign, hit.get('city'), hit.get('state'),
+                            source=hit.get('location_source', 'lookup'))
+                    print("  {:<10} {}  ({})".format(
+                        callsign, hit['grid'], hit.get('location_source')))
+                    missing.remove(callsign)
+                    found += 1
+            crawler.overrides.save()
+            crawler.resolver.save_cache()
+            print("  Resolved {} of them automatically.".format(found))
+            if not missing:
+                return found
+
+    print("")
+    try:
+        answer = input("Enter gridsquares for the remaining {} by hand? (y/N): ".format(
+            len(missing))).strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print("")
+        return 0
+    if answer not in ('y', 'yes'):
+        return 0
+
+    print("Enter a gridsquare, or press Enter to skip, or 'q' to stop.")
+    updated = 0
+    for callsign in missing:
+        node = nodes[callsign]
+        location = node.get('location') or {}
+        # Show whatever context we have - the city, or the first line of the
+        # node's own INFO text - so the sysop is not guessing from a callsign.
+        context = ''
+        if location.get('city'):
+            context = ' ({}{})'.format(
+                location['city'],
+                ', ' + location['state'] if location.get('state') else '')
+        elif node.get('info'):
+            first = node['info'].strip().split('\n')[0][:48]
+            if first:
+                context = ' [{}]'.format(first)
+
+        while True:
+            try:
+                value = input("  {}{}: ".format(callsign, context)).strip()
+            except (KeyboardInterrupt, EOFError):
+                print("")
+                value = 'q'
+            if value.lower() == 'q':
+                crawler.overrides.save()
+                return updated
+            if not value:
+                break
+            if not re.match(r'^[A-R]{2}[0-9]{2}([a-x]{2})?$', value, re.IGNORECASE):
+                print("    '{}' is not a gridsquare (expected FN43 or FN43vp).".format(value))
+                try:
+                    if input("    Use it anyway? (y/N): ").strip().lower() in ('y', 'yes'):
+                        pass
+                    else:
+                        continue
+                except (KeyboardInterrupt, EOFError):
+                    print("")
+                    continue
+            value = value[:4].upper() + value[4:].lower()
+            crawler.overrides.set_grid(callsign, value, source='manual')
+            updated += 1
+            break
+
+    crawler.overrides.save()
+    if updated:
+        print("")
+        print("Saved {} gridsquare(s) to {}.".format(
+            updated, crawler.overrides.filename))
+        print("These now override anything a future crawl parses.")
+    return updated
+
+
+def review_quarantined_callsigns(crawler):
+    """Let the sysop confirm or reject each quarantined callsign.
+
+    Anything confirmed is whitelisted permanently and will be crawled from
+    now on; anything rejected stays on the ignore list so no future crawl
+    spends RF time trying to reach a station that never existed.
+    """
+    suspects = crawler.suspect_calls
+    if not suspects:
+        return 0
+    print("")
+    print("{} callsign(s) quarantined as probable packet corruption:".format(len(suspects)))
+    for callsign, detail in sorted(suspects.items()):
+        print("  {:<10} {:<22} heard by {} node(s)".format(
+            callsign, detail['reason'], detail.get('heard_by', 1)))
+    print("")
+    print("These are excluded from the map and will not be crawled again.")
+    try:
+        answer = input("Review them one by one? (y/N): ").strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print("")
+        return 0
+    if answer not in ('y', 'yes'):
+        return 0
+
+    print("y = real station (crawl it in future), Enter = confirm as junk, q = stop")
+    restored = 0
+    for callsign, detail in sorted(suspects.items()):
+        try:
+            answer = input("  {} [{}]: ".format(callsign, detail['reason'])).strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print("")
+            break
+        if answer == 'q':
+            break
+        if answer in ('y', 'yes'):
+            crawler.overrides.add_confirm(callsign, reason='sysop reviewed')
+            restored += 1
+            print("    {} whitelisted - it will be crawled next run.".format(callsign))
+    crawler.overrides.save()
+    if restored:
+        print("")
+        print("Whitelisted {} callsign(s).".format(restored))
+    return restored
+
+
 def main():
     """Main entry point."""
+    # Ignore-list management (fast exits, no crawl, no node connection)
+    if '--list-ignored' in sys.argv:
+        store = OverrideStore()
+        if not store.ignore:
+            print("No callsigns are being ignored.")
+            sys.exit(0)
+        print("{} ignored callsign(s) - these are skipped by every crawl:".format(
+            len(store.ignore)))
+        print("")
+        print("  {:<10} {:<24} {:<10} {}".format('CALL', 'REASON', 'SOURCE', 'SEEN'))
+        for call, detail in sorted(store.ignore.items()):
+            print("  {:<10} {:<24} {:<10} {}".format(
+                call, detail.get('reason', '')[:23],
+                detail.get('source', ''), detail.get('hits', 1)))
+        print("")
+        print("Restore one with: {} --confirm-call CALLSIGN".format(sys.argv[0]))
+        sys.exit(0)
+
+    if '--ignore-call' in sys.argv:
+        idx = sys.argv.index('--ignore-call')
+        if idx + 1 >= len(sys.argv):
+            colored_print("Error: --ignore-call requires a CALLSIGN", Colors.RED)
+            sys.exit(1)
+        store = OverrideStore()
+        added = 0
+        for call in sys.argv[idx + 1].split(','):
+            call = call.strip().upper()
+            if not call:
+                continue
+            store.add_ignore(call, 'sysop rejected', source='manual')
+            print("Ignoring {} - it will not be crawled again.".format(call))
+            added += 1
+        store.save()
+        sys.exit(0 if added else 1)
+
+    if '--confirm-call' in sys.argv:
+        idx = sys.argv.index('--confirm-call')
+        if idx + 1 >= len(sys.argv):
+            colored_print("Error: --confirm-call requires a CALLSIGN", Colors.RED)
+            sys.exit(1)
+        store = OverrideStore()
+        for call in sys.argv[idx + 1].split(','):
+            call = call.strip().upper()
+            if not call:
+                continue
+            store.add_confirm(call, reason='sysop confirmed real')
+            print("Confirmed {} as a real station - it will be crawled and mapped.".format(call))
+        store.save()
+        sys.exit(0)
+
     # Check for set-grid mode first (fast exit)
     if '--set-grid' in sys.argv or '-g' in sys.argv:
         set_grid_call = None
@@ -4179,7 +6069,7 @@ def main():
             sys.exit(1)
         
         # Validate gridsquare format (basic check)
-        if not re.match(r'^[A-R]{2}[0-9]{2}[a-x]{2}$', set_grid_value, re.IGNORECASE):
+        if not re.match(r'^[A-R]{2}[0-9]{2}([a-x]{2})?$', set_grid_value, re.IGNORECASE):
             colored_print("Warning: Gridsquare '{}' doesn't match standard format (e.g., FN43vp)".format(set_grid_value), Colors.YELLOW)
             response = input("Continue anyway? (y/N): ").strip().lower()
             if response not in ['y', 'yes']:
@@ -4213,12 +6103,18 @@ def main():
                     response = input("Update all variants? (Y/n): ").strip().lower()
                     if response in ['', 'y', 'yes']:
                         # Update all variants
+                        _store = OverrideStore()
                         for match in matches:
                             if 'location' not in nodes_data[match]:
                                 nodes_data[match]['location'] = {}
                             nodes_data[match]['location']['grid'] = set_grid_value
                             nodes_data[match]['gridsquare'] = set_grid_value
+                            # Also record it as a sysop override. Writing only
+                            # to nodemap.json meant the value lasted exactly
+                            # until the next crawl re-exported the node.
+                            _store.set_grid(match, set_grid_value, source='manual')
                             print("Updated gridsquare for {}: {}".format(match, set_grid_value))
+                        _store.save()
                         
                         # Save back to file
                         with open('nodemap.json', 'w') as f:
@@ -4238,6 +6134,10 @@ def main():
             old_grid = nodes_data[node_key]['location'].get('grid', 'N/A')
             nodes_data[node_key]['location']['grid'] = set_grid_value
             nodes_data[node_key]['gridsquare'] = set_grid_value
+            # Record the override so a later crawl cannot overwrite it.
+            _store = OverrideStore()
+            _store.set_grid(node_key, set_grid_value, source='manual')
+            _store.save()
             
             print("Updated gridsquare for {}: {} -> {}".format(node_key, old_grid, set_grid_value))
             
@@ -4248,7 +6148,13 @@ def main():
             colored_print("Saved to nodemap.json", Colors.GREEN)
             
             # Offer to regenerate maps
-            response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            # These paths are commonly scripted (cron, deploy hooks), where
+            # stdin is closed; treat that as "no" rather than an error.
+            try:
+                response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print("")
+                response = "n"
             if response in ['', 'y', 'yes']:
                 print("\nGenerating maps...")
                 html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
@@ -4358,7 +6264,13 @@ def main():
             colored_print("Saved to nodemap.json", Colors.GREEN)
             
             # Offer to regenerate maps
-            response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            # These paths are commonly scripted (cron, deploy hooks), where
+            # stdin is closed; treat that as "no" rather than an error.
+            try:
+                response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print("")
+                response = "n"
             if response in ['', 'y', 'yes']:
                 print("\nGenerating maps...")
                 html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
@@ -4594,7 +6506,13 @@ def main():
             colored_print("\nSaved cleaned data to nodemap.json", Colors.GREEN)
             
             # Offer to regenerate maps
-            response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            # These paths are commonly scripted (cron, deploy hooks), where
+            # stdin is closed; treat that as "no" rather than an error.
+            try:
+                response = input("\nRegenerate maps? (Y/n): ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print("")
+                response = "n"
             if response in ['', 'y', 'yes']:
                 print("\nGenerating maps...")
                 html_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nodemap-html.py')
@@ -4685,6 +6603,17 @@ def main():
         print("")
         print("       -g, --set-grid CALL GRID")
         print("              Set gridsquare for callsign (e.g., -g NG1P FN43vp).")
+        print("              Saved to nodemap-overrides.json; survives re-crawls.")
+        print("       --list-ignored")
+        print("              List callsigns excluded as packet corruption.")
+        print("       --ignore-call CALL[,CALL...]")
+        print("              Never crawl or map these callsigns again.")
+        print("       --confirm-call CALL[,CALL...]")
+        print("              Mark a quarantined callsign as a real station.")
+        print("       --no-lookup")
+        print("              Do not use the internet to fill in missing locations.")
+        print("       --no-auto-ignore")
+        print("              Quarantine corrupt callsigns but keep retrying them.")
         print("")
         print("       -N, --note CALL [TEXT]")
         print("              Add/update note for node. Without TEXT, removes existing note.")
@@ -5180,6 +7109,10 @@ def main():
     silent_mode = '--yes' in sys.argv or '-y' in sys.argv  # Autonomous mode - no prompts
     allow_hf = '--hf' in sys.argv or '-H' in sys.argv  # Include HF ports (VARA, ARDOP, PACTOR) - slow at 300 baud
     allow_ip = '--ip' in sys.argv or '-I' in sys.argv  # Include IP ports (AXIP, TCP, Telnet) - not RF
+    # Location lookups reach the internet; --no-lookup keeps a crawl entirely
+    # on-net, which matters when the uplink is the thing that just failed.
+    resolve_locations = '--no-lookup' not in sys.argv
+    auto_ignore = '--no-auto-ignore' not in sys.argv
     
     # Parse positional and optional arguments
     i = 1
@@ -5390,7 +7323,7 @@ def main():
     merge_mode = '--overwrite' not in sys.argv and '-o' not in sys.argv
     
     # Create crawler with specified crawl mode and exclusions
-    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, allow_hf=allow_hf, allow_ip=allow_ip, op_timeout=op_timeout)
+    crawler = NodeCrawler(max_hops=max_hops, username=username, password=password, verbose=verbose, notify_url=notify_url, log_file=log_file, debug_log=debug_log, resume=resume, crawl_mode=crawl_mode, exclude=exclude_nodes, allow_hf=allow_hf, allow_ip=allow_ip, op_timeout=op_timeout, resolve_locations=resolve_locations, auto_ignore=auto_ignore)
     crawler.silent_mode = silent_mode  # Set silent mode for skipping interactive prompts
     
     # Set resume file if specified
@@ -5545,67 +7478,21 @@ def main():
                 print("")
                 print("Skipping map generation")
         
-        # Prompt for missing gridsquares (skip in silent mode)
-        missing_grids = []
-        for callsign, node_data in crawler.nodes.items():
-            location = node_data.get('location', {})
-            grid = location.get('grid', '')
-            if not grid:
-                missing_grids.append(callsign)
-        
-        if missing_grids and not crawler.resume and not silent_mode:
-            print("\n{} node(s) missing gridsquare data: {}".format(
-                len(missing_grids), ', '.join(sorted(missing_grids))))
-            response = input("Set gridsquares now? (y/N): ").strip().lower()
-            
-            if response in ['y', 'yes']:
-                updated_count = 0
-                for callsign in sorted(missing_grids):
-                    node_data = crawler.nodes[callsign]
-                    location_info = node_data.get('location', {})
-                    city = location_info.get('city', '')
-                    state = location_info.get('state', '')
-                    
-                    # Show context
-                    if city or state:
-                        prompt = "Gridsquare for {} ({}{}): ".format(
-                            callsign, city, ', ' + state if state else '')
-                    else:
-                        prompt = "Gridsquare for {}: ".format(callsign)
-                    
-                    while True:
-                        grid_input = input(prompt).strip()
-
-                        # Skip if blank
-                        if not grid_input:
-                            break
-
-                        # Validate format (warn but allow or retry)
-                        if not re.match(r'^[A-R]{2}[0-9]{2}[a-x]{2}$', grid_input, re.IGNORECASE):
-                            print("  Warning: '{}' doesn't match standard gridsquare format".format(grid_input))
-                            confirm = input("  Use it anyway? (y/N): ").strip().lower()
-                            if confirm not in ['y', 'yes']:
-                                print("  Try again (or press Enter to skip).")
-                                continue
-
-                        break
-
-                    if not grid_input:
-                        continue
-                    
-                    # Update the node data
-                    if 'location' not in crawler.nodes[callsign]:
-                        crawler.nodes[callsign]['location'] = {}
-                    crawler.nodes[callsign]['location']['grid'] = grid_input
-                    crawler.nodes[callsign]['gridsquare'] = grid_input
-                    updated_count += 1
-                    print("  Set {} = {}".format(callsign, grid_input))
-                
-                if updated_count > 0:
-                    print("\nUpdated {} gridsquare(s), re-exporting...".format(updated_count))
+        # Review quarantined callsigns and fill in missing gridsquares.
+        # Both read the exported map, so they see every node in it - not just
+        # the handful this run happened to re-crawl.
+        if not silent_mode:
+            try:
+                review_quarantined_callsigns(crawler)
+                if prompt_for_missing_grids(crawler):
+                    # Re-export so the manual entries land in nodemap.json
+                    # immediately rather than waiting for the next crawl.
                     crawler.export_json(merge=merge_mode)
                     crawler.export_csv()
-        
+            except (KeyboardInterrupt, EOFError):
+                print("")
+                print("Skipping review.")
+
         # Generate HTML/SVG maps if user opted in
         if generate_maps:
             print("\nGenerating maps...")
