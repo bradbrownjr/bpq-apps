@@ -7,6 +7,8 @@ Sysop tools for network mapping, maintenance, and service installation.
 - [Quick Start](#quick-start)
 - [install-dxspider.sh - DX Spider Cluster Installer](#install-dxspidersh---dx-spider-cluster-installer)
 - [nodemap.py - Network Topology Mapper](#nodemappy---network-topology-mapper)
+  - [Data Quality](#data-quality)
+- [nodemap-tui.py - Full-Screen Front End](#nodemap-tuipy---full-screen-front-end)
 - [nodemap-html.py - Interactive Map Generator](#nodemap-htmlpy---interactive-map-generator)
 - [mailroute.py - Mail Forwarding Route Analyzer](#mailroutepy---mail-forwarding-route-analyzer)
 
@@ -18,16 +20,19 @@ mkdir -p ~/utilities
 cd ~/utilities
 
 # Download scripts
-for f in nodemap.py nodemap-html.py map_boundaries.py; do 
+for f in nodemap.py nodemap-html.py nodemap-tui.py map_boundaries.py; do 
   wget -O "$f" "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/$f"
 done
-chmod +x nodemap.py nodemap-html.py
+chmod +x nodemap.py nodemap-html.py nodemap-tui.py
 
 # Basic crawl (5 hops from local node)
 ./nodemap.py 5
 
 # Generate maps
 ./nodemap-html.py -a
+
+# Or drive all of the above from a menu
+./nodemap-tui.py
 ```
 
 **Full installation guide**: See [docs/INSTALLATION.md#utilities-installation](../docs/INSTALLATION.md#utilities-installation)
@@ -212,19 +217,110 @@ Supported node firmware:
 
 - **nodemap.json** - Complete network data (nodes, connections, SSIDs, quality scores)
 - **nodemap.csv** - Connection list (from, to, port, quality, gridsquares)
+- **nodemap-overrides.json** - Sysop-entered data a crawl will never overwrite:
+  gridsquares, the ignore list, and confirmed-real callsigns. Safe to edit by hand.
+- **nodemap-geocache.json** - Cached location lookups, so repeat crawls make no
+  HTTP requests and an offline node still resolves what it resolved before.
 - **telnet.log** - Command/response traffic with timestamps (use `-l`)
 - **debug.log** - Verbose crawl diagnostics (use `-D`)
-- **exclusions.txt** - Optional blocklist for corrupted callsigns
+- **exclusions.txt** - Optional blocklist, still honoured via `-x`
 
-Example exclusions.txt:
-```
-# Corrupted callsigns from packet loss
-KX1nMA
-KM1JMH
+Corrupted callsigns no longer need to be listed by hand - see Data Quality below.
 
-# Offline nodes
-AB1KI, N1REX  # commas work too
+### Data Quality
+
+**Corrupt callsign detection.** MHEARD is the only discovery source that arrives
+as bare AX.25 UI frames, with no error correction, so a share of the "stations"
+it reports are corrupted copies of real ones. ROUTES and the NODES table arrive
+inside an acked NET/ROM session and have already survived a CRC, so they are
+treated as corroboration while MHEARD is treated only as a lead.
+
+A callsign is quarantined when it shows one of the known corruption signatures:
+
+| Signature | Example | Why |
+|---|---|---|
+| `case_anomaly` | `KX1nMA` | AX.25 cannot carry a lowercase callsign |
+| `unallocated_prefix` | `Q1QFY` | Q is reserved for Q signals, never issued |
+| `bit_error:CALL` | `N1QYY` from `N1QFY` | Same length, one or two flipped characters |
+| `truncated:CALL` | `N1Q` from `N1QFY` | Frame cut short mid-address |
+| `bad_ssid` | `W1ABC-99` | AX.25 SSIDs are 4 bits, 0-15 |
+| `reserved_word` | `NODES`, `BEACON` | A protocol word, not a station |
+
+Length matters: the AX.25 address field is a fixed 7 bytes, so real corruption
+substitutes characters rather than inserting or deleting them. Matching on
+substitution distance instead of full edit distance is what keeps genuine
+callsigns such as `W1ZE` and `N1EP` out of the quarantine.
+
+**Proof of contact always wins.** A station the crawler has actually connected
+to and read commands from can never be quarantined or deleted, and a stale
+ignore entry for it is cleared automatically. WD1F is a real Maine BBS whose
+callsign sits one character from WD1O, a real node; this is what keeps that
+coincidence from erasing it.
+
+A callsign-registry lookup was tried as a second net and deliberately removed.
+It is the wrong tool: it rescued KC1JMF, a definite bad copy of KC1JMH that
+happens to be an issued callsign, and the only free FCC source covers US
+callsigns only - so it would bias toward keeping ghosts everywhere and do
+nothing at all outside the US. Contact is the only authenticity check that
+holds regardless of region.
+
+Quarantined callsigns are removed from the map, added to the ignore list, and
+skipped by every later crawl - each one avoided is minutes of 1200-baud air
+time. Nothing is deleted: the reasoning is kept in `suspect_callsigns` in
+nodemap.json, and any decision can be reversed.
+
+```bash
+./nodemap.py --list-ignored              # what is being skipped, and why
+./nodemap.py --confirm-call W1ZE         # real station, crawl it again
+./nodemap.py --ignore-call N8QFQ         # never crawl this again
+./nodemap.py --no-auto-ignore            # flag corruption but keep retrying
 ```
+
+**Node status.** Every node carries `first_seen`, `last_seen`, `last_crawled`,
+`crawl_attempts`, `crawl_successes`, `consecutive_failures` and a `status`:
+
+- `online` - reached this run, or heard on RF within 24 hours
+- `recent` - seen within the last week, but no fresh evidence this run
+- `stale` - nothing has confirmed it for over a week
+- `offline` - three or more consecutive failed connections
+- `unreachable` - not present in any ROUTES table
+
+Links carry the same treatment: `first_seen`, `last_seen`, `observed_count`,
+`stale`, and `asymmetric` (A hears B but B never hears A - a real property of
+an RF path, and worth drawing differently).
+
+**Location resolution.** Missing gridsquares are filled from the first source
+that answers, most trustworthy first:
+
+1. Sysop override in `nodemap-overrides.json`
+2. A gridsquare stated in the node's INFO text
+3. Lat/lon in INFO, converted to a locator
+4. A place name in INFO - including hilltops such as "on Streaked Mtn" -
+   geocoded via OpenStreetMap
+5. Callsign lookup via Callook, then HamDB, then QRZ
+
+QRZ credentials are read from the `qrz3.py` config (`apps/config.py`) if it is
+installed; no credentials are stored in this script. Note that a callsign
+lookup returns the *license address*, not the node site, which is why it sits
+at the bottom of the ladder - WS1EC's licence is in Scarborough while the node
+is on the air from Windham.
+
+Every lookup is cached and every one is optional. `--no-lookup` keeps a crawl
+entirely off the internet, and a failed uplink simply disables further lookups
+rather than stalling the crawl - the emergency in which the map matters most is
+the one where the internet is down.
+
+**Gridsquares are remembered.** Anything entered by hand goes to
+`nodemap-overrides.json` and outranks whatever a later crawl parses. Previously
+a hand-entered grid survived only until the next crawl of that node re-exported
+it as empty.
+
+```bash
+./nodemap.py --set-grid NG1P FN43vp      # persists across crawls
+```
+
+After a crawl, the script offers to look up every node still missing a grid,
+then to take the rest by hand.
 
 ### How It Works
 
@@ -248,9 +344,51 @@ SSIDs like `-2` (BBS), `-10` (RMS), `-4` (CHAT) vary by sysop. When crawl encoun
 ### Requirements
 
 - Python 3.5.3+ (3.6+ recommended)
-- Python 3.13+: `pip install telnetlib3`
+- Python 3.13+: `pip install telnetlib3` to crawl. Everything that does not
+  open a connection (`--set-grid`, `--list-ignored`, `--display`) works without it.
+- Internet access is optional; used only for location lookups
 - Access to BPQ telnet port (default: 8010)
 - Readable `bpq32.cfg`
+
+---
+
+
+## nodemap-tui.py - Full-Screen Front End
+
+A menu-driven front end for `nodemap.py`, for when the option list is more than
+you want to assemble by hand. Built on stdlib `curses` - nothing to install, and
+it runs on the Python 3.5 that ships with older Raspbian.
+
+```bash
+wget -O nodemap-tui.py \
+  https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/utilities/nodemap-tui.py
+chmod +x nodemap-tui.py
+./nodemap-tui.py
+```
+
+### Screens
+
+- **Crawl** - every crawl option as a labelled field, with a one-line
+  explanation of whichever is highlighted and a live preview of the command it
+  builds. Press `r` to run it. The preview is generated from the same objects
+  the form edits, so it cannot drift, and it doubles as a way to learn the CLI.
+- **Nodes and status** - every node sorted worst-status first, with gridsquare,
+  days since last seen and neighbour count. Enter queries one node.
+- **Gridsquares** - which nodes have a locator and where it came from, with
+  the missing ones flagged. Enter sets one by hand.
+- **Ignored callsigns** - the quarantine list with the reason for each. Enter
+  restores a callsign that is really a station.
+
+### Keys
+
+`up`/`down` or `j`/`k` move, `enter` selects or edits, `space` toggles,
+`left`/`right` cycle a choice, `q` or `Escape` goes back, `g` regenerates the
+HTML and SVG maps.
+
+Needs `nodemap.py` in the same directory, and a terminal of at least 60x16.
+It is a front end only - every action shells out to `nodemap.py`, so anything
+done here can still be done from the shell, and nothing depends on the TUI
+being installed.
 
 ---
 
