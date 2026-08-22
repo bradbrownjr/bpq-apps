@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.3
+Version: 1.8.4
 """
 
-__version__ = '1.8.3'
+__version__ = '1.8.4'
 
 import sys
 import socket
@@ -1862,8 +1862,14 @@ class NodeCrawler:
                             self._debug_log("Connected to {}".format(callsign))
                             break
                         
-                        # Check for failure patterns
-                        if any(x in response.upper() for x in ['BUSY', 'FAILED', 'NO ROUTE', 
+                        # Check for failure patterns.
+                        # BPQ32's actual wording is "Failure with <call>", not
+                        # "Failed" - that word never appeared here before, so
+                        # every real failure was missed and this loop burned
+                        # its full conn_timeout waiting for a CONNECTED that
+                        # was never coming (confirmed 2026-08-21: 14 straight
+                        # "Failure with X" responses, all silently ignored).
+                        if any(x in response.upper() for x in ['BUSY', 'FAILED', 'FAILURE', 'NO ROUTE',
                                                                  'TIMEOUT', 'DISCONNECTED',
                                                                  'NOT HEARD', 'NO ANSWER',
                                                                  'NOT IN TABLES', 'NO ROUTE TO']):
@@ -1954,7 +1960,7 @@ class NodeCrawler:
                                     print("  Connected to {} via NetRom alias {}".format(callsign, alias))
                                     break
                                 
-                                if any(x in response.upper() for x in ['BUSY', 'FAILED', 'NO ROUTE', 
+                                if any(x in response.upper() for x in ['BUSY', 'FAILED', 'FAILURE', 'NO ROUTE',
                                                                          'TIMEOUT', 'DISCONNECTED',
                                                                          'NOT HEARD', 'NO ANSWER']):
                                     break
@@ -2864,7 +2870,21 @@ class NodeCrawler:
                             else:
                                 # Fallback: assume direct connection to parent
                                 path = [callsign]
-                
+
+                # A node that shows up as "unexplored" in several different
+                # parents' neighbor lists (common - e.g. KC1JMH-15 was listed
+                # by WS1EC, NG1P-4, WD1O-15 AND KX1EMA-15 on 2026-08-21)
+                # always resolves to the SAME successful_path here, since that
+                # path comes from the neighbor's own record, not the parent's.
+                # Without this check the same (target, path) pair went into
+                # the queue once per parent that mentioned it - on that run
+                # KC1JMH-15 was queued 4 times and, combined with each failed
+                # attempt burning a full conn_timeout, consumed the entire
+                # session without ever reaching any of the other 7 targets.
+                path_key = (neighbor_to_queue, tuple(path))
+                if path_key in self.queued_paths:
+                    continue
+                self.queued_paths.add(path_key)
                 unexplored.append((neighbor_to_queue, path))
         
         # Sort by multiple criteria to try best paths first:
