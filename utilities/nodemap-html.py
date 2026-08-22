@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.19
+Version: 1.4.20
 """
 
-__version__ = '1.4.19'
+__version__ = '1.4.20'
 
 import sys
 import json
@@ -740,12 +740,22 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         
         // Add node markers
         nodes.forEach(function(node) {
-            // HF-connected nodes shown in gray so they stand out from VHF/UHF nodes
+            // HF-connected nodes shown in gray so they stand out from VHF/UHF nodes.
+            // A node with no frequency at all has never actually been
+            // crawled (its PORTS table was never retrieved - it's only
+            // known from being someone else's MHEARD sighting or from
+            // callsign/location lookup) and previously rendered identical
+            // to a VHF/UHF node, falsely implying it had been confirmed on
+            // RF. Marked with its own gray/#888888 so it reads as "unknown"
+            // rather than "confirmed VHF/UHF", matching the SVG export.
             var isHf = node.hf_ports && node.hf_ports.length > 0;
+            var isUnknown = !isHf && !node.frequency;
+            var fillColor = isHf ? '#9E9E9E' : (isUnknown ? '#888888' : '#e53935');
+            var strokeColor = isHf ? '#616161' : (isUnknown ? '#555555' : '#b71c1c');
             var marker = L.circleMarker([node.lat, node.lon], {
                 radius: 8,
-                fillColor: isHf ? '#9E9E9E' : '#e53935',
-                color: isHf ? '#616161' : '#b71c1c',
+                fillColor: fillColor,
+                color: strokeColor,
                 weight: 2,
                 opacity: 1,
                 fillOpacity: 0.8
@@ -829,7 +839,8 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                 '<hr style="margin:6px 0">' +
                 '<strong>Node Markers</strong><br>' +
                 '<div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#e53935;border:2px solid #b71c1c;margin-right:8px;flex-shrink:0"></div>VHF/UHF node</div>' +
-                '<div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#9E9E9E;border:2px solid #616161;margin-right:8px;flex-shrink:0"></div>HF gateway (VARA/ARDOP)</div>';
+                '<div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#9E9E9E;border:2px solid #616161;margin-right:8px;flex-shrink:0"></div>HF gateway (VARA/ARDOP)</div>' +
+                '<div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:#888888;border:2px solid #555555;margin-right:8px;flex-shrink:0"></div>Unknown (not yet crawled)</div>';
             return div;
         };
         legend.addTo(map);
@@ -1393,9 +1404,9 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     
     # Legend
     legend_x = width - 150
-    legend_y = height - 195
+    legend_y = height - 215
     svg_lines.append('  <g class="legend" transform="translate({},{})">'.format(legend_x, legend_y))
-    svg_lines.append('    <rect x="-5" y="-15" width="140" height="200" fill="white" stroke="#ccc" rx="5"/>')
+    svg_lines.append('    <rect x="-5" y="-15" width="140" height="220" fill="white" stroke="#ccc" rx="5"/>')
     svg_lines.append('    <text y="0" font-weight="bold">Connection Lines</text>')
     
     bands = [
@@ -1416,6 +1427,13 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     svg_lines.append('    <text x="22" y="157">VHF/UHF node</text>')
     svg_lines.append('    <circle cx="10" cy="173" r="5" fill="#9E9E9E" stroke="#616161" stroke-width="1.5"/>')
     svg_lines.append('    <text x="22" y="177">HF gateway</text>')
+    # get_band_color(None) below returns the same '#888888' used for "Other/
+    # Unknown" connection lines above - a node with no PORTS data (never
+    # actually crawled, only known via MHEARD/lookup) renders that same gray
+    # and was previously indistinguishable from a true HF gateway (#9E9E9E),
+    # since Node Markers had no entry explaining it.
+    svg_lines.append('    <circle cx="10" cy="193" r="5" fill="#888888" stroke="#333" stroke-width="1.5"/>')
+    svg_lines.append('    <text x="22" y="197">Unknown (not yet crawled)</text>')
     svg_lines.append('  </g>')
     
     # Stats
