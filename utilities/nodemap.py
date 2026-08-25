@@ -20,6 +20,11 @@ Features:
 - Remembers sysop-entered gridsquares in nodemap-overrides.json
 - Fills missing locations from INFO text, geocoding, Callook/HamDB/QRZ
 - Routes by NET/ROM link quality rather than raw hop count
+- Flags links as 'confirmed' only when both ends are themselves reachable
+  and current, so a bare-TNC station's inherently one-way ROUTES entry
+  doesn't get mistaken for a dead link
+- Creates a locatable stub for nodes known only via another node's ROUTES
+  table, so a never-crawled neighbor still has a place on the map
 
 Sidecar files (all safe to edit or delete):
   nodemap-overrides.json  sysop-entered grids, ignore list, whitelist
@@ -34,10 +39,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.8
+Version: 1.9.0
 """
 
-__version__ = '1.8.8'
+__version__ = '1.9.0'
 
 import sys
 import socket
@@ -3684,6 +3689,16 @@ class NodeCrawler:
         # includes being heard by somebody else even when we never reached it.
         last_seen = history.get('last_seen') or node.get('last_seen')
         heard = self.last_heard.get(base)
+        # A node can reach here with genuinely nothing behind it: known only
+        # because some OTHER node's ROUTES table mentions it as a neighbor
+        # (see export_json's phantom-node stub), never attempted, never
+        # heard, not in this run's history and not in any prior export. For
+        # that case the bootstrap fallback below is exactly the "now" trap
+        # its own comment warns about, just one layer removed - a truly
+        # evidence-free node would borrow the surrounding crawl's freshness
+        # instead of the "now" this function is trying to avoid, and read as
+        # online/recent despite having never once been verified.
+        has_evidence = bool(history) or heard is not None or base in self.freshly_crawled
         if base in self.freshly_crawled:
             last_seen = self.crawl_started
         elif heard is not None:
@@ -3693,7 +3708,7 @@ class NodeCrawler:
                 last_seen = candidate
 
         node['first_seen'] = first_seen
-        node['last_seen'] = last_seen or bootstrap
+        node['last_seen'] = last_seen or (bootstrap if has_evidence else None)
         if last_crawled:
             node['last_crawled'] = last_crawled
         node['crawl_attempts'] = history.get('crawl_attempts', node.get('crawl_attempts', 0))
@@ -5687,13 +5702,36 @@ class NodeCrawler:
     def _connection_key(self, conn):
         return '{}>{}'.format(_base_call(conn.get('from')), _base_call(conn.get('to')))
 
-    def _annotate_connections(self, connections):
+    def _annotate_connections(self, connections, nodes_data):
         """Stamp first/last seen on links and drop the ones built from ghosts.
 
         Also flags asymmetry: A hearing B while B never hears A is a real and
         useful property of an RF path, not a defect in the data, and the map
         should be able to draw it differently.
+
+        And flags confidence: 'confirmed' means both ends have themselves
+        been successfully connected to at some point AND are currently in
+        good standing (status online/recent) - not just that some node's
+        ROUTES table mentions the link. Deliberately not the same thing as
+        'asymmetric' above: a bare TNC with no NET/ROM stack of its own
+        (e.g. N1EP-1) can never publish a ROUTES entry back, so a link to it
+        is permanently asymmetric no matter how reliably it answers - that
+        signal alone would flag it as suspect forever. 'confirmed' asks
+        "have we ourselves gotten in, recently" instead, which is what
+        actually answers "is this a solid path" for a station that claims
+        to always be up but runs hardware that can't corroborate that.
         """
+        status_by_base = {}
+        successes_by_base = {}
+        for callsign, node in nodes_data.items():
+            base = _base_call(callsign)
+            status_by_base[base] = node.get('status')
+            successes_by_base[base] = node.get('crawl_successes', 0)
+
+        def _confirmed(base):
+            return (successes_by_base.get(base, 0) or 0) > 0 and \
+                status_by_base.get(base) in ('online', 'recent')
+
         seen_pairs = set()
         result = []
         fresh_keys = {self._connection_key(c) for c in self.connections}
@@ -5726,6 +5764,7 @@ class NodeCrawler:
             if age is not None:
                 record['days_since_seen'] = round(age, 2)
                 record['stale'] = age > self.STALE_AFTER_DAYS
+            record['confirmed'] = _confirmed(from_call) and _confirmed(to_call)
             result.append(record)
 
         # Second pass for symmetry, once every link is in hand.
@@ -5858,6 +5897,74 @@ class NodeCrawler:
                                    if _base_call(n) not in self.suspect_calls
                                    and not self.overrides.is_ignored(n)]
 
+        # A connection can point at a node nobody has ever actually reached
+        # - only some OTHER node's ROUTES table vouches for it (e.g. N1EP-1,
+        # a Kantronics TNC with no NET/ROM stack of its own to corroborate
+        # back with: known only via AB1KI-15's ROUTES, every direct connect
+        # attempt to it failed). Without a record of its own it has no
+        # location and the map can't place it at all - the edge just
+        # silently disappears. Give it a minimal stub: a best-effort
+        # callsign-only location lookup (no RF involved) if one succeeds,
+        # nothing invented if it doesn't - nodemap-html.py already handles
+        # a node with no resolvable grid by listing it as unmapped rather
+        # than failing, so this is safe even when the lookup comes up empty.
+        # crawl_successes stays 0 and it goes through the same temporal
+        # stamping as everything else below, so its status naturally comes
+        # out 'unknown'/'unreachable' rather than something invented here.
+        # Connections are recorded with base-call-only endpoints (self.nodes
+        # and all_neighbors both key/store by base call), but nodes_data
+        # keys remote nodes with their SSID once crawled (e.g. 'KS1R-15').
+        # Matching phantom_targets against nodes_data.keys() directly would
+        # treat every already-known SSID-qualified node's own base call as
+        # "phantom" and spawn a bogus duplicate stub for it - compare by
+        # base call instead, the same way the SSID-dedup pass above does.
+        known_bases = {_base_call(k) for k in nodes_data.keys()}
+        phantom_targets = set()
+        for conn in connections_data:
+            phantom_targets.add(conn.get('to'))
+            phantom_targets.add(conn.get('from'))
+        for callsign in phantom_targets:
+            if not callsign or callsign in nodes_data:
+                continue
+            base = _base_call(callsign)
+            if base in known_bases:
+                continue
+            if base in self.suspect_calls or self.overrides.is_ignored(base):
+                continue
+            location = {}
+            try:
+                resolved = self.resolver.lookup_callsign(base)
+            except Exception as e:
+                resolved = None
+                self._debug_log("phantom-node lookup failed for {}: {}".format(callsign, e))
+            if resolved and resolved.get('grid'):
+                for field in ('grid', 'city', 'state'):
+                    if resolved.get(field):
+                        location[field] = resolved[field]
+                location['source'] = resolved.get('source', 'lookup')
+            nodes_data[callsign] = {
+                'gridsquare': location.get('grid'),
+                'location': location,
+                'location_source': location.get('source', 'lookup'),
+                'neighbors': [], 'explored_neighbors': [],
+                'unexplored_neighbors': [], 'intermittent_neighbors': [],
+                'hop_distance': None,
+                'ports': [], 'applications': [], 'commands': [],
+                'type': 'Unknown',
+                # nodemap-html.py's reciprocity check already treats a
+                # 'partial' node's routes as incomplete data rather than
+                # requiring the bidirectional agreement it demands of a
+                # fully-crawled node - exactly the tolerance a stub with an
+                # empty routes dict needs, since it was never crawled at
+                # all (not even a normal timed-out partial), so it can
+                # never satisfy that check on its own.
+                'partial': True,
+            }
+            # A second phantom_targets entry for the same base call (e.g.
+            # both a bare and an SSID-qualified spelling turning up in
+            # different connections) must not spawn a second stub.
+            known_bases.add(base)
+
         # Overlay sysop data and stamp the temporal fields across every node,
         # including ones this run never touched - otherwise a node goes
         # permanently statusless the moment it stops being re-crawled.
@@ -5873,7 +5980,7 @@ class NodeCrawler:
             self._apply_overrides(callsign, node)
             self._apply_temporal_fields(callsign, node)
 
-        connections_data = self._annotate_connections(connections_data)
+        connections_data = self._annotate_connections(connections_data, nodes_data)
 
         status_counts = {}
         for node in nodes_data.values():
