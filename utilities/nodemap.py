@@ -39,10 +39,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.9.0
+Version: 1.9.1
 """
 
-__version__ = '1.9.0'
+__version__ = '1.9.1'
 
 import sys
 import socket
@@ -2890,12 +2890,20 @@ class NodeCrawler:
         logic did, so this is a drop-in replacement for both.
         """
         self_reported = {}
-        for node_key in nodes_data.keys():
-            if '-' not in node_key:
-                continue
-            base = node_key.split('-')[0]
-            if self._is_valid_callsign(base) and self._is_likely_node_ssid(node_key):
+        for node_key, node_data in nodes_data.items():
+            base = node_key.split('-')[0] if '-' in node_key else node_key
+            if '-' in node_key and self._is_valid_callsign(base) and self._is_likely_node_ssid(node_key):
                 self_reported[base] = node_key
+            # A node stored under its bare base call (crawl target wasn't
+            # yet SSID-resolved when queued) can still have a banner_ssid
+            # from its own prompt on the session it WAS actually reached -
+            # e.g. KY2D is keyed 'KY2D' but its prompt read 'KY2D2M:KY2D-15}'.
+            # That live read outranks even an SSID-qualified key, since a
+            # key can be stale from an older crawl while banner_ssid is
+            # this record's own most recent successful connection.
+            banner_ssid = node_data.get('banner_ssid')
+            if banner_ssid and self._is_valid_callsign(base) and self._is_likely_node_ssid(banner_ssid):
+                self_reported[base] = banner_ssid
 
         from collections import defaultdict
         ssid_votes = defaultdict(lambda: defaultdict(int))
@@ -4419,7 +4427,27 @@ class NodeCrawler:
                     primary_alias = match.group(1)
                     if self.verbose:
                         print("  Extracted primary alias from prompt: {}".format(primary_alias))
-            
+
+            # The same prompt also carries the exact CALL-SSID this session
+            # actually connected as - the single most authoritative SSID
+            # signal available, since it is literally what the far end just
+            # answered with, not a third-hand ROUTES vote. A node offering
+            # several SSID'd services under one callsign (e.g. KY2D-1
+            # EANHUB vs KY2D-15 KY2D2M, both real, both active at once) can
+            # never win a plain vote count between them - that's why KY2D
+            # kept getting reported "insufficient SSID data" on every run
+            # despite being fully and successfully crawled right here.
+            banner_ssid = None
+            if commands:
+                first_cmd = commands[0] if commands else ''
+                match = re.match(r'^\w+:(\w+-\d+)\}', first_cmd)
+                if match:
+                    candidate = match.group(1).upper()
+                    if candidate.split('-')[0] == base_callsign and self._is_likely_node_ssid(candidate):
+                        banner_ssid = candidate
+                        if self.verbose:
+                            print("  Extracted banner SSID from prompt: {}".format(banner_ssid))
+
             # Fallback: Use first own_aliases entry (unreliable - dict order may be wrong)
             if not primary_alias and own_aliases:
                 primary_alias = list(own_aliases.keys())[0]
@@ -4456,6 +4484,7 @@ class NodeCrawler:
                 'own_aliases': own_aliases,  # This node's aliases (CCEMA:WS1EC-15, etc.)
                 'seen_aliases': other_aliases,  # Other nodes' aliases seen in NODES
                 'netrom_ssids': mheard_ssids,  # From MHEARD (actual RF transmissions)
+                'banner_ssid': banner_ssid,  # Exact CALL-SSID from this session's own prompt
                 'applications': applications,  # From ? command (BBS, CHAT, RMS, etc.)
                 'commands': commands,  # From ? command (all available commands)
                 'port_audit': port_audit  # HF/IP stations heard but not crawled (awareness only)
@@ -5338,25 +5367,31 @@ class NodeCrawler:
                         colored_print("Run a full crawl first to build network map", Colors.YELLOW)
                         return
                     
-                    # Populate netrom_ssid_map and route_ports from topology data
-                    # Priority: 1) Node's own SSID (from routes where it's listed as direct neighbor)
-                    #           2) netrom_ssids from other nodes
+                    # Populate netrom_ssid_map from topology data via the same
+                    # self-reported-first consensus used everywhere else in
+                    # the crawler. This used to be its own inline two-pass
+                    # loop ("node's own key wins, unless already set" /
+                    # "then other nodes' votes, unless already set") - but a
+                    # single combined pass keyed only on "already set or
+                    # not" is order-dependent: dict iteration is alphabetical
+                    # (AB1KI-15 before KC1JMH-15), so if AB1KI-15's own
+                    # netrom_ssids carried a stale vote for KC1JMH (it did -
+                    # 'KC1JMH-7', a single-bit RF corruption of the real
+                    # 'KC1JMH-15', last refreshed back in January), that
+                    # secondary vote claimed the map slot before KC1JMH-15's
+                    # own authoritative key was ever reached, and the
+                    # "already set" guard then silently protected the wrong
+                    # value forever. This is exactly the bug
+                    # _resolve_ssid_consensus was built to fix (see its own
+                    # docstring for the KC1JMH-15/-7 story) - it was just
+                    # never wired into this particular code path, which only
+                    # a --callsign correction run exercises. Reusing it here
+                    # closes that gap instead of re-fixing the same class of
+                    # bug a second time in a second place.
+                    self._resolve_ssid_consensus(nodes_data)
+
+                    # Store route ports (which port neighbors are heard on)
                     for node_call, node_info in nodes_data.items():
-                        # First, store the node's own SSID (this is authoritative)
-                        # The key in nodes_data IS the authoritative SSID (e.g., "KC1JMH-15")
-                        base_node = node_call.split('-')[0] if '-' in node_call else node_call
-                        if '-' in node_call and base_node not in self.netrom_ssid_map:
-                            self.netrom_ssid_map[base_node] = node_call
-                            self.ssid_source[base_node] = ('routes', time.time())
-                        
-                        # Then store SSIDs this node knows about (secondary)
-                        for base_call, full_call in node_info.get('netrom_ssids', {}).items():
-                            # Only set if we don't have an authoritative source already
-                            if base_call not in self.netrom_ssid_map:
-                                self.netrom_ssid_map[base_call] = full_call
-                                self.ssid_source[base_call] = ('topology', time.time())
-                        
-                        # Store route ports (which port neighbors are heard on)
                         for neighbor_call, port_num in node_info.get('heard_on_ports', []):
                             if port_num is not None and neighbor_call not in self.route_ports:
                                 self.route_ports[neighbor_call] = port_num
@@ -5378,6 +5413,21 @@ class NodeCrawler:
                     while queue and not found_path:
                         current, path = queue.pop(0)
                         current_info = nodes_data.get(current, {})
+                        if not current_info and '-' not in current:
+                            # 'neighbors' lists are recorded base-call-only
+                            # (see the loop below), but nodes_data keys a
+                            # remote node with its resolved SSID once
+                            # crawled (e.g. 'KC1JMH-15'). Without this, any
+                            # node reached via a neighbor list - which is
+                            # every node past the first hop - dead-ends here
+                            # with an empty record and the search silently
+                            # stops one hop short of anything real, exactly
+                            # what made a KY2D correction run report
+                            # "Cannot find path" despite KY2D being two
+                            # genuine, already-mapped hops away.
+                            current_ssid = self.netrom_ssid_map.get(current)
+                            if current_ssid:
+                                current_info = nodes_data.get(current_ssid, {})
                         neighbors = current_info.get('neighbors', [])
                         
                         if self.verbose and neighbors:
