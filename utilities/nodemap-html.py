@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.23
+Version: 1.4.24
 """
 
-__version__ = '1.4.23'
+__version__ = '1.4.24'
 
 import sys
 import json
@@ -1203,22 +1203,27 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     min_lon = min(n['lon'] for n in map_nodes)
     max_lon = max(n['lon'] for n in map_nodes)
     
-    # Add generous padding for context (show surrounding area)
+    # Add padding for context (show surrounding area). Kept fairly tight -
+    # every degree spent on padding is a degree not spent spreading real,
+    # closely-spaced nodes apart on screen.
     lat_range = max_lat - min_lat
     lon_range = max_lon - min_lon
-    lat_padding = max(lat_range * 0.3, 0.5)  # At least 0.5 degrees
-    lon_padding = max(lon_range * 0.3, 0.5)
+    lat_padding = max(lat_range * 0.15, 0.25)
+    lon_padding = max(lon_range * 0.15, 0.25)
     min_lat -= lat_padding
     max_lat += lat_padding
     min_lon -= lon_padding
     max_lon += lon_padding
-    
-    # SVG dimensions. Wider than the old 800x600 - this network's real
-    # footprint (Maine to the Maritimes) is much wider than it is tall,
-    # so a wide canvas wastes less of itself on empty margin once the
-    # projection below stops distorting that shape to fit a squarer box.
-    width = 1100
-    height = 600
+
+    # SVG dimensions. width/height are rendered at 100% (see below), so
+    # these numbers only set the aspect ratio and the internal coordinate
+    # resolution - not the physical on-screen size. Matched roughly to a
+    # 1080p browser window with the OS taskbar, window chrome, and a
+    # bookmarks bar subtracted (~1900x900), which is also close to this
+    # network's real footprint (Maine to the Maritimes is much wider than
+    # tall), so little of the frame goes to letterboxing either way.
+    width = 1900
+    height = 900
 
     # A degree of longitude is only cos(latitude) as wide as a degree of
     # latitude in real distance. Scaling lon_range and lat_range to
@@ -1232,13 +1237,14 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     mean_lat_rad = math.radians((min_lat + max_lat) / 2.0)
     cos_lat = max(math.cos(mean_lat_rad), 0.1)  # guard the poles
     lon_span = padded_lon_range * cos_lat
-    avail_w = width - 100
-    avail_h = height - 100
+    MARGIN = 40
+    avail_w = width - 2 * MARGIN
+    avail_h = height - 2 * MARGIN
     scale = min(
         avail_w / lon_span if lon_span > 0 else avail_w,
         avail_h / padded_lat_range if padded_lat_range > 0 else avail_h)
-    x_offset = 50 + (avail_w - lon_span * scale) / 2.0
-    y_offset = 50 + (avail_h - padded_lat_range * scale) / 2.0
+    x_offset = MARGIN + (avail_w - lon_span * scale) / 2.0
+    y_offset = MARGIN + (avail_h - padded_lat_range * scale) / 2.0
 
     def project(lat, lon):
         """Equirectangular projection, latitude-corrected and aspect-preserving."""
@@ -1246,37 +1252,15 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         y = y_offset + (max_lat - lat) * scale
         return (x, y)
 
-    # Many stations sit within a few miles of each other - geographically
-    # correct, but at map scale their dots and labels collapse into an
-    # unreadable smear (e.g. 16 midcoast Maine nodes inside a 150x125px
-    # area). Nudge anything closer than MIN_NODE_SEPARATION apart in
-    # projected space, and draw connection lines to these nudged points
-    # too, so a line always visibly reaches the dot it's connecting to.
-    MIN_NODE_SEPARATION = 38
+    # Real, geographically accurate positions for every node - project()
+    # is the single source of truth. An earlier version nudged crowded
+    # nodes apart to reduce label overlap, but that put real stations
+    # over open ocean and made the map lie about where things are; the
+    # right lever for legibility is more scale (see width/height and the
+    # padding factor above), not moving dots off their true location.
     node_positions = {}
     for node in map_nodes:
-        node_positions[node['callsign']] = list(project(node['lat'], node['lon']))
-    calls = list(node_positions.keys())
-    for _ in range(80):
-        moved = False
-        for i in range(len(calls)):
-            for j in range(i + 1, len(calls)):
-                x1, y1 = node_positions[calls[i]]
-                x2, y2 = node_positions[calls[j]]
-                dx, dy = x2 - x1, y2 - y1
-                dist = math.hypot(dx, dy)
-                if dist < MIN_NODE_SEPARATION:
-                    moved = True
-                    if dist < 0.01:
-                        # Exactly coincident (same grid square) - any
-                        # direction works, so pick one deterministically.
-                        dx, dy, dist = 1.0, 0.0, 1.0
-                    push = (MIN_NODE_SEPARATION - dist) / 2.0
-                    ux, uy = dx / dist, dy / dist
-                    node_positions[calls[i]] = [x1 - ux * push, y1 - uy * push]
-                    node_positions[calls[j]] = [x2 + ux * push, y2 + uy * push]
-        if not moved:
-            break
+        node_positions[node['callsign']] = project(node['lat'], node['lon'])
 
     def coords_to_path(coords):
         """Convert list of [lon, lat] coords to SVG path."""
@@ -1352,7 +1336,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     # Define clip path to constrain boundary drawing to visible area
     svg_lines.append('  <defs>')
     svg_lines.append('    <clipPath id="map-clip">')
-    svg_lines.append('      <rect x="50" y="50" width="{}" height="{}"/>'.format(width - 100, height - 100))
+    svg_lines.append('      <rect x="{}" y="{}" width="{}" height="{}"/>'.format(MARGIN, MARGIN, avail_w, avail_h))
     svg_lines.append('    </clipPath>')
     svg_lines.append('  </defs>')
     
