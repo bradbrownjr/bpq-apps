@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.22
+Version: 1.4.23
 """
 
-__version__ = '1.4.22'
+__version__ = '1.4.23'
 
 import sys
 import json
@@ -1245,7 +1245,39 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         x = x_offset + (lon - min_lon) * cos_lat * scale
         y = y_offset + (max_lat - lat) * scale
         return (x, y)
-    
+
+    # Many stations sit within a few miles of each other - geographically
+    # correct, but at map scale their dots and labels collapse into an
+    # unreadable smear (e.g. 16 midcoast Maine nodes inside a 150x125px
+    # area). Nudge anything closer than MIN_NODE_SEPARATION apart in
+    # projected space, and draw connection lines to these nudged points
+    # too, so a line always visibly reaches the dot it's connecting to.
+    MIN_NODE_SEPARATION = 38
+    node_positions = {}
+    for node in map_nodes:
+        node_positions[node['callsign']] = list(project(node['lat'], node['lon']))
+    calls = list(node_positions.keys())
+    for _ in range(80):
+        moved = False
+        for i in range(len(calls)):
+            for j in range(i + 1, len(calls)):
+                x1, y1 = node_positions[calls[i]]
+                x2, y2 = node_positions[calls[j]]
+                dx, dy = x2 - x1, y2 - y1
+                dist = math.hypot(dx, dy)
+                if dist < MIN_NODE_SEPARATION:
+                    moved = True
+                    if dist < 0.01:
+                        # Exactly coincident (same grid square) - any
+                        # direction works, so pick one deterministically.
+                        dx, dy, dist = 1.0, 0.0, 1.0
+                    push = (MIN_NODE_SEPARATION - dist) / 2.0
+                    ux, uy = dx / dist, dy / dist
+                    node_positions[calls[i]] = [x1 - ux * push, y1 - uy * push]
+                    node_positions[calls[j]] = [x2 + ux * push, y2 + uy * push]
+        if not moved:
+            break
+
     def coords_to_path(coords):
         """Convert list of [lon, lat] coords to SVG path."""
         if not coords:
@@ -1369,8 +1401,8 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             continue
         drawn_connections.add(key)
         
-        x1, y1 = project(conn['from_lat'], conn['from_lon'])
-        x2, y2 = project(conn['to_lat'], conn['to_lon'])
+        x1, y1 = node_positions[conn['from']]
+        x2, y2 = node_positions[conn['to']]
         link_type = conn.get('link_type', 'rf')
         
         # Line style based on link type
@@ -1393,7 +1425,7 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     # Draw nodes
     svg_lines.append('  <g class="nodes">')
     for node in map_nodes:
-        x, y = project(node['lat'], node['lon'])
+        x, y = node_positions[node['callsign']]
         # HF-connected nodes shown in gray to distinguish from VHF/UHF nodes
         if node.get('has_hf'):
             color = '#9E9E9E'
