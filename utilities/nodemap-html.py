@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.21
+Version: 1.4.22
 """
 
-__version__ = '1.4.21'
+__version__ = '1.4.22'
 
 import sys
 import json
@@ -1259,7 +1259,14 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     # Generate SVG
     svg_lines = []
     svg_lines.append('<?xml version="1.0" encoding="UTF-8"?>')
-    svg_lines.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {} {}" width="{}" height="{}">'.format(width, height, width, height))
+    # width/height are "100%" rather than the pixel dimensions on purpose -
+    # a browser opened directly on the .svg file renders a fixed-size root
+    # at its intrinsic size, centered in a sea of blank page. viewBox alone
+    # still fixes the internal coordinate system and aspect ratio (the
+    # default preserveAspectRatio="xMidYMid meet" scales the whole graphic
+    # up together, so the map and legend keep the same relative layout -
+    # nothing that doesn't already overlap starts overlapping).
+    svg_lines.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {} {}" width="100%" height="100%">'.format(width, height))
     svg_lines.append('  <style>')
     svg_lines.append('    .node { cursor: pointer; }')
     svg_lines.append('    .node:hover circle { r: 10; }')
