@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.20
+Version: 1.4.21
 """
 
-__version__ = '1.4.20'
+__version__ = '1.4.21'
 
 import sys
 import json
@@ -1213,14 +1213,37 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     min_lon -= lon_padding
     max_lon += lon_padding
     
-    # SVG dimensions
-    width = 800
+    # SVG dimensions. Wider than the old 800x600 - this network's real
+    # footprint (Maine to the Maritimes) is much wider than it is tall,
+    # so a wide canvas wastes less of itself on empty margin once the
+    # projection below stops distorting that shape to fit a squarer box.
+    width = 1100
     height = 600
-    
+
+    # A degree of longitude is only cos(latitude) as wide as a degree of
+    # latitude in real distance. Scaling lon_range and lat_range to
+    # independently fill the box (the old behavior) ignores that and
+    # stretches the map differently on each axis - real shapes (state
+    # outlines, node spacing) come out visibly distorted. Use one shared
+    # scale, corrected for latitude, and center whichever axis has room
+    # left over instead of stretching it to fill the box.
+    padded_lat_range = max_lat - min_lat
+    padded_lon_range = max_lon - min_lon
+    mean_lat_rad = math.radians((min_lat + max_lat) / 2.0)
+    cos_lat = max(math.cos(mean_lat_rad), 0.1)  # guard the poles
+    lon_span = padded_lon_range * cos_lat
+    avail_w = width - 100
+    avail_h = height - 100
+    scale = min(
+        avail_w / lon_span if lon_span > 0 else avail_w,
+        avail_h / padded_lat_range if padded_lat_range > 0 else avail_h)
+    x_offset = 50 + (avail_w - lon_span * scale) / 2.0
+    y_offset = 50 + (avail_h - padded_lat_range * scale) / 2.0
+
     def project(lat, lon):
-        """Simple Mercator-like projection to SVG coordinates."""
-        x = (lon - min_lon) / (max_lon - min_lon) * (width - 100) + 50
-        y = (max_lat - lat) / (max_lat - min_lat) * (height - 100) + 50
+        """Equirectangular projection, latitude-corrected and aspect-preserving."""
+        x = x_offset + (lon - min_lon) * cos_lat * scale
+        y = y_offset + (max_lat - lat) * scale
         return (x, y)
     
     def coords_to_path(coords):
