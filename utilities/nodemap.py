@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.7
+Version: 1.8.8
 """
 
-__version__ = '1.8.7'
+__version__ = '1.8.8'
 
 import sys
 import socket
@@ -4653,8 +4653,31 @@ class NodeCrawler:
             mode_name = "Resume" if self.resume else "New-only"
             print("{} mode: Loading unexplored nodes from {}...".format(mode_name, resume_filename))
             unexplored = self._load_unexplored_nodes(resume_filename)
-            
-            if not unexplored:
+
+            # _load_unexplored_nodes() marks every node already in
+            # nodemap.json - including the local node itself - as visited,
+            # and only ever returns OTHER nodes' unexplored neighbours. The
+            # local node is never anyone's "unexplored neighbour" (it's the
+            # most explored node there is), so under plain --resume it would
+            # never get queued at all: its own live MHEARD/ROUTES - the one
+            # thing that changes between crawls without any remote node's
+            # help - would silently go stale forever. Exempted for --resume
+            # specifically, not --mode new-only: new-only's whole point is
+            # "touch nothing already known", so forcing a refresh there
+            # would contradict what the mode is for.
+            if self.resume and not forced_target:
+                effective_start = (start_node or self.callsign or '').upper()
+                if effective_start:
+                    effective_base = effective_start.split('-')[0]
+                    for known in list(self.visited):
+                        if known.split('-')[0] == effective_base:
+                            self.visited.discard(known)
+                    local_key = (effective_start, ())
+                    if local_key not in self.queued_paths:
+                        self.queue.appendleft((effective_start, [], 255))
+                        self.queued_paths.add(local_key)
+
+            if not unexplored and not self.queue:
                 print("No unexplored nodes found.")
                 if len(self.visited) > 0:
                     print("All {} previously crawled nodes have been fully explored.".format(len(self.visited)))
@@ -4662,11 +4685,11 @@ class NodeCrawler:
                 else:
                     colored_print("No previous crawl data found. Use normal mode to start a fresh crawl.", Colors.RED)
                 return
-            
+
             # Queue all unexplored nodes (with default quality for resume)
             for callsign, path in unexplored:
                 self.queue.append((callsign, path, 255))  # Default high quality for resume paths
-            
+
             colored_print("Queued {} unexplored nodes for crawling".format(len(unexplored)), Colors.GREEN)
             mode_name = "Resume" if self.resume else "New-only"
             self._send_notification("{} crawl: {} unexplored nodes".format(mode_name, len(unexplored)))
