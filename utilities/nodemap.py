@@ -25,6 +25,8 @@ Features:
   doesn't get mistaken for a dead link
 - Creates a locatable stub for nodes known only via another node's ROUTES
   table, so a never-crawled neighbor still has a place on the map
+- Rejects callsign-lookup results far outside North America, so a bad
+  upstream geocode (Callook/HamDB/QRZ) can't wreck the map's scale
 
 Sidecar files (all safe to edit or delete):
   nodemap-overrides.json  sysop-entered grids, ignore list, whitelist
@@ -39,10 +41,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.9.1
+Version: 1.9.2
 """
 
-__version__ = '1.9.1'
+__version__ = '1.9.2'
 
 import sys
 import socket
@@ -543,6 +545,23 @@ def latlon_to_grid(lat, lon, precision=6):
     return grid
 
 
+def grid_to_latlon(grid):
+    """Convert a Maidenhead locator to its approximate center lat/lon.
+
+    Only needs to be roughly right - callers use this for continent-scale
+    plausibility checks, not for plotting.
+    """
+    if not grid or len(grid) < 4:
+        return None
+    grid = grid.upper()
+    try:
+        lon = (ord(grid[0]) - ord('A')) * 20 - 180 + int(grid[2]) * 2 + 1
+        lat = (ord(grid[1]) - ord('A')) * 10 - 90 + int(grid[3]) + 0.5
+    except (IndexError, ValueError):
+        return None
+    return lat, lon
+
+
 def _dm_to_decimal(degrees, minutes, hemisphere):
     """Combine a degrees/minutes/hemisphere triple into decimal degrees."""
     try:
@@ -782,12 +801,35 @@ class LocationResolver:
 
         for method in (self._callook, self._hamdb, self._qrz):
             result = method(base)
+            if result and not self._plausible(result.get('grid')):
+                # An upstream geocoder bug, not a real DX neighbor - HamDB's
+                # own address for VE1BO says Mahone Bay, NS but its lat/lon
+                # landed in Bangalore. Trusting that grid would blow out the
+                # map's scale and squash every local node into a corner.
+                if self.verbose:
+                    print("    lookup for {} rejected implausible grid {}"
+                          .format(base, result.get('grid')))
+                continue
             if result:
                 return self._store(key, result)
         # Cache the miss too - re-asking three services per crawl for a
         # Canadian or club call that none of them carry is pure air time.
         self._store(key, {})
         return None
+
+    @staticmethod
+    def _plausible(grid):
+        """Reject a lookup result nowhere near North America.
+
+        A VE/VA/VO neighbor just across the border is exactly what we want
+        to plot - this only screens out results a continent away, which are
+        always a data bug upstream, never a real packet radio neighbor.
+        """
+        coords = grid_to_latlon(grid)
+        if not coords:
+            return False
+        lat, lon = coords
+        return 15.0 <= lat <= 75.0 and -170.0 <= lon <= -50.0
 
     def _callook(self, callsign):
         """callook.info - free, no key, FCC data, US callsigns only."""
