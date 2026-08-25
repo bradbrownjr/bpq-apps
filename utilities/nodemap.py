@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.4
+Version: 1.8.5
 """
 
-__version__ = '1.8.4'
+__version__ = '1.8.5'
 
 import sys
 import socket
@@ -2650,49 +2650,14 @@ class NodeCrawler:
         # Restore SSID mappings from previous crawl data
         # SSID Selection Standard:
         # 1. CLI-forced SSIDs (already in cli_forced_ssids) - highest priority
-        # 2. ROUTES consensus (aggregate netrom_ssids from all nodes) - AUTHORITATIVE
-        # 3. Base callsign only (let NetRom figure it out)
+        # 2. Self-reported (the node's own crawled record) - AUTHORITATIVE
+        # 3. ROUTES consensus (aggregate netrom_ssids from all nodes)
+        # 4. Base callsign only (let NetRom figure it out)
         #
         # The 'alias' field is NOT reliable - it comes from the BPQ prompt which may be
         # from a BBS, RMS, or CHAT service rather than the node itself.
-        # ROUTES data (stored in netrom_ssids) IS reliable - it shows actual node SSIDs.
-        
-        # Build ROUTES consensus by aggregating netrom_ssids from ALL crawled nodes
-        # Each node's ROUTES table shows what SSIDs it knows for its neighbors
-        from collections import defaultdict
-        ssid_votes = defaultdict(lambda: defaultdict(int))
-        
-        for node_data in nodes_data.values():
-            netrom = node_data.get('netrom_ssids', {})
-            for base_call, full_ssid in netrom.items():
-                # Only count valid callsigns WITH explicit SSID (skip bare callsigns and corrupted data)
-                # Bare callsigns in ROUTES are ambiguous - could be any service
-                # Node SSIDs should have explicit -N suffix
-                if self._is_valid_callsign(base_call) and '-' in full_ssid and self._is_likely_node_ssid(full_ssid):
-                    ssid_votes[base_call][full_ssid] += 1
-        
-        # Use ROUTES consensus to build SSID map
-        # Only use consensus if there's a CLEAR winner (more votes than any other)
-        # If tied, skip this node - insufficient routing data
-        for base_call, votes in ssid_votes.items():
-            sorted_votes = sorted(votes.items(), key=lambda x: (-x[1], x[0]))
-            best_ssid, best_count = sorted_votes[0]
-            
-            # Check if there's a clear winner (no tie for first place)
-            if len(sorted_votes) == 1 or best_count > sorted_votes[1][1]:
-                # Clear consensus - use this SSID
-                self.netrom_ssid_map[base_call] = best_ssid
-                self.ssid_source[base_call] = ('routes_consensus', time.time())
-            else:
-                # Tied votes - skip this node, insufficient routing data
-                self.skipped_no_ssid[base_call] = dict(votes)
-                if self.verbose:
-                    print("  No consensus for {} (tied: {}), skipping".format(
-                        base_call, dict(votes)))
-        
-        if self.verbose and ssid_votes:
-            print("Built ROUTES consensus from {} callsigns".format(len(ssid_votes)))
-        
+        routable_base_calls = self._resolve_ssid_consensus(nodes_data)
+
         # Build alias mappings from own_aliases (for NetRom routing)
         # We populate alias_to_call for reverse lookups, but do NOT use alias field for SSIDs
         for callsign, node_data in nodes_data.items():
@@ -2797,9 +2762,10 @@ class NodeCrawler:
                 if neighbor in self.visited or neighbor_base in self.visited or neighbor in self.exclude or neighbor_base in self.exclude:
                     continue
                 
-                # Skip if not in any ROUTES table (unreachable via NetRom)
-                # Nodes only in MHEARD but not ROUTES are likely user stations or offline nodes
-                if neighbor_base not in ssid_votes:
+                # Skip if not in any ROUTES table and never self-crawled either
+                # (unreachable via NetRom). Nodes only in MHEARD but not
+                # ROUTES are likely user stations or offline nodes.
+                if neighbor_base not in routable_base_calls:
                     self.skipped_no_route.add(neighbor_base)
                     if self.verbose:
                         print("  Skipping {} (not in any ROUTES table)".format(neighbor))
@@ -2813,7 +2779,7 @@ class NodeCrawler:
                     continue
                 
                 # NOTE: We do NOT skip nodes that lack a NetRom alias!
-                # If the node is in ROUTES (ssid_votes check above passed), we can reach it.
+                # If the node is routable (the check above passed), we can reach it.
                 # The connection logic queries ROUTES at each hop to get port numbers.
                 # Example: At KX1EMA, ROUTES shows "1 WD1O-15 200" - we can "C 1 WD1O-15"
                 # This allows crawling nodes that appear in ROUTES but not in NODES tables.
@@ -2895,7 +2861,80 @@ class NodeCrawler:
         
         print("Found {} path(s) to {} unique neighbor(s)".format(len(unexplored), len(set(call for call, _ in unexplored))))
         return unexplored
-    
+
+    def _resolve_ssid_consensus(self, nodes_data):
+        """Populate self.netrom_ssid_map from a loaded nodemap.json.
+
+        A node's own record - the callsign it identified itself with when
+        WE crawled it - is authoritative over anything a THIRD node's ROUTES
+        table claims about it, because that third-hand claim travelled over
+        at least one more un-FEC'd 1200-baud hop and can carry exactly the
+        kind of single-bit SSID corruption this crawler already hunts for in
+        callsigns: WS1EC crawled KC1JMH-15 directly (confirmed by its own
+        INFO banner, "Node KC1JMH-15 at Westbrook, ME"), yet on 2026-08-22
+        five other nodes' ROUTES tables reported it as KC1JMH-7 - a single
+        flipped bit (15=0b1111, 7=0b0111) - tying 5-5 against the five
+        nodes correctly reporting KC1JMH-15. The old vote-only consensus
+        below had no way to break that tie and silently gave up, leaving
+        every multi-hop connect through KC1JMH built with the bare base
+        callsign 'KC1JMH' - which BPQ32 rejects outright ("Failure with
+        KC1JMH") - instead of the working 'KC1JMH-15'.
+
+        Returns nothing; fills self.netrom_ssid_map, self.ssid_source, and
+        self.skipped_no_ssid exactly as the two former inline copies of this
+        logic did, so this is a drop-in replacement for both.
+        """
+        self_reported = {}
+        for node_key in nodes_data.keys():
+            if '-' not in node_key:
+                continue
+            base = node_key.split('-')[0]
+            if self._is_valid_callsign(base) and self._is_likely_node_ssid(node_key):
+                self_reported[base] = node_key
+
+        from collections import defaultdict
+        ssid_votes = defaultdict(lambda: defaultdict(int))
+
+        for node_data in nodes_data.values():
+            netrom = node_data.get('netrom_ssids', {})
+            for base_call, full_ssid in netrom.items():
+                # Only count valid callsigns WITH explicit SSID (skip bare callsigns and corrupted data)
+                # Bare callsigns in ROUTES are ambiguous - could be any service
+                # Node SSIDs should have explicit -N suffix
+                if self._is_valid_callsign(base_call) and '-' in full_ssid and self._is_likely_node_ssid(full_ssid):
+                    ssid_votes[base_call][full_ssid] += 1
+
+        all_base_calls = set(ssid_votes.keys()) | set(self_reported.keys())
+        for base_call in all_base_calls:
+            if base_call in self_reported:
+                # Self-report wins outright, even against a unanimous vote:
+                # a node's own crawled identity can't be corrupted by a
+                # relay hop it was never sent over.
+                self.netrom_ssid_map[base_call] = self_reported[base_call]
+                self.ssid_source[base_call] = ('self_reported', time.time())
+                continue
+
+            votes = ssid_votes[base_call]
+            sorted_votes = sorted(votes.items(), key=lambda x: (-x[1], x[0]))
+            best_ssid, best_count = sorted_votes[0]
+
+            # Check if there's a clear winner (no tie for first place)
+            if len(sorted_votes) == 1 or best_count > sorted_votes[1][1]:
+                # Clear consensus - use this SSID
+                self.netrom_ssid_map[base_call] = best_ssid
+                self.ssid_source[base_call] = ('routes_consensus', time.time())
+            else:
+                # Tied votes - skip this node, insufficient routing data
+                self.skipped_no_ssid[base_call] = dict(votes)
+                if self.verbose:
+                    print("  No consensus for {} (tied: {}), skipping".format(
+                        base_call, dict(votes)))
+
+        if self.verbose and ssid_votes:
+            print("Built ROUTES consensus from {} callsigns".format(len(ssid_votes)))
+
+        return all_base_calls
+
     def _is_likely_node_ssid(self, full_callsign):
         """
         Check if a callsign-SSID looks like a node SSID (used for routing).
@@ -4656,44 +4695,13 @@ class NodeCrawler:
                     
                     # SSID Selection Standard (from copilot-instructions.md):
                     # 1. CLI-forced SSIDs (handled via cli_forced_ssids, highest priority)
-                    # 2. ROUTES consensus (aggregate netrom_ssids from all nodes) - AUTHORITATIVE
-                    # 3. Base callsign only (let NetRom figure it out)
+                    # 2. Self-reported (the node's own crawled record) - AUTHORITATIVE
+                    # 3. ROUTES consensus (aggregate netrom_ssids from all nodes)
+                    # 4. Base callsign only (let NetRom figure it out)
                     #
                     # The 'alias' field is NOT reliable - it comes from the BPQ prompt which may be
                     # from a BBS, RMS, or CHAT service rather than the node itself.
-                    # ROUTES data (stored in netrom_ssids) IS reliable - it shows actual node SSIDs.
-                    
-                    # Build ROUTES consensus by aggregating netrom_ssids from ALL crawled nodes
-                    from collections import defaultdict
-                    ssid_votes = defaultdict(lambda: defaultdict(int))
-                    
-                    for node_info in nodes_data.values():
-                        netrom = node_info.get('netrom_ssids', {})
-                        for base_call, full_ssid in netrom.items():
-                            if self._is_valid_callsign(base_call) and self._is_likely_node_ssid(full_ssid):
-                                ssid_votes[base_call][full_ssid] += 1
-                    
-                    # Use ROUTES consensus to build SSID map
-                    # Only use consensus if there's a CLEAR winner (more votes than any other)
-                    # If tied, skip this node - insufficient routing data
-                    for base_call, votes in ssid_votes.items():
-                        sorted_votes = sorted(votes.items(), key=lambda x: (-x[1], x[0]))
-                        best_ssid, best_count = sorted_votes[0]
-                        
-                        # Check if there's a clear winner (no tie for first place)
-                        if len(sorted_votes) == 1 or best_count > sorted_votes[1][1]:
-                            # Clear consensus - use this SSID
-                            self.netrom_ssid_map[base_call] = best_ssid
-                            self.ssid_source[base_call] = ('routes_consensus', time.time())
-                        else:
-                            # Tied votes - skip this node, insufficient routing data
-                            self.skipped_no_ssid[base_call] = dict(votes)
-                            if self.verbose:
-                                print("  No consensus for {} (tied: {}), skipping".format(
-                                    base_call, dict(votes)))
-                    
-                    if self.verbose and ssid_votes:
-                        print("Built ROUTES consensus for {} callsigns".format(len(ssid_votes)))
+                    self._resolve_ssid_consensus(nodes_data)
                     
                     # Build alias mappings from own_aliases (for NetRom routing)
                     for node_call, node_info in nodes_data.items():
