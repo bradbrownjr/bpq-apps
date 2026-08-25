@@ -14,10 +14,10 @@ nodemap.py command, and anything done here can still be done from the shell.
 Requires nodemap.py in the same directory.
 
 Author: Brad Brown, KC1JMH
-Version: 1.0
+Version: 1.1
 """
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 import curses
 import json
@@ -316,6 +316,12 @@ class Option(object):
         elif self.kind == 'choice':
             index = self.choices.index(self.value) if self.value in self.choices else 0
             self.value = self.choices[(index + step) % len(self.choices)]
+        elif self.kind == 'number':
+            # Same left/right convention as every other option, so hop
+            # count (and any other number field, e.g. timeout) doesn't need
+            # the enter-to-type prompt just to bump the value by one.
+            current = self.value if self.value is not None else 0
+            self.value = max(0, current + step)
 
     def edit(self, win, theme):
         if self.kind in ('toggle', 'choice'):
