@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.6
+Version: 1.8.7
 """
 
-__version__ = '1.8.6'
+__version__ = '1.8.7'
 
 import sys
 import socket
@@ -5500,6 +5500,20 @@ class NodeCrawler:
         
         print("-" * 50)
         colored_print("Crawl complete. Found {} nodes.".format(len(self.nodes)), Colors.GREEN)
+        # self.failed itself is deliberately never written to during the
+        # crawl - every failure site's comment explains why: a node that
+        # failed via one path may still succeed via another, so nothing
+        # should be blacklisted from being re-queued mid-crawl on a single
+        # failure. But that meant this summary always read "No failed
+        # connections", even after real, unrecovered failures, because
+        # nothing was left to ever populate it. Computed here instead, once
+        # the crawl is actually over: every base call that recorded at least
+        # one failure (self.crawl_failures, via _record_crawl_result) and
+        # was never subsequently reached by any path (self.freshly_crawled)
+        # - preserving the original "don't blacklist mid-crawl" intent while
+        # making the final report honest about what never got in.
+        self.failed = {base for base in self.crawl_failures
+                       if base not in self.freshly_crawled}
         if self.failed:
             colored_print("Failed connections: {} nodes".format(len(self.failed)), Colors.YELLOW)
             print("  Failed: {}".format(', '.join(sorted(self.failed))))
