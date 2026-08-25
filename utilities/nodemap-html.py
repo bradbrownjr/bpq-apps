@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.24
+Version: 1.4.25
 """
 
-__version__ = '1.4.24'
+__version__ = '1.4.25'
 
 import sys
 import json
@@ -1262,6 +1262,32 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     for node in map_nodes:
         node_positions[node['callsign']] = project(node['lat'], node['lon'])
 
+    # A handful of stations are genuinely co-located - same site, same
+    # grid square, not a projection artifact (a 6-character grid cell is
+    # already about 1.5x2.5 miles, so two calls sharing one are already at
+    # the limit of what this map can tell apart). Left exactly overlapping,
+    # only the top dot is hoverable and both labels print on the same
+    # spot. Nudge each member of such a cluster a few pixels apart and
+    # alternate its label above/below so every station stays reachable.
+    COINCIDENT_EPSILON = 2.0
+    COINCIDENT_OFFSET = 9
+    label_above = set()
+    groups = {}
+    for call, pos in node_positions.items():
+        key = (round(pos[0] / COINCIDENT_EPSILON), round(pos[1] / COINCIDENT_EPSILON))
+        groups.setdefault(key, []).append(call)
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        members.sort()  # deterministic between regenerations
+        cx, cy = node_positions[members[0]]
+        n = len(members)
+        for i, call in enumerate(members):
+            dx = (i - (n - 1) / 2.0) * COINCIDENT_OFFSET
+            node_positions[call] = (cx + dx, cy)
+            if i % 2 == 0:
+                label_above.add(call)
+
     def coords_to_path(coords):
         """Convert list of [lon, lat] coords to SVG path."""
         if not coords:
@@ -1444,7 +1470,8 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         svg_lines.append('    <g class="node" transform="translate({:.1f},{:.1f})" onmouseenter="highlightNode(\'{}\');" onmousemove="showTooltip(event, {});" onmouseleave="unhighlightAll(); hideTooltip();">'.format(x, y, node['callsign'], repr(tooltip_str)))
         svg_lines.append('      <circle r="6" fill="{}" stroke="{}" stroke-width="1.5">'.format(color, stroke_color))
         svg_lines.append('      </circle>')
-        svg_lines.append('      <text x="0" y="18" text-anchor="middle">{}</text>'.format(node['display_call']))
+        text_y = -10 if node['callsign'] in label_above else 18
+        svg_lines.append('      <text x="0" y="{}" text-anchor="middle">{}</text>'.format(text_y, node['display_call']))
         svg_lines.append('    </g>')
     svg_lines.append('  </g>')
     
