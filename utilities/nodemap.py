@@ -34,10 +34,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.8.5
+Version: 1.8.6
 """
 
-__version__ = '1.8.5'
+__version__ = '1.8.6'
 
 import sys
 import socket
@@ -3861,14 +3861,25 @@ class NodeCrawler:
                 fail_msg = "{} failed to reach {}".format(path[-1], callsign)
             self._send_notification(fail_msg)
             
-            # If there were intermediate hops, mark the last one as a failed relay
-            # and try to find an alternative path to the target
+            # Mark this node as a failed relay so the main queue loop can skip
+            # every OTHER already-queued path that routes through it, instead
+            # of spending a full login+connect cycle re-discovering the same
+            # failure one target at a time. Direct (path=[]) failures count
+            # too, not just intermediate-hop failures: a direct neighbor that
+            # just failed is exactly as unusable as a relay for any deeper
+            # target that would have gone through it.
+            failed_relay = (self.last_failed_relay
+                             or (path[-1].split('-')[0] if path and '-' in path[-1] else
+                                 (path[-1] if path else callsign.split('-')[0] if '-' in callsign else callsign)))
+            newly_failed = failed_relay not in self.failed_relays
+            if newly_failed:
+                self.failed_relays.add(failed_relay)
+
+            # If there were intermediate hops, try to find an alternative path to the target
             if path:
-                failed_relay = self.last_failed_relay or (path[-1].split('-')[0] if '-' in path[-1] else path[-1])
-                if failed_relay not in self.failed_relays:
-                    self.failed_relays.add(failed_relay)
+                if newly_failed:
                     colored_print("  Marking {} as failed relay - searching for alternate path to {}".format(failed_relay, callsign), Colors.YELLOW)
-                    
+
                     # BFS through known nodes to find alternate path avoiding failed relays
                     target_base = callsign.split('-')[0] if '-' in callsign else callsign
                     alt_path = self._find_alternate_path(target_base)
@@ -5462,7 +5473,28 @@ class NodeCrawler:
                 if hop_distance > self.max_hops:
                     print("Skipping {} ({} hops > max {})".format(callsign, hop_distance, self.max_hops))
                     continue
-            
+
+            # Don't spend a full login+connect cycle re-discovering a
+            # failure we already know about this session. Every path that
+            # routes through an already-failed relay is doomed at that same
+            # hop - retrying it costs real RF airtime for zero new
+            # information. (This is what would have kept firing on every
+            # queued item behind KC1JMH before this check existed: 12
+            # queued targets, 12 identical ~50s failures, one after another.)
+            blocked_via = None
+            for hop in path:
+                if _base_call(hop) in self.failed_relays:
+                    blocked_via = hop
+                    break
+            if blocked_via is None and not path and _base_call(callsign) in self.failed_relays:
+                blocked_via = callsign
+            if blocked_via:
+                colored_print("  Skipping {} - {} already failed this session, no point retrying".format(
+                    callsign, blocked_via), Colors.YELLOW)
+                self._record_crawl_result(callsign, False,
+                                          reason='blocked by known-failed relay {}'.format(_base_call(blocked_via)))
+                continue
+
             self.crawl_node(callsign, path)
             time.sleep(2)  # Be polite, don't hammer network
         
