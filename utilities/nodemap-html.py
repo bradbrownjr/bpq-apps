@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.26
+Version: 1.4.27
 """
 
-__version__ = '1.4.26'
+__version__ = '1.4.27'
 
 import sys
 import json
@@ -1085,8 +1085,12 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
                 if port_num not in node_heard_ports[callsign][neighbor_base]:
                     node_heard_ports[callsign][neighbor_base].append(port_num)
     
-    # Track connections by node pair AND band
-    seen_connections = {}  # {(from, to): set of frequencies}
+    # Track connections by node pair AND band/link-type, same shape as
+    # generate_html_map's links_found below - a pair reachable over both RF
+    # and IP/HF needs one entry per distinct (freq, link_type), not just
+    # per frequency, or the IP/HF leg (which has no frequency at all)
+    # collapses into nothing.
+    seen_connections = {}  # {(from, to): set of (frequency, link_type) tuples}
     
     for callsign, node_data in nodes.items():
         if callsign not in node_coords:
@@ -1151,11 +1155,11 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             if conn_key not in seen_connections:
                 seen_connections[conn_key] = set()
             
-            # Determine link frequency from multiple sources (priority order):
-            # 1. Port number stored in direct_routes (most accurate)
+            # Determine link frequency/type from multiple sources (priority order):
+            # 1. Port number(s) stored in direct_routes (most accurate)
             # 2. MHEARD heard_on_ports from both directions
             # 3. Fallback to first RF port
-            freqs_found = set()
+            links_found = set()
 
             # Priority 1: Use port number(s) from direct_routes - one line
             # per physical port ROUTES reported for this neighbor
@@ -1163,37 +1167,49 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
                 p = port_entry.get('port')
                 if p is None:
                     continue
-                freq = node_port_freqs.get(callsign, {}).get(p)
+                port_info = node_port_info.get(callsign, {}).get(p, {})
+                freq = port_info.get('frequency')
+                port_type = port_info.get('port_type', 'rf')
                 if freq:
-                    freqs_found.add(freq)
-            
+                    links_found.add((freq, port_type))
+                elif port_type in ('ip', 'hf'):
+                    links_found.add((None, port_type))
+
             # Priority 2: MHEARD port info from both directions
-            if not freqs_found:
+            if not links_found:
                 heard_ports_this = node_heard_ports.get(callsign, {}).get(neighbor_base, [])
                 heard_ports_neighbor = node_heard_ports.get(neighbor_key, {}).get(callsign_base, [])
-                
+
                 for port_num in heard_ports_this:
-                    freq = node_port_freqs.get(callsign, {}).get(port_num)
+                    port_info = node_port_info.get(callsign, {}).get(port_num, {})
+                    freq = port_info.get('frequency')
+                    port_type = port_info.get('port_type', 'rf')
                     if freq:
-                        freqs_found.add(freq)
+                        links_found.add((freq, port_type))
+                    elif port_type in ('ip', 'hf'):
+                        links_found.add((None, port_type))
                 for port_num in heard_ports_neighbor:
-                    freq = node_port_freqs.get(neighbor_key, {}).get(port_num)
+                    port_info = node_port_info.get(neighbor_key, {}).get(port_num, {})
+                    freq = port_info.get('frequency')
+                    port_type = port_info.get('port_type', 'rf')
                     if freq:
-                        freqs_found.add(freq)
-            
+                        links_found.add((freq, port_type))
+                    elif port_type in ('ip', 'hf'):
+                        links_found.add((None, port_type))
+
             # Priority 3: Fallback to first RF port
-            if not freqs_found:
+            if not links_found:
                 for port in node_data.get('ports', []):
                     if port.get('is_rf') and port.get('frequency'):
-                        freqs_found.add(port['frequency'])
+                        links_found.add((port['frequency'], 'rf'))
                         break
-            
-            for freq in freqs_found:
-                if freq not in seen_connections[conn_key]:
-                    seen_connections[conn_key].add(freq)
-    
+
+            for link_info in links_found:
+                if link_info not in seen_connections[conn_key]:
+                    seen_connections[conn_key].add(link_info)
+
     # Build map_connections from seen_connections
-    for conn_key, frequencies in seen_connections.items():
+    for conn_key, link_infos in seen_connections.items():
         from_call, to_call = conn_key
         if from_call not in node_coords or to_call not in node_coords:
             continue
@@ -1201,7 +1217,13 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         from_lat, from_lon = node_coords[from_call]
         to_lat, to_lon = node_coords[to_call]
         
-        for freq in frequencies:
+        for freq, link_type in link_infos:
+            if link_type == 'ip':
+                color = '#00BCD4'  # Cyan for IP links
+            elif link_type == 'hf':
+                color = '#FFEB3B'  # Yellow for HF links
+            else:
+                color = get_band_color(freq)  # Normal band color for RF
             map_connections.append({
                 'from': from_call,
                 'to': to_call,
@@ -1209,8 +1231,9 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
                 'from_lon': from_lon,
                 'to_lat': to_lat,
                 'to_lon': to_lon,
-                'color': get_band_color(freq),
-                'frequency': freq
+                'color': color,
+                'frequency': freq,
+                'link_type': link_type
             })
     
     if not map_nodes:
@@ -1425,8 +1448,12 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
     svg_lines.append('  <g class="connections">')
     drawn_connections = set()
     for conn in map_connections:
-        # Avoid duplicate lines (A-B and B-A)
-        key = tuple(sorted([conn['from'], conn['to']]))
+        # Avoid drawing the exact same link twice (discovered from both the
+        # A-B and B-A direction), while still letting a pair reachable over
+        # more than one physical path (e.g. RF and AXIP) draw one line per
+        # path - keying on frequency/link_type too, not just the pair, is
+        # what makes that distinction instead of collapsing to one line.
+        key = (tuple(sorted([conn['from'], conn['to']])), conn.get('frequency'), conn.get('link_type'))
         if key in drawn_connections:
             continue
         drawn_connections.add(key)
