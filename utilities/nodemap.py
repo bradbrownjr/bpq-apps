@@ -27,6 +27,12 @@ Features:
   table, so a never-crawled neighbor still has a place on the map
 - Rejects callsign-lookup results far outside North America, so a bad
   upstream geocode (Callook/HamDB/QRZ) can't wreck the map's scale
+- Records every physical port ROUTES reports for a direct neighbor (not just
+  the last one seen), so a neighbor reachable over both RF and AXIP/telnet
+  keeps both paths distinguishable downstream
+- Retries a live connection over a neighbor's other known port (RF preferred,
+  then AXIP/HF) before falling back to slower NetRom alias discovery, even
+  after an explicit BUSY/FAILED reply, and even across a --resume crawl
 
 Sidecar files (all safe to edit or delete):
   nodemap-overrides.json  sysop-entered grids, ignore list, whitelist
@@ -41,10 +47,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.9.2
+Version: 1.9.5
 """
 
-__version__ = '1.9.2'
+__version__ = '1.9.5'
 
 import sys
 import socket
@@ -1107,6 +1113,13 @@ class NodeCrawler:
         self.routes = {}  # Best routes to nodes: {callsign: [path]}
         self.route_ports = {}  # Port numbers for direct neighbors of LOCAL node: {callsign: port_number}
         self.node_route_ports = {}  # Per-node port maps: {node_base: {neighbor_base: port}}
+        # Every port ever heard for a given neighbor from a given node this
+        # session, RF ordered first: {node_base: {neighbor_base: [port, ...]}}.
+        # node_route_ports above keeps a single preferred port for existing
+        # single-value callers; this lets a failed connection retry a
+        # specific known alternate port (e.g. AXIP) before falling back to
+        # slower NetRom alias discovery.
+        self.node_route_ports_alt = {}
         self.shortest_paths = {}  # Shortest discovered path to each node: {callsign: [path]}
         self.netrom_ssid_map = {}  # Global NetRom SSID mapping: {base_callsign: 'CALLSIGN-SSID'}
         self.ssid_source = {}  # Track SSID source: {base_callsign: ('routes'|'mheard', timestamp)}
@@ -1795,7 +1808,7 @@ class NodeCrawler:
                             
                             try:
                                 routes_output = self._send_command(tn, 'ROUTES', timeout=15, expect_content='!')
-                                routes, route_ports, route_ssids, _ = self._parse_routes(routes_output)
+                                routes, route_ports, route_ssids, _, _ = self._parse_routes(routes_output)
                                 
                                 # Check if target is in ROUTES
                                 if lookup_call in route_ports or lookup_call in routes:
@@ -1889,12 +1902,13 @@ class NodeCrawler:
                 except:
                     pass
                 
+                hard_failed = False  # Explicit BUSY/FAILED/etc. reply, vs a plain timeout
                 while time.time() - connection_start_time < conn_timeout:
                     # Check timeout FIRST before any I/O operations
                     elapsed = time.time() - connection_start_time
                     if elapsed >= conn_timeout:
                         break
-                    
+
                     try:
                         # Use read_very_eager() instead of read_some() - it's non-blocking
                         chunk = tn.read_very_eager()
@@ -1908,7 +1922,7 @@ class NodeCrawler:
                             print("  Connected to {}".format(callsign))
                             self._debug_log("Connected to {}".format(callsign))
                             break
-                        
+
                         # Check for failure patterns.
                         # BPQ32's actual wording is "Failure with <call>", not
                         # "Failed" - that word never appeared here before, so
@@ -1916,6 +1930,14 @@ class NodeCrawler:
                         # its full conn_timeout waiting for a CONNECTED that
                         # was never coming (confirmed 2026-08-21: 14 straight
                         # "Failure with X" responses, all silently ignored).
+                        #
+                        # A hard failure here used to abort the whole connect
+                        # chain immediately (tn.close(); return None). It now
+                        # breaks out to the same alt-port/alias fallback path
+                        # a plain timeout takes below - a BUSY on the RF port
+                        # doesn't mean the node itself is unreachable, and a
+                        # known AXIP port for the same neighbor is worth one
+                        # more real attempt before giving up on this hop.
                         if any(x in response.upper() for x in ['BUSY', 'FAILED', 'FAILURE', 'NO ROUTE',
                                                                  'TIMEOUT', 'DISCONNECTED',
                                                                  'NOT HEARD', 'NO ANSWER',
@@ -1923,19 +1945,19 @@ class NodeCrawler:
                             # Extract last meaningful line for error message
                             error_line = response.strip().split('\n')[-1] if response.strip() else 'Unknown error'
                             fail_msg = "Connection to {} (via {}) failed: {}".format(
-                                callsign, 
+                                callsign,
                                 connect_target,
                                 error_line
                             )
                             colored_print("  " + fail_msg, Colors.RED)
                             self._debug_log(fail_msg)
-                            tn.close()
-                            return None
-                        
+                            hard_failed = True
+                            break
+
                         # Sleep between checks to avoid busy-waiting
                         # Sleep between checks to avoid busy-waiting
                         time.sleep(0.5)
-                        
+
                     except EOFError:
                         print("  Connection lost to {}".format(callsign))
                         tn.close()
@@ -1948,22 +1970,78 @@ class NodeCrawler:
                         if time.time() - connection_start_time >= conn_timeout:
                             break
                         time.sleep(0.5)
-                
+
                 if not connected:
-                    elapsed = time.time() - connection_start_time
-                    if self.verbose:
+                    if hard_failed:
+                        pass  # Failure reason already printed above
+                    elif self.verbose:
+                        elapsed = time.time() - connection_start_time
                         print("  Connection to {} (via {}) timed out after {:.1f}s (expected timeout: {}s)".format(
                             callsign, connect_target, elapsed, conn_timeout))
                     else:
                         print("  Connection to {} (via {}) timed out (no CONNECTED response)".format(callsign, connect_target))
-                    
+
+                    # If the direct port attempt used one of several known
+                    # ports for this neighbor (e.g. RF failed but AXIP is
+                    # also on file), try the next known port directly before
+                    # falling back to slower, less certain NetRom alias
+                    # discovery. Gets its own bounded time slice instead of
+                    # being squeezed out of the original conn_timeout, since
+                    # the point is to genuinely try a second real path.
+                    if port_num and full_callsign and not connected:
+                        alt_ports = [p for p in self.node_route_ports_alt.get(current_node_base, {}).get(lookup_call, [])
+                                     if p != port_num]
+                        if alt_ports:
+                            alt_port = alt_ports[0]
+                            conn_timeout += 15  # bounded extra slice for the second real attempt
+                            if self.verbose:
+                                print("    Direct port {} connection failed - trying known alternate port {}".format(port_num, alt_port))
+                            try:
+                                tn.read_very_eager()
+                            except:
+                                pass
+                            alt_cmd = "C {} {}\r".format(alt_port, full_callsign).encode('ascii')
+                            try:
+                                tn.write(alt_cmd)
+                                self._log('SEND', alt_cmd)
+                            except:
+                                tn.close()
+                                return None
+                            connect_target = "{} {} (alternate port after {} failed)".format(alt_port, full_callsign, port_num)
+                            response = ""
+                            if self.verbose:
+                                remaining = max(5, conn_timeout - (time.time() - connection_start_time))
+                                print("    Waiting for connection on alternate port (timeout: {}s remaining)...".format(int(remaining)))
+                            while time.time() - connection_start_time < conn_timeout:
+                                if time.time() - connection_start_time >= conn_timeout:
+                                    break
+                                try:
+                                    chunk = tn.read_some()
+                                    self._log('RECV', chunk)
+                                    response += chunk.decode('ascii', errors='ignore')
+                                    if 'CONNECTED' in response.upper():
+                                        connected = True
+                                        print("  Connected to {} via alternate port {}".format(callsign, alt_port))
+                                        break
+                                    if any(x in response.upper() for x in ['BUSY', 'FAILED', 'FAILURE', 'NO ROUTE',
+                                                                             'TIMEOUT', 'DISCONNECTED',
+                                                                             'NOT HEARD', 'NO ANSWER']):
+                                        break
+                                    time.sleep(0.5)
+                                except socket.timeout:
+                                    if time.time() - connection_start_time >= conn_timeout:
+                                        break
+                                    pass
+                                except EOFError:
+                                    break
+
                     # If direct port connection failed, try NetRom alias as fallback
                     # But ONLY if alias is valid (not a callsign - that would be a bug)
                     fallback_alias = self.call_to_alias.get(lookup_call)
                     if fallback_alias and (fallback_alias == lookup_call or self._is_valid_callsign(fallback_alias)):
                         fallback_alias = None  # Invalid alias, don't use
                     
-                    if port_num and fallback_alias:
+                    if not connected and port_num and fallback_alias:
                         if self.verbose:
                             print("    Direct port connection failed - trying NetRom alias: {}".format(fallback_alias))
                         
@@ -2772,7 +2850,30 @@ class NodeCrawler:
                         ports[cb] = port
                 if ports:
                     self.node_route_ports[node_b] = ports
-        
+
+        # Restore each node's alternate-port lists from a prior crawl's
+        # direct_routes[...]['ports'] (nodemap.py >= 1.9.3), RF ordered
+        # using that same node's own 'ports' config, so a resumed crawl
+        # gets retry benefit for nodes it doesn't re-visit this session too.
+        for node_key, node_data in nodes_data.items():
+            node_b = node_key.split('-')[0] if '-' in node_key else node_key
+            direct_routes = node_data.get('direct_routes') or {}
+            if not direct_routes:
+                continue
+            port_type_by_num = {p.get('number'): p.get('port_type', 'rf')
+                                 for p in node_data.get('ports', []) if isinstance(p, dict)}
+            alt_ports = {}
+            for neighbor, route_info in direct_routes.items():
+                if not isinstance(route_info, dict):
+                    continue
+                port_list = [e.get('port') for e in (route_info.get('ports') or [])
+                             if e.get('port') is not None]
+                if port_list:
+                    port_list.sort(key=lambda p: 0 if port_type_by_num.get(p, 'rf') == 'rf' else 1)
+                    alt_ports[neighbor] = port_list
+            if alt_ports:
+                self.node_route_ports_alt[node_b] = alt_ports
+
         # Restore CLI-forced SSIDs (these override anything from JSON)
         for base_call, forced_ssid in self.cli_forced_ssids.items():
             self.netrom_ssid_map[base_call] = forced_ssid
@@ -3349,16 +3450,28 @@ class NodeCrawler:
             > 1 KS1R-15   200 20!   <- KS1R-15 is the NODE (not KS1R-13 CHAT)
         
         Returns:
-            Tuple of (routes dict, ports dict, ssids dict, direct_neighbors set)
+            Tuple of (routes dict, ports dict, ssids dict, direct_neighbors set, direct_ports dict)
             - routes: {callsign: quality} for all routes
-            - ports: {callsign: port_number} for direct neighbors only
+            - ports: {callsign: port_number} for direct neighbors only (last '>' line wins,
+              matching prior behaviour - callers relying on the single best/last port are
+              unaffected)
             - ssids: {base_callsign: full_callsign-ssid} for direct neighbors (AUTHORITATIVE)
             - direct_neighbors: set of base callsigns that are direct RF neighbors (> prefix)
+            - direct_ports: {base_callsign: [{'port': p, 'quality': q}, ...]} EVERY '>' line
+              seen for that neighbor, in output order - use this to distinguish parallel
+              physical paths (e.g. RF + AXIP) to the same neighbor that `ports` collapses
         """
         routes = {}
         ports = {}
         ssids = {}  # Store authoritative node SSIDs from ROUTES
         direct_neighbors = set()  # Only entries with > prefix (actual RF neighbors)
+        # NET/ROM keeps one best-quality route per neighbor, but a neighbor can
+        # still appear on more than one '>' line here when it is reachable over
+        # several physical ports (e.g. UHF RF and an AXIP/telnet link) - each
+        # port has its own quality vote. `ports` above only keeps the last line
+        # seen for a given base_call; this collects every line so callers that
+        # need to distinguish parallel paths (not just the winning one) can.
+        direct_ports = {}  # base_call -> [{'port': p, 'quality': q}, ...] in line order
         lines = output.split('\n')
         
         for line in lines:
@@ -3385,6 +3498,8 @@ class NodeCrawler:
                         ports[base_call] = port_num  # Store port for direct neighbors
                         ssids[base_call] = full_call  # AUTHORITATIVE node SSID
                         direct_neighbors.add(base_call)
+                        direct_ports.setdefault(base_call, []).append(
+                            {'port': port_num, 'quality': quality})
                         continue
             
             # Look for other route lines (non-direct neighbors)
@@ -3414,7 +3529,7 @@ class NodeCrawler:
                     elif self.verbose:
                         print("    Ignoring {} (quality 0 - sysop blocked route)".format(full_call))
         
-        return routes, ports, ssids, direct_neighbors
+        return routes, ports, ssids, direct_neighbors, direct_ports
     
     # ------------------------------------------------------------------
     # Callsign quality control
@@ -4076,10 +4191,10 @@ class NodeCrawler:
             if check_deadline():
                 return
             routes_output = self._send_command(tn, 'ROUTES', timeout=cmd_timeout)
-            routes, route_ports, routes_ssids, direct_neighbors = self._parse_routes(routes_output)
+            routes, route_ports, routes_ssids, direct_neighbors, direct_ports = self._parse_routes(routes_output)
             partial_data['routes'] = routes  # Save partial
             partial_data['direct_routes'] = {
-                k: {'quality': v, 'port': route_ports.get(k)}
+                k: {'quality': v, 'port': route_ports.get(k), 'ports': direct_ports.get(k)}
                 for k, v in routes.items()
                 if k in direct_neighbors and k != base_callsign
             }  # Save partial (with port info, no self-loops)
@@ -4106,7 +4221,8 @@ class NodeCrawler:
             # 
             # Do NOT use NODES aliases for SSIDs - they include app SSIDs like BBS, RMS, CHAT
             mheard_neighbors = []
-            mheard_ports = {}  # {callsign: port_num}
+            mheard_ports = {}  # {callsign: port_num} - single preferred (RF wins) port per neighbor
+            mheard_all_ports = {}  # {callsign: [port_num, ...]} - every port heard, RF ordered first
             mheard_ssids = {}  # {base_callsign: 'CALLSIGN-SSID'} - from actual RF
             port_audit = []  # HF/IP ports in 'audit' mode: [{port, port_type, description, heard}]
             
@@ -4203,6 +4319,11 @@ class NodeCrawler:
                         mheard_neighbors.append(base_call)
                         if base_call not in mheard_ports:
                             mheard_ports[base_call] = port_num
+                        mheard_all_ports.setdefault(base_call, []).append(port_num)
+            # Classify each configured port as RF or not, so the multi-port
+            # loop below can prefer the real radio path over AXIP/HF when a
+            # neighbor answers on more than one.
+            port_type_by_num = {p['number']: p.get('port_type', 'rf') for p in ports_list}
             for port_info in ports_list:
                 port_type = port_info.get('port_type', 'rf')
                 # RF (VHF/UHF) is always fully processed. HF and IP each have
@@ -4326,11 +4447,29 @@ class NodeCrawler:
                         # Stations without SSIDs can't be crawled
                         if has_ssid:
                             mheard_neighbors.append(base_call)
-                            
-                            # Store port info
-                            if base_call not in mheard_ports:
+
+                            # Store every port this neighbor answered on (RF
+                            # and AXIP/HF alike). mheard_ports keeps a single
+                            # preferred port for existing callers - RF wins
+                            # over HF/IP since that's the real radio path
+                            # this tool exists to confirm; a neighbor first
+                            # heard on AXIP that later answers on RF upgrades
+                            # to the RF port instead of keeping the earlier
+                            # pick.
+                            mheard_all_ports.setdefault(base_call, [])
+                            if port_num not in mheard_all_ports[base_call]:
+                                mheard_all_ports[base_call].append(port_num)
+                            existing_port = mheard_ports.get(base_call)
+                            if existing_port is None:
                                 mheard_ports[base_call] = port_num
-            
+                            elif port_type == 'rf' and port_type_by_num.get(existing_port) != 'rf':
+                                mheard_ports[base_call] = port_num
+
+            # Order each neighbor's port list RF-first so live retries try
+            # the real radio path before AXIP/HF, matching mheard_ports above.
+            for _call, _port_list in mheard_all_ports.items():
+                _port_list.sort(key=lambda p: 0 if port_type_by_num.get(p, 'rf') == 'rf' else 1)
+
             # Update global netrom_ssid_map with MHEARD data
             # Priority: 1) ROUTES (already stored above - authoritative)
             #           2) Newer MHEARD (can overwrite older MHEARD, but not ROUTES)
@@ -4519,10 +4658,13 @@ class NodeCrawler:
                 'type_source': 'info' if 'BPQ' in info_output.upper() or 'FBB' in info_output.upper() else 'prompt',
                 'routes': routes,  # From ROUTES (reliable) - ALL routes (direct + indirect)
                 'direct_routes': {
-                    k: {'quality': v, 'port': route_ports.get(k)}
+                    k: {'quality': v, 'port': route_ports.get(k), 'ports': direct_ports.get(k)}
                     for k, v in routes.items()
                     if k in direct_neighbors and k != base_callsign
-                },  # Only > prefix entries, with port number for frequency lookup
+                },  # Only > prefix entries, with port number for frequency lookup.
+                # 'ports' holds every physical port seen for this neighbor
+                # (e.g. RF + AXIP), since NET/ROM's ROUTES table can carry more
+                # than one line for the same neighbor but 'port' only keeps one.
                 'own_aliases': own_aliases,  # This node's aliases (CCEMA:WS1EC-15, etc.)
                 'seen_aliases': other_aliases,  # Other nodes' aliases seen in NODES
                 'netrom_ssids': mheard_ssids,  # From MHEARD (actual RF transmissions)
@@ -4542,7 +4684,29 @@ class NodeCrawler:
                     fresh_ports[cb] = port
             if fresh_ports:
                 self.node_route_ports[node_b] = fresh_ports
-            
+
+            # Also remember every alternate port seen for each neighbor
+            # (RF first), so a failed connection through this node can retry
+            # a specific known port before falling back to NetRom alias
+            # discovery. Merges both sources - MHEARD (mheard_all_ports,
+            # gated by --hf/--ip mode) and ROUTES (direct_ports, gathered
+            # regardless of those modes) - since the default --ip off skips
+            # querying MHEARD on an AXIP port entirely, but ROUTES' '>'
+            # lines for it still come through.
+            fresh_alt_ports = {}
+            for call in set(mheard_all_ports) | set(direct_ports):
+                cb = call.split('-')[0] if '-' in call else call
+                port_list = list(mheard_all_ports.get(call, []))
+                for entry in direct_ports.get(call, []):
+                    p = entry.get('port')
+                    if p is not None and p not in port_list:
+                        port_list.append(p)
+                if port_list:
+                    port_list.sort(key=lambda p: 0 if port_type_by_num.get(p, 'rf') == 'rf' else 1)
+                    fresh_alt_ports[cb] = port_list
+            if fresh_alt_ports:
+                self.node_route_ports_alt[node_b] = fresh_alt_ports
+
             # If this node was crawled with a CLI-forced SSID, update its netrom_ssids entry
             # This ensures the corrected SSID persists in the JSON for future crawls
             base_call = callsign.split('-')[0] if '-' in callsign else callsign
@@ -4895,7 +5059,28 @@ class NodeCrawler:
                                     ports[cb] = port
                             if ports:
                                 self.node_route_ports[node_b] = ports
-                    
+
+                    # Restore each node's alternate-port lists too - see the
+                    # matching block in the --resume startup path above.
+                    for node_key, node_info in nodes_data.items():
+                        node_b = node_key.split('-')[0] if '-' in node_key else node_key
+                        direct_routes = node_info.get('direct_routes') or {}
+                        if not direct_routes:
+                            continue
+                        port_type_by_num = {p.get('number'): p.get('port_type', 'rf')
+                                             for p in node_info.get('ports', []) if isinstance(p, dict)}
+                        alt_ports = {}
+                        for neighbor, route_info in direct_routes.items():
+                            if not isinstance(route_info, dict):
+                                continue
+                            port_list = [e.get('port') for e in (route_info.get('ports') or [])
+                                         if e.get('port') is not None]
+                            if port_list:
+                                port_list.sort(key=lambda p: 0 if port_type_by_num.get(p, 'rf') == 'rf' else 1)
+                                alt_ports[neighbor] = port_list
+                        if alt_ports:
+                            self.node_route_ports_alt[node_b] = alt_ports
+
                     if self.route_ports:
                         if self.verbose:
                             print("Loaded {} port mappings from existing nodemap.json".format(len(self.route_ports)))

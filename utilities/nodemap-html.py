@@ -14,10 +14,10 @@ For BPQ Web Server:
 
 Author: Brad Brown (KC1JMH)
 Date: January 2026
-Version: 1.4.25
+Version: 1.4.26
 """
 
-__version__ = '1.4.25'
+__version__ = '1.4.26'
 
 import sys
 import json
@@ -446,21 +446,28 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
         
         # Iterate through direct routes (actual RF neighbors)
         for neighbor_base, route_info in routes.items():
-            # Support both new format {quality, port} and legacy format (int)
+            # Support both new format {quality, port, ports} and legacy format (int).
+            # 'ports' (nodemap.py >= 1.9.3) lists every physical port ROUTES
+            # reported for this neighbor - a neighbor can be reachable over
+            # more than one (e.g. RF + AXIP), which the single 'port' field
+            # collapses to just one. Fall back to 'port' alone for older JSON.
             if isinstance(route_info, dict):
                 quality = route_info.get('quality', 0)
                 route_port = route_info.get('port')
+                route_ports_list = route_info.get('ports') or (
+                    [{'port': route_port}] if route_port is not None else [])
             else:
                 quality = route_info
                 route_port = None
-            
+                route_ports_list = []
+
             if quality == 0:
                 continue  # Skip zeroed routes
-            
+
             # Skip self-loops (node referencing itself in routes)
             if neighbor_base == callsign_base:
                 continue
-            
+
             # Find neighbor in nodes dict - could be keyed as base or with SSID
             neighbor_key = None
             if neighbor_base in nodes:
@@ -471,7 +478,7 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
                     if node_key.startswith(neighbor_base + '-'):
                         neighbor_key = node_key
                         break
-            
+
             # Skip if neighbor not in topology or has no coordinates
             if not neighbor_key or neighbor_key not in node_coords:
                 continue
@@ -505,10 +512,14 @@ def generate_html_map(nodes, connections, output_file='nodemap.html'):
             # 2. MHEARD heard_on_ports from both directions
             # 3. Fallback to first RF port (least accurate)
             links_found = set()
-            
-            # Priority 1: Use port number from direct_routes
-            if route_port is not None:
-                port_info = node_port_info.get(callsign, {}).get(route_port, {})
+
+            # Priority 1: Use port number(s) from direct_routes - one link
+            # per physical port ROUTES reported for this neighbor
+            for port_entry in route_ports_list:
+                p = port_entry.get('port')
+                if p is None:
+                    continue
+                port_info = node_port_info.get(callsign, {}).get(p, {})
                 freq = port_info.get('frequency')
                 port_type = port_info.get('port_type', 'rf')
                 if freq:
@@ -1088,17 +1099,23 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
         callsign_base = callsign.split('-')[0] if '-' in callsign else callsign
         
         for neighbor_base, route_info in routes.items():
-            # Support both new format {quality, port} and legacy format (int)
+            # Support both new format {quality, port, ports} and legacy format
+            # (int). 'ports' (nodemap.py >= 1.9.3) lists every physical port
+            # ROUTES reported for this neighbor - fall back to 'port' alone
+            # for older JSON.
             if isinstance(route_info, dict):
                 quality = route_info.get('quality', 0)
                 route_port = route_info.get('port')
+                route_ports_list = route_info.get('ports') or (
+                    [{'port': route_port}] if route_port is not None else [])
             else:
                 quality = route_info
                 route_port = None
-            
+                route_ports_list = []
+
             if quality == 0:
                 continue
-            
+
             # Skip self-loops (node referencing itself in routes)
             if neighbor_base == callsign_base:
                 continue
@@ -1139,11 +1156,14 @@ def generate_svg_map(nodes, connections, output_file='nodemap.svg'):
             # 2. MHEARD heard_on_ports from both directions
             # 3. Fallback to first RF port
             freqs_found = set()
-            
-            # Priority 1: Use port number from direct_routes
-            if route_port is not None:
-                port_info = node_port_info.get(callsign, {}).get(route_port, {})
-                freq = port_info.get('frequency')
+
+            # Priority 1: Use port number(s) from direct_routes - one line
+            # per physical port ROUTES reported for this neighbor
+            for port_entry in route_ports_list:
+                p = port_entry.get('port')
+                if p is None:
+                    continue
+                freq = node_port_freqs.get(callsign, {}).get(p)
                 if freq:
                     freqs_found.add(freq)
             
