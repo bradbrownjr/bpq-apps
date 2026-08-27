@@ -47,10 +47,10 @@ Network Resources:
 
 Author: Brad Brown, KC1JMH
 Date: January 2026
-Version: 1.9.5
+Version: 1.9.6
 """
 
-__version__ = '1.9.5'
+__version__ = '1.9.6'
 
 import sys
 import socket
@@ -5865,7 +5865,9 @@ class NodeCrawler:
             
             for callsign in sorted(self.nodes.keys()):
                 node = self.nodes[callsign]
-                hop_dist = node.get('hop_distance', 0)
+                hop_dist = node.get('hop_distance')
+                if hop_dist is None:
+                    hop_dist = ''
                 ports = len([p for p in node.get('ports', []) if p.get('is_rf')])
                 apps = len(node.get('applications', []))  # Apps from ? command (BBS, CHAT, RMS, etc.)
                 commands = len(node.get('commands', []))  # All commands from ? (reliable)
@@ -7474,7 +7476,7 @@ def main():
                 
                 print("{:<12} {:<6} {:<10} {:<12} {:<25} {:<25}".format(
                     callsign,
-                    str(hops) if hops != '' else '-',
+                    str(hops) if hops not in (None, '') else '-',
                     alias[:10],
                     grid[:12],
                     neighbor_str[:25],
