@@ -31,7 +31,7 @@
     "num": 5,
     "word": "FIVE",
     "group": "emergency",
-    "text": "Am moving to new location. Send no further mail or communication. Will inform you of new address when relocated.",
+    "text": "Am moving to new location. Send no further mail or communication. Will inform you of new address when relocated. Will contact you as soon as possible.",
     "blanks": []
   },
   {
@@ -297,7 +297,7 @@
     "num": 48,
     "word": "FORTY EIGHT",
     "group": "routine",
-    "text": "Reference your message number _____ to _____ not delivered. Telephone _____ inoperative. Please give better address.",
+    "text": "Reference your message number _____ to _____ not delivered. Telephone _____ (insert number as received) inoperative. Please give better address.",
     "blanks": ["Message number", "Addressee", "Phone number"]
   },
   {
@@ -465,7 +465,7 @@
     "num": 72,
     "word": "SEVENTY TWO",
     "group": "routine",
-    "text": "Establish communications with _____ (EmComm group) on _____ frequency _____ mode.",
+    "text": "Establish communications with _____ (name of EmComm group) on _____ frequency _____ mode.",
     "blanks": ["EmComm group name", "Frequency", "Mode"]
   },
   {
@@ -500,35 +500,35 @@
     "num": 78,
     "word": "SEVENTY EIGHT",
     "group": "routine",
-    "text": "SITREP messages requested every _____ hours your location. Transmit to station _____ in _____ (state/section).",
+    "text": "SITREP messages requested every _____ (spell number) hours your location. Transmit to station _____ (call sign) in _____ (state/section).",
     "blanks": ["Interval (spell number)", "Callsign", "State/section"]
   },
   {
     "num": 79,
     "word": "SEVENTY NINE",
     "group": "routine",
-    "text": "WXOBS messages requested every _____ hours your location. Transmit to station _____ in _____ (state/section).",
+    "text": "WXOBS messages requested every _____ (spell number) hours your location. Transmit to station _____ (call sign) in _____ (state/section).",
     "blanks": ["Interval (spell number)", "Callsign", "State/section"]
   },
   {
     "num": 80,
     "word": "EIGHTY",
     "group": "routine",
-    "text": "OPRED messages requested your station. Update when changes occur. Transmit to station _____ in _____ (state/section).",
+    "text": "OPRED messages requested your station. Update when changes occur. Transmit to station _____ (call sign) in _____ (state/section).",
     "blanks": ["Callsign", "State/section"]
   },
   {
     "num": 82,
     "word": "EIGHTY TWO",
     "group": "routine",
-    "text": "Digital Traffic Station connect/download frequency at _____ minute intervals requested in support of disaster operations.",
+    "text": "Digital Traffic Station connect/download frequency at _____ (spell number) minute intervals requested in support of disaster operations.",
     "blanks": ["Interval (spell number)"]
   },
   {
     "num": 83,
     "word": "EIGHTY THREE",
     "group": "routine",
-    "text": "RRI Winlink gateway connect/download frequency at _____ minute intervals requested in support of disaster operations.",
+    "text": "RRI Winlink gateway connect/download frequency at _____ (spell number) minute intervals requested in support of disaster operations.",
     "blanks": ["Interval (spell number)"]
   },
   {

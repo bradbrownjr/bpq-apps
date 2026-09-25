@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- **apps/forms/arl_messages.json**: ARL texts brought to the ARL Numbered
+  Radiogram Texts v3.0 (ARRL/RRI, 2025-10-07, nts2.arrl.org/numbered-texts).
+  ARL FIVE gains "Will contact you as soon as possible."; 48, 72, 78-80, 82
+  and 83 gain v3.0's fill-in hints ("(spell number)", "(call sign)"). Blank
+  labels unchanged. Nodes pick it up on the next forms.py start (data files
+  sync by content).
+
 ## [LinBPQ Modern Web Theme] - 2026-05-28
 ### Added
 - **html-theme/**: nginx reverse proxy theme for the LinBPQ web management interface.
