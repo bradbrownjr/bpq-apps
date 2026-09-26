@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Changed
+- **apps/forms.py 1.34, radiogram.frm 3.2**: radiogram text and preamble
+  follow the RRI/NTS 2.0 guidelines (27 Feb 2026), ported from kissterm's
+  `nts.py`, replacing Winlink's fixpunct() rules: `?` is QUERY (not INT),
+  other punctuation is spelled out (COMMA, COLON; X is the period only and
+  never the last group), quotes and parentheses are QUOTE/UNQUOTE and
+  PAREN/UNPAREN, email is `ATSIGN`, `ARL 46` is spelled ARL FORTY SIX, and
+  the check is the number of groups (with ARL ahead of it for an ARL text),
+  not one per five digits. The preamble has no `NR`, EMERGENCY is spelled
+  out, the time filed carries Z and the day has no leading zero. Phone and
+  email lose their TEL/EMAIL labels; a 9-digit ZIP is `NNNNN DASH NNNN`.
+  HXI (deliver as radiogram-ICS213) is accepted.
+- **apps/forms.py**: an information strip is split on `/` outside
+  parentheses only (MCF720's "Local/Regional Chain" was two prompts), and
+  an answer containing `/` is asked for again.
 - **apps/forms/arl_messages.json**: ARL texts brought to the ARL Numbered
   Radiogram Texts v3.0 (ARRL/RRI, 2025-10-07, nts2.arrl.org/numbered-texts).
   ARL FIVE gains "Will contact you as soon as possible."; 48, 72, 78-80, 82

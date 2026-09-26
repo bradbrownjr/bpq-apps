@@ -1,7 +1,7 @@
 {
   "id": "RADIOGRAM",
   "title": "ARRL Radiogram",
-  "version": "3.1",
+  "version": "3.2",
   "format": "nts_radiogram",
   "description": "Standard ARRL radiogram for the National Traffic System (NTS).",
   "fields": [
@@ -42,7 +42,8 @@
         "HXD    Report relay and delivery chain to originating station",
         "HXE    Get reply from addressee; originate reply message back",
         "HXF(n) Hold delivery until date n",
-        "HXG    No toll delivery; cancel and notify origin if cost required"
+        "HXG    No toll delivery; cancel and notify origin if cost required",
+        "HXI    Deliver as radiogram-ICS213 message (RRI 2026)"
       ]
     },
     {

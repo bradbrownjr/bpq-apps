@@ -22,7 +22,7 @@ Field Types:
 - strip: Slash-separated MARS/SHARES format
 
 Author: Brad Brown KC1JMH
-Version: 1.30
+Version: 1.34
 Date: May 2026
 """
 
@@ -39,7 +39,7 @@ if sys.version_info < (3, 5):
     print("\nPlease run with: python3 forms.py")
     sys.exit(1)
 
-VERSION = "1.33"
+VERSION = "1.34"
 APP_NAME = "forms.py"
 
 import os
@@ -534,7 +534,7 @@ class FormsApp:
                     if normalized != value.upper().strip():
                         print("NTS text (normalized):")
                         print(normalized)
-                    print("Check (word count): {}".format(check))
+                    print("Check (groups): {}".format(check))
                     value = normalized
                     form_data['nts_check'] = check
             else:
@@ -624,8 +624,10 @@ class FormsApp:
         if strip_input.endswith('//'):
             strip_input = strip_input[:-2]
         
-        # Parse the strip
-        fields = strip_input.split('/')
+        # Parse the strip: split on / outside parentheses only, so a prompt
+        # like "(@0=Local/Regional Chain, ...)" stays whole; an unmatched )
+        # (GYX WEATHER's "LOCATION ROAD, TOWN)") is ignored
+        fields = self.split_strip(strip_input)
         
         if len(fields) < 2:
             print("\nError: Strip must have at least 2 fields (title and one data field)")
@@ -661,6 +663,10 @@ class FormsApp:
                     print("\nExiting...")
                     sys.exit(0)
                 return None
+            # A / in an answer would add a field to the response strip
+            while '/' in response:
+                print("An answer cannot contain / (it separates the answers). Try again:")
+                response = self.get_input("> ").strip()
             # If empty, use three spaces as placeholder (MARS convention)
             if not response:
                 response = "   "
@@ -692,6 +698,23 @@ class FormsApp:
             })
         
         return form_data
+
+    def split_strip(self, text):
+        """TITLE/a (b/c)/d -> ['TITLE', 'a (b/c)', 'd']: / splits only
+        outside parentheses."""
+        segments, current, depth = [], [], 0
+        for char in text:
+            if char == '(':
+                depth += 1
+            elif char == ')':
+                depth = max(depth - 1, 0)
+            if char == '/' and depth == 0:
+                segments.append(''.join(current))
+                current = []
+            else:
+                current.append(char)
+        segments.append(''.join(current))
+        return segments
 
     def validate_field_value(self, field, value):
         """Validate a non-empty field value against the field's 'validate' rule.
@@ -738,8 +761,9 @@ class FormsApp:
 
         elif rule == 'hx_code':
             for code in value.upper().split():
-                if not re.match(r'^HX[A-G]\d*$', code):
-                    return "HX code must be HXA-HXG with optional number (e.g. HXA100, HXB24)"
+                # HXA-HXG (MPG 1.1.4), HXI radiogram-ICS213 (RRI 2026)
+                if not re.match(r'^HX[A-GI]+\d*$', code):
+                    return "HX code must be HXA-HXG or HXI, with optional number (e.g. HXA100, HXB24)"
 
         return None
 
@@ -1336,75 +1360,79 @@ class FormsApp:
 
         return '\n'.join(lines)
 
+    # NTS text rules, ported from kissterm's nts.py (same author), which
+    # cites them: RRI/NTS 2.0 "Guidelines for Origination, Relay and
+    # Delivery of Radiogram-ICS213 Messages" (27 Feb 2026), KY2D's review
+    # (ef6612c), ARRL MPG chapter 1. They replace Winlink's fixpunct():
+    # ? is QUERY (not INT), other punctuation is spelled out (COMMA, not
+    # X), and the check is the number of groups.
+    _NTS_SPELLED = [('.', 'X'), ('?', 'QUERY'), ('!', 'EXCLAMATION'), (',', 'COMMA'),
+                    (':', 'COLON'), (';', 'SEMICOLON'), ('-', 'DASH'), ('&', 'AND'),
+                    ('@', 'AT')]
+    _NTS_ONES = ('', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT',
+                 'NINE', 'TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN',
+                 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN')
+    _NTS_TENS = ('', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY',
+                 'EIGHTY', 'NINETY')
+
+    def _nts_number_words(self, n):
+        """46 -> FORTY SIX (ARL numbers are always spelled, MPG 1.3.3)."""
+        if n < 20:
+            return self._NTS_ONES[n]
+        return '{} {}'.format(self._NTS_TENS[n // 10], self._NTS_ONES[n % 10]).strip()
+
     def normalize_nts_text(self, text):
-        """Apply ARRL NTS prosign encoding to message text.
-        Matches Winlink fixpunct() behavior:
-          , ! ;     -> X    |  ? -> INT  |  & -> AND  |  ' -> dropped
-          d.d d/d d:d -> R  |  hyphen between words -> X
-        Trailing punctuation and prosigns are stripped.
+        """The text as radiogram groups, punctuation spelled out (MPG 1.3.1;
+        RRI 2026): . -> X (never the last group), ? -> QUERY, , -> COMMA,
+        decimal point between digits -> R, "..." -> QUOTE ... UNQUOTE,
+        (...) -> PAREN ... UNPAREN, apostrophe dropped, #5 -> NR 5,
+        an email address -> ... ATSIGN ... DOT ..., ARL 46 -> ARL FORTY SIX.
         """
-        t = text.upper().strip()
-        # Strip trailing punctuation before any conversion
-        t = re.sub(r'[.,!?;:\s]+$', '', t).strip()
-        # Decimal, fraction slash, time-colon between digits -> R
-        t = re.sub(r'(\d)[.:/](\d)', r'\1R\2', t)
-        # Apostrophe -> dropped
+        t = text.upper().replace('\u2019', "'")
+        t = re.sub(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',
+                   lambda m: ' {} '.format(self.encode_nts_email(m.group(0))), t)
+        t = re.sub(r'(\d)\.(\d)', r'\1R\2', t)
+        t = re.sub(r'\b(\d{3})-(\d{3})-(\d{4})\b', r'\1 \2 \3', t)
+        t = re.sub(r'\b(\d{3})-(\d{4})\b', r'\1 \2', t)
+        t = re.sub(r'(^|\s)"', r'\1 QUOTE ', t).replace('"', ' UNQUOTE ')
+        t = t.replace('(', ' PAREN ').replace(')', ' UNPAREN ')
         t = t.replace("'", '')
-        # Ampersand -> AND
-        t = re.sub(r'&', ' AND ', t)
-        # At-sign in text -> AT
-        t = re.sub(r'@', ' AT ', t)
-        # Question mark -> INT (NTS prosign)
-        t = re.sub(r'\?', ' INT ', t)
-        # Parentheses -> dropped
-        t = re.sub(r'[()]', ' ', t)
-        # Hyphen between word characters -> X
-        t = re.sub(r'(\w)\s*-\s*(\w)', r'\1 X \2', t)
-        # Remaining hyphens -> space
-        t = re.sub(r'-', ' ', t)
-        # Period, comma, exclamation, semicolon, colon -> X word group
-        t = re.sub(r'[.,!;:]', ' X ', t)
-        # Collapse multiple spaces
-        t = re.sub(r' {2,}', ' ', t).strip()
-        # Strip trailing prosign words (no standalone meaning at end)
+        t = re.sub(r'#\s*(?=\d)', ' NR ', t)
+        for char, word in self._NTS_SPELLED:
+            t = t.replace(char, ' {} '.format(word))
+        t = re.sub(r'[^A-Z0-9/\s]', ' ', t)
+        groups = []
         words = t.split()
-        while words and words[-1] in ('X', 'INT'):
-            words.pop()
-        return ' '.join(words)
+        for i, g in enumerate(words):
+            if i and words[i - 1] == 'ARL' and g.isdigit() and 1 <= int(g) <= 99:
+                groups.extend(self._nts_number_words(int(g)).split())
+            elif not (g == 'X' and groups and groups[-1] == 'X'):
+                groups.append(g)
+        while groups and groups[-1] == 'X':
+            groups.pop()
+        return ' '.join(groups)
 
     def count_nts_check(self, text):
-        """Compute NTS check (word count) per ARRL/Winlink rules.
-        Strips punctuation without prosign substitution — matches Winlink
-        Strippunct+wordcount behavior. Pure-digit strings >5 chars count
-        as ceil(len/5) words each per ARRL NTS standard.
-        """
-        t = text.upper().strip()
-        # Treat decimal between digits as one number token (146.52 -> 1 word)
-        t = re.sub(r'(\d)\.(\d)', r'\1\2', t)
-        # Strip all remaining punctuation
-        t = re.sub(r'[^\w\s]', ' ', t)
-        t = re.sub(r' {2,}', ' ', t).strip()
-        count = 0
-        for w in t.split():
-            if re.match(r'^\d+$', w):
-                count += (len(w) + 4) // 5
-            else:
-                count += 1
-        return count
+        """The check of normalized text: the number of groups, whatever
+        their length (MPG 1.3.4), with ARL ahead of it when the text holds
+        an ARL numbered radiogram (MPG 1.1.5): "9" or "ARL 9"."""
+        groups = text.split()
+        if 'ARL' in groups:
+            return 'ARL {}'.format(len(groups))
+        return str(len(groups))
 
     def encode_nts_email(self, addr):
-        """Encode email address for NTS radiogram output.
-        user@example.com -> USER AT EXAMPLE DOT COM
-        """
+        """user@example.com -> USER ATSIGN EXAMPLE DOT COM (RRI 2026)."""
         if not addr:
             return ''
-        addr = addr.strip().upper()
-        addr = addr.replace('@', ' AT ')
-        addr = addr.replace('.', ' DOT ')
-        return re.sub(r' {2,}', ' ', addr).strip()
+        t = addr.strip().upper()
+        for char, word in (('@', 'ATSIGN'), ('.', 'DOT'), ('-', 'DASH'), ('_', 'UNDERSCORE')):
+            t = t.replace(char, ' {} '.format(word))
+        return ' '.join(t.split())
 
     def format_nts_phone(self, ph):
-        """Normalize phone to NXX NXX XXXX for radiogram output (no dashes per NTS rules)."""
+        """(207) 555-1212 -> 207 555 1212, no dashes, no TEL (MPG 1.2.4;
+        RRI's sample radiogram)."""
         if not ph:
             return ph
         digits = re.sub(r'[^\d]', '', ph)
@@ -1414,26 +1442,22 @@ class FormsApp:
             return '{} {} {}'.format(digits[:3], digits[3:6], digits[6:])
         if len(digits) == 7:
             return '{} {}'.format(digits[:3], digits[3:])
-        return ph
+        return ' '.join(re.sub(r'[^0-9\s]', ' ', ph).split())
+
+    def format_nts_zip(self, code):
+        """21117-2345 -> 21117 DASH 2345 (MPG 1.2.3)."""
+        digits = re.sub(r'[^\d]', '', code or '')
+        if len(digits) == 9:
+            return '{} DASH {}'.format(digits[:5], digits[5:])
+        return digits
 
     def _sanitize_nts_address(self, text):
-        """Spell out punctuation in address fields per NTS rules.
-        # -> NR, hyphen -> DASH, colons/commas -> space.
-        """
-        t = text.upper().strip()
-        # Number sign -> NR
-        t = re.sub(r'#\s*', 'NR ', t)
-        # Hyphen between word characters -> DASH
+        """An address line without punctuation (MPG 1.2.6): # -> NR (KY2D),
+        a needed hyphen -> DASH, / may stay, anything else -> space."""
+        t = re.sub(r'#\s*', ' NR ', (text or '').upper())
         t = re.sub(r'(\w)\s*-\s*(\w)', r'\1 DASH \2', t)
-        # Remaining hyphens -> space
-        t = re.sub(r'-', ' ', t)
-        # Colons -> space
-        t = re.sub(r':', ' ', t)
-        # Commas -> space
-        t = re.sub(r',', ' ', t)
-        # Collapse spaces
-        t = re.sub(r' {2,}', ' ', t).strip()
-        return t
+        t = re.sub(r'[^A-Z0-9/\s]', ' ', t)
+        return ' '.join(t.split())
 
     def _format_text_5words(self, text):
         """Format normalized NTS text in groups of 5 words per line."""
@@ -1471,8 +1495,11 @@ class FormsApp:
         """
         fv = {f['name']: f['value'] for f in form_data['fields']}
 
-        # Precedence: extract just the letter from e.g. "R - Routine"
+        # Precedence: the letter from e.g. "R - Routine"; EMERGENCY is
+        # always spelled out (MPG 1.1.2)
         prec = fv.get('precedence', 'R - Routine').split(' ')[0].upper()
+        if prec == 'E':
+            prec = 'EMERGENCY'
         handling = fv.get('handling', '').strip().upper()
         origin = fv.get('station_of_origin', form_data.get('submitted_by', '')).upper()
 
@@ -1483,16 +1510,23 @@ class FormsApp:
         if 'nts_check' in form_data:
             check = str(form_data['nts_check'])
         else:
-            check = str(self.count_nts_check(raw_text))
+            check = self.count_nts_check(text)
 
-        place = re.sub(r' {2,}', ' ', re.sub(r',', ' ', fv.get('place_of_origin', '').upper())).strip()
+        place = self._sanitize_nts_address(fv.get('place_of_origin', ''))
 
-        filed_time = fv.get('filed_time', '').strip()
+        # Time filed carries its zone, 1830Z (MPG 1.1.7); the field is UTC.
+        filed_time = fv.get('filed_time', '').strip().upper()
         if not filed_time:
             filed_time = datetime.utcnow().strftime('%H%M')
-        filed_date = datetime.utcnow().strftime('%b %d').upper()  # e.g. MAY 20
+        if re.match(r'^\d{4}$', filed_time):
+            filed_time += 'Z'
+        # Month and day, no leading zero (MPG 1.1.9): SEP 5
+        now = datetime.utcnow()
+        filed_date = '{} {}'.format(now.strftime('%b').upper(), now.day)
 
-        preamble_parts = ['NR', fv.get('number', ''), prec]
+        # No NR before the number: RRI 2026's sample and TPRFN's generator
+        # (the 2002 MPG 6.2.1 had it)
+        preamble_parts = [fv.get('number', ''), prec]
         if handling:
             preamble_parts.append(handling)
         preamble_parts.extend([origin, check, place, filed_time, filed_date])
@@ -1514,22 +1548,24 @@ class FormsApp:
         to_address = self._sanitize_nts_address(fv.get('to_address', ''))
         if to_address:
             lines.append(to_address)
-        to_cs = re.sub(r' {2,}', ' ', re.sub(r',', ' ', fv.get('to_city_state', '').upper())).strip()
-        to_zip = fv.get('to_zip', '').strip()
+        to_cs = self._sanitize_nts_address(fv.get('to_city_state', ''))
+        to_zip = self.format_nts_zip(fv.get('to_zip', ''))
         lines.append("{} {}".format(to_cs, to_zip).strip())
+        # Phone and email on lines of their own, no TEL/EMAIL labels
+        # (RRI 2026 sample radiogram)
         to_phone = fv.get('to_phone', '').strip()
         if to_phone:
-            lines.append("TEL {}".format(self.format_nts_phone(to_phone)))
+            lines.append(self.format_nts_phone(to_phone))
         to_email = fv.get('to_email', '').strip()
         if to_email:
-            lines.append("EMAIL {}".format(self.encode_nts_email(to_email)))
+            lines.append(self.encode_nts_email(to_email))
         lines.append('BT')
 
         # Text in groups of 5 words per line for easy check verification
         lines.append(self._format_text_5words(text))
         lines.append('BT')
 
-        lines.append(fv.get('signature', '').upper().strip())
+        lines.append(self._sanitize_nts_address(fv.get('signature', '')))
 
         return '\n'.join(lines)
 
