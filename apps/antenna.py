@@ -6,7 +6,7 @@ antenna.py - Antenna Calculator & Configuration Database
 Calculators for common antenna types and a user-contributed database
 of antenna configurations for portable/field antennas.
 
-Version: 1.8
+Version: 1.9
 
 Author: Brad Brown Jr, KC1JMH
 Date: 2026-01-31
@@ -25,7 +25,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request, URLError
 
-VERSION = "1.8"
+VERSION = "1.9"
 SCRIPT_NAME = "antenna.py"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/bradbrownjr/bpq-apps/main/apps/"
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "antenna.json")
@@ -902,35 +902,47 @@ def calc_moxon():
     if not freq:
         return
     
-    # Moxon formulas (empirical)
-    wavelength = 984.0 / freq  # feet
-    
-    # Dimensions as percentage of wavelength
-    A = wavelength * 0.4755  # Element length
-    B = wavelength * 0.1260  # Tip spacing
-    C = wavelength * 0.0175  # Tip length
-    D = wavelength * 0.1520  # Element spacing
-    
+    # MoxGen equations (L.B. Cebik W4RNL / AC6LA): second-order polynomials
+    # in log10(wire diameter / wavelength), results in wavelengths.
+    # Valid for wire 1e-5 to 1e-2 wavelength; #14 AWG (1.628 mm) assumed.
+    wire_mm = 1.628
+    wl_m = 299.792458 / freq
+    x = math.log10(wire_mm / 1000.0 / wl_m)
+    dim_a = -0.0008571428571 * x * x - 0.009571428571 * x + 0.3398571429
+    dim_b = -0.002142857143 * x * x - 0.02035714286 * x + 0.008285714286
+    dim_c = 0.001809523381 * x * x + 0.01780952381 * x + 0.05164285714
+    dim_d = 0.001 * x + 0.07178571429
+    dim_e = dim_b + dim_c + dim_d
+
+    def ftm(frac):
+        feet = frac * wl_m / 0.3048
+        return "{:.2f} ft ({:.2f} m)".format(feet, feet * 0.3048)
+
     print("\n" + "-" * 40)
     print("MOXON for {:.3f} MHz".format(freq))
     print("-" * 40)
-    print("    A           A")
-    print("  |---|       |---|")
-    print("  +---+   D   +---+")
-    print("  | C | <---> | C |")
-    print("  +---+       +---+")
-    print("    B           B")
-    print("  <->           <->")
-    print("  DRIVEN     REFLECTOR")
+    print(" +--------- A ---------+ driven")
+    print(" |                     |")
+    print(" B                     B")
+    print(" |                     |")
+    print(" +                     +")
+    print("      C (gap) between tips")
+    print(" +                     +")
+    print(" |                     |")
+    print(" D                     D")
+    print(" |                     |")
+    print(" +--------- A ---------+ reflector")
     print("-" * 40)
-    print("A (element):  {:.1f} ft ({:.2f} m)".format(A, A * 0.3048))
-    print("B (tip gap):  {:.1f} in ({:.1f} cm)".format(B * 12, B * 30.48))
-    print("C (tip len):  {:.1f} in ({:.1f} cm)".format(C * 12, C * 30.48))
-    print("D (spacing):  {:.1f} ft ({:.2f} m)".format(D, D * 0.3048))
-    print("\nTotal width:  {:.1f} ft".format(A))
-    print("Total depth:  {:.1f} ft".format(D + (C * 2 / 12)))
-    print("\nGain: ~4 dBd, F/B: ~25-30 dB")
-    print("Feed: Direct 50 ohm at driven elem")
+    print("A width:       " + ftm(dim_a))
+    print("B driven tail: " + ftm(dim_b))
+    print("C gap:         " + ftm(dim_c))
+    print("D refl tail:   " + ftm(dim_d))
+    print("E depth:       " + ftm(dim_e))
+    print("\nDriven wire:   " + ftm(dim_a + 2 * dim_b))
+    print("Reflector:     " + ftm(dim_a + 2 * dim_d))
+    print("\nWire: #14 AWG. Gain ~6 dBi, F/B")
+    print("25 dB or better. Feed 50 ohm direct")
+    print("at the center of the driven element.")
     print("-" * 40)
     pause()
 

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **apps/antenna.py 1.9**: the Moxon calculator gave wrong dimensions (for
+  example a 105 inch tip gap on 20m) from made-up percentage-of-wavelength
+  coefficients. It now uses the published MoxGen equations (Cebik, W4RNL;
+  AC6LA's calculator) for #14 wire, and prints A width, B driven tail,
+  C gap, D reflector tail, E depth and the wire lengths. 20m comes out at
+  about 25 ft wide, matching Cebik's tables.
+
 ### Changed
 - **apps/forms.py 1.34, radiogram.frm 3.2**: radiogram text and preamble
   follow the RRI/NTS 2.0 guidelines (27 Feb 2026), ported from kissterm's
